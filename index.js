@@ -3,24 +3,28 @@ const { Router } = require('./router/router');
 const { fork } = require('child_process');
 const { join } = require('path');
 const { statSync, existsSync } = require('fs');
+const { subscribe } = require('diagnostics_channel');
 
 const store = {
     subscribers:[],
     status:0 ,
     data:null ,
-    onDone(cb) {
-        this.subscribers.push(cb);
-    } ,
     tryexecuteSubscribes () {
         if(this.status > 0) return ;
         this.subscribers.forEach(subscriber => {
-            subscriber()
+            subscriber(this.data)
         });
     } ,
-    update() {
+    update(data) {
 
-        // if()
-    }
+        this.data = data ;
+
+        this.tryexecuteSubscribes();
+        
+    } , 
+    subscribe(cb) {
+        this.subscribers.push(cb)
+    } ,
 }
 
 const filescannerprocess = fork(join('.' , 'services' , 'ipc-filescanner' , 'file-scanner.js'));
@@ -31,7 +35,9 @@ filescannerprocess.on('message' , (message) => {
 
         store.status = 0 ;
 
-        store.tryexecuteSubscribes();
+        // store.
+
+        store.update(message.payload);
 
         console.log({type:message.type , payload:message.payload});
     }
@@ -44,7 +50,7 @@ const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
 });
 
-router.get('/test/:id/foo/:bar' , (req , res) => {
+router.get('/test/:id/foo/:bar' , async (req , res) => {
 
     const { method , url } = req ;
 
@@ -58,7 +64,13 @@ router.get('/test/:id/foo/:bar' , (req , res) => {
     //     queryParams,
     // }));
 
-    
+    await sendOrderParseDir(store);
+
+    store.subscribe((data) => {
+
+        res.end(JSON.stringify(data));
+
+    });
 
 });
 
@@ -70,21 +82,7 @@ server.listen(port, host , () => {
 });
 
 
-async function sendOrderParseDir (store, method ,
-            url ,
-            params , 
-            queryParams ,  res) {
-
-    store.onDone(() => {
-
-        res.setHeader('content-type' , 'application/json');
-        res.end(JSON.stringify({
-            method ,
-            url ,
-            params , 
-            queryParams,
-        }));
-    });
+async function sendOrderParseDir (store) {
 
     store.status = 1 ;
 
