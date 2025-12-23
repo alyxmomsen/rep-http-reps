@@ -16,15 +16,18 @@ const server = http.createServer((req , res) => {
     
 });
 
-
-router.get('/test' , (req , res) => {
+router.get('/test/:id/foo/:bar' , (req , res) => {
 
     const { method , url } = req ;
+
+    const {params , queryParams} = res ;
 
     res.setHeader('content-type' , 'application/json');
     res.end(JSON.stringify({
         method ,
         url ,
+        params , 
+        queryParams,
     }));
 });
 

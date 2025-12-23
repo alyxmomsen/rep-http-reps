@@ -2,13 +2,48 @@ class Router {
 
     async handleRequest(req , res) {
 
-        const { method , url } = req ;
+        const { method , url: rawUrl } = req ;
         
+        const {url , rawURLQueryString } = await this.#splitURL(rawUrl);
 
+        console.log({url , rawUrl , rawURLQueryString});
 
-        // this.#routes.get();
+        const methodRoutes = this.#routes.get(method.toUpperCase());
 
-        res.end('hello');
+        if(methodRoutes === undefined) {
+
+            res.writeHead(404 , 'not found');
+            console.log('method is not defined');
+            res.end('not found'.toUpperCase());
+            return;
+        }
+        
+        for (const [ template , bundle] of methodRoutes) {
+
+            // console.log('method route couple' , template , bundle);
+
+            console.log('test' ,bundle.regex , bundle);
+
+            const match = bundle.regex.exec(url);
+
+            if(match === null) continue ;
+
+            const queryParams = await this.#parseQueryParams(rawURLQueryString);
+            
+            const params = {};
+    
+            res.params = params ;
+            res.queryParams = queryParams ;
+
+            bundle.handler(req , res);
+            
+            return;
+        }
+
+        res.writeHead(404 , 'not found');
+        console.log('template is not added'.toUpperCase());
+        res.end('not found');
+        return;
     }
 
     async get (template , ...handlers) {
@@ -21,7 +56,38 @@ class Router {
 
     #routes ;
 
-    // async sp
+    async #parseQueryParams (rawURLQueryString) {
+
+        const params = {};
+
+        rawURLQueryString.split('&').forEach((couple , i) => {
+
+            console.log(couple)
+
+            const [key , value] = couple.split('=');
+
+            if(key !== undefined && value !== undefined) {
+
+                params[key.toLowerCase()] = value ;
+            }
+
+        });
+
+        return params ;
+    }
+
+    async #splitURL(rawURL) {
+
+        const [left , right] = rawURL.split(`?`);
+
+        const url = /.+\/$/.test(left) === true ? left.replace(/\/$/ , '') : left ;
+        const rawURLQueryString = right ; 
+
+        return {
+            url , 
+            rawURLQueryString ,
+        }
+    }
 
     async #addRoute (template , method , handlers) {
 
