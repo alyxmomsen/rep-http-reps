@@ -4,16 +4,44 @@ const { fork } = require('child_process');
 const { join } = require('path');
 const { statSync, existsSync } = require('fs');
 
+const store = {
+    subscribers:[],
+    status:0 ,
+    data:null ,
+    onDone(cb) {
+        this.subscribers.push(cb);
+    } ,
+    tryexecuteSubscribes () {
+        if(this.status > 0) return ;
+        this.subscribers.forEach(subscriber => {
+            subscriber()
+        });
+    } ,
+    update() {
 
+        // if()
+    }
+}
+
+const filescannerprocess = fork(join('.' , 'services' , 'ipc-filescanner' , 'file-scanner.js'));
+
+filescannerprocess.on('message' , (message) => {
+
+    if(message.type && message.type === 'order::response' ) {
+
+        store.status = 0 ;
+
+        store.tryexecuteSubscribes();
+
+        console.log({type:message.type , payload:message.payload});
+    }
+});
 
 const router = new Router();
-
-launchIPC(join('.' , 'services' , 'filescanner.js'));
 
 const server = http.createServer((req , res) => {
     
     router.handleRequest(req , res);
-    
 });
 
 router.get('/test/:id/foo/:bar' , (req , res) => {
@@ -22,13 +50,16 @@ router.get('/test/:id/foo/:bar' , (req , res) => {
 
     const {params , queryParams} = res ;
 
-    res.setHeader('content-type' , 'application/json');
-    res.end(JSON.stringify({
-        method ,
-        url ,
-        params , 
-        queryParams,
-    }));
+    // res.setHeader('content-type' , 'application/json');
+    // res.end(JSON.stringify({
+    //     method ,
+    //     url ,
+    //     params , 
+    //     queryParams,
+    // }));
+
+    sendOrderParseDir(store , method , url ,params , queryParams , res);
+
 });
 
 const port = 3333;
@@ -38,6 +69,30 @@ server.listen(port, host , () => {
     console.log({port , host});
 });
 
+
+async function sendOrderParseDir (store, method ,
+            url ,
+            params , 
+            queryParams ,  res) {
+
+    store.onDone(() => {
+
+        res.setHeader('content-type' , 'application/json');
+        res.end(JSON.stringify({
+            method ,
+            url ,
+            params , 
+            queryParams,
+        }));
+    });
+
+    store.status = 1 ;
+
+    filescannerprocess.send({type:'order::parse-directory' , payload : {
+        path:join('D:' , 'Documents') ,
+    }});
+
+}
 
 async function launchIPC (scriptPath) {
     
@@ -61,7 +116,6 @@ async function launchIPC (scriptPath) {
     });
     
 }
-
 
 async function listenSTDIN () {
 
