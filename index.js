@@ -58,7 +58,7 @@ router.get('/test/:id/foo/:bar' , (req , res) => {
     //     queryParams,
     // }));
 
-    sendOrderParseDir(store , method , url ,params , queryParams , res);
+    
 
 });
 
