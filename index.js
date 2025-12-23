@@ -2,7 +2,7 @@ const http = require('http');
 const { Router } = require('./router/router');
 const { fork } = require('child_process');
 const { join } = require('path');
-const { statSync, existsSync } = require('fs');
+const { statSync, existsSync, readFileSync } = require('fs');
 const { subscribe } = require('diagnostics_channel');
 
 const store = {
@@ -68,7 +68,12 @@ router.get('/test/:id/foo/:bar' , async (req , res) => {
 
     store.subscribe((data) => {
 
-        res.end(JSON.stringify(data));
+
+        const rawhtml = readFileSync('./index.html' , 'utf-8');
+
+        const content = rawhtml.replace(/\<\%content\%\>/ , data.files.map(elem => `<a href="#">${elem}</a>`).join('<br>'));
+
+        res.end(content);
 
     });
 
