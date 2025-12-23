@@ -1,11 +1,12 @@
 class Router {
 
-
-
     async handleRequest(req , res) {
 
+        const { method , url } = req ;
         
-        
+
+
+        // this.#routes.get();
 
         res.end('hello');
     }
@@ -19,6 +20,8 @@ class Router {
     }
 
     #routes ;
+
+    // async sp
 
     async #addRoute (template , method , handlers) {
 
