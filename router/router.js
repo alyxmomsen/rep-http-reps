@@ -61,6 +61,8 @@ class Router {
 
         const params = {};
 
+        if(rawURLQueryString === undefined) return params ;
+
         rawURLQueryString.split('&').forEach((couple , i) => {
 
             console.log(couple)
