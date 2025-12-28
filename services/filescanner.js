@@ -18,7 +18,7 @@ async function launchFileScanner (path , config = undefined) {
 
 
     if(!result) {
-        return null ;
+        return null ;   
     }
 
     return result ;
