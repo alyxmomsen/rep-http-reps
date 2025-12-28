@@ -60,11 +60,23 @@ wsserver.on('connection' , (ws) => {
     console.log('new web socket');
 
 
-    ws.on('message' , (data) => {
+    ws.on('message' , async (data) => {
 
         console.log(JSON.parse(data.toString()));
 
+        store.subscribe((data) => {
+
+            ws.send(JSON.stringify(data));
+        });
+        
+        await sendOrderParseDir(store);
+
+
+
+
     });
+
+
 
 });
 
