@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    hello world
+</body>
+</html>
+<script>
+
+    // const port = 3333;
+    const port = 8080;
+
+    const ws = new WebSocket(`http://localhost:${port}`);
+
+    console.log(ws);
+
+    ws.onopen = () => {
+        ws.send(JSON.stringify({foo:'bar'}));
+    }
+</script>

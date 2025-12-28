@@ -2,8 +2,11 @@ const http = require('http');
 const { Router } = require('./router/router');
 const { fork } = require('child_process');
 const { join } = require('path');
-const { statSync, existsSync } = require('fs');
+const { statSync, existsSync, readFileSync } = require('fs');
 const { subscribe } = require('diagnostics_channel');
+const { createHash } = require('crypto');
+const { buffer } = require('stream/consumers');
+const { WebSocketServer } = require('ws');
 
 const store = {
     subscribers:[],
@@ -50,8 +53,74 @@ const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
 });
 
-server.on('upgrade' , () => {
+const wsserver =  new WebSocketServer({port:8080});
 
+wsserver.on('connection' , (ws) => {
+
+    console.log('new web socket');
+
+
+    ws.on('message' , (data) => {
+
+        console.log(JSON.parse(data.toString()));
+
+    });
+
+});
+
+
+// const clients = new Set();
+
+// server.on('upgrade' , async (req , socket) => {
+
+//     console.log('updgrade is on');
+//     const key = req.headers['sec-websocket-key'] ;
+
+//     if(!key) {
+//         socket.destroy();
+//         return ;
+//     }
+
+//     console.log('upgrade is continue');
+
+//     const acceptKey = await generateAcceptKey(key);
+
+//     console.log('acceptKey' , acceptKey);
+
+//     socket.write(
+//         'HTTP/1.1 101 Switching Protocols\r\n' +
+//         'Upgrade: websocket\r\n' +
+//         'Connection: Upgrade\r\n' +
+//         `Sec-WebSocket-Accept: ${acceptKey}\r\n` +
+//         '\r\n'
+//     );``
+
+//     clients.add(socket);
+
+//     console.log('socket added');
+
+//     socket.on('data', (buf) => {
+
+//         console.log('buffer' , buf/* .toString("utf-8") */);
+
+//         console.log('new web socket data');
+
+//   });
+
+
+// });
+
+async function generateAcceptKey (key) {
+    '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+    const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11' ;
+    return createHash('sha1').update(key + GUID).digest("base64");
+
+}
+
+router.get('/' , async (req , res) => {
+
+    const html = readFileSync('./index.html' , 'utf-8');
+    res.end(html);
 });
 
 router.get('/test/:id/foo/:bar' , async (req , res) => {
