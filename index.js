@@ -50,6 +50,10 @@ const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
 });
 
+server.on('upgrade' , () => {
+
+});
+
 router.get('/test/:id/foo/:bar' , async (req , res) => {
 
     const { method , url } = req ;
@@ -75,12 +79,11 @@ router.get('/test/:id/foo/:bar' , async (req , res) => {
 });
 
 const port = 3333;
-const host = '0.0.0.0';
+const host = 'localhost';
 
 server.listen(port, host , () => {
     console.log({port , host});
 });
-
 
 async function sendOrderParseDir (store) {
 
