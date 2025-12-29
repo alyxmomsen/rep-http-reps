@@ -15,10 +15,9 @@ class Router {
             return;
         }
 
-        const { url } = await this.#splitFullURLSting(fullURLSting);
+        const { url , rawQueryString } = await this.#splitFullURLSting(fullURLSting);
 
         for (const [template , routeBundle] of methodRoutes) {
-
 
             const match = routeBundle.regex.exec(url);
 
@@ -26,7 +25,10 @@ class Router {
 
             const params = await this.compileParams(routeBundle.keys , match.slice(1) , url);
 
-            const queryParams = {};
+            const queryParams = await this.extractQueryParams(rawQueryString);
+
+            await this.#executeMiddleware(req , res , routeBundle.middleware);
+            await this.#executeMiddleware(req , res , this.#middleware);
 
             req.params = params ;
             req.queryParams = queryParams ;
@@ -36,6 +38,13 @@ class Router {
         }
 
         res.end('stock response not route (' + url +') response');
+    }
+
+    async use(...middleware) {
+
+        middleware.forEach(m8e => {
+            this.#middleware.push(m8e);
+        });
     }
 
     async get (template , ...handlers) {
@@ -49,7 +58,27 @@ class Router {
     }
 
     #acceptedMethods;
+    #middleware;
     #routes;
+
+    async extractQueryParams (rawQueryString) {
+
+        const params = {};
+
+        if(rawQueryString === undefined) {
+            return params ;
+        }
+
+        rawQueryString.split('&').forEach(couple => {
+            const [key , value] = couple.split('=');
+
+            if(key !== undefined) {
+                params[key.toLowerCase()] = value ;
+            }
+        });
+
+        return params;
+    }
 
     async compileParams (keys , values , url) {
 
@@ -64,6 +93,22 @@ class Router {
         return params ;
 
     }
+
+    async #executeMiddleware (req , res , middleware) {
+
+        let counter = 0 ;
+
+        const next = () => {
+
+            if(counter < middleware.length) {
+                middleware[counter++](req , res , next)
+            }
+
+        }
+
+        next();
+
+    } 
 
     async #splitFullURLSting (fullURLSting) {
 
@@ -117,6 +162,8 @@ class Router {
     }
 
     constructor () {
+
+        this.#middleware = [] ;
 
         this.#routes = new Map();
 

@@ -10,6 +10,25 @@ const server = http.createServer((req , res) => {
 
 });
 
+router.use(
+    (req ,res , next) => {
+        console.log('glob middleware 1');
+        next();
+    } ,
+    (req ,res , next) => {
+        console.log('glob middleware 2');
+        // next();
+    } ,
+    (req ,res , next) => {
+        console.log('glob middleware 3');
+        next();
+    } ,
+    (req ,res , next) => {
+        console.log('glob middleware 4');
+        next();
+    } ,
+);
+
 router.get('/' , async (req , res) => {
 
     const {method , url , params , queryParams} = req ;
@@ -27,15 +46,15 @@ router.get(
     } , 
     async (req ,res , next) => {
         console.log('local middle ware 2');
-        next();
+        // next();
     } , 
     async (req ,res , next) => {
         console.log('local middle ware 3');
-        
+        next();
     } , 
     async (req ,res , next) => {
         console.log('local middle ware 4');
-        
+        next();
     } , 
     
     async (req , res) => {
