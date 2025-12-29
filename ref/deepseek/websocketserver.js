@@ -62,13 +62,18 @@ class WebSocketServer extends EventEmitter {
     // Вычисляем accept ключ
     const acceptKey = this.generateAcceptKey(key);
 
+    // 'HTTP/1.1 101 Switching Protocols',
+    //   'Upgrade: websocket',
+    //   'Connection: Upgrade',
+    //   `Sec-WebSocket-Accept: ${acceptKey}`
+
     // Отправляем handshake ответ
     const headers = [
-      'HTTP/1.1 101 Switching Protocols',
-      'Upgrade: websocket',
-      'Connection: Upgrade',
-      `Sec-WebSocket-Accept: ${acceptKey}`
-    ];
+        `HTTP/1.1 101 Switching Protocols` ,
+        `Upgrade: websocket` ,
+        `Connection: Upgrade` ,
+        `Sec-WebSocket-Accept: ${acceptKey}`
+    ]
 
     socket.write(headers.join('\r\n') + '\r\n\r\n');
 

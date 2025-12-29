@@ -6,14 +6,49 @@
     <title>Document</title>
 </head>
 <body>
-    hello world
+    <div id="message-field">
+        message not yet
+    </div>
+    <button disabled="true" id="btn-1">
+        send message
+    </button>
 </body>
 </html>
 <script>
-    const ws = new WebSocket('ws://localhost:8080');
 
-    ws.addEventListener("open" , () => {
-        alert('ws online');
-        console.log('websocket server online');
+    window.addEventListener("DOMContentLoaded" , () => {
+
+        const messageeleme = document.getElementById('message-field');
+        const btn = document.getElementById('btn-1');
+
+
+        const ws = new WebSocket('ws://localhost:8080');
+    
+        ws.addEventListener("open" , () => {
+            // alert('ws online');
+            console.log('websocket server online');
+
+            messageeleme.innerHTML = "websocket server online";
+
+            if(btn instanceof HTMLButtonElement) {
+
+                btn.disabled = false ;
+                btn.innerHTML = "welcome"; 
+
+                btn.addEventListener('click' , (e) => {
+                    e.preventDefault();
+
+                    ws.send('hello-server');
+
+                });
+            }
+
+            ws.onmessage = (message) => {
+                console.log(message.data);
+            }
+            
+        });
+
     });
+
 </script>
