@@ -10,8 +10,22 @@ const server = http.createServer((req , res) => {
 
 });
 
-router.get('/' , (req , res) => {
-    res.end('default "/" resolve');
+router.get('/' , async (req , res) => {
+
+    const {method , url , params , queryParams} = req ;
+
+    res.end(JSON.stringify({
+        method , url , params , queryParams
+    }));
+});
+
+router.get('/test/:foo/smth/:bar' , async (req , res) => {
+
+    const {method , url , params , queryParams} = req ;
+
+    res.end(JSON.stringify({
+        method , url , params , queryParams
+    }));
 });
 
 router.post('/post' , (req , res) => {
