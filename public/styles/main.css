@@ -1,0 +1,8 @@
+#content {
+	display: flex;
+	width: max-content;
+}
+
+.wrapper {
+	width: 50vw;
+}

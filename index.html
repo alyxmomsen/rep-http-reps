@@ -3,73 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/public/styles/main" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <!-- <script src="/public/scripts/ws"></script> -->
     <title>Document</title>
 </head>
 <body>
     <div id="content">preparing...</div>
+    <div>
+        <h3>buttons</h3>
+        <div id="controls">
+            ...
+        </div>
+    </div>
 
 </body>
 </html>
-<style>
-
-</style>
 <script>
+    console.log('hello');
+    const ws = new WebSocket('http://localhost:3333');
 
-    window.addEventListener("DOMContentLoaded" , () => {
+    ws.addEventListener("open"  , () => {
 
-        document.addEventListener('scroll' , () => {
-            
+        console.log('socket is open');
+
+        ws.send('imready');
+
+        ws.addEventListener("message" , (message) => {
+
+            const data = JSON.stringify(message.data);
+
+            console.log('data' , data);
+
         });
 
-        const conentHTML = document.getElementById('content');
-
-        console.log('content loaded');
-        const port = 8080;
-    
-        const ws = new WebSocket(`http://localhost:${port}`);
-    
-        console.log(ws);
-    
-        ws.onopen = () => {
-
-            conentHTML.innerHTML = "loading ..."
-
-            ws.send(JSON.stringify({foo:'bar'}));
-
-            ws.addEventListener("message" , (message) => {
-
-                const messageData = JSON.parse(message.data);
-                let counter = 0 ;
-
-                const getCounter  = () => {
-
-                    const value = counter ;
-                    counter = counter > 0 ? 0 : counter + 1 ;
-                    return value ;
-                }
-
-
-
-                conentHTML.innerHTML = messageData.files.map((file ,i) => {
-
-
-
-                    const result = i % 20 
-
-                    console.log(result);
-
-                    const wrapperState = (result === 0) ? getCounter() : null; 
-
-                    // console.log(wrapperState);
-
-                    return `${wrapperState === 0 ? '</div><div class="wrapper">' : ''}<div class="hideable">${file}</div>${wrapperState === 1 ? '</div><div class="wrapper">' : ''}` ;
-                }).join('');
-
-                // message.data;
-
-                console.log(messageData);
-            });
-        }
     });
-    // const port = 3333;
 </script>

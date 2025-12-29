@@ -7,6 +7,7 @@ const { subscribe } = require('diagnostics_channel');
 const { createHash } = require('crypto');
 const { buffer } = require('stream/consumers');
 const { WebSocketServer } = require('ws');
+const { readFile } = require('fs/promises');
 
 const store = {
     subscribers:[],
@@ -70,13 +71,43 @@ wsserver.on('connection' , (ws) => {
         });
         
         await sendOrderParseDir(store);
+    });
+});
 
+server.on('upgrade' , async (req , socket) => {
 
+    const key = req.headers['sec-websocket-key'];
 
+    if(key === undefined) {
+        socket.destroy();
+        return ;
+    }
+
+    const genAcceptKey = (key) => {
+
+        const GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" ;
+
+        return createHash('sha1').update(key + GUID).digest('base64');
+
+    }
+
+    const acceptKey = genAcceptKey(key);
+
+    const headers = [
+
+        'HTTP/1.1 101 Switching Protocols' ,
+        'Upgrade: Websocket' ,
+        'Connection: Upgrade' ,
+        `Sec-WebSocket-Accept:${acceptKey}` ,
+    ];
+
+    socket.write(headers.join('\r\n') + '\r\n\r\n');
+
+    socket.on('data' , (buf) => {
+
+        console.log('web socket data ' , buf);
 
     });
-
-
 
 });
 
@@ -105,7 +136,7 @@ wsserver.on('connection' , (ws) => {
 //         'Connection: Upgrade\r\n' +
 //         `Sec-WebSocket-Accept: ${acceptKey}\r\n` +
 //         '\r\n'
-//     );``
+//     );
 
 //     clients.add(socket);
 
@@ -127,6 +158,64 @@ async function generateAcceptKey (key) {
     const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11' ;
     return createHash('sha1').update(key + GUID).digest("base64");
 
+}
+
+router.get('/public/styles/main' , async (req , res) => {
+
+    const data = await publicSourceLoader(
+        join(__dirname , 'public' , 'styles' , 'main.css') ,
+        (e) => {
+            console.log('script loading error: ' , e);
+        }
+    ) ;
+
+    if(data === null) {
+
+        res.writeHead(500 , 'internal error');
+        res.end('internal error');
+        return ;
+    }
+
+    res.end(data);
+
+});
+
+router.get('/public/scripts/ws' , async (req , res) => {
+
+    const data = await publicSourceLoader(
+        join(__dirname , 'public' , 'scripts' , 'ws.js') ,
+        (e) => {
+            console.log('script loading error: ' , e);
+        }
+    ) ;
+
+    if(data === null) {
+
+        res.writeHead(500 , 'internal error');
+        res.end('internal error');
+        return ;
+    }
+
+    res.end(data);
+
+});
+
+async function publicSourceLoader (path , fallback = e => e) {
+
+    try {
+
+        const file = await readFile(path , {
+            encoding:"utf-8",
+        });
+
+        return file ;
+    }
+    catch(e) {
+
+        fallback(e);
+        return null ;
+
+    }
 }
 
 router.get('/' , async (req , res) => {
