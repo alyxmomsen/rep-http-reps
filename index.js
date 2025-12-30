@@ -1,5 +1,9 @@
 const http = require('http');
 const { Router } = require('./router/router');
+const loadPublicSourceUtil = require('./router/handlers/public-handlers/load-public-source.util.');
+const { join } = require('path');
+const handlePartialContentRequest = require('./router/handlers/handle-partial-content-request');
+const handleform = require('./router/handlers/handle-form-data-request');
 
 const router = new Router();
 
@@ -28,6 +32,28 @@ router.use(
         next();
     } ,
 );
+
+
+router.get('/form' , async (req , res) => {
+
+    await loadPublicSourceUtil(req , res ,join(__dirname , `public` ,`html` ,`form.html`) , (e) => console.log(e));
+});
+
+router.post('/api/handle-form' , async (req ,res) => {
+
+    handleform(req , res);
+})
+
+router.get('/api/video/:video-id' , (req , res) => {
+
+    handlePartialContentRequest(req , res);
+    return;
+})
+
+router.get('/video' , async (req , res) => {
+
+    await loadPublicSourceUtil(req , res ,join(__dirname , `public` ,`html` ,`video.html`) , (e) => console.log(e));
+});
 
 router.get('/' , async (req , res) => {
 
