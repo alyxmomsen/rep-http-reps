@@ -1,6 +1,7 @@
 
 const { join } = require('path');
 const loadPublicSourceUtil = require("./public-handlers/load-public-source.util.");
+const handleMultipart = require('./handle-form-data/handle-multipart');
 
 const htmlpath = join('.' , 'public' , 'html' , 'form.html');
 
@@ -22,7 +23,7 @@ async function handleform (req , res) {
 
     req.on('end' , async () => {
 
-        await handleRequestEnd(matchers  , bufferChunks , contentTypeHeaderData);
+        await handleRequestEnd(matchers  , Buffer.concat(bufferDataParts) , contentTypeHeaderData);
 
     });
 
@@ -70,8 +71,4 @@ async function matcherFactory (regex , handler) {
             handler(contentTypeHeaderData , formData);
         }
     }
-}
-
-async function handleMultipart (contentTypeHeaderData , formData) {
-    console.log(contentTypeHeaderData , formData);
 }
