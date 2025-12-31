@@ -1,5 +1,6 @@
 const http = require('http');
 const { Router } = require('./router/router');
+const { fork } = require('child_process');
 
 const router = new Router();
 
@@ -19,7 +20,6 @@ router.use(
 
         console.log('global middleware 1');
 
-        
     } ,
     (req , res , next) => {
 
@@ -29,9 +29,27 @@ router.use(
     } ,
 );
 
-router.get('/' , (req , res  , next) => {console.log('local mw 1')} , (req , res) => {
-    console.log();
-    res.end('we stars');
+router.get('/test/:id/foo/:bar' , (req , res  , next) => {console.log('local mw 1')} , (req , res) => {
+    
+    const {method , url , params , queryParams } = req ;
+
+    const child = fork('./forks/filescanner.js')
+
+    child.on("error" , (e) => {
+        console.log('child error' , e);
+    });
+
+    child.send(
+        {
+            type:'order' ,
+            payload:{
+                name:'scan-dir' ,
+                path:'C:/Users/Public/Libraries'
+            }
+        }
+    );
+
+    res.end(JSON.stringify({method , url , params , queryParams}));
 });
 
 const port = 3333;

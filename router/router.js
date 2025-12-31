@@ -20,14 +20,33 @@ class Router {
 
             if(match === null) continue ;
 
-
             this.#executeMiddleware(routeBundle.middleware , req , res);
+
+            // extract query params
+            const queryParams = await this.#extractQueryParams(queryString);
+
+            console.log({queryParams});
+
+            req.queryParams = queryParams ;
+            
+            // compile url params
+            const params = {};
+            routeBundle.keys.forEach((key , i) => {
+                
+                // console.log(key);
+
+                const value = match[i + 1] ;
+
+                params[key] = value ;    
+            });
+            req.params = params ;
+            // ------------------- 
 
             routeBundle.handler(req , res);
             return ;
         }        
 
-        res.end('hello');
+        res.end('stock respo');
     }
 
     async get (template , ...handlers) {
@@ -50,6 +69,36 @@ class Router {
     #routes ;
     #middleware ;
     #acceptedMethods ;
+
+    async #compileUrlParams (keys , values) {
+
+    }
+
+    async #extractQueryParams (rawQueryString) {
+
+        console.log({rawQueryString});
+
+        if(rawQueryString === undefined) {
+            return {} ;
+        }
+
+        const params = {} ;
+
+        rawQueryString.split('&').forEach(couple => {
+
+            
+            const [ key , value ] = couple.split('=');
+            
+
+            if(key !== undefined && value !== undefined) {
+                params[key.toLowerCase()] = value ;
+            }
+        });
+
+        console.log({params});
+
+        return params ;
+    }
 
     async #executeMiddleware (middleware , req , res) {
 
@@ -100,13 +149,13 @@ class Router {
 
         methodRoutes.set(template , routeBundle);
 
-        console.log(`added route < ${method} > < ${routeBundle.originalTemplate} >`);
+        console.log(`added route < ${method} > < ${routeBundle.originalTemplate} >` ,routeBundle);
     }
 
     async #compileRouteBundle (template , handlers) {
         
         const keys = [] ;
-        const regexTemplate = template.replace(/:[^\/]+/g , (_ , key) => {
+        const regexTemplate = template.replace(/:([^\/]+)/g , (_ , key) => {
 
             keys.push(key);
             return '([^\/]+)';
