@@ -1,26 +1,30 @@
 const { readFile, readdir, stat } = require('fs/promises');
 const { join } = require('path');
 
+let isScanExecuting = null ;
+
 process.on('message' , async (message) => {
 
-    console.log('trueeeeee');
+    const {path , filter} = message ;
+
+    console.log({path , filter});
+
+    const result = await launchScan(path);
+
+    console.log(result);
+
+    process.send({
+        type:'data' , 
+        payload:['file 1' ,'file 2' , 'file 3'] ,
+    });
     
-    if(message.type && message.type === "order") {
-        
-        
-        const payload = message.payload;
-
-        const ordername = payload.name ;
-        const path = payload.path ;
-
-        await launchScan(path);
-
-    }
-
-    console.log('message from father' , {message});
 });
 
-async function launchScan (path) {
+async function launchScan (path , filter) {
+
+    console.log('scanner getting launch');
+
+    const regexFilter = new RegExp(`\.${filter}$`);
 
     const store = {
 
@@ -29,6 +33,8 @@ async function launchScan (path) {
     }
 
     try {
+
+        console.log('try try');
 
         const stats = stat(path);
 
@@ -39,13 +45,16 @@ async function launchScan (path) {
             return;
         }
 
+        console.log('readir launching');
+
         await _readDir(path , store);
 
         store.scanProcesses.forEach(process => {
             process.files.forEach(file => {
                 
-                
-                if(/\.mp3$/.test(file)) {
+
+
+                if(regexFilter.test(file.filename)) {
                     
                     console.log(file);
                 }
@@ -53,22 +62,24 @@ async function launchScan (path) {
         });
     }
     catch (e) {
-
-        return console.log(e);
+        console.log(e);
+        return store.scanProcesses ;
     }
+
+    return store.scanProcesses ;
 }
 
 async function _readDir (path , store) {
 
+    console.log('scan dir: ' , path);
     const scanProcess = {
         status:'in-process' ,
         files:[] ,
     }
-
+    
     store.scanProcesses.push(scanProcess);
     store.depth += 1 ;
-
-    console.log('scan dir: ' , path);
+    
     
     try {
 
@@ -82,13 +93,16 @@ async function _readDir (path , store) {
 
             if((await stats).isDirectory() === true) {
 
-                
                 await _readDir(newPath , store);
                 continue ;
             }
 
-            scanProcess.files.push(filelike);
-            
+            scanProcess.files.push({
+                filename:filelike ,
+                path ,
+            });
+
+            // console.log(filelike);
         }
     }
     catch (e) {

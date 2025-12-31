@@ -1,6 +1,11 @@
 const http = require('http');
 const { Router } = require('./router/router');
 const { fork } = require('child_process');
+const { join } = require('path');
+const loadresponsefile = require('./router/utils/loadfiles');
+const { WebSocketServer } = require('ws');
+const { createHash, randomBytes } = require('crypto');
+const WSServer = require('./services/wsserver');
 
 const router = new Router();
 
@@ -8,6 +13,8 @@ const server = http.createServer((req , res) => {
 
     router.handleRequest(req , res);
 });
+
+const wsserver = new WSServer();
 
 router.use(
     (req , res , next) => {
@@ -29,27 +36,15 @@ router.use(
     } ,
 );
 
-router.get('/test/:id/foo/:bar' , (req , res  , next) => {console.log('local mw 1')} , (req , res) => {
+router.get('/test/:id/foo/:bar' , (req , res  , next) => {console.log('local mw 1')} , async (req , res) => {
     
     const {method , url , params , queryParams } = req ;
 
-    const child = fork('./forks/filescanner.js')
-
-    const scanPath = join('C:','Users','Public'/* ,'Libraries' */);
-
-    child.on("error" , (e) => {
-        console.log('child error' , e);
-    });
-
-    child.send(
-        {
-            type:'order' ,
-            payload:{
-                name:'scan-dir' ,
-                path:scanPath ,
-            }
-        }
-    );
+    const file = await loadresponsefile(join('public','html','index.html'));
+    if(file) {
+        res.end(file);
+        return ;
+    }
 
     res.end(JSON.stringify({method , url , params , queryParams}));
 });
