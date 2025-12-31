@@ -35,6 +35,8 @@ router.get('/test/:id/foo/:bar' , (req , res  , next) => {console.log('local mw 
 
     const child = fork('./forks/filescanner.js')
 
+    const scanPath = join('C:','Users','Public'/* ,'Libraries' */);
+
     child.on("error" , (e) => {
         console.log('child error' , e);
     });
@@ -44,7 +46,7 @@ router.get('/test/:id/foo/:bar' , (req , res  , next) => {console.log('local mw 
             type:'order' ,
             payload:{
                 name:'scan-dir' ,
-                path:'C:/Users/Public/Libraries'
+                path:scanPath ,
             }
         }
     );
