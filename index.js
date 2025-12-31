@@ -6,7 +6,6 @@ const router = new Router();
 const server = http.createServer((req , res) => {
 
     router.handleRequest(req , res);
-
 });
 
 const port = 3333;
