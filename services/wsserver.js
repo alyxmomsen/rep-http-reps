@@ -7,14 +7,14 @@ const scanner = fork('./forks/filescanner.js')
 
 class WSServer {
     
-    #connections;
+    #clinets;
     #messageHandlers;
 
-    #handleMessage (connection ,data) {
+    #handleMessage (connection , client ,data) {
 
-        this.#messageHandlers[data.type][data.name].handler(connection , data.details);
+        this.#messageHandlers[data.type][data.name].handler(connection , client , data.details);
 
-        console.log('message data' , data);
+        // console.log('message data' , data);
     }
     
     constructor () {
@@ -22,7 +22,7 @@ class WSServer {
         this.#messageHandlers = {
             order: {
                 'scan-dir': {
-                    handler: (connection , details) => {
+                    handler: (wsConnection , client , details) => {
 
                         const filter = details.filter;
 
@@ -33,22 +33,24 @@ class WSServer {
 
                         scanner.once('message' , (message) => {
 
-                            console.log({message});
+                            // console.log({message});
 
-                            connection.send(JSON.stringify({
-                                type:'data' ,
+                            client.data = message.payload ;
+
+                            wsConnection.send(JSON.stringify({
+                                type:'result' ,
                                 payload:message.payload ,
                             }));
 
                         });
 
-                        console.log('handler ' , filter);
+                        // console.log('handler ' , filter);
                     }
                 }
             }
         }
         
-        this.#connections = [];
+        this.#clinets = [];
         
         const websocketserver = new WebSocketServer({
             port:3000 ,
@@ -56,25 +58,26 @@ class WSServer {
         });
 
         websocketserver.addListener('connection' , (ws) => {
+            const newClient = {
+                id:randomBytes(16).toString('hex') ,
+                connection:ws ,
+                data:[] ,
+            };
     
             ws.addEventListener("message" , (message) => {
 
-                this.#handleMessage(ws , JSON.parse(message.data));
+                this.#handleMessage(ws , newClient , JSON.parse(message.data));
             });
 
-            const newConnection = {
-                id:randomBytes(16).toString('hex') ,
-                connection:ws ,
-            };
             
-            this.#connections.push(newConnection) ;
+            this.#clinets.push(newClient) ;
             
             ws.send(JSON.stringify({
                 type:'new-connection', 
-                payload:newConnection.id ,
+                payload:newClient.id ,
             }));
             
-            console.log('new connection' , newConnection.id);
+            console.log('new connection' , newClient.id);
             
         });
     }

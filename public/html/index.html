@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=s, initial-scale=1.0">
+    <script src="/public/scripts/main"></script>
+    <link rel="stylesheet" href="/public/styles/main">
     <title>Document</title>
 </head>
 <body>
@@ -13,77 +15,3 @@
     </div>
 </body>
 </html>
-<script>
-
-    window.addEventListener("DOMContentLoaded" , () => {
-
-        const ws = new WebSocket('http://localhost:3000');
-    
-        ws.addEventListener("open" , (s) => {
-            console.log('web socket connection is opened!');
-    
-            ws.addEventListener("message" , (message) => {
-                
-                hendleMessage(JSON.parse(message.data));
-    
-            });
-    
-            ws.addEventListener("error" , () => {
-    
-            });
-    
-            ws.addEventListener("close" , () => {
-    
-            });
-
-            getFiles(ws);
-    
-        });
-
-    });
-
-    async function hendleMessage (data) {
-
-        const handlers = {
-            data: {
-                handler: (data) => {
-
-                }
-            } ,
-            order:{
-                handler: () => {
-
-                }
-            } ,
-            'new-connection' : {
-                handler: (data) => {
-                    
-                    const htmlelement = document.getElementById('smth')
-        
-                    if(htmlelement) {
-                        htmlelement.innerHTML = data;
-                    }
-                }
-            }
-        }
-
-
-        handlers[data.type]?.handler(data.payload);
-
-        console.log(handlers[data.type] , data.payload);
-
-    }
-
-    async function getFiles (ws) {
-
-        ws.send(JSON.stringify({
-            type:'order' ,
-            name:'scan-dir' ,
-            details: {
-                filter:'mp3'
-            }            
-        }));
-    }
-
-
-</script>

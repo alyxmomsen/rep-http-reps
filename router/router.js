@@ -108,7 +108,7 @@ class Router {
 
             const oneMiddlewareLike = middleware[counter++];
 
-            if(middleware === undefined) {
+            if(oneMiddlewareLike === undefined) {
                 return 
             }
 

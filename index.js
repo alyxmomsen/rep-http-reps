@@ -36,6 +36,40 @@ router.use(
     } ,
 );
 
+router.get('/public/styles/main' , async (req , res) => {
+
+    const {method , url , params , queryParams } = req ;
+    
+    const file = await loadresponsefile(join('public','css','main.css'));
+    console.log({file});
+    if(file) {
+        res.writeHead(200 , 'ok' , {
+            'content-type':'text/css' ,
+        });
+        res.end(file);
+        return ;
+    }
+    
+    res.end(JSON.stringify({method , url , params , queryParams}));
+});
+
+router.get('/public/scripts/main' , async (req , res) => {
+
+    const {method , url , params , queryParams } = req ;
+    
+    const file = await loadresponsefile(join('public','scripts','main.js'));
+    console.log({file});
+    if(file) {
+        res.writeHead(200 , 'ok' , {
+            'content-type':'text/javascript' ,
+        });
+        res.end(file);
+        return ;
+    }
+    
+    res.end(JSON.stringify({method , url , params , queryParams}));
+});
+
 router.get('/test/:id/foo/:bar' , (req , res  , next) => {console.log('local mw 1')} , async (req , res) => {
     
     const {method , url , params , queryParams } = req ;

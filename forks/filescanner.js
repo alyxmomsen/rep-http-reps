@@ -11,11 +11,15 @@ process.on('message' , async (message) => {
 
     const result = await launchScan(path);
 
-    console.log(result);
+    const newArr = [] ;
+    result.forEach(elem => elem.files.forEach(elem => {
+        newArr.push(elem.filename);
+    }));
 
     process.send({
         type:'data' , 
-        payload:['file 1' ,'file 2' , 'file 3'] ,
+        // payload:['file 1' ,'file 2' , 'file 3'] ,
+        payload:newArr ,
     });
     
 });
@@ -56,7 +60,7 @@ async function launchScan (path , filter) {
 
                 if(regexFilter.test(file.filename)) {
                     
-                    console.log(file);
+                    // console.log(file);
                 }
             });
         });

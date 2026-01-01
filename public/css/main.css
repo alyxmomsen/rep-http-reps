@@ -1,0 +1,29 @@
+
+body {
+    background-color: #1f1f2f;
+}
+
+
+.wrapper--main {
+    width:666px ;
+    margin: 0 auto;
+    background-color: #2c2c3b;
+    color: wheat;
+    padding: 9px;
+}
+
+a:link {
+    color:inherit ;
+}
+
+a:visited {
+    color:inherit ;
+}
+
+a:active {
+    color:greenyellow ;
+}
+
+a:hover {
+    color:whitesmoke ;
+}
