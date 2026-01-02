@@ -6,32 +6,38 @@ async function handleMultipart (contentTypeHeaderData , formDataBuffer) {
     
     
     const match = /boundary=(?<boundary>----[^$\s;]+)/.exec(contentTypeHeaderData);
+
     
     if(match === null) {
-
+        
         return 
     }
 
-    const splitted  = await splitFormData(match.groups.boundary , formDataBuffer);
+    const boundaryBuffer = Buffer.from(`--${match.groups.boundary}`);
+    const boundaryEndBuffer = Buffer.from(`--${match.groups.boundary}--`);
     
-    splitted.forEach(part => {
+    const parts = await splitFormData(Buffer.from(match.groups.boundary) , formDataBuffer)
 
-        const {
-            contentType ,
-            filename ,
-            inputname ,
-            data ,
-        } = part ;
+    parts.pop();
+    parts.shift();
 
-        console.log(part);
+    for (const part of parts) {
 
-        if(filename !== null && contentType !== null)  {
-            saveFile(filename , data);
+        // if(part.equals(boundaryBuffer))
+
+        const bodySeparator = Buffer.from('\r\n\r\n');
+
+        const separatorIndex = _findIndex(part , bodySeparator);
+
+        if(separatorIndex === -1) {
+            continue ;
         }
+        
+    }
 
-    });
 
-    return 
+
+    console.log(result);
 
 }
 
@@ -60,63 +66,57 @@ async function saveFile (filename , data , fallback = f => f) {
     }
 }
 
-async function splitFormData (boundary  , formdata) {
+async function splitFormData (separator  , buffer) {
 
-    
-    let data = '' ;
-    
-    if(formdata instanceof Buffer) {
-        data = formdata.toString('utf-8');
-    }
-    else {
-        data = formdata ;
-    }
+    // console.log({boundary: separator , formdata: buffer});
 
-    // console.log(formdata , data);
+    const parts = [] ;
+    let start = 0 ;
+    let index = 0 ;
 
-    const startBoundary = `--${boundary}`;
-    const endBoundary = `--${boundary}--\r\n`;
-    const regularBoundary = `--${boundary}`;
+    while ((index = await _findIndex(buffer , separator , start)) !== -1) {
 
-    
-    return data.replace(startBoundary , '').replace(endBoundary , '').split(regularBoundary).map((part) => {
-        
-        const [headersPart  , ...datapart] = part
-            .replace(/^\r\n/ , '')
-            .replace(/\r\n$/ , '')
-            .split('\r\n\r\n');
+        const part = buffer.subarray(start , index) ;
 
-        const headersrows = headersPart.split('\r\n');
+        parts.push(part);
 
-        const headers = {} ;
+        start = index + separator.length ;
 
-        headersrows.forEach(row => {
-            const [key , value] = row.split(': ');
-
-            if(key !== undefined && value !== undefined) {
-                headers[key.toLowerCase()] = value ;
-            }
-        });
-
-        const dispositionData = parseDispHEader(headers['content-disposition']);
-        const contentType =  parseContentTypeHeaderData(headers['content-type']);
-
-        // console.log({part , contDispHeaderData , contentTypeHeaderData: contentType});
-
-        
-        // console.log({contDisp: contDispRow , contType: contTypeRow , headers: headersrows , datapart:datapart.join('\r\n\r\n')});
-
-        return {
-            contentType,
-            filename:dispositionData?.filename ,
-            inputname:dispositionData?.inputname ,
-            data:datapart.join('\r\n\r\n'),
+        if(buffer[start] === 0x0d && buffer[start + 1] === 0x0a) {
+            start += 2 ;
         }
 
-    });
+        // console.log('part: ' , part.toString('utf-8'));
+    }
 
+    parts.push(buffer.subarray(start));
 
+    // console.log('result' , parts);
+
+    return parts ;
 } 
+
+async function _findIndex (buffer , separator , start = 0) {
+
+    for (let i = start ; i <= buffer.length - separator.length ; i++) {
+        let found = true ;
+        for (let j = 0 ; j < separator.length ; j++) {
+
+            if(buffer[i + j] !== separator[j]) {
+                found = false ;
+                break ;
+            }
+
+        }
+
+        if(found === true) {
+            return i ;
+        }
+    }
+
+    return -1 ;
+
+}
 
 function parseDispHEader (headerd) {
 
