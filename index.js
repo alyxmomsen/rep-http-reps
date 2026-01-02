@@ -23,15 +23,24 @@ async function launch () {
     let start = 0 ;
     let index = 0 ;
 
-    while((i = await findIndex(mainstring , substr , start)) !== -1) {
+    while((index = await findIndex(mainstring , substr , start)) !== -1) {
 
+        const part = mainstring.subarray(start , start + index);
+
+        // console.log(part.toString('utf-8'));
+
+        parts.push(part.toString('utf-8'));
         
-        parts.push(mainstring.slice(start , index));
+        start = index + substr.length ;
         
-        start = i + substr.length ;
-        
-        console.log({i , start});
-        // console.log(parts);
+        // console.log({index , start});
+
+    }
+
+    const endPart = mainstring.subarray(start + substr)
+
+    if(endPart.length > 0) {
+        parts.push(endPart.toString('utf-8'))
     }
 
     return parts;
