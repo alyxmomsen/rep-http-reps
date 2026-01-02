@@ -32,12 +32,14 @@ async function handleMultipart (contentTypeHeaderData , formDataBuffer) {
         if(separatorIndex === -1) {
             continue ;
         }
-        
+
+        console.log('part part part : ' , part.toString('utf-8'));
+
     }
 
 
 
-    console.log(result);
+    // console.log(result);
 
 }
 
