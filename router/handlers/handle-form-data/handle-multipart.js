@@ -4,72 +4,65 @@ const { Readable } = require('stream');
 const { buffer } = require('stream/consumers');
 
 async function handleMultipart (contentTypeHeaderData , formDataBuffer) {
-    
-    const boundary = contentTypeHeaderData.match(/boundary=(----[^;\s]+)/);
-    
-    if(boundary === null) {
-        return null
-    }
 
-    const parts = await _getDataBufferParts(formDataBuffer , Buffer.from('--' + boundary[1]));
+    const boundary = await _extractBoundaryString(contentTypeHeaderData);
 
-    for (const part of parts) {
+    const parts = await _splitDataBuffer(formDataBuffer , Buffer.from(`--${boundary}`));
 
-        await _handleDataPart(part);
-    }
+    await _handleParts(parts);
 
+    console.log({boundary , parts}) ;
 }
 
 module.exports = handleMultipart ;
 
-async function _handleDataPart (part) {
+async function _handleParts (parts) {
 
-    const dataseparator = Buffer.from(`\r\n\r\n`);
+    const dataSeparatorRegexBuffer = Buffer.from('\r\n\r\n') ;
 
-    const index = await _findIndex(part , dataseparator) ;
+    for (const part of parts) {
 
-    if(index === -1) {
+        const index = await _findIndex(part , dataSeparatorRegexBuffer);
+ 
+        if(index === -1) {
+            console.log('incorrect part: ' , part.toString('utf-8'));
+            continue ;
+        }
 
-        return null;
+        const headersPart = part.subarray(0 , index);
+        const datapPart = part.subarray(index + dataSeparatorRegexBuffer.length);
+
+        const filename = (match = /filename="([^"]+)"/.exec(headersPart.toString('utf-8')))?.[1] ;
+
+        if(filename !== undefined) {
+
+            await _handleFileData(datapPart , headersPart ,  filename);
+            continue ;
+        }
+
+        console.log('headers part: ' , headersPart.toString('utf-8') , datapPart.toString('utf-8'));
+
+        // console.log(part.subarray(0 , index).toString());
+
     }
-
-    const headershalfBuffer  = part.subarray(0 , index)
-    const datahalfBuffer = part.subarray(index + dataseparator.length);
-
-    const filenamematch = headershalfBuffer.toString('utf-8').match(/filename="([^"]+)"/) ;
-
-    if(filenamematch) {
-       
-        // handle file data
-
-        const filename = filenamematch[1] ;
-
-        _handleFileData(datahalfBuffer , filename);
-
-        return ;
-    }
-
-    // other data handling
-
-    return ;
 
 }
 
-async function _handleFileData (dataBuffer , filenamestring) {
+async function _handleFileData (fileDataBuffer , headersPart , filenameString) {
 
-    const readStream = Readable.from(dataBuffer) ;
-
-    readStream.on("data" , (chunk) => {
-        console.log({chunk});
-    });
-
-    const writeStream = createWriteStream(`./upload-data/${Date.now()}.${filenamestring.replace(' ' , '')}`);
-
-    readStream.pipe(writeStream);
+    console.log('filedata: ' ,fileDataBuffer , headersPart.toString('utf-8') , filenameString);
 
 }
 
-async function _getDataBufferParts (dataBuffer , boundaryBuffer) {
+async function _extractBoundaryString (contentTypeHeaderData) {
+
+    const match = /boundary=(----[^;$\s]+)/.exec(contentTypeHeaderData);
+
+    return match ? match[1] : match ;
+
+}
+
+async function _splitDataBuffer (dataBuffer , boundaryBuffer) {
 
     const parts = [] ;
 
@@ -77,42 +70,34 @@ async function _getDataBufferParts (dataBuffer , boundaryBuffer) {
     let index = 0 ;
 
     while ((index = await _findIndex(dataBuffer , boundaryBuffer , start)) !== -1) {
-        
-        const part = dataBuffer.subarray(start , index);
 
-        parts.push(part);
-
-        // console.log(start , index);
-        start = index + boundaryBuffer.length ;
-
+        parts.push(dataBuffer.subarray(start , index));
+        start = index + boundaryBuffer.length;
     }
 
     parts.push(dataBuffer.subarray(start));
 
     return parts ;
+
 }
 
-async function _findIndex (buffer , separator , start = 0) {
+async function _findIndex (dataBuffer , separatorBuffer , start = 0) {
 
-    console.log('finding index');
-
-    for (let i=start ; i<= buffer.length - separator.length ; i++) {
+    for (let index=start ; index<dataBuffer.length - separatorBuffer.length ;index++) {
 
         let found = true ;
+        for (let j=0 ; j<separatorBuffer.length ; j++) {
 
-        for (let j=0 ; j<separator.length ; j++) {
-
-            if(buffer[i + j] !== separator[j]) {
+            if(dataBuffer[index + j] !== separatorBuffer[j]) {
                 found = false ;
                 break ;
             }
         }
 
         if(found === true) {
-            return i ;
+            return index ;
         }
     }
 
     return -1 ;
-
 }
