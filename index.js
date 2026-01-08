@@ -1,12 +1,13 @@
 const http = require('http');
-const { Router } = require('./router/router');
+// const { Router } = require('./router/router');
 
 const router = new Router();
 
 const server = http.createServer((req , res) => {
 
-    router.handleRequest(req , res);
+    
 
+    res.end('hello the fucking world');
 });
 
 const port = 3333;

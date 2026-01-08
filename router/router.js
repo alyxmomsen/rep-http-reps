@@ -8,6 +8,14 @@ class Router {
         res.end('hello');
     }
 
+    async get () {
+        this.#addRoute();
+    }
+
+    async #addRoute(template , method , handlers) {
+
+    }
+
     constructor () {
 
     }
