@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="wrapper--main">
+        <div class="flex-container">
+            <div id="display-wrapper">
+                display
+            </div>
+            <div id="playlist-wrapper">
+                playlist
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+
+    window.addEventListener("DOMContentLoaded" , async () => {
+
+        try {
+
+            const response = await fetch ('/api/video/get-all');
+
+            const jsonData = await response.json();
+
+
+            const playlisthtmlelement = document.getElementById('playlist-wrapper') ;
+            const videwrappperelement = document.getElementById('display-wrapper') ;
+
+            if(playlisthtmlelement instanceof HTMLElement && videwrappperelement instanceof HTMLElement ) {
+
+                if((jsonData instanceof Array) === false && jsonData.length < 1) {
+                    return ;
+                }
+
+                videwrappperelement.innerHTML = '' ;
+
+                const videoelement = document.createElement("video") ;
+                videoelement.controls = true ;
+
+                videwrappperelement.appendChild(videoelement) ;
+
+                playlisthtmlelement.innerHTML = '' ;
+                jsonData.forEach((dataItem , i) => {
+
+                    const divelement = document.createElement('div');
+                    divelement.innerHTML = `<span>${i + 1}</span><span>.${dataItem.filename}</span>` ;
+                    divelement.addEventListener("click" , (e) => {
+                        videoelement.src = `/api/video/get-by-id/${dataItem.id}`;
+                        videoelement.load();
+                    });
+                    playlisthtmlelement.appendChild(divelement);
+
+                });
+
+                // playlisthtmlelement.innerHTML
+
+            }
+
+            console.log({jsonData});
+        }
+        catch (e) {
+
+        }
+    });
+
+</script>
