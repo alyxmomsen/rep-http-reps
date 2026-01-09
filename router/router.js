@@ -23,7 +23,7 @@ class Router {
             if(match === null) continue ;
 
 
-            await this.#execMiddleware(req , res , this.#middleware);
+            // await this.#execMiddleware(req , res , this.#middleware);
             await this.#execMiddleware(req , res , routeBundle.middleware);
 
 

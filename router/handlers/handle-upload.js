@@ -5,167 +5,92 @@ const { createWriteStream } = require('fs');
 
 async function _handleUpload (req , res , registry) {
     
-    console.log('handle upload...');
+    const conentTypeHeader = req.headers['content-type'] ;
 
-    const contentType = req.headers['content-type'];
+    if(conentTypeHeader === undefined) {
 
-    if(contentType === undefined) {
-        console.log('content type is undefined');
-        return 
-    }
-
-
-    const boundaryStringMatch = contentType.match(/boundary=(----[^;$\s]+)/) ;
-
-    if(boundaryStringMatch === null) {
-        console.log('no boundary in content type header');
+        await _fallback(res , 'no content type header');
         return ;
     }
 
+    const boundaryString = await _extractBoundaryString(conentTypeHeader);
 
+    if(boundaryString === null) {
+        await _fallback(res , 'no boundary string');
+        return ;
+    }
 
-    const bufferParts = [] ;
-    req.on('data' , async  (bufferChunk) => {
+    const bufferChuncks = [];
 
-        bufferParts.push(bufferChunk);
+    req.on('data' , async (chunk) => {
+        bufferChuncks.push(chunk);
+    });
+
+    req.on('error' , async (e) => {
+
+        console.log('req data error: ' , e);
     });
 
     req.on('end' , async () => {
 
-        const wholeBufferData = Buffer.concat(bufferParts);
-        const boundaryBuffer = Buffer.from(`--${boundaryStringMatch[1]}`);
+        const boundaryBuffer = Buffer.from(boundaryString); ;
 
-        const boundaryParts = await _splitBuffer(wholeBufferData , boundaryBuffer);
+        const wholeBuffer = Buffer.concat(bufferChuncks);
 
-        console.log('boundary parts: ' , {boundaryParts});
+        const parsedBuffer = await _splitBuffer(wholeBuffer , boundaryBuffer) ;
 
-        for (const part of boundaryParts) {
+        console.log({parsedBuffer});
 
-            await _handlePart(part , registry);
-            
+        for (let contentPartBuffer of parsedBuffer) {
+
+            const result = await _parseContentPartBuffer(contentPartBuffer);
         }
 
     });
-
-
-    return ;
+    
 }
 
 module.exports = _handleUpload ;
 
-async function _handlePart (part , registry) {
+async function _parseContentPartBuffer(part) {
     
-    const separatorBuffer = Buffer.from('\r\n\r\n');
+    // const partString = part.toString('utf-8');
 
-    const separatorIndex = await _findIndex(part , separatorBuffer);
+    const dataSeparatorBuffer = Buffer.from('\r\n\r\n');
+
+    const separatorIndex = await _findIndex(part ,dataSeparatorBuffer);
 
     if(separatorIndex === -1) {
-        console.log('incorrect part'.toUpperCase());
-        return 
+        console.log(`incorrect part`.toUpperCase());
+        return ;
     }
 
-    let bodyEndBufferIndex = part.length ;
+    let bodyPartEndIndex = part.length ;
 
-    if(part[part.length - 2] === 0x0d && part[part.length - 1] === 0x0a) {
-
-        bodyEndBufferIndex -= 2
+    if(part[bodyPartEndIndex - 2] === 0x0d && part[bodyPartEndIndex - 1] === 0x0a) {
+        bodyPartEndIndex -= 2 ;
     }
 
     const headersPart = part.subarray(0 , separatorIndex);
-    const bodyPart = part.subarray(separatorIndex + separatorBuffer.length , bodyEndBufferIndex);
+    const bodyPart = part.subarray(separatorIndex + dataSeparatorBuffer.length , bodyPartEndIndex);
 
-    const headersRows = await _splitHeaders(headersPart.toString('utf-8'));
+    console.log({headersPart:headersPart.toString('utf-8') , bodyPart:bodyPart.toString('utf-8')});
 
-    const contentDispositionRow = headersRows['content-disposition'] ;
-    
-    if(contentDispositionRow === undefined) {
-        console.log('no content-disposition row');
-        return ;
-    }
-
-    const _filename = await _headerParse('filename' , contentDispositionRow)
-    const _inputname = await _headerParse('name' , contentDispositionRow)
-    const _contentType = headersRows['content-type'] || null ;
-
-    console.log({bodyPart , headersRows , _filename , _inputname , _contentType})
-
-
-    if(_filename !== null) {
-
-        // handle file data
-
-        if(registry instanceof _Registry === false) {
-
-            return;
-        }
-
-        try {
-
-            const newFilename = _filename.replace(' ' , '') ;
-
-            const readStream = Readable.from(bodyPart);
-
-            const _newExtendedFileName = `${Date.now()}.${newFilename}` ;
-
-            const writeStream = createWriteStream(`./upload-data/${_newExtendedFileName}`);
-            readStream.on("error" , (e) => {
-
-                console.log('read stream error: ' , e);
-            });
-
-            readStream.on('end' , async () => {
-                console.log('file uploaded'.toUpperCase());
-                await registry.push(_newExtendedFileName , 'upload-data' ) ;
-            })
-
-            readStream.pipe(writeStream);
-
-        }
-        catch (e) {
-            console.log('file upload error: ' , e);
-        }
-
-
-        return ;
-    }
-
-    // handle just input data
 }
 
-async function _headerParse (headername , row) {
-    console.log({headername , row});
-
-    const regex = new RegExp(`${headername}="([^"]+)"`);
-
-    const match = row.match(regex)
+async function _extractBoundaryString (contentTypeHeaderString) {
+    
+    const match = contentTypeHeaderString.match(/boundary=(----[^;\s$]+)/);
 
     if(match === null) return null ;
 
-    console.log(match[1]);
+    return `--${match[1]}` ;
 
-    return match[1];
-}
-
-async function _splitHeaders(headersPartString) {
-
-    const rows = headersPartString.split('\r\n') ;
-
-    const headers = {} ;
-    rows.forEach((elem) => {
-
-        const [key , value] = elem.split(': ');
-
-        if(key !== undefined && value !== undefined) {
-            headers[key.toLowerCase()] = value ;
-        }
-    });
-
-    return headers ;
 }
 
 async function _splitBuffer (buffer , separator) {
-
-    const parts = [] ;
+    
+    const parts = []; 
 
     let start = 0 ;
     let index = 0 ;
@@ -173,36 +98,46 @@ async function _splitBuffer (buffer , separator) {
     while ((index = await _findIndex(buffer , separator , start)) !== -1) {
 
         parts.push(buffer.subarray(start , index));
-
         start = index + separator.length ;
 
         if(buffer[start] === 0x0d && buffer[start + 1] === 0x0a) {
+            console.log('handle tail..');
             start += 2 ;
         }
-    }   
+
+    }
 
     parts.push(buffer.subarray(start));
-    
-    return parts ;
 
+    return parts ;
 }
 
-async function _findIndex (buf , sep , start = 0) {
 
-    for (let index = start ; index < buf.length - sep.length ; index++) {
+async function _findIndex (buffer , separator , start = 0) {
 
-        let found = true ;
-
-        for (let j = 0 ; j < sep.length ; j++) {
+    for (let index = start ; index < buffer.length - separator.length ; index++) {
+        
+        let found  = true ;
+        for (let j = 0 ; j < separator.length ; j++) {
             
-            if(buf[index + j] !== sep[j]) {
+            if(buffer[index + j] !== separator[j]) {
+
                 found = false ;
                 break;
             }
         }
 
-        if(found === true) return index ;
+        if(found === true) {
+            return index ;
+        }
     }
     
     return -1 ;
+}
+
+async function _fallback (res , message) {
+
+    const _message = message.toUpperCase();
+
+    console.log('fallback: ' , _message);
 }
