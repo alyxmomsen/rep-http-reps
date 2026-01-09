@@ -43,6 +43,77 @@ async function _handleUpload (req , res , registry) {
 
         const partExtractedData = []; 
 
+        
+        const compiledData = {
+
+        }
+
+        const inputResolver = {
+
+            '_cache': [
+
+            ] ,
+
+            'subj': {
+                handler (id) {
+
+                    if(compiledData[id] === undefined) {
+
+                        let found = -1 ;
+                        for (let i = 0 ; i < inputResolver._cache.length ; i++) {
+
+                            if(inputResolver._cache[i].subjId === id) {
+                                found = id ;
+                                break;
+                            } 
+                        } 
+
+                        if(found !== -1) {
+
+                            inputResolver._cache[found].handler() ;
+
+                            compiledData[found] = {
+
+                            } ;
+                        }
+
+                    }
+
+
+
+                }
+            } ,
+            'attr': {
+                handler (subjId , attr_name , others) {
+
+                    if(compiledData[subjId] === undefined) {
+                        inputResolver._cache.push({
+                            subjId ,
+                            handler () {
+
+                                if(compiledData[subjId] === undefined) {
+                                    compiledData[subjId] = {} ;
+                                }
+
+                                if(compiledData[subjId][attr_name] === undefined) {
+                                    compiledData[subjId][attr_name] = {} ;
+                                }
+                            }
+                        });
+
+                        return ;
+                    }
+
+                    if(compiledData[subjId][attr_name] === undefined) {
+                        compiledData[subjId][attr_name] = {} ;
+                    }
+
+                    compiledData[subjId][attr_name] ;
+                }
+            } ,
+        }
+
+
         for (let contentPartBuffer of parsedBuffer) {
 
             const _partExtractedData = await _parseContentPartBuffer(contentPartBuffer);
@@ -50,7 +121,26 @@ async function _handleUpload (req , res , registry) {
             if(_partExtractedData === undefined) continue ;
 
             partExtractedData.push(_partExtractedData);
+
+            // gether file data hard-code ; warning it is absolutely hardcode 
+            
+            const { body , contentType , filename , inputname } = _partExtractedData ;
+
+            
+            // console.log({body , contentType , filename ,inputname});
+
+            const [type, id , attr_name , ...others] = inputname.split('.') ;
+
+            // console.log({type , id , attr_name , others});
+
+
+            inputResolver[type].handler(id , attr_name , others)
+
+            console.log({compiledData});
+
         }
+
+
 
         console.log({partExtractedData});
 
@@ -101,7 +191,7 @@ async function _parseContentPartBuffer(part) {
 
     const inputname =  await _util(headers['content-disposition'] , 'name') ;
     const filename = await _util(headers['content-disposition'] , 'filename');
-    const contentType = headers['content-type'] || undefined ;
+    const contentType = headers['content-type'] || null ;
     const body = bodyPart ;
 
     return {

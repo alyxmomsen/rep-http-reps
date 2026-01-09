@@ -1,0 +1,9 @@
+
+class HTMLInputsHandler {
+
+    
+
+    constructor () {
+
+    }
+}
