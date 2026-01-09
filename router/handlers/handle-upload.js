@@ -104,7 +104,10 @@ async function _handlePart (part , registry) {
             const newFilename = _filename.replace(' ' , '') ;
 
             const readStream = Readable.from(bodyPart);
-            const writeStream = createWriteStream(`./upload-data/${Date.now()}.${newFilename}`);
+
+            const _newExtendedFileName = `${Date.now()}.${newFilename}` ;
+
+            const writeStream = createWriteStream(`./upload-data/${_newExtendedFileName}`);
             readStream.on("error" , (e) => {
 
                 console.log('read stream error: ' , e);
@@ -112,7 +115,7 @@ async function _handlePart (part , registry) {
 
             readStream.on('end' , async () => {
                 console.log('file uploaded'.toUpperCase());
-                await registry.push(_filename , 'upload-data' ) ;
+                await registry.push(_newExtendedFileName , 'upload-data' ) ;
             })
 
             readStream.pipe(writeStream);
