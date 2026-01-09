@@ -18,6 +18,11 @@ const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
 });
 
+router.get('/src/sctipt/main' ,  async (req , res) => {
+
+    _serveResponseFile(res , join('.' , 'dist' , 'bundle.js'));
+});
+
 router.get('/game' , async (req , res) => {
     _serveResponseFile(res , join('.' , 'view' , 'canvas.html'));
 });
