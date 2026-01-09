@@ -41,10 +41,18 @@ async function _handleUpload (req , res , registry) {
 
         console.log({parsedBuffer});
 
+        const partExtractedData = []; 
+
         for (let contentPartBuffer of parsedBuffer) {
 
-            const result = await _parseContentPartBuffer(contentPartBuffer);
+            const _partExtractedData = await _parseContentPartBuffer(contentPartBuffer);
+
+            if(_partExtractedData === undefined) continue ;
+
+            partExtractedData.push(_partExtractedData);
         }
+
+        console.log({partExtractedData});
 
     });
     
@@ -74,8 +82,47 @@ async function _parseContentPartBuffer(part) {
     const headersPart = part.subarray(0 , separatorIndex);
     const bodyPart = part.subarray(separatorIndex + dataSeparatorBuffer.length , bodyPartEndIndex);
 
-    console.log({headersPart:headersPart.toString('utf-8') , bodyPart:bodyPart.toString('utf-8')});
+    const headersPartString = headersPart.toString('utf-8');
 
+    // handle headers part
+    
+    const headersPartRows = headersPartString.split(/\r\n/);
+    const headers = {} ;
+    for (const headersPartRow of headersPartRows) {
+
+        const [key , value] = headersPartRow.split(': ');
+
+        if(key === undefined || value === undefined) continue ;
+
+        headers[key.toLowerCase()] = value ;
+    }
+    
+    // end handle headers part
+
+    const inputname =  await _util(headers['content-disposition'] , 'name') ;
+    const filename = await _util(headers['content-disposition'] , 'filename');
+    const contentType = headers['content-type'] || undefined ;
+    const body = bodyPart ;
+
+    return {
+        inputname ,
+        filename ,
+        contentType ,
+        body ,
+    }
+
+    async function _util(headerValueString , atrName) {
+        
+        const rgx = new RegExp(`${atrName}="([^"]+)"`);
+
+        const match = headerValueString.match(rgx);
+
+        if(match === null) {
+            return null ;
+        }
+
+        return match[1] ;
+    }
 }
 
 async function _extractBoundaryString (contentTypeHeaderString) {
