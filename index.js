@@ -18,6 +18,10 @@ const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
 });
 
+router.get('/game' , async (req , res) => {
+    _serveResponseFile(res , join('.' , 'view' , 'canvas.html'));
+});
+
 router.post('/api/upload' , (req , res) => {
 
     _handleUpload(req ,res , registry);
