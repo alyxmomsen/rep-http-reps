@@ -14,7 +14,6 @@ async function _handlePartialContent(req , res , registry) {
 
     if(range === undefined) {
 
-
         res.writeHead(400 , 'bad request' , {
             'content-type':'text/plain' ,
         });

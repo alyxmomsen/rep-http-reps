@@ -2,7 +2,6 @@
 const { Readable } = require('stream');
 const _Registry = require("../../services/registry");
 const { createWriteStream } = require('fs');
-const HTMLInputsDataCompiler = require('./input-handler-util');
 
 async function _handleUpload (req , res , registry) {
     
@@ -34,8 +33,6 @@ async function _handleUpload (req , res , registry) {
 
     req.on('end' , async () => {
 
-        const inputsDataCompiler = new HTMLInputsDataCompiler();
-
         const boundaryBuffer = Buffer.from(boundaryString); ;
 
         const wholeBuffer = Buffer.concat(bufferChuncks);
@@ -52,13 +49,18 @@ async function _handleUpload (req , res , registry) {
             
             const { body , contentType , filename , inputname } = _partExtractedData ;
 
-            if(inputsDataCompiler instanceof HTMLInputsDataCompiler === false) continue ;
-            
-            inputsDataCompiler.gulpOne(inputname , filename , contentType , body);
+            if(filename) {
 
+                console.log('creating write stream');
+
+                const readStream = Readable.from(body);
+                
+                const writeStream = createWriteStream('./upload-data/' + filename);
+
+                readStream.pipe(writeStream);
+            }
         }
     });
-    
 }
 
 module.exports = _handleUpload ;
