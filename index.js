@@ -19,6 +19,19 @@ const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
 });
 
+router.useMiddleware(
+    (req ,res , next) => {
+
+        console.log('global middleware 1');
+        next();
+    } ,
+    (req ,res , next) => {
+
+        console.log('global middleware 2');
+        next();
+    } ,
+);
+
 router.get('/src/sctipt/main' ,  async (req , res) => {
 
     _serveResponseFile(res , join('.' , 'dist' , 'bundle.js'));
@@ -35,7 +48,7 @@ router.post('/api/upload' , (req , res) => {
 });
 
 router.get('/form' , (req , res) => {
-
+    
     _serveResponseFile(res , join('.' , 'view' , 'form.html'));
 });
 
@@ -78,12 +91,29 @@ router.get('/' , async (req ,res) => {
     }));
 });
 
-router.get('/parametrized/:id' , async (req ,res) => {
+router.get('/parametrized/:id' ,
+    (req , res , next) => {
+        console.log(`local mw 1`);
+        next();
+    } ,
+    (req , res , next) => {
+        console.log(`local mw 2`);
+        next();
+    } ,
+    (req , res , next) => {
+        console.log(`local mw 3`);
+        next();
+    } ,
+    async (req ,res) => {
 
     const { method , url} = req; 
     const params = req.params ;
+    const queryParams = req.queryParams ;
+    res.writeHead(200 , 'ok' , {
+        'content-type':'application/json' ,
+    });
     res.end(JSON.stringify({
-        method , url , params
+        method , url , params , queryParams
     }));
 });
 

@@ -24,6 +24,28 @@ class Router {
             const match = routeBundle.regex.exec(url);
             if(match === null) continue ;
 
+
+            // fetch params
+            
+            const params = {};
+            routeBundle.keys.forEach((key, i) => {
+
+                params[key] = match[i + 1] ;
+            });
+
+            const queryParams = await this.#parseQueryParams(queryString) ;
+            
+            // end fetch params
+
+
+            // apply params
+            req.params = params ;
+            req.queryParams = queryParams ;
+            // end apply params
+            
+            this.#executeMiddleware(req , res , this.#middleware);
+            this.#executeMiddleware(req , res , routeBundle.middleware);
+
             routeBundle.handler(req , res);
             return ;
         }
@@ -32,12 +54,48 @@ class Router {
         return ;
     }
 
+    async useMiddleware (...middleware) {
+        middleware.forEach(mw => {
+
+            this.#middleware.push(mw);
+        });
+    }
+
+    async #executeMiddleware (req , res , middleware) {
+
+        let counter = 0 ;
+        const next = () => {
+
+            const oneMiddlewareLike = middleware[counter++] ;
+            if(oneMiddlewareLike === undefined) return ;
+
+            oneMiddlewareLike(req , res , next );
+        }
+
+        next() ;
+    }
+
     async get (template , ...handlers) {
         this.#addRoute(template , 'GET' , handlers);
     }
 
     async post (template , ...handlers) {
         this.#addRoute(template , 'POST' , handlers);
+    }
+
+    async #parseQueryParams (queryString) {
+
+        const params  = {} ;
+        if(queryString === undefined) return params ;
+        const qsParamsCouples = queryString.split('&');
+        qsParamsCouples.forEach(couple => {
+            const [key , value] = couple.split('=');
+            if(key !== undefined && value !== undefined) {
+                params[key.toLowerCase()] = value ;
+            }
+        });
+        
+        return params ;
     }
 
     async #splitURL (fullURL) {
