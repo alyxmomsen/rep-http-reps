@@ -1,36 +1,31 @@
 const path = require('path');
 
 module.exports = {
-  // Точка входа (начало построения графа зависимостей)
+  mode: 'development',
   entry: './webpack-src/index.js',
-
-  // Настройки вывода
   output: {
-    path: path.resolve(__dirname, 'dist'), // папка для выходного файла
-    filename: 'bundle.js',               // имя бандла
-    clean: true                           // очищать dist перед каждой сборкой
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
   },
-
-  // Режим сборки
-  mode: 'development', // или 'production' для минификации
-
-  // Правила для обработки файлов
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader' // если нужен транспайлинг (например, для ES6+)
-        }
+        // use: {
+        //   loader: 'babel-loader',
+        //   options: {
+        //     presets: [
+        //       ['@babel/preset-env', {
+        //         targets: {
+        //           browsers: ['> 0.5%', 'last 2 versions', 'not dead']
+        //         },
+        //         modules: 'auto' // или false для сохранения ES модулей
+        //       }]
+        //     ],
+        //   }
+        // }
       }
     ]
   },
-
-  // Оптимизации (опционально)
-  optimization: {
-    splitChunks: {
-      chunks: 'all'
-    }
-  }
 };
