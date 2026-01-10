@@ -1,11 +1,12 @@
 const http = require('http');
-const { Router } = require('./router/router') ;
+
 const _handleUpload = require('./router/handlers/handle-upload');
 const _serveResponseFile = require('./router/services/serve-response-files');
 const { join } = require('path');
 const _Registry = require('./services/registry');
 const _serveVideoListRequest = require('./router/handlers/_seve-video-list-request');
 const _handlePartialContent = require('./router/handlers/_handle-partial-content');
+const Router = require('./router/router');
 
 const registry = new _Registry({rootDir:join('.' , 'upload-data')});
 
