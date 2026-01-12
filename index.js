@@ -1,5 +1,9 @@
 const http = require('http');
 const { Router } = require('./router/router');
+const _sendPublicFile = require('./router/utils');
+const { join } = require('path');
+const { stat } = require('fs');
+const handleStreamRequest = require('./router/handlers/streaminghandler');
 
 const router = new Router();
 
@@ -21,6 +25,31 @@ router.use(
         next();
     } ,
 );
+
+
+router.get('/form' , async (req , res) => {
+    const status = await _sendPublicFile(res , join('.' , 'view' , 'index.html'));
+    if(status > 0) {
+        res.end();
+        return;
+    }
+});
+
+router.get('/api/video-stream' , async (req , res) => {
+
+    await handleStreamRequest(req , res);
+});
+
+router.get('/video' , (req , res  , next) => {next()} , async (req , res) => {
+
+
+    const status = await _sendPublicFile(res , join('.' , 'view' , 'index.html'));
+    if(status > 0) {
+        res.end();
+        return;
+    }
+
+});
 
 router.get('/' , 
     (req , res , next) => {
