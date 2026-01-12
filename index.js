@@ -4,6 +4,7 @@ const _sendPublicFile = require('./router/utils');
 const { join } = require('path');
 const { stat } = require('fs');
 const handleStreamRequest = require('./router/handlers/streaminghandler');
+const handleForm = require('./router/handlers/handleform');
 
 const router = new Router();
 
@@ -26,9 +27,12 @@ router.use(
     } ,
 );
 
+router.post('/api/handle-form' , async (req , res) => {
+    handleForm(req , res);
+});
 
 router.get('/form' , async (req , res) => {
-    const status = await _sendPublicFile(res , join('.' , 'view' , 'index.html'));
+    const status = await _sendPublicFile(res , join('.' , 'view' , 'form.html'));
     if(status > 0) {
         res.end();
         return;

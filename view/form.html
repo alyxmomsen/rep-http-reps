@@ -22,6 +22,21 @@
         .wrapper {
             border: 1px solid black ;
             border-radius: 9px;
+            padding: 9px;
+        }
+
+        .flex-item {
+            margin:9px;
+        }
+
+        .flex-container {
+            display: flex ;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+
+        .flex-col {
+            flex-direction: column;
         }
 
     </style>
@@ -30,20 +45,52 @@
 <body>
     <div class="wrapper--main">
         <form action="/api/handle-form" method="post" enctype="multipart/form-data">
-            <input type="text" name="caption.cap-1--" id="">
-            <input type="text" name="caption.cap-1--" id="">
-            <div class="wrapper">
-                <input type="checkbox" name="option.opt-0" id="">
-                <input type="checkbox" name="option.opt-1" id="">
-            </div>
-            <div class="wrapper">
-                <input type="radio" name="option.opt-2" id="">
-                <input type="radio" name="option.opt-2" id="">
-                <input type="radio" name="option.opt-3" id="">
-            </div>
-            <div class="wrapper">
-                <input type="radio" name="option.opt-3" id="">
-                <input type="radio" name="option.opt-3" id="">
+            <div class="wrapper flex-container flex-col">
+                <div class="wrapper flex-container">
+                    <div class="wrapper">
+                        <label for="video-1">video 1</label>
+                        <input type="file" name="file.video-1.--" id="video-1" accept=".mp4, .mkv">
+                    </div>
+                    <div class="wrapper">
+                        <label for="picture-1">picture 1</label>
+                        <input type="file" name="file.picture-1.--" id="picture-1" accept=".img, .gif, .png">
+                    </div>
+                    <div class="wrapper">
+                        <label for="audio-1">audio 1</label>
+                        <input type="file" name="file.audio-1.--" id="audio-1" accept=".mp3">
+                    </div>
+                </div>
+                <div class="wrapper flex-item flex-container">
+                    <input type="text" name="caption.cap-1.title--video-1" id="cap-1" placeholder="video-1 title">
+                    <input type="text" name="caption.cap-2.description--video-1" id="cap-2" placeholder="video-1 description">
+                    <input type="text" name="caption.cap-3.title--audio-1" id="cap-3" placeholder="audio-1 title">
+                    <input type="text" name="caption.cap-4.description--audio-1" id="cap-4" placeholder="audio-1 description">
+                    <input type="text" name="caption.cap-5.title--picture-1" id="cap-5" placeholder="picture-1 title">
+                    <input type="text" name="caption.cap-6.description--picture-1" id="cap-6" placeholder="picture-1 description">
+                </div>
+                <div class="wrapper flex-item">
+                    <label for="opt-0">foo bar</label>
+                    <input type="checkbox" name="option.opt-0" id="opt-0">
+                    <label for="opt-1">foo bar</label>
+                    <input type="checkbox" name="option.opt-1" id="opt-1">
+                    <label for="opt-2">foo bar</label>
+                    <input type="checkbox" name="option.opt-2" id="opt-2">
+                </div>
+                <div class="wrapper flex-item">
+                    <label for="opt-3.1">foo bar</label>
+                    <input type="radio" name="option.opt-3" id="opt-3.1">
+                    <label for="opt-3.2">foo bar</label>
+                    <input type="radio" name="option.opt-3" id="opt-3.2">
+                </div>
+                <div class="wrapper flex-item">
+                    <label for="opt-4.1">foo bar</label>
+                    <input type="radio" name="option.opt-4" id="opt-4.1">
+                    <label for="opt-4.2">foo bar</label>
+                    <input type="radio" name="option.opt-4" id="opt-4.2">
+                    <label for="opt-4.3">foo bar</label>
+                    <input type="radio" name="option.opt-4" id="opt-4.3">
+                </div>
+                <input type="submit" value="submit">
             </div>
         </form>
     </div>
