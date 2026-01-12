@@ -17,26 +17,40 @@ class HTMLFormDataParser {
         console.log('gulp: ' , {filename , contentType  ,inputname , body});
 
         const matchers = [
-            await _matchersFactory('file' , (subj , target , filename , contentType , body) => {
+            await _matchersFactory('file' , (subj , target) => {
                 
-                console.log('handler' ,{filename , contentType ,body , subj , target});
+                console.log('handler' ,{subj , target });
 
                 this.#files.set(subj.id , {
-                    filename ,
-                    contentType , 
-                    body ,
+                    filename:subj.filename ,
+                    contentType:subj.contentType , 
+                    body:subj.body ,
                     surname:subj.surname ,
                 });
+            }) , 
+            await _matchersFactory('caption' , (subj , target) => {
 
+                console.log('caption: ' , {subj , target});
 
+                const targetBundle = this.#files.get(target.id);
+
+                if(targetBundle === undefined) {
+                    return ;
+                }
+
+                targetBundle[subj.surname] = subj.body.toString('utf-8'); 
 
             }) , 
-            // await _matchersFactory('file' , (subj , target , filename , contentType , body) => {
+            await _matchersFactory('option' , (subj , target) => {
+                const targetBundle = this.#files.get(target.id);
 
-            // }) , 
-            // await _matchersFactory('file' , (subj , target , filename , contentType , body) => {
+                if(targetBundle === undefined) {
+                    return ;
+                }
 
-            // }) , 
+                targetBundle[subj.surname] = subj.body.toString('utf-8'); 
+
+            }) , 
             // await _matchersFactory('file' , (subj , target , filename , contentType , body) => {
 
             // }) , 
@@ -44,13 +58,17 @@ class HTMLFormDataParser {
 
         const { subj , target } = this.#parseInputName(inputname);
 
+        subj.filename = filename ;
+        subj.contentType = contentType ;
+        subj.body = body ;
+
         for (const matcher of matchers) {
             const handlerlike = matcher(subj.type);
             if (handlerlike === null) {
                 continue ;
             }
 
-            handlerlike(subj ,  target , filename , contentType , body);
+            handlerlike(subj ,  target);
         }
 
     }
@@ -89,8 +107,8 @@ async function _matchersFactory (filter , handler) {
     return (_filter) => {
 
         if(_filter === filter) {
-            return (subj , target , filename , contentType , body) => {
-                handler(subj , target , filename , contentType  , body);
+            return (subj , target) => {
+                handler(subj , target);
             }
         }
 
