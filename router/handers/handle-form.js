@@ -14,17 +14,10 @@ async function handleForm(req ,res) {
         res.end(fallbackmessage('content-type header'));
         return ;
     }
-    
-    const boundaryStr = await extractBoundaryString(contentTypeHeaderString);
-    
-    if(boundaryStr === null) {
-        
-        res.writeHead(400 , 'bad request' , {
-            'content-type':'text/plain' ,
-        });
-        res.end(fallbackmessage('boundary string'));
-        return ;
-    }
+
+    const [contentType , boundaryStringLike] = contentTypeHeaderString.split('; ');
+
+    console.log({contentType , boundaryStringLike});
 
     const allBufferParts = [];
     req.on('data' , async (chunk) => {
@@ -33,14 +26,28 @@ async function handleForm(req ,res) {
 
     req.on('end' , async () => {
 
-        const wholeBuffer = Buffer.concat(allBufferParts);
+        // const dataBuffer = getherWholeBuffer(allBufferParts);
+        // return ;
+
+        const boundaryStr = await extractBoundaryString(contentTypeHeaderString);
+    
+        if(boundaryStr === null) {
+            
+            res.writeHead(400 , 'bad request' , {
+                'content-type':'text/plain' ,
+            });
+            res.end(fallbackmessage('boundary string'));
+            return ;
+        }
+
+        console.log({contentTypeHeaderString});
+
+        const wholeBuffer = await getherWholeBuffer(allBufferParts);
 
         const parts = await _splitBuffer(wholeBuffer , Buffer.from(`--${boundaryStr}`));
 
-        console.log({parts});
-
         for (let part of parts) {
-            await handlePart(part);
+            await handlePartAsMultipartFormData(part);
         }
 
         res.end(JSON.stringify(parts.length));
@@ -52,8 +59,95 @@ async function handleForm(req ,res) {
     console.log('handle form');
 }
 
-async function handlePart (part) {
-    console.log({part});
+async function getherWholeBuffer(bufferParts) {
+    const wholeBuffer = Buffer.concat(bufferParts);
+    return wholeBuffer ;
+}
+
+async function handlePartAsMultipartFormData (partBuffer) {
+
+    const separatorString = '\r\n\r\n' ;
+    const separatorBuffer = Buffer.from(separatorString);
+
+    const separatorBufferIndex = await _findIndex(partBuffer , separatorBuffer);
+
+    if(separatorBufferIndex === -1) {
+        const fallbackmessage = 'skip incorrect part'.toUpperCase();
+        console.log(fallbackmessage);
+        return fallbackmessage ;
+    }
+
+    const headersPartBuffer = partBuffer.subarray(0 , separatorBufferIndex);
+    let bodyPartEndBufferIndex = partBuffer.length ;
+
+    if(partBuffer[partBuffer.length - 2] === 0x0d && partBuffer[partBuffer.length - 1] === 0x0a) {
+        bodyPartEndBufferIndex -= 2 ;
+    }
+
+    const bodyPartBuffer = partBuffer.subarray(separatorBufferIndex + separatorBuffer.length , bodyPartEndBufferIndex);
+
+    const dataHeaderPartRows = await splitHeadersPartToRows_local_util(headersPartBuffer.toString('utf-8'));
+
+    const dataHeadersObject = await extractDataHeaders_localUtil(dataHeaderPartRows);
+
+    const contentDispositionDataHeader = dataHeadersObject['content-disposition'] ;
+    const contentTypeDataHeader = dataHeadersObject['content-type'] ;
+
+    console.log({dataHeadersObject});
+
+
+    // ----------------------------------
+
+
+    if(contentDispositionDataHeader === undefined) {
+        console.log('no content-disposition'.toUpperCase());
+
+        const {name , filename} = await extractInputMeataData(contentDispositionDataHeader);
+
+        
+
+        return ;
+    }
+
+    if(contentTypeDataHeader === undefined) {
+        console.log('no content-type'.toUpperCase());
+    }
+
+
+    // ----------------------------------
+
+
+    async function extractInputMeataData(contentDispositionDataHeader) {
+        
+            return {
+                name:'' ,
+                filename: '' ,
+            }
+    }
+
+    async function splitHeadersPartToRows_local_util(headersPartString) {
+        
+        const rows = headersPartString.split('\r\n');
+        return rows ;
+    }
+
+    async function extractDataHeaders_localUtil(dataHeadersPartRows) {
+        
+        const _headers = {} ;
+
+        console.log('extractDataHeaders_localUtil: ' /* , dataHeaderPartRows */);
+
+        dataHeadersPartRows.forEach((row , i) => {
+            const [key ,value] = row.split(': ');
+            if(key !== undefined && value !== undefined) {
+                _headers[key.toLowerCase()] = value ;
+            }
+        });
+
+        return _headers ;
+
+    }
+
 }
 
 async function _splitBuffer(buffer , separator) {
