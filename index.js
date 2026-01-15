@@ -1,10 +1,15 @@
 const http = require('http');
 const { _Router } = require('./router/router');
+const handleForm = require('./router/handers/handle-form');
 
 const router = new _Router();
 
 const server = http.createServer((req , res) => {
     router.handleRequest(req , res);
+});
+
+router.get('/form'  , async (req , res) =>  {
+    await handleForm(req , res);
 });
 
 router.get('/test/:id_1/:id_2' , async (req ,res) => {
