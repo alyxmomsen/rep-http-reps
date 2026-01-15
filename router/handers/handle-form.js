@@ -1,5 +1,5 @@
-
-async function handleForm(req ,res) {
+const { createWriteStream } = require('fs');
+async function handleForm(req ,res , storeAdapter) {
     
     const { headers } = req ;
 
@@ -47,10 +47,22 @@ async function handleForm(req ,res) {
         const parts = await _splitBuffer(wholeBuffer , Buffer.from(`--${boundaryStr}`));
 
         for (let part of parts) {
-            await handlePartAsMultipartFormData(part);
+            await handlePartAsMultipartFormData(part , storeAdapter);
         }
 
-        res.end(JSON.stringify(parts.length));
+        const files = await storeAdapter.getAllFiles();
+
+        console.log({files});
+
+        for (const file of files) {
+
+            console.log({file});
+
+            createWriteStream('./upload/' + Date.now() + '.' + (file.title ? file.title : file.originalFilename));
+
+        }
+
+        res.end('foo bar');
         return ;
 
     });
@@ -64,7 +76,7 @@ async function getherWholeBuffer(bufferParts) {
     return wholeBuffer ;
 }
 
-async function handlePartAsMultipartFormData (partBuffer) {
+async function handlePartAsMultipartFormData (partBuffer, storeAdapter) {
 
     const separatorString = '\r\n\r\n' ;
     const separatorBuffer = Buffer.from(separatorString);
@@ -93,35 +105,50 @@ async function handlePartAsMultipartFormData (partBuffer) {
     const contentDispositionDataHeader = dataHeadersObject['content-disposition'] ;
     const contentTypeDataHeader = dataHeadersObject['content-type'] ;
 
-    console.log({dataHeadersObject});
-
-
-    // ----------------------------------
+    // start ----------------------------------
 
 
     if(contentDispositionDataHeader === undefined) {
         console.log('no content-disposition'.toUpperCase());
 
-        const {name , filename} = await extractInputMeataData(contentDispositionDataHeader);
-
-        
-
         return ;
     }
+    
+    // const contentType = contentTypeDataHeader ;
 
-    if(contentTypeDataHeader === undefined) {
-        console.log('no content-type'.toUpperCase());
-    }
+    const {filename: originalFilename , other:{type , id , name , targetid}} = await parseInputsAttributes_local_util(contentDispositionDataHeader , (inputname) => {
+
+        const [subject , target] = inputname.split('--');
+        const [type , id , name] =  subject.split('.');
+
+        return {type , id , name , targetid:target || null};
+    });
+
+    const payload = {
+        id , name , targetid , body:bodyPartBuffer , originalFilename ,
+    } ;
+
+    await storeAdapter.gulp(type , payload);
 
 
-    // ----------------------------------
+    // end ----------------------------------
 
+    // start local utils
 
-    async function extractInputMeataData(contentDispositionDataHeader) {
+    async function parseInputsAttributes_local_util(contentDispositionDataHeader , behavior) {
         
+            const filenamematch = contentDispositionDataHeader.match(/filename="([^"]+)"/);
+            const namematch = contentDispositionDataHeader.match(/name="([^"]+)"/);
+
+            const name = namematch === null ? null : namematch[1] ;
+            const filename = filenamematch === null ? null : filenamematch[1] ;
+
+            const other = behavior?.(name);
+
             return {
-                name:'' ,
-                filename: '' ,
+                name  ,
+                filename  ,
+                other: other || null ,
             }
     }
 
@@ -147,6 +174,8 @@ async function handlePartAsMultipartFormData (partBuffer) {
         return _headers ;
 
     }
+
+    // end local utils
 
 }
 

@@ -3,6 +3,9 @@ const { _Router } = require('./router/router');
 const handleForm = require('./router/handers/handle-form');
 const { readFile } = require('fs/promises');
 const { join } = require('path');
+const StoreAdapter = require('./services/strore-adapter');
+
+const storeAdapter = new StoreAdapter();
 
 const router = new _Router();
 
@@ -19,11 +22,18 @@ router.get('/form' , async (req ,res) => {
     catch (error) {
         console.log('readfile error ' , {error});
     }
+
     res.end(file);
 });
 
-router.post('/api/handle-form'  , async (req , res) =>  {
-    await handleForm(req , res);
+router.post('/api/handle-form'  , 
+    (req , res , next) => {
+        console.log('middleware is run');
+        next();
+
+    } ,
+    async (req , res) =>  {
+    await handleForm(req , res , storeAdapter);
 });
 
 router.get('/test/:id_1/:id_2' , async (req ,res) => {

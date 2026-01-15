@@ -78,15 +78,17 @@ class _Router {
     }
 
     async #executeMiddleware (req , res , middleware) {
-        
+
         let counter = 0 ;
         const next = () => {
 
-            const middleware = middleware[counter++] ;
-            if(middleware === undefined) return;
+            const handler = middleware[counter++] ;
+            if(handler === undefined) return;
 
-            middleware(req , res , next);
+            handler(req , res , next);
         }
+
+        next();
 
         return ;
     }
@@ -156,6 +158,8 @@ class _Router {
     }
 
     constructor () {
+        
+        this.#middleware = [];
         this.#routes = new Map;
         const acceptMethods = [
             'GET' , "POST" ,
@@ -165,8 +169,6 @@ class _Router {
             const method = m.toUpperCase();
             this.#routes.set(method , new Map);
         });
-
-        
     }
 }
 
