@@ -3,9 +3,6 @@ const { _Router } = require('./router/router');
 const handleForm = require('./router/handers/handle-form');
 const { readFile } = require('fs/promises');
 const { join } = require('path');
-const StoreAdapter = require('./services/strore-adapter');
-
-const storeAdapter = new StoreAdapter();
 
 const router = new _Router();
 
@@ -33,7 +30,7 @@ router.post('/api/handle-form'  ,
 
     } ,
     async (req , res) =>  {
-    await handleForm(req , res , storeAdapter);
+    await handleForm(req , res);
 });
 
 router.get('/test/:id_1/:id_2' , async (req ,res) => {

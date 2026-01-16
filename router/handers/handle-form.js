@@ -1,9 +1,7 @@
-const { createWriteStream } = require('fs');
-const { join } = require('path');
-const { ids } = require('webpack');
+
 const multipartdatahandler = require('./form-handlers/multiparthanlder');
 const _log = require('../../global-utils/log');
-async function handleForm(req ,res , storeAdapter) {
+async function handleForm(req ,res) {
     
     const { headers } = req ;
     const contentTypeHeader = headers['content-type'];

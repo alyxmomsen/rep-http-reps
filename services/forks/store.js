@@ -2,15 +2,14 @@
 
 class _Store {
     
-    #files;
-    
-    add(type , payload) {
+    add() {
 
-        console.log('store method: ' , type , payload );
-    }
+    }    
+
+    #items;
 
     constructor () {
-        this.#files = new Map();
+        this.#items = new Map(); 
     }
 }
 
@@ -20,6 +19,4 @@ process.addListener("message" , (message) => {
 
     console.log({message});
 
-    // store.add(message.type , message.payload);
-    
 })
