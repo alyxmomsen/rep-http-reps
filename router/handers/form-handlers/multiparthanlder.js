@@ -7,7 +7,15 @@ async function multipartdatahandler(res , databuffer , boundarybuffer) {
 
     for (const part of formDataParts) {
 
-        await _handlePart(part);
+        const dataBundleLike = await _compileDataBundleFromPart(part);
+
+        if(dataBundleLike === null) {
+
+            continue;
+        }
+
+        _log({...dataBundleLike});
+
     } 
 
     console.log('multipart resolver' , {formDataParts});
@@ -17,24 +25,28 @@ async function multipartdatahandler(res , databuffer , boundarybuffer) {
 
 module.exports = multipartdatahandler ;
 
-async function _handlePart (partBuffer) {
+async function _compileDataBundleFromPart (partBuffer) {
     
     const splitedPartLike = await _splitPart(partBuffer);
     
     if(splitedPartLike === null) {
-        return ;
+        return null ;
     }
     
-    const {body: bodyBuffer , headers} = splitedPartLike ;
+    const {body: bodyDataPartBuffer , headers: headersRowsPart} = splitedPartLike ;
         
-    const {contentType: contentTypeString , filename: filenameString , name: nameString} = await _parsePartHeaders(headers.toString('utf-8'));
+    const {
+        contentType , 
+        filename ,
+        name
+    } = await _parsePartHeaders(headersRowsPart.toString('utf-8'));
 
-    console.log({
-        contentType: contentTypeString , 
-        filename: filenameString , 
-        name: nameString , 
-        body: bodyBuffer
-    });
+    return {
+        contentType ,
+        filename ,
+        name ,
+        body:bodyDataPartBuffer ,
+    }
     
 }
 
