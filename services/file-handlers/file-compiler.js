@@ -128,19 +128,6 @@ class FileCompiler {
     async gulp (payload) {
 
         const {type ,id , targetId , inputDataName , body , originalFileName , fileContentType} = payload ;
-
-        // if(this.#items.has(type) === false) {
-        //     this.#items.set(type , new Map());
-        // }
-        
-        // const typeData = this.#items.get(type);
-
-        // typeData.set(id , {
-        //     inputDataName ,
-        //     body ,
-        //     targetId ,
-        // });
-
         
         if(this.#items[type] === undefined) {
             this.#items[type] = {}
