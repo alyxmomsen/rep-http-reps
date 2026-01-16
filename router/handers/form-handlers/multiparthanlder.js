@@ -7,39 +7,38 @@ async function multipartdatahandler(res , databuffer , boundarybuffer) {
 
     for (const part of formDataParts) {
 
-        const dataBundleLike = await _compileDataBundleFromPart(part);
+        const splitedPartLike = await _splitPart(part);
 
-        if(dataBundleLike === null) {
-
-            continue;
+        if(splitedPartLike === null) {
+            const fallbackmessage = 'incorrect data part'.toUpperCase();
+            _log({fallbackmessage});
+            // res.end('fallbackmessage');
+            continue ;
         }
+  
+        const {body:bodyDataPartBuffer , headers:headersRowsPartBuffer} = splitedPartLike ;
 
-        _log({...dataBundleLike});
+        const {body , contentType , filename , name} = await _compileDataBundleFromPart(bodyDataPartBuffer , headersRowsPartBuffer.toString('utf-8'));
+
+        _log({body , contentType , filename , name});
+
+        
 
     } 
 
-    console.log('multipart resolver' , {formDataParts});
     res.end('multipart resolver');
     return ;
 }
 
 module.exports = multipartdatahandler ;
 
-async function _compileDataBundleFromPart (partBuffer) {
-    
-    const splitedPartLike = await _splitPart(partBuffer);
-    
-    if(splitedPartLike === null) {
-        return null ;
-    }
-    
-    const {body: bodyDataPartBuffer , headers: headersRowsPart} = splitedPartLike ;
-        
+async function _compileDataBundleFromPart (bodyDataPartBuffer , headersRowsPart) {
+            
     const {
         contentType , 
         filename ,
         name
-    } = await _parsePartHeaders(headersRowsPart.toString('utf-8'));
+    } = await _parsePartHeaders(headersRowsPart);
 
     return {
         contentType ,
