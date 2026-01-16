@@ -23,54 +23,16 @@ async function multipartdatahandler(res , databuffer , boundarybuffer) {
 
         const {body , contentType , filename , name} = await _compileDataBundleFromPart(bodyDataPartBuffer , headersRowsPartBuffer.toString('utf-8'));
 
-        // it needs to transfer to services
-        const parseNameInput = (nameDataString) => {
-
-            const [subject , target] = nameDataString.split('--');
-
-            const [_type , _id , _name] = subject.split('.') ;
-
-            const type = _type || null
-            const id = _id || null
-            const name = _name || null
-            const targetId = target || null ;
-
-            return {
-                type ,
-                id ,
-                name ,
-                targetId ,
-            }
-
-        }
-
-        // it needs to transfer to services
-        const uploadFile = (bundle) => {
-
-            
-            const {type , id , name , targetId , body} = bundle ;
-            
-
-
-
-            
-            _log({type , id , name , targetId , body});
-
-        }
-
-        const naminputData = parseNameInput(name);
+        const naminputData = FileCompiler.ParseNameInput(name);
 
         const { type , id , targetId , name:inputDataName } = naminputData ; 
 
-
-        filecompiler.gulp({type ,id , targetId , inputDataName , body});
-
-        // uploadFile({type , id , targetId , inputDataName , body})
-
+        filecompiler.gulp({type ,id , targetId , inputDataName , body , originalFileName:filename , fileContentType:contentType});
     } 
 
     filecompiler.getFiles();
 
+    // FileCompiler.UploadData();
     res.end('multipart resolver');
     return ;
 }

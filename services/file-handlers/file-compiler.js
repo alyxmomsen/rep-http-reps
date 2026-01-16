@@ -1,16 +1,100 @@
 const {} = require('fs');
+const _log = require('../../global-utils/log');
 
 class FileCompiler {
 
     #items;
 
+    static UploadData (items) {
+
+        const {type , id , name , targetId , body} = bundle ;
+        _log({type , id , name , targetId , body});
+    }
+
+    uploadCompiledItems () {
+
+
+
+    }
+
+    static ParseNameInput (nameDataString) {
+
+        const [subject , target] = nameDataString.split('--');
+
+        const [_type , _id , _name] = subject.split('.') ;
+
+        const type = _type || null
+        const id = _id || null
+        const name = _name || null
+        const targetId = target || null ;
+
+        return {
+            type ,
+            id ,
+            name ,
+            targetId ,
+        }
+    }
+
     async getFiles () {
         
-        for (const [type , subject] of this.#items) {
+        const files = {} ;
 
-            console.log({type ,subject});
+        const resolvers = {
+            'file':{
+                handler:(typeEntries) => {
+                    
+                    for (const [name , bunldle] of Object.entries(typeEntries)) {
+                        
+                        files[name] = bunldle ;
+                    }
+                } ,
+            } ,
+            'caption':{
+                handler:(typeEntries) => {
 
+                    for (const [keyname , bundle] of Object.entries(typeEntries)) {
+
+                        const file = files[bundle.targetId] ;
+
+                        if(file === undefined) {
+                            continue ;
+                        }
+
+                        file[bundle.inputDataName] = bundle ? bundle.body.toString() : null ;
+                    }
+                } ,
+            } ,
+            'option':{
+                handler:(typeEntries) => {
+                    
+                    for (const [keyname , bundle] of Object.entries(typeEntries)) {
+        
+                        const file = files[bundle.targetId] ;
+
+                        if(file === undefined) {
+                            continue ;
+                        }
+        
+                        file[bundle.inputDataName] = bundle ? bundle.body.toString() : null ;
+                    }
+                } ,
+            } ,
         }
+
+
+        for (const [type , typeEntryies] of Object.entries(this.#items)) {
+
+            const resolverlike = resolvers[type] ;
+
+            if(resolverlike === undefined) continue;
+
+            resolverlike.handler(typeEntryies);
+ 
+        }
+
+        _log({files});
+    
     }
 
     async compileByType (type) {
@@ -43,23 +127,40 @@ class FileCompiler {
 
     async gulp (payload) {
 
-        const {type ,id , targetId , inputDataName , body} = payload ;
+        const {type ,id , targetId , inputDataName , body , originalFileName , fileContentType} = payload ;
 
-        if(this.#items.has(type) === false) {
-            this.#items.set(type , new Map());
+        // if(this.#items.has(type) === false) {
+        //     this.#items.set(type , new Map());
+        // }
+        
+        // const typeData = this.#items.get(type);
+
+        // typeData.set(id , {
+        //     inputDataName ,
+        //     body ,
+        //     targetId ,
+        // });
+
+        
+        if(this.#items[type] === undefined) {
+            this.#items[type] = {}
         }
         
-        const typeData = this.#items.get(type);
-
-        typeData.set(id , {
+        const typeItems = this.#items[type] ;
+        
+        typeItems[id] = {
             inputDataName ,
             body ,
             targetId ,
-        });
+            originalFileName ,
+            fileContentType ,
+        }
     }
 
     constructor () {
-        this.#items = new Map();
+        // this.#items = new Map();
+        this.#items = {};
+
     }
 }
 
