@@ -1,5 +1,6 @@
-const {} = require('fs');
+const { createWriteStream, createReadStream } = require('fs');
 const _log = require('../../global-utils/log');
+const { Readable } = require('stream');
 
 class FileCompiler {
 
@@ -11,9 +12,51 @@ class FileCompiler {
         _log({type , id , name , targetId , body});
     }
 
-    uploadCompiledItems () {
+    async uploadCompiledItems () {
 
+        const files = await this.compileFiles();
 
+        const mimes = {
+            'video/x-matroska':() => {
+                
+                return ;
+            } ,
+            'audio/mpeg':() => {
+                
+                return ;
+            } ,
+            'text/plain':() => {
+                
+                return ;
+            } ,
+        }
+
+        for (const [id , bundle] of Object.entries(files)) {
+
+            let newFileName = '' ;
+
+            let ext = null ;
+
+            const originalFileName = bundle.originalFileName ;
+            if(originalFileName !== undefined) {
+                const match = originalFileName.match(/\.[\w\d]+$/);
+                if(match !== null) {
+                    
+                    ext = match[0] ;
+                } 
+            }
+
+            const title = bundle.title || null ;
+
+            if(title && ext) {
+                const readStream = Readable.from(bundle.body);
+                const writeStream = createWriteStream('./upload/' + title + '.' + Date.now() + ext);
+                readStream.pipe(writeStream);
+            }
+
+            console.log({ext});
+
+        }
 
     }
 
@@ -36,7 +79,7 @@ class FileCompiler {
         }
     }
 
-    async getFiles () {
+    async compileFiles () {
         
         const files = {} ;
 
@@ -93,36 +136,8 @@ class FileCompiler {
  
         }
 
-        _log({files});
+        return files ;
     
-    }
-
-    async compileByType (type) {
-
-        const typeBundles = this.#items.get(type);
-
-        if(typeBundles === undefined) {
-            console.log('no bundles'.toUpperCase());
-            return;
-        }
-
-        for (const [_type , bundle] of this.#items) {
-
-            if(type === _type) {
-                continue ;
-            }
-
-            for (const [subj_id , subjectBundle] of typeBundles ) {
-
-                if(bundle.targetId !== subj_id) {
-                    continue ;
-                }
-
-                subjectBundle[bundle.name] = bundle.body                
-            } 
-
-        }
-
     }
 
     async gulp (payload) {

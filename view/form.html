@@ -8,9 +8,15 @@
 <body>
     <form action="/api/handle-form" method="post" enctype="multipart/form-data">
         <!-- name attr description : type.id.name--targetId -->
-        <input type="file" name="file.file-1.main-video--" id="" accept=".mp4, .mkv , .txt">
+        <input type="file" name="file.file-1.main-video--" id="" accept=".mp4, .mkv">
+        <input type="file" name="file.file-2.main-audio--" id="" accept=".mp3">
+        <input type="file" name="file.file-3.main-text--" id="" accept=".txt">
         <input type="text" name="caption.cap-1.title--file-1" id="">
         <input type="text" name="caption.cap-2.description--file-1" id="">
+        <input type="text" name="caption.cap-3.title--file-2" id="">
+        <input type="text" name="caption.cap-4.description--file-2" id="">
+        <input type="text" name="caption.cap-5.title--file-3" id="">
+        <input type="text" name="caption.cap-6.description--file-3" id="">
         <input type="checkbox" name="option.check-1.toload--file-1" value="true" id="">
         <input type="checkbox" name="option.check-2.todeploy--file-1" value="true" id="">
         <input type="checkbox" name="option.check-3.totest--file-1" value="true" id="">

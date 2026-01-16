@@ -30,7 +30,9 @@ async function multipartdatahandler(res , databuffer , boundarybuffer) {
         filecompiler.gulp({type ,id , targetId , inputDataName , body , originalFileName:filename , fileContentType:contentType});
     } 
 
-    filecompiler.getFiles();
+    const files = await filecompiler.compileFiles();
+
+    await filecompiler.uploadCompiledItems();
 
     // FileCompiler.UploadData();
     res.end('multipart resolver');
