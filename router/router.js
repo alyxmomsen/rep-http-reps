@@ -131,7 +131,7 @@ class Router {
         });
 
         return {
-            regex: new RegExp(),
+            regex: new RegExp(`^${regexTemplate}$`),
             handler: handlers[handlers.length - 1], 
             middleware: handlers.length > 1 ? handlers.slice(0, -1) : [],
             originalTemplate:template,
@@ -163,8 +163,21 @@ module.exports = router;
 router.get('/', (req, res , next) => {
     console.log('middleware');
     next();
-} , async (req , res) => {
-    res.end('foo bar');
+}, async (req, res) => {
+    
+    const { params , queryParams , url , method } = req;
+
+    res.end(JSON.stringify({url ,method , params , queryParams}));
+});
+
+router.get('/test/:id/foo/:bar', (req, res , next) => {
+    console.log('middleware');
+    next();
+}, async (req, res) => {
+    
+    const { params , queryParams , url , method } = req;
+
+    res.end(JSON.stringify({url ,method , params , queryParams}));
 });
 
 router.get('/video', async () => {
