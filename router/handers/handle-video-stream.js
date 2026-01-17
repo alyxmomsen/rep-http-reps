@@ -1,20 +1,29 @@
 const { createReadStream } = require("fs");
 const { stat } = require("fs/promises");
-const { join } = require("path");
-
-const testVideoFilePath = join('C:', 'Users', 'user', 'Videos', '1g33JJ33roO5qbaw.mp4');
 
 async function handleVideoStream(req, res) {
+
+
+    console.log('handle video stream start' , req.local);
+
+    let testpath = null;
+
+    if (req.local && req.local.videopath) {
+        testpath = req.local.videopath
+    }
     
-    console.log('handle video stream start');
-    
+    if (testpath === null) {
+        res.end('no content');
+        return;
+    }
+
     const { headers } = req;
 
     const rangeLike = headers.range;
 
     try {
 
-        const stats = await stat(testVideoFilePath);
+        const stats = await stat(testpath);
         const filesize = (stats).size;
         const { start, end } = await fetchRanges(rangeLike , filesize);
         const statusCode = 206;
@@ -27,7 +36,7 @@ async function handleVideoStream(req, res) {
         };
 
         res.writeHead(statusCode , statusMessage , resHeaders);
-        createReadStream(testVideoFilePath , {start ,end}).pipe(res);
+        createReadStream(testpath , {start ,end}).pipe(res);
 
     }
     catch (e) {

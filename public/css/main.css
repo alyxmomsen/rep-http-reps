@@ -27,8 +27,21 @@ video {
     display: flex;
     gap: 9px;
     flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .flex-item {
-    
+
 }
+
+#playlist {
+    /* width: 29%; */
+}
+
+#video {
+    /* width: 60%; */
+}
+
+/* @media screen and ( min-width) {
+    
+} */

@@ -2,10 +2,13 @@ const { readFile } = require("fs/promises");
 const handleVideoStream = require("./handers/handle-video-stream");
 const serveAsset = require("./handers/serve-asset");
 const handleForm = require("./handers/handle-form");
+const VideoManager = require("../services/video-manager");
+
+const v3oM5r = new VideoManager();
 
 class Router {
 
-    handleRequest(req , res) {
+    async handleRequest(req , res) {
         
         const { method , headers , url:fullURLString } = req; 
 
@@ -32,10 +35,10 @@ class Router {
             req.params = params;
             req.queryParams = this.#extractQueryParams(queryStringLike);
 
-            this.#executeMiddleware(req , res , this.#middleware);
-            this.#executeMiddleware(req , res , routeBundle.middleware);
+            await this.#executeMiddleware(req , res , this.#middleware);
+            await this.#executeMiddleware(req , res , routeBundle.middleware);
 
-            routeBundle.handler(req, res);
+            await routeBundle.handler(req, res);
             return;
         }
 
@@ -57,7 +60,7 @@ class Router {
         this.#addRoute(template , 'POST' , handlers);
     }
 
-    #executeMiddleware(req,  res , middleware) {
+    async #executeMiddleware(req,  res , middleware) {
         
         let counter = 0;
         const next = () => {
@@ -189,7 +192,21 @@ router.get('/test/:id/foo/:bar', (req, res , next) => {
     res.end(JSON.stringify({url ,method , params , queryParams}));
 });
 
-router.get('/api/video', async (req , res) => {
+router.get('/api/video', async (req , res , next) => {
+
+    const videoItem = await v3oM5r.getRanddom();
+
+    console.log('global middle' , videoItem);
+
+    const videopath = videoItem.path;
+
+    req.local = {
+        videopath ,
+    };
+
+    next();
+
+} , async (req , res) => {
     await handleVideoStream(req , res);
 });
 
