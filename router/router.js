@@ -1,5 +1,7 @@
 const { readFile } = require("fs/promises");
 const handleVideoStream = require("./handers/handle-video-stream");
+const serveAsset = require("./handers/serve-asset");
+const handleForm = require("./handers/handle-form");
 
 class Router {
 
@@ -154,7 +156,6 @@ class Router {
             const method = m.toUpperCase();
             this.#routes.set(method , new Map());
         });
-
     }
 }
 
@@ -165,62 +166,7 @@ module.exports = router;
 
 router.get('/public/asset/:type/:id', async (req, res) => {
 
-    console.log('asset loading...');
-    
-    const { params } = req;
-    console.log({params});
-
-    try {
-        const { type, id } = params;
-
-        if(!type && !id) throw new Error('no type or ID')
-        const resolve = {
-            'css': {
-                ext: '.css',
-            },
-            'js': {
-                ext: '.js',
-
-            }
-        };
-        
-        const ext = await _resolve(type);
-
-        console.log('./public/' + type + '/' + id + ext);
-
-        const file = await readFile('./public/' + type + '/' + id + ext);
-        res.end(file);
-
-    }
-    catch (e) {
-
-        res.end('smth went wrong' ,e);
-    }
-
-    async function getParams(params) {
-        
-    }
-        
-    async function _resolve(type) {
-        const resolve = {
-            'css': {
-                ext: '.css',                    
-            },
-            'js': {
-                ext: '.js',
-
-            }
-        }
-
-        const resolver = resolve[type];
-
-        if (resolver === undefined) throw new Error('smth');
-
-        return resolver.ext;
-    }
-
-
-
+    serveAsset(req, res);
 });
 
 router.get('/', (req, res , next) => {
@@ -260,6 +206,17 @@ router.get('/video', async (req,  res) => {
     }
 });
 
-router.get('/form', async () => {
+router.post('/api/handle-form', async (req , res) => {
+    handleForm(req ,res);
+});
+
+router.get('/form', async (req , res) => {
     
+    try {
+        const html = await readFile('./view/form.html');
+        res.end(html);
+    }
+    catch (e) {
+        res.end('smth went wrong');
+    }
 });
