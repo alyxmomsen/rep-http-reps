@@ -1,169 +1,78 @@
-const { createWriteStream, createReadStream } = require('fs');
-const _log = require('../../global-utils/log');
-const { Readable } = require('stream');
+const { kMaxLength } = require("buffer");
 
-class FileCompiler {
+class FileManager {
 
-    #items;
+    async gulp(headersPartBuffer , bodyPartBuffer) {
 
-    static UploadData (items) {
+        const headersPartString = headersPartBuffer.toString('utf-8');
 
-        const {type , id , name , targetId , body} = bundle ;
-        _log({type , id , name , targetId , body});
-    }
+        const bodyHeaders = await this.#compileHeaders(headersPartString);
+        
+        const contentDispositionHeader = bodyHeaders['content-disposition'];
+        const contentTypeHeader = bodyHeaders['content-type'] || null;
 
-    async uploadCompiledItems () {
+        const headerAttributes = await this.#parseContentDisposition(contentDispositionHeader);
 
-        const files = await this.compileFiles();
+        const name = headerAttributes['name'] || null;
+        const filename = headerAttributes['filename'] || null;
 
-        const mimes = {
-            'video/x-matroska':() => {
-                
-                return ;
-            } ,
-            'audio/mpeg':() => {
-                
-                return ;
-            } ,
-            'text/plain':() => {
-                
-                return ;
-            } ,
+        const bundle = {
+            name,
+            filename ,
+            contentType:contentTypeHeader ,
         }
 
-        for (const [id , bundle] of Object.entries(files)) {
+        console.log({bundle});
+        
+    }
 
-            let newFileName = '' ;
+    async #parseContentDisposition(contentDispositionHeader) {
+        console.log('parse disp');
 
-            let ext = null ;
+        if (contentDispositionHeader === undefined) throw new Error();
 
-            const originalFileName = bundle.originalFileName ;
-            if(originalFileName !== undefined) {
-                const match = originalFileName.match(/\.[\w\d]+$/);
-                if(match !== null) {
-                    
-                    ext = match[0] ;
-                } 
+        const parts = contentDispositionHeader.split('; ');
+
+        const attributes = {};
+        parts.forEach(elem => {
+            const [key, value] = elem.split('=');
+
+            if (key !== undefined && value !== undefined) {
+
+                attributes[key.toLowerCase()] = value.replace(/^"/ , '').replace(/"$/ , '');
             }
+        });
 
-            const title = bundle.title || null ;
-
-            if(title && ext) {
-                const readStream = Readable.from(bundle.body);
-                const writeStream = createWriteStream('./upload/' + title + '.' + Date.now() + ext);
-                readStream.pipe(writeStream);
-            }
-
-            console.log({ext});
-
-        }
-
+        return attributes;
     }
-
-    static ParseNameInput (nameDataString) {
-
-        const [subject , target] = nameDataString.split('--');
-
-        const [_type , _id , _name] = subject.split('.') ;
-
-        const type = _type || null
-        const id = _id || null
-        const name = _name || null
-        const targetId = target || null ;
-
-        return {
-            type ,
-            id ,
-            name ,
-            targetId ,
-        }
-    }
-
-    async compileFiles () {
-        
-        const files = {} ;
-
-        const resolvers = {
-            'file':{
-                handler:(typeEntries) => {
-                    
-                    for (const [name , bunldle] of Object.entries(typeEntries)) {
-                        
-                        files[name] = bunldle ;
-                    }
-                } ,
-            } ,
-            'caption':{
-                handler:(typeEntries) => {
-
-                    for (const [keyname , bundle] of Object.entries(typeEntries)) {
-
-                        const file = files[bundle.targetId] ;
-
-                        if(file === undefined) {
-                            continue ;
-                        }
-
-                        file[bundle.inputDataName] = bundle ? bundle.body.toString() : null ;
-                    }
-                } ,
-            } ,
-            'option':{
-                handler:(typeEntries) => {
-                    
-                    for (const [keyname , bundle] of Object.entries(typeEntries)) {
-        
-                        const file = files[bundle.targetId] ;
-
-                        if(file === undefined) {
-                            continue ;
-                        }
-        
-                        file[bundle.inputDataName] = bundle ? bundle.body.toString() : null ;
-                    }
-                } ,
-            } ,
-        }
-
-
-        for (const [type , typeEntryies] of Object.entries(this.#items)) {
-
-            const resolverlike = resolvers[type] ;
-
-            if(resolverlike === undefined) continue;
-
-            resolverlike.handler(typeEntryies);
- 
-        }
-
-        return files ;
     
+    async #compileHeaders(headersPartString) {
+        
+        const headers = {};
+        
+        const rows = headersPartString.split('\r\n');
+        rows.forEach(row => {
+            const [key, value] = row.split(': ');
+            if (key !== undefined & value !== undefined) {
+                
+                headers[key.toLowerCase()] = value;
+            }
+        });
+        
+        return headers;
     }
 
-    async gulp (payload) {
+    async handleFiles(files) {
+        
 
-        const {type ,id , targetId , inputDataName , body , originalFileName , fileContentType} = payload ;
-        
-        if(this.#items[type] === undefined) {
-            this.#items[type] = {}
-        }
-        
-        const typeItems = this.#items[type] ;
-        
-        typeItems[id] = {
-            inputDataName ,
-            body ,
-            targetId ,
-            originalFileName ,
-            fileContentType ,
-        }
     }
 
-    constructor () {
-        // this.#items = new Map();
-        this.#items = {};
+    #files;
 
+    constructor() {
+
+        this.#files = {};
     }
 }
 
-module.exports = FileCompiler ;
+module.exports = FileManager;

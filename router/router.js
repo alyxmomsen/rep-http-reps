@@ -189,8 +189,6 @@ router.get('/test/:id/foo/:bar', (req, res , next) => {
     res.end(JSON.stringify({url ,method , params , queryParams}));
 });
 
-
-
 router.get('/api/video', async (req , res) => {
     await handleVideoStream(req , res);
 });
