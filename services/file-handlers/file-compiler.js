@@ -1,5 +1,8 @@
 const { kMaxLength } = require("buffer");
 const _behavior = require("./file-compiler-behaviors");
+const { Readable } = require("stream");
+const { createWriteStream } = require("fs");
+const { join } = require("path");
 
 class FileManager {
 
@@ -55,12 +58,46 @@ class FileManager {
 
             console.log(
 
-                {inputs:this.#inputs[i] , files , queue}
+                // {inputs:this.#inputs[i] , files , queue}
             );
 
 
+            
         }
+        
+        for (const [key , bundle] of Object.entries(files)) {
 
+            const body = bundle.body;
+
+            if (!body.length) continue;
+            
+            const readstream = Readable.from(bundle.body);
+
+            
+            const extresolver = (contenttype) => {
+                const mime = {
+                    'audio/mpeg':'mp3',
+                    'text/plain':'txt',
+                    'video/mp4':'mp4',
+                };
+                return mime[contenttype] || null;
+            }
+
+            const ext = extresolver(bundle.contentType);
+            // if(bundle.title && ext && )
+
+            const path = join('.', 'upload');
+            const prefix = `.${Date.now()}`;
+            const filename = bundle.title && ext ? `${bundle.title}.${ext}` : bundle.filename || null;
+            
+            const fullpath = join(path , `${prefix}.${filename}`);
+
+            const writeStream = createWriteStream(fullpath);
+
+            readstream.pipe(writeStream);
+
+            console.log({ path, filename  , fullpath});
+        }
     }
 
     async gulp(headersPartBuffer , bodyPartBuffer) {
