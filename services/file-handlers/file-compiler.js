@@ -1,6 +1,67 @@
 const { kMaxLength } = require("buffer");
+const _behavior = require("./file-compiler-behaviors");
 
 class FileManager {
+
+    async upload() {
+
+        const files = {};
+        const queue = [];
+        
+        for (let i = 0; i < this.#inputs.length; i++) {
+
+            const item = this.#inputs[i];
+
+            if (item.type === 'file') {
+                
+                if (files[item.subjectId] === undefined) {
+                    
+                    files[item.subjectId] = {
+    
+                    }
+                }
+
+                const file = files[item.subjectId];
+
+                for (const [key , value] of Object.entries(item)) {
+                    if (key === 'type') continue;
+
+                    file[key] = value;
+                }
+
+                continue;
+            }
+
+            const file = files[item.targetId];
+
+            if (file === undefined) {
+                    
+                queue.push(item);
+                continue;
+            }
+
+            file[item.subjectName] = item.body || null;
+            // file[item.subjectName] = item.subjectName || null;
+
+            // for (const [key , value] of Object.entries(item)) {
+            //     if (key === 'targetId') continue;
+            //     if (key === 'type') continue;
+            //     if (key === 'subjectId') continue;
+            //     if (key === 'filename') continue;
+            //     if (key === 'contentType') continue;
+
+            //     file[key] = value;
+            // }
+
+            console.log(
+
+                {inputs:this.#inputs[i] , files , queue}
+            );
+
+
+        }
+
+    }
 
     async gulp(headersPartBuffer , bodyPartBuffer) {
 
@@ -17,13 +78,23 @@ class FileManager {
         const filename = headerAttributes['filename'] || null;
 
         const bundle = {
-            name,
+            ...(await this.#parseNameInutValue(name , _behavior)) ,
             filename ,
-            contentType:contentTypeHeader ,
+            contentType: contentTypeHeader,
+            body:bodyPartBuffer ,
         }
 
-        console.log({bundle});
+        this.#inputs.push(bundle);
         
+    }
+
+    async #parseNameInutValue(nameInputValue , behavior) {
+        
+        const result =  behavior(nameInputValue);
+
+        // console.log({ result });
+        
+        return result;
     }
 
     async #parseContentDisposition(contentDispositionHeader) {
@@ -67,11 +138,11 @@ class FileManager {
 
     }
 
-    #files;
+    #inputs;
 
     constructor() {
 
-        this.#files = {};
+        this.#inputs = [];
     }
 }
 

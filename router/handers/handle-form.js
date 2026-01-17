@@ -31,7 +31,8 @@ async function handleForm(req , res) {
                 await handlePart(part);
             }
 
-    
+            filemanager.upload();
+
         });
     }
     catch (error) {
