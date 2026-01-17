@@ -1,3 +1,5 @@
+const { readFile } = require("fs/promises");
+const handleVideoStream = require("./handers/handle-video-stream");
 
 class Router {
 
@@ -160,6 +162,67 @@ const router = new Router();
 
 module.exports = router;
 
+
+router.get('/public/asset/:type/:id', async (req, res) => {
+
+    console.log('asset loading...');
+    
+    const { params } = req;
+    console.log({params});
+
+    try {
+        const { type, id } = params;
+
+        if(!type && !id) throw new Error('no type or ID')
+        const resolve = {
+            'css': {
+                ext: '.css',
+            },
+            'js': {
+                ext: '.js',
+
+            }
+        };
+        
+        const ext = await _resolve(type);
+
+        console.log('./public/' + type + '/' + id + ext);
+
+        const file = await readFile('./public/' + type + '/' + id + ext);
+        res.end(file);
+
+    }
+    catch (e) {
+
+        res.end('smth went wrong' ,e);
+    }
+
+    async function getParams(params) {
+        
+    }
+        
+    async function _resolve(type) {
+        const resolve = {
+            'css': {
+                ext: '.css',                    
+            },
+            'js': {
+                ext: '.js',
+
+            }
+        }
+
+        const resolver = resolve[type];
+
+        if (resolver === undefined) throw new Error('smth');
+
+        return resolver.ext;
+    }
+
+
+
+});
+
 router.get('/', (req, res , next) => {
     console.log('middleware');
     next();
@@ -180,14 +243,23 @@ router.get('/test/:id/foo/:bar', (req, res , next) => {
     res.end(JSON.stringify({url ,method , params , queryParams}));
 });
 
-router.get('/video', async () => {
-    
+
+
+router.get('/api/video', async (req , res) => {
+    await handleVideoStream(req , res);
+});
+
+router.get('/video', async (req,  res) => {
+   
+    try {
+        const html = await readFile('./view/video.html');
+        res.end(html);
+    }
+    catch (e) {
+        res.end('internal error');
+    }
 });
 
 router.get('/form', async () => {
-    
-});
-
-router.get('/other', async () => {
     
 });
