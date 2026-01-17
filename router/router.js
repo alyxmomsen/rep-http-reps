@@ -1,176 +1,180 @@
-class _Router {
 
-    async handleRequest(req , res) {
+class Router {
 
-        const {method , url:wholeURL} = req ;
+    handleRequest(req , res) {
         
-        console.log('handle request' , {method});
+        const { method , headers , url:fullURLString } = req; 
 
-        const _method = method.toUpperCase();
+        const methodRoutes = this.#routes.get(method);
 
-        const methodRoutes = this.#routes.get(_method);
-
-        if(methodRoutes === undefined) {
-            const fallbackmessage = `that method < ${_method} > is not accepted` ;
-            console.log(fallbackmessage);
-            res.end(fallbackmessage);
-            return ;
+        if (methodRoutes === undefined) {
+            console.log();
+            res.end('this method' + method +' is not accepted');
+            return;
         }
 
-        const { url , rawQueryString } = await this.splitURL(wholeURL);
+        const { url , queryStringLike } = this.#splitURL(fullURLString);
 
-        for (const [indexLikeTemplate , routeBundle] of methodRoutes) {
-            
-            const match = routeBundle.regex.exec(url);
+        for (const [_ , routeBundle] of methodRoutes) {
 
-            if(match === null) continue ;
+            const urlmatch = routeBundle.regex.exec(url);
+            if (urlmatch === null) continue;
 
-            // compile params
-
-            const params = {} ;
-
+            const params = {};
             routeBundle.keys.forEach((key , i) => {
-
-                params[key] = match[i + 1] ;
+                params[key] = urlmatch[i + 1];
             });
 
-            const queryParams = await this.#parseQueryParams(rawQueryString) ;
+            req.params = params;
+            req.queryParams = this.#extractQueryParams(queryStringLike);
 
-            // end compile params
+            this.#executeMiddleware(req , res , this.#middleware);
+            this.#executeMiddleware(req , res , routeBundle.middleware);
 
-            req.params = params ;
-            req.queryParams = queryParams ;
-
-            this.#executeMiddleware(req ,res , this.#middleware);
-            this.#executeMiddleware(req ,res , routeBundle.middleware);
-
-            routeBundle.handler(req , res);
-            return ;
+            routeBundle.handler(req, res);
+            return;
         }
 
-        const defaultresponse = 'default response' ;
-        res.end(defaultresponse);
     }
 
-    async use (...middleware) {
-
+    use(...middleware) {
+        
         middleware.forEach(mw => {
+
             this.#middleware.push(mw);
         });
     }
 
-    async get (template , ...handlers) {
-        this.#addRoute(template , "GET" , handlers);
+    get(template , ...handlers) {
+        this.#addRoute(template , 'GET' , handlers);
     }
 
-    async post (template , ...handlers) {
-        await this.#addRoute(template , "POST" , handlers);
+    post(template , ...handlers) {
+        this.#addRoute(template , 'POST' , handlers);
     }
 
-    async splitURL (wholeURLString) {
+    #executeMiddleware(req,  res , middleware) {
         
-        const [_url , rawQueryString] = wholeURLString.split('?') ;
-        
-        return {
-            url: /.+\/$/.test(_url) ? _url.replace(/\/$/ , '') : _url , 
-            rawQueryString ,
-        }
-    }
-
-    async #executeMiddleware (req , res , middleware) {
-
-        let counter = 0 ;
+        let counter = 0;
         const next = () => {
 
-            const handler = middleware[counter++] ;
-            if(handler === undefined) return;
+            const handlerlike = middleware[counter++];
 
-            handler(req , res , next);
+            if (handlerlike === undefined) return;
+
+            handlerlike(req, res, next);
         }
 
         next();
 
-        return ;
     }
 
-    async #parseQueryParams (rawQueryString) {
-
+    #extractQueryParams(queryStringLike) {
+        
         const params = {};
-        if(rawQueryString === undefined) {
-            return params ;
+
+        if (queryStringLike === undefined) {
+            return params;
         }
 
-        const couples = rawQueryString.split('&');
+        const couples = queryStringLike.split('&');
         
-        for (let couple of couples) {
+        couples.forEach(couple => {
+
             const [key , value] = couple.split('=');
-            if(key !== undefined && value !== undefined) {
-
-                params[key.toLowerCase()] = value ;
+            if (key !== undefined && value !== undefined) {
+                params[key.toLowerCase()] = value;
             }
-        }
+        });
 
-        return params ;
+        return params;
+
     }
 
-    async #addRoute(template , method , handlers) {
+    #splitURL(fullURLString) {
 
-        const _method = method.toUpperCase();
+        const [rawURL , queryStringLike] = fullURLString.split('?');
 
-        const methodRoutes = this.#routes.get(_method);
-
-        if(methodRoutes === undefined) {
-            const fallbackmessage = `this method < ${_method} > is not accepted` ;
-            console.log(fallbackmessage);
-            return ;
-        }
-        
-        if(methodRoutes.has(template) === true) {
-            const fallbackmessage = `this template < ${_method} > already in use` ;
-            console.log(fallbackmessage);
-            return ;
-        }
-
-        const routeBundle = await this.#compileRouteBundle(template , handlers);
-
-        methodRoutes.set(routeBundle.originalTemplate , routeBundle);
-        console.log(`added route < ${_method} > < ${routeBundle.originalTemplate} >`);
+        return {
+            url: /.+\/$/.test(rawURL) ? rawURL.replace(/\/$/ , '') : rawURL,
+            queryStringLike ,
+        };
     }   
 
-    #routes ;
-    #middleware;
+    #addRoute(template ,method , handlers) {
+        
+        const _method = method.toUpperCase();
 
-    async #compileRouteBundle (template , handlers) {
+        const mehodRoutes = this.#routes.get(_method);
 
-        const keys = [] ;
-        const regexTemplate = template.replace(/:([^\/]+)/g , (_ , key) => {
+        if (mehodRoutes === undefined) {
+            console.log(`method is not accepted`);
+            return;
+        }
+
+        if (mehodRoutes.has(template) === true) {
+            console.log(`this template ${template} is already exists`);
+            return;
+        }
+
+        const routeBundle = this.#compileBundle(template , handlers);
+
+        mehodRoutes.set(routeBundle.originalTemplate , routeBundle);
+        console.log('added route' + ' ' + _method + ' ' + routeBundle.originalTemplate);
+    }
+
+    #compileBundle(template , handlers) {
+        const keys = [];
+        const regexTemplate = template.replace(/:([^\/]+)/g, (_ , key) => {
             keys.push(key);
             return '([^\/]+)'
         });
 
         return {
+            regex: new RegExp(),
+            handler: handlers[handlers.length - 1], 
+            middleware: handlers.length > 1 ? handlers.slice(0, -1) : [],
+            originalTemplate:template,
             keys ,
-            handler: handlers[handlers.length - 1] ,
-            middleware: handlers.length > 1 ? handlers.slice(0 , -1) : [] ,
-            regex:new RegExp(`^${regexTemplate}$`),
-            originalTemplate:template , 
         }
     }
 
-    constructor () {
-        
-        this.#middleware = [];
-        this.#routes = new Map;
-        const acceptMethods = [
-            'GET' , "POST" ,
-        ];
+    #routes;
+    #middleware;
 
-        acceptMethods.forEach(m => {
+    constructor() {
+        this.#middleware = [];
+        this.#routes = new Map();
+
+        const accepted = ['get', 'post'];
+        
+        accepted.forEach(m => {
             const method = m.toUpperCase();
-            this.#routes.set(method , new Map);
+            this.#routes.set(method , new Map());
         });
+
     }
 }
 
+const router = new Router();
 
-module.exports = {_Router} ;
+module.exports = router;
+
+router.get('/', (req, res , next) => {
+    console.log('middleware');
+    next();
+} , async (req , res) => {
+    res.end('foo bar');
+});
+
+router.get('/video', async () => {
+    
+});
+
+router.get('/form', async () => {
+    
+});
+
+router.get('/other', async () => {
+    
+});
