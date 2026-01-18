@@ -8,64 +8,18 @@ class FileManager {
 
     async upload() {
 
-        const files = {};
-        const queue = [];
-        
-        for (let i = 0; i < this.#inputs.length; i++) {
-
-            const item = this.#inputs[i];
-
-            if (item.type === 'file') {
-                
-                if (files[item.subjectId] === undefined) {
-                    
-                    files[item.subjectId] = {
-    
-                    }
-                }
-
-                const file = files[item.subjectId];
-
-                for (const [key , value] of Object.entries(item)) {
-                    if (key === 'type') continue;
-
-                    file[key] = value;
-                }
-
-                continue;
-            }
-
-            const file = files[item.targetId];
-
-            if (file === undefined) {
-                    
-                queue.push(item);
-                continue;
-            }
-
-            file[item.subjectName] = item.body || null;
-            // file[item.subjectName] = item.subjectName || null;
-
-            // for (const [key , value] of Object.entries(item)) {
-            //     if (key === 'targetId') continue;
-            //     if (key === 'type') continue;
-            //     if (key === 'subjectId') continue;
-            //     if (key === 'filename') continue;
-            //     if (key === 'contentType') continue;
-
-            //     file[key] = value;
-            // }
-
-            console.log(
-
-                // {inputs:this.#inputs[i] , files , queue}
-            );
-
-
-            
+        const { files , queue } = await this.#compileFiles();
+        // this.#executeUpload(files , queue);
+        for (const [key , value] of Object.entries(files)) {
+            console.log({key , value});
         }
-        
+    }
+
+    async #executeUpload(files , queue) {
+
         for (const [key , bundle] of Object.entries(files)) {
+
+            console.log({bundle});
 
             const body = bundle.body;
 
@@ -73,7 +27,6 @@ class FileManager {
             
             const readstream = Readable.from(bundle.body);
 
-            
             const extresolver = (contenttype) => {
                 const mime = {
                     'audio/mpeg':'mp3',
@@ -96,7 +49,87 @@ class FileManager {
 
             readstream.pipe(writeStream);
 
-            console.log({ path, filename  , fullpath});
+            // console.log({ path, filename  , fullpath});
+        }
+    }
+
+    async #compileFiles() {
+
+        const files = {};
+        const queue = [];
+        
+        for (let i = 0; i < this.#inputs.length; i++) {
+
+            const inputBoundary = this.#inputs[i];
+
+            console.log({inputBoundary});
+
+            const type = inputBoundary.type;
+            
+            const resolvers = [
+                await resolverFactory('file', (files ,inputBoundary) => {
+                    
+                    const targetId = inputBoundary.subjectId;
+                    const fileByTargetId = files[targetId] || {};
+
+                    if (fileByTargetId === undefined) {
+                        
+                        fileByTargetId =  {};
+                    }
+
+                    if (inputBoundary.body === undefined || !inputBoundary.body.length) return;
+
+                    for (const [key , value] of Object.entries(inputBoundary)) {
+            
+                        if (key === 'type') continue;
+                        fileByTargetId[key] = value;
+                    }
+
+                    files[targetId] = fileByTargetId;
+                }) ,
+                await resolverFactory('caption', (files ,inputBoundary) => {
+
+                    const targetId = inputBoundary.targetId;
+                    const fileByTargetId = files[targetId];
+                    
+                    if (fileByTargetId === undefined) return;
+
+                    if (fileByTargetId.captions === undefined) {
+                        fileByTargetId.captions = {};
+                    }
+
+                    const captions =  fileByTargetId.captions;
+
+                    captions[inputBoundary.subjectName] = inputBoundary.body;
+                }) ,
+                await resolverFactory('option', (files ,inputBoundary) => {
+                    const targetId = inputBoundary.targetId;
+                    const fileByTargetId = files[targetId];
+                    
+                    if (fileByTargetId === undefined) return;
+
+                    if (fileByTargetId.options === undefined) {
+                        fileByTargetId.options = {};
+                    }
+
+                    const options =  fileByTargetId.options;
+
+                    options[inputBoundary.subjectName] = inputBoundary.body;
+                }) ,
+            ]
+
+            resolvers.forEach(resolver => {
+                const handlerLike = resolver(type, inputBoundary);
+                if (handlerLike !== null) handlerLike(files);
+                
+            });
+
+            console.log({files});
+        }
+
+        return {
+            files,
+            queue ,
         }
     }
 
@@ -122,14 +155,11 @@ class FileManager {
         }
 
         this.#inputs.push(bundle);
-        
     }
 
     async #parseNameInutValue(nameInputValue , behavior) {
         
-        const result =  behavior(nameInputValue);
-
-        // console.log({ result });
+        const result = behavior(nameInputValue);
         
         return result;
     }
@@ -184,3 +214,19 @@ class FileManager {
 }
 
 module.exports = FileManager;
+
+async function resolverFactory (type , handler) {
+    
+    return ( _type , inputBoundary) => {
+
+        if (type === _type) {
+
+            return (files) => {
+                
+                handler(files , inputBoundary );
+            }
+        }
+
+        return null;
+    }
+}

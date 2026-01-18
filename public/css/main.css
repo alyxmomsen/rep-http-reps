@@ -6,6 +6,7 @@
 
 body {
     background-color: #19192d;
+    color:#faebd7;
 }
 
 video {
@@ -23,11 +24,39 @@ video {
     border: 1px solid black 
 }
 
-.flex-container {
+.flx {
     display: flex;
     gap: 9px;
     flex-wrap: wrap;
     justify-content: space-between;
+}
+
+.flx-row {
+    flex-direction: row;
+}
+
+.flx-col {
+    flex-direction: column;
+}
+
+.flx-g {
+    gap:9px;
+}
+
+.flx-aln-st {
+    align-items: start;
+}
+
+.flx-jtf-left {
+    justify-content:left ;
+}
+
+.flx-jtf-right {
+    justify-content:right ;
+}
+
+.flx-jtf {
+    justify-content:space-around ;
 }
 
 .flex-item {
