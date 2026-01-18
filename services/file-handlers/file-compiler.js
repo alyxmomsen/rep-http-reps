@@ -68,60 +68,19 @@ class FileManager {
             
             const resolvers = [
                 await resolverFactory('file', (files ,inputBoundary) => {
-                    
-                    const targetId = inputBoundary.subjectId;
-                    const fileByTargetId = files[targetId] || {};
-
-                    if (fileByTargetId === undefined) {
-                        
-                        fileByTargetId =  {};
-                    }
-
-                    if (inputBoundary.body === undefined || !inputBoundary.body.length) return;
-
-                    for (const [key , value] of Object.entries(inputBoundary)) {
-            
-                        if (key === 'type') continue;
-                        fileByTargetId[key] = value;
-                    }
-
-                    files[targetId] = fileByTargetId;
+                    fileCaseHandler(files , inputBoundary);
                 }) ,
                 await resolverFactory('caption', (files ,inputBoundary) => {
-
-                    const targetId = inputBoundary.targetId;
-                    const fileByTargetId = files[targetId];
-                    
-                    if (fileByTargetId === undefined) return;
-
-                    if (fileByTargetId.captions === undefined) {
-                        fileByTargetId.captions = {};
-                    }
-
-                    const captions =  fileByTargetId.captions;
-
-                    captions[inputBoundary.subjectName] = inputBoundary.body;
+                    captionCaseHandler(files , inputBoundary);
                 }) ,
                 await resolverFactory('option', (files ,inputBoundary) => {
-                    const targetId = inputBoundary.targetId;
-                    const fileByTargetId = files[targetId];
-                    
-                    if (fileByTargetId === undefined) return;
-
-                    if (fileByTargetId.options === undefined) {
-                        fileByTargetId.options = {};
-                    }
-
-                    const options =  fileByTargetId.options;
-
-                    options[inputBoundary.subjectName] = inputBoundary.body;
+                    optionCaseHandler(files , inputBoundary);
                 }) ,
             ]
 
             resolvers.forEach(resolver => {
                 const handlerLike = resolver(type, inputBoundary);
                 if (handlerLike !== null) handlerLike(files);
-                
             });
 
             console.log({files});
@@ -229,4 +188,54 @@ async function resolverFactory (type , handler) {
 
         return null;
     }
+}
+
+async function fileCaseHandler (files , inputBoundary) {
+    const targetId = inputBoundary.subjectId;
+    const fileByTargetId = files[targetId] || {};
+
+    if (fileByTargetId === undefined) {
+        
+        fileByTargetId =  {};
+    }
+
+    if (inputBoundary.body === undefined || !inputBoundary.body.length) return;
+
+    for (const [key , value] of Object.entries(inputBoundary)) {
+
+        if (key === 'type') continue;
+        fileByTargetId[key] = value;
+    }
+
+    files[targetId] = fileByTargetId;
+}
+
+async function captionCaseHandler (params) {
+    const targetId = inputBoundary.targetId;
+    const fileByTargetId = files[targetId];
+    
+    if (fileByTargetId === undefined) return;
+
+    if (fileByTargetId.captions === undefined) {
+        fileByTargetId.captions = {};
+    }
+
+    const captions =  fileByTargetId.captions;
+
+    captions[inputBoundary.subjectName] = inputBoundary.body;
+}
+
+async function optionCaseHandler (params) {
+    const targetId = inputBoundary.targetId;
+    const fileByTargetId = files[targetId];
+    
+    if (fileByTargetId === undefined) return;
+
+    if (fileByTargetId.options === undefined) {
+        fileByTargetId.options = {};
+    }
+
+    const options =  fileByTargetId.options;
+
+    options[inputBoundary.subjectName] = inputBoundary.body;
 }
