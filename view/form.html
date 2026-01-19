@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/asset/css/main">
+    <title>Document</title>
+</head>
+<body>
+    <div class="wrapper--main">
+        <form action="/api/handle-form" method="post" enctype="multipart/form-data">
+            <!-- name attr description : type.id.name--targetId -->
+            <div class="wrapper flx flx-col flx-g">
+                <div class="flx flx-col flx-aln-st">
+                    <label for="">Video</label>
+                    <input type="file" name="file.file-1.main-video--" id="" accept=".mp4, .mkv">
+                </div>
+                <div class="flx flx-col flx-aln-st" >
+                    <label for="">title</label>
+                    <input placeholder="title" type="text" name="caption.cap-1.title--file-1" id="">
+                </div>
+                <div class="flx flx-col flx-aln-st">
+                    <label for="">description</label>
+                    <input placeholder="description" type="text" name="caption.cap-2.description--file-1" id="">
+                </div>
+                <div class="flx flx-col">
+                    <label for="">options</label>
+                    <div class="flx flx-row flx-g flx-jtf-left">
+                        <input type="checkbox" name="option.check-1.toload--file-1" value="true" id="">
+                        <input type="checkbox" name="option.check-2.todeploy--file-1" value="true" id="">
+                        <input type="checkbox" name="option.check-3.totest--file-1" value="true" id="">
+                    </div>
+                </div>
+            </div>
+            <div class="wrapper flx flx-col flx-g">
+                <div class="flx flx-col flx-aln-st">
+                    <label for="">Audio</label>
+                    <input type="file" name="file.file-2.main-audio--" id="" accept=".mp3 , .vaw">
+                </div>
+                <div class="flx flx-col flx-aln-st" >
+                    <label for="">title</label>
+                    <input placeholder="title" type="text" name="caption.cap-3.title--file-2" id="">
+                </div>
+                <div class="flx flx-col flx-aln-st">
+                    <label for="">description</label>
+                    <input placeholder="description" type="text" name="caption.cap-4.description--file-2" id="">
+                </div>
+                <div class="flx flx-col">
+                    <label for="">options</label>
+                    <div class="flx flx-row flx-g flx-jtf-left">
+                        <input type="checkbox" name="option.check-4.toload--file-2" value="true" id="">
+                        <input type="checkbox" name="option.check-5.todeploy--file-2" value="true" id="">
+                        <input type="checkbox" name="option.check-6.totest--file-2" value="true" id="">
+                    </div>
+                </div>
+            </div>
+            <div class="wrapper flx flx-col flx-g">
+                <div class="flx flx-col flx-aln-st">
+                    <label for="">Picture</label>
+                    <input type="file" name="file.file-3.main-img--" id="" accept=".jpg , .gif , .png">
+                </div>
+                <div class="flx flx-col flx-aln-st" >
+                    <label for="">title</label>
+                    <input placeholder="title" type="text" name="caption.cap-5.title--file-3" id="">
+                </div>
+                <div class="flx flx-col flx-aln-st">
+                    <label for="">description</label>
+                    <input placeholder="description" type="text" name="caption.cap-6.description--file-3" id="">
+                </div>
+                <div class="flx flx-col">
+                    <label for="">options</label>
+                    <div class="flx flx-row flx-g flx-jtf-left">
+                        <input type="checkbox" name="option.check-7.toload--file-3" value="true" id="">
+                        <input type="checkbox" name="option.check-8.todeploy--file-3" value="true" id="">
+                        <input type="checkbox" name="option.check-9.totest--file-3" value="true" id="">
+                    </div>
+                </div>
+            </div>
+            <div class="wrapper">
+                <input type="submit" value="submit the form">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
