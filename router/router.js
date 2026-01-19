@@ -1,3 +1,9 @@
+const {} = require('fs');
+
+const handleFormData = require("./handlers/handle-form-data");
+const { readFile } = require('fs/promises');
+const { join } = require('path');
+
 class Router {
 
     async handleRequest(req , res) {
@@ -44,7 +50,10 @@ class Router {
             return ;
         }
 
-        res.end('hello');
+        res.writeHead(404 , 'not found' , {
+            'content-type':'text/plain',
+        });
+        res.end('not found');
     }
 
     async get (template , ...handlers) {
@@ -52,7 +61,7 @@ class Router {
     }
 
     async post (template , ...handlers) {
-        await athis.#addRoute(template , "POST" , handlers);
+        await this.#addRoute(template , "POST" , handlers);
     }
 
     async use (...handlers) {
@@ -176,7 +185,30 @@ const router = new Router ();
 
 router.use((req , res , next) => {console.log(`global mw 1`);next();} , (req , res , next) => {console.log(`global mw 1`);});
 
-router.get('/test/:id' , (req , res , next) => {
+router.post('/api/handle-form' , async (req , res) => {
+    await handleFormData(req , res);
+});
+
+router.get('/form' , async (req , res , next) => {
+    console.log(`form middleware${''}`);
+    next();
+} , async (req , res) => {
+
+    try {
+
+        const file = await readFile(join('.' , 'view' , 'form.html'));
+        res.end(file);
+
+    }
+    catch (e) {
+        console.log('fail to load form');
+        res.end('fail to load form');
+        return;
+    }
+
+});
+
+router.get('/test/:id' , async (req , res , next) => {
     console.log(`middleware local${''}`);
     next();
 } , async (req , res) => {
