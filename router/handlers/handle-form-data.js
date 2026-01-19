@@ -20,6 +20,15 @@ async function handleFormData(req , res) {
         return ;
     }
 
+    const [contentTypeStr , ...attr] = contenTypeHeader.split('; ');
+
+    const factory = factoryDecorator(contentTypeStr);
+
+    const matchers = [
+        factory(handler) ,
+    ];
+    
+    console.log({contenTypeHeader , contentTypeStr , attr});
     const boundaryMatch = contenTypeHeader.match(/boundary=(----[^$;\s]+)/);
 
     if(boundaryMatch === null) {
@@ -28,7 +37,6 @@ async function handleFormData(req , res) {
     }
 
     const boundaryString = boundaryMatch[1] ;
-
 
     let totalSize = 0 ;
     let dataBufferChunks = [] ;
@@ -64,6 +72,9 @@ async function handleFormData(req , res) {
 module.exports = handleFormData ;
 
 async function handleFormInputDataPart(dataBufferPart , behavior) {
+
+
+
     
     console.log(dataBufferPart);
 
@@ -107,4 +118,24 @@ async function _findIndex (buf , sep , start = 0) {
     }
 
     return -1 ;
+}
+
+async function factoryDecorator(contentType) {
+    return (handler) => {
+        contentTypeMatcherFactory(contentType , handler);
+    } ;
+}
+
+async function contentTypeMatcherFactory(contentType , handler) {
+    
+    return (_contentType , dataBuffer) => {
+
+        if(contentType === _contentType) return (payload) => {
+            
+
+            handler(dataBuffer , payload);
+        }
+
+        return null ;
+    }
 }
