@@ -3,6 +3,8 @@ const {} = require('fs');
 const handleFormData = require("./handlers/handle-form-data");
 const { readFile } = require('fs/promises');
 const { join } = require('path');
+const processPublicDataRequest = require('../utils/process-public-data-request');
+const handleVideoStreamRequest = require('./handlers/video-stream/handle-video-stream-request');
 
 class Router {
 
@@ -189,23 +191,19 @@ router.post('/api/handle-form' , async (req , res) => {
     await handleFormData(req , res);
 });
 
+router.get('/api/handle-stream-request', async (req , res) => {
+    await handleVideoStreamRequest(req , res);
+});
+
+router.get('/video', async (req , res) => {
+    await processPublicDataRequest(res , join('.' , 'view' , 'video.html'));
+});
+
 router.get('/form' , async (req , res , next) => {
-    console.log(`form middleware${''}`);
+    console.log(`call local middleware ${'form'}`);
     next();
 } , async (req , res) => {
-
-    try {
-
-        const file = await readFile(join('.' , 'view' , 'form.html'));
-        res.end(file);
-
-    }
-    catch (e) {
-        console.log('fail to load form');
-        res.end('fail to load form');
-        return;
-    }
-
+    await processPublicDataRequest(res , join('.' , 'view' , 'form.html'));
 });
 
 router.get('/test/:id' , async (req , res , next) => {
