@@ -8,6 +8,15 @@ class Router {
         res.end('hello');
     }
 
+    get () {
+
+    }
+
+    #addRoute () {
+        
+    }
+    
+
     constructor () {
 
     }
