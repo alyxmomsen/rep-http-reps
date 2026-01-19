@@ -3,6 +3,9 @@ const { readFile } = require("fs/promises");
 const { join } = require("path");
 const handleMultipartData = require("./sub-handlers/handle-multipart-data");
 const { factoryDecorator } = require("./utils/contetn-type-matcher-factory");
+const CustomStoreManager = require("../../services/custom-store-manager");
+
+const customStoreManager = new CustomStoreManager();
 
 const fallbackresponse = (res ,message) => {
     
@@ -30,7 +33,12 @@ async function handleFormData(req , res) {
     
     const matchers = [
         await matcherFactory(
-            'multipart/form-data' , handleMultipartData , {contenTypeHeader}
+            'multipart/form-data',
+            handleMultipartData,
+            {
+                contenTypeHeader,
+                customStoreManager,
+            }
         ) ,
         await matcherFactory('application/x-www-form-urlencoded' , (dataBuffer , payload) => {
             console.log(`application/x-www-form-urlencoded handler`);

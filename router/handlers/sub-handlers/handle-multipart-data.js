@@ -3,7 +3,7 @@ const _splitBuffer = require("../../utils/split-buffer");
 
 async function handleMultipartData(dataBuffer , payload) {
 
-    const {contenTypeHeader}  = payload ;
+    const {contenTypeHeader , customStoreManager}  = payload ;
 
     const boundaryMatch = contenTypeHeader.match(/boundary=(----[^$;\s]+)/);
     if(boundaryMatch === null) {
@@ -21,7 +21,8 @@ async function handleMultipartData(dataBuffer , payload) {
         
     for (const dataBufferPart of dataBufferParts) {
 
-        console.log({dataBufferPart});
+        customStoreManager.gulp(dataBufferPart);
+
         // await handleFormInputDataPart(dataBufferPart , async () => {console.log(`input data handler`)});
     }
 }
