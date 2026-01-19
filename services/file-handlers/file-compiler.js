@@ -9,48 +9,39 @@ class FileManager {
     async upload() {
 
         const { files , queue } = await this.#compileFiles();
-        // this.#executeUpload(files , queue);
-        for (const [key , value] of Object.entries(files)) {
-            console.log({key , value});
-        }
+        this.#executeUpload(files , queue);
+        
     }
 
-    async #executeUpload(files , queue) {
+    async #executeUpload(files, queue) {
+        
+        for (const [key, value] of Object.entries(files)) {
+                    
+            const { captions , options } = value;
 
-        for (const [key , bundle] of Object.entries(files)) {
-
-            console.log({bundle});
-
-            const body = bundle.body;
-
-            if (!body.length) continue;
-            
-            const readstream = Readable.from(bundle.body);
-
-            const extresolver = (contenttype) => {
-                const mime = {
-                    'audio/mpeg':'mp3',
-                    'text/plain':'txt',
-                    'video/mp4':'mp4',
-                };
-                return mime[contenttype] || null;
+            const title = null;
+            const description = null;
+            if (options) {
+                
+                title = options.title || null;
+                description = options.description || null;
             }
 
-            const ext = extresolver(bundle.contentType);
-            // if(bundle.title && ext && )
+            const filename = value.filename || null 
 
-            const path = join('.', 'upload');
-            const prefix = `.${Date.now()}`;
-            const filename = bundle.title && ext ? `${bundle.title}.${ext}` : bundle.filename || null;
-            
-            const fullpath = join(path , `${prefix}.${filename}`);
+            if (filename === null) continue;
 
-            const writeStream = createWriteStream(fullpath);
+            let filenamepart = null;
+            let extpart = null;
 
-            readstream.pipe(writeStream);
+            if(/\.[\d\w]+$/.test(filename)) {
+                const match = filename.match(/\.([\d\w]+)$/);
+                extpart = match === null ? null : match[1];
+            }
 
-            // console.log({ path, filename  , fullpath});
+            console.log({value});
         }
+
     }
 
     async #compileFiles() {
@@ -82,8 +73,6 @@ class FileManager {
                 const handlerLike = resolver(type, inputBoundary);
                 if (handlerLike !== null) handlerLike(files);
             });
-
-            console.log({files});
         }
 
         return {
@@ -210,7 +199,7 @@ async function fileCaseHandler (files , inputBoundary) {
     files[targetId] = fileByTargetId;
 }
 
-async function captionCaseHandler (params) {
+async function captionCaseHandler (files , inputBoundary) {
     const targetId = inputBoundary.targetId;
     const fileByTargetId = files[targetId];
     
@@ -225,7 +214,7 @@ async function captionCaseHandler (params) {
     captions[inputBoundary.subjectName] = inputBoundary.body;
 }
 
-async function optionCaseHandler (params) {
+async function optionCaseHandler (files , inputBoundary) {
     const targetId = inputBoundary.targetId;
     const fileByTargetId = files[targetId];
     
