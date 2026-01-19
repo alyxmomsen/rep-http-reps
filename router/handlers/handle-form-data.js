@@ -1,4 +1,4 @@
-const {} = require("fs");
+const { randomBytes } = require("crypto");
 const { readFile } = require("fs/promises");
 const { join } = require("path");
 
@@ -22,21 +22,21 @@ async function handleFormData(req , res) {
 
     const [contentTypeStr , ...attr] = contenTypeHeader.split('; ');
 
-    const factory = factoryDecorator(contentTypeStr);
-
-    const matchers = [
-        factory(handler) ,
-    ];
-    
     console.log({contenTypeHeader , contentTypeStr , attr});
-    const boundaryMatch = contenTypeHeader.match(/boundary=(----[^$;\s]+)/);
-
-    if(boundaryMatch === null) {
-        fallbackresponse(res , 'no boundary');
-        return ;
-    }
-
-    const boundaryString = boundaryMatch[1] ;
+    
+    const matcherFactory = await factoryDecorator(contentTypeStr);
+    
+    const matchers = [
+        await matcherFactory(
+            'multipart/form-data' , handleMultipartData , {contenTypeHeader}
+        ) ,
+        await matcherFactory('application/x-www-form-urlencoded' , (dataBuffer , payload) => {
+            console.log(`application/x-www-form-urlencoded handler`);
+        } , {}) ,
+        await matcherFactory('text/plain' , (dataBuffer , payload) => {
+            console.log(`text/plain handler`);
+        } , {}) ,
+    ];
 
     let totalSize = 0 ;
     let dataBufferChunks = [] ;
@@ -47,13 +47,18 @@ async function handleFormData(req , res) {
 
     req.on('end' , async () => {
 
+        
         const wholeBufferData = Buffer.concat(dataBufferChunks);
 
-        const dataBufferParts = await _splitBuffer(wholeBufferData , Buffer.from(`--${boundaryString}`));
+        
+        for (const matcher of matchers) {
+            const handlerLike = await matcher();
 
-        for (const dataBufferPart of dataBufferParts) {
+            console.log({handlerLike});
 
-            await handleFormInputDataPart(dataBufferPart , () => {console.log(`input data handler`)});
+            if(handlerLike === null) continue ;
+            const handler = handlerLike ;
+            handler(wholeBufferData);
         }
 
         try {
@@ -73,9 +78,6 @@ module.exports = handleFormData ;
 
 async function handleFormInputDataPart(dataBufferPart , behavior) {
 
-
-
-    
     console.log(dataBufferPart);
 
     behavior();
@@ -120,22 +122,58 @@ async function _findIndex (buf , sep , start = 0) {
     return -1 ;
 }
 
-async function factoryDecorator(contentType) {
-    return (handler) => {
-        contentTypeMatcherFactory(contentType , handler);
+
+async function handleMultipartData(dataBuffer , payload) {
+
+    const {contenTypeHeader}  = payload ;
+
+    const boundaryMatch = contenTypeHeader.match(/boundary=(----[^$;\s]+)/);
+    if(boundaryMatch === null) {
+        console.log('no boundary');
+        return ;
+    }
+    const boundaryString = `--${boundaryMatch[1]}` ;
+    const boundaryBuffer = Buffer.from(boundaryString);
+    
+    console.log(`multipart handler`);
+
+
+    console.log(`call multipart handler ${randomBytes(32).toString('hex')}`);
+    const dataBufferParts = await _splitBuffer(dataBuffer , boundaryBuffer);
+        
+    for (const dataBufferPart of dataBufferParts) {
+
+        await handleFormInputDataPart(dataBufferPart , async () => {console.log(`input data handler`)});
+    }
+}
+
+const x = randomBytes(32).toString("hex") ;
+
+async function factoryDecorator(headerContentTypeData) {
+    console.log(`call global decorator... ${x}`);
+    // decorated matcher factory 
+    return async (contentTypeTemplate , handler , payload) => {
+        console.log(`call factory ${x}`);
+        // matcher factory wrapper
+        return async () => {
+            console.log(`call matcher ${x}`);
+            return await contentTypeMatcherFactory(contentTypeTemplate , handler , headerContentTypeData , payload);
+        }
     } ;
 }
 
-async function contentTypeMatcherFactory(contentType , handler) {
+async function contentTypeMatcherFactory(contentTypeTemplate , handler , headerContentTypeData , payload) {
+
+    console.log(`call matcher behavior...`);
     
-    return (_contentType , dataBuffer) => {
+    if(contentTypeTemplate === headerContentTypeData){
+        
+        return async (dataBuffer) => {
 
-        if(contentType === _contentType) return (payload) => {
-            
-
-            handler(dataBuffer , payload);
+            await handler(dataBuffer , payload);
         }
-
-        return null ;
-    }
+    } 
+    
+    return null ;
+    
 }
