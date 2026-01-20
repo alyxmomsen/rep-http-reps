@@ -21,10 +21,10 @@ async function handleMultipartData(dataBuffer , payload) {
         
     for (const dataBufferPart of dataBufferParts) {
 
-        customStoreManager.gulp(dataBufferPart);
+        await customStoreManager.gulp(dataBufferPart);
 
-        // await handleFormInputDataPart(dataBufferPart , async () => {console.log(`input data handler`)});
     }
 }
 
 module.exports = handleMultipartData;
+
