@@ -1,10 +1,8 @@
 const {} = require('fs');
-
-const handleFormData = require("./handlers/handle-form-data");
-const { readFile } = require('fs/promises');
 const { join } = require('path');
 const processPublicDataRequest = require('../utils/process-public-data-request');
 const handleVideoStreamRequest = require('./handlers/video-stream/handle-video-stream-request');
+const handleFormData = require('./handlers/handle-form-data/handle-form-data');
 
 class Router {
 

@@ -7,8 +7,70 @@ class CustomStoreManager {
         const bundle = await behavior(databundle);
 
         if(bundle === null) return ;
+        
+        const nameInputBundle = await parseNameAttribut(bundle.contentDisposition.name);
 
-        console.log({bundle});
+        const _bundle = {
+            id:nameInputBundle.id ,
+            contentType:bundle.contentType ,
+            body:bundle.body ,
+            name:nameInputBundle.name ,
+            type:nameInputBundle.type ,
+            targetId:nameInputBundle.targetId ,
+        } ;
+
+        console.log({_bundle});
+
+        if(_bundle.type === 'subj') {
+
+            if(this.#files[_bundle.type] === undefined) {
+                
+                this.#files[_bundle.type] = {} ;
+            }
+
+            const file = this.#files[_bundle.type] ;
+
+            for (const [key , value] of Object.entries(_bundle)) {
+                
+                if(key === 'type') {
+                    continue ;
+                }
+
+                file[key] = value ;
+            }
+
+            return ;
+        }
+
+        if(_bundle.type == 'attr') {
+
+            console.log('set attr');
+
+            const subjectId = _bundle.targetId ;
+
+            const file = this.#files[subjectId] ;
+
+            if(file === undefined) {
+                
+                return ;
+            } 
+
+
+            if(file.metadata === undefined) {
+                file.metadata = {} ;
+            }
+
+            file.metadata[_bundle.name] = _bundle.body ;
+
+
+        }
+
+        console.log({files:this.#files});
+    }
+
+    async #uploadFiles (bundle) {
+
+
 
     }
 
@@ -28,6 +90,21 @@ class CustomStoreManager {
 
 module.exports = CustomStoreManager;
 
+async function parseNameAttribut(nameAttr) {
+
+    const [subject , target] = nameAttr.split('--')
+
+    console.log({subject , target});
+
+    const [type , id, name] = subject.split('.');
+
+    return {
+        type ,
+        id ,
+        name ,
+        targetId:target ,
+    }
+}
 
 async function behavior(dataBufferPart) {
     

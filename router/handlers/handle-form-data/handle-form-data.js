@@ -2,8 +2,8 @@ const { randomBytes } = require("crypto");
 const { readFile } = require("fs/promises");
 const { join } = require("path");
 const handleMultipartData = require("./sub-handlers/handle-multipart-data");
-const { factoryDecorator } = require("./utils/contetn-type-matcher-factory");
-const CustomStoreManager = require("../../services/custom-store-manager");
+const { factoryDecorator } = require("../utils/contetn-type-matcher-factory");
+const CustomStoreManager = require("../../../services/custom-store-manager");
 
 const customStoreManager = new CustomStoreManager();
 
@@ -85,13 +85,3 @@ async function handleFormData(req , res) {
 }
 
 module.exports = handleFormData;
-
-
-async function handleFormInputDataPart(dataBufferPart , behavior) {
-
-    console.log(dataBufferPart);
-
-    behavior();
-
-}
-
