@@ -1,32 +1,16 @@
 
-async function handleMultipartData (req , res , dataBuffer) {
+async function handleMultipartData (req , res , dataBuffer , boundaryStr = null) {
 
     const { url , method , params , queryParams , headers } = req ;
     console.log({url , method  ,params , queryParams , dataBuffer });
 
-    const contentTypeHEaderString = headers['content-type'];
-    if(contentTypeHEaderString === undefined) {
-        
-        res.end('no cont')
-        return ;
-    }
-    
-    const [contentType , attr] = contentTypeHEaderString.split('; ');
-    
-    
-    if(contentType === undefined) {
-        res.end('check')
-        return ;
-    }
-    
-    const boundarymatch = attr.match(/boundary=(----[^;$\s]+)/);
-    
-    if(boundarymatch === null) {
+    if(boundaryStr === null) {
         console.log('no boundary');
-        return ;
+        res.en();
+        return;
     }
     
-    const parts  = await _splitBufferBy(dataBuffer , Buffer.from(`--${boundarymatch[1]}`));
+    const parts  = await _splitBufferBy(dataBuffer , Buffer.from(boundaryStr));
 
     console.log({parts});
 
@@ -35,6 +19,7 @@ async function handleMultipartData (req , res , dataBuffer) {
 }
 
 module.exports = handleMultipartData ;
+
 
 async function _splitBufferBy(dataBuffer , separator) {
 

@@ -2,6 +2,7 @@
 require('fs');
 const matcherFactoryDecorator = require("../utils/matcher-factory");
 const handleMultipartData = require("./multipart-form-data/handle-multipart-data");
+const extractBoundaryDecorator = require('./multipart-form-data/utils/decorators/get-boundary-decorator');
 const handleTextPlainData = require('./text-plain-handler/handle-text-plain-data');
 const handleAppUrlEncoded = require('./url-x-www-form-handler/handle-app-urlencoded-data');
 
@@ -26,7 +27,10 @@ async function handleFormData (req , res) {
     const matcherFactory = await matcherFactoryDecorator(contentType);
 
     const contentTypeMatchers = [
-        await matcherFactory('multipart/form-data' , handleMultipartData) ,
+        await matcherFactory(
+            'multipart/form-data' , 
+            await extractBoundaryDecorator(handleMultipartData , contentTypeHeaderString)
+        ) ,
         await matcherFactory('application/x-www-form-urlencoded' , handleAppUrlEncoded) ,
         await matcherFactory('text/plain' , handleTextPlainData) ,
     ] ;

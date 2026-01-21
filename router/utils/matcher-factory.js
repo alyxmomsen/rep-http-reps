@@ -11,7 +11,11 @@ async function matcherFactoryDecorator (contentType) {
             
             console.log(`call ${_contentTypeMatcher} matcher..` );
 
-            if(contentType === _contentTypeMatcher) return handler ;
+            if(contentType === _contentTypeMatcher) return (req , res ,  wholeBufferData, contentType) => {
+                
+                handler(req , res ,  wholeBufferData , contentType) ;
+            } 
+
             return null;
             
         }
