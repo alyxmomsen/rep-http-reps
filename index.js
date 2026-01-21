@@ -1,5 +1,13 @@
 const http = require('http');
+const router = require('./router/controller/router-controllers');
 
-http.createServer((req , res) => {
+const server = http.createServer((req , res) => {
+    router.handleRequest(req , res);
+});
 
+const port = 3333;
+const host = '127.0.0.1' ;
+
+server.listen(port , host , () => {
+    console.log({port , host});
 });
