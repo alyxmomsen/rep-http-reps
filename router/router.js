@@ -1,8 +1,12 @@
-const {} = require('fs');
+
+const handleFormData = require("./handlers/handle-form-data");
 const { join } = require('path');
 const processPublicDataRequest = require('../utils/process-public-data-request');
 const handleVideoStreamRequest = require('./handlers/video-stream/handle-video-stream-request');
-const handleFormData = require('./handlers/handle-form-data/handle-form-data');
+const simpleDecorator = require('../utils/decorators/simple-decorator');
+const { config } = require('dotenv');
+const { send } = require("process");
+const processPublicAssetRequest = require("./utils/common/process-public-asset-request");
 
 class Router {
 
@@ -43,8 +47,8 @@ class Router {
             req.queryParams = queryParams ;
             // end extract params
 
-            this.#executeMiddleware(req , res , this.#middleware);
-            this.#executeMiddleware(req , res , bundle.middleware);
+            await this.#executeMiddleware(req , res , this.#middleware);
+            await this.#executeMiddleware(req , res , bundle.middleware);
 
             await bundle.handler(req , res);
             return ;
@@ -105,16 +109,16 @@ class Router {
 
     async #executeMiddleware (req , res , middleware) {
         let counter = 0 ;
-        const next = () => {
+        const next = async () => {
 
             const hanlerlike = middleware[counter++];
             if(hanlerlike === undefined) return;
-            hanlerlike(req , res , next);
+            await hanlerlike(req , res , next);
 
             return ;
         }
 
-        next();
+        await next();
     }
 
     async #addRoute (template , method , handlers) {
@@ -181,7 +185,7 @@ class Router {
     }
 }
 
-const router = new Router ();
+const router = new Router();
 
 router.use((req , res , next) => {console.log(`global mw 1`);next();} , (req , res , next) => {console.log(`global mw 1`);});
 
@@ -210,6 +214,55 @@ router.get('/test/:id' , async (req , res , next) => {
 } , async (req , res) => {
 
     res.end('hello world');
+});
+
+router.get('/test-decorator', async (req, res, next) => {
+    const decorated = await simpleDecorator(
+        {
+            foo: 'bar',
+            config: '258eafa5-e91447da95ca-c5ab0dc85b11',
+            type: 'foo',
+
+        }, async (payload , ...params) => {
+            console.log({ payload  , params});
+            
+            const { foo , config , type } = payload;
+
+            const local = {
+                foo,
+                config,
+                type,
+                params ,
+            }
+
+            req.local = local;
+
+    });
+    
+    const result = await decorated('hello', 'world');
+    console.log({ result: result });
+
+} , async (req , res) => {
+
+    const { local } = req;
+    
+    console.log("foo bar" ,{local});
+    
+    res.writeHead(200, 'ok', {
+        'content-type':'application/json' ,
+    });
+
+
+    res.end(JSON.stringify(local));
+    
+});
+
+router.get('/public/:a/:b', async (req , res) => {
+    await processPublicAssetRequest(req , res);
+});
+
+router.get('/', async (req ,res) => {
+    await processPublicAssetRequest(req , res , join('.' , 'view' , 'home.html'));
 });
 
 module.exports = { router } ;
