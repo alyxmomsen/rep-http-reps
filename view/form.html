@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="">
+    <script src=""></script>
+    <title>Form</title>
+</head>
+<body>
+        <!-- 
+        enctype="text/plain" 
+        enctype="application/x-www-form-urlencoded"
+        -->
+        <form 
+        enctype="multipart/form-data"
+        method="post" 
+        action="/api/handle-form" 
+    >
+        <input placeholder="file" type="file" name="file" id="">
+        <input placeholder="text" type="text" name="text" id="">
+        <input placeholder="checkbox" type="checkbox" name="checkbox" id="">
+        <input placeholder="radio" type="radio" name="radio" id="">
+        <input placeholder="submit" type="submit" value="submit">
+    </form>
+</body>
+</html>
