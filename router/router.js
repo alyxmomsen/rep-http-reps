@@ -38,6 +38,7 @@ class Router {
             ]);
 
             await routebundle.handler(req , res);
+            return ;
         }
 
         async function sendFallBack (res , statusCode , statusMessage = '' ,  message = '') {
