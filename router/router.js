@@ -1,12 +1,10 @@
 
-const handleFormData = require("./handlers/handle-form-data");
 const { join } = require('path');
 const processPublicDataRequest = require('../utils/process-public-data-request');
 const handleVideoStreamRequest = require('./handlers/video-stream/handle-video-stream-request');
 const simpleDecorator = require('../utils/decorators/simple-decorator');
-const { config } = require('dotenv');
-const { send } = require("process");
 const processPublicAssetRequest = require("./utils/common/process-public-asset-request");
+const handleFormData = require('./handlers/handle-form-data/handle-form-data');
 
 class Router {
 
@@ -190,6 +188,7 @@ const router = new Router();
 router.use((req , res , next) => {console.log(`global mw 1`);next();} , (req , res , next) => {console.log(`global mw 1`);});
 
 router.post('/api/handle-form' , async (req , res) => {
+
     await handleFormData(req , res);
 });
 
