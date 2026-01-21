@@ -1,4 +1,8 @@
 
+/* 
+preserves the handler's content-type signature by adding the functionality 
+of extracting a boundary-string from a content-type header 
+*/
 async function extractBoundaryDecorator(handler , contenTypeHeaderString) {
     
     return async (req , res , dataBuffer) => {
@@ -11,7 +15,9 @@ async function extractBoundaryDecorator(handler , contenTypeHeaderString) {
 
 module.exports = extractBoundaryDecorator ;
 
-
+/* 
+additional functionality for the handler 
+*/
 async function extractBoundary (contentTypeHeaderString) {
     
     if(!contentTypeHeaderString) return null ;

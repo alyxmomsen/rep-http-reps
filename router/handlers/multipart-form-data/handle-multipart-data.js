@@ -1,3 +1,6 @@
+const getFilesFromStorage = require("../../../services/custom-store-manager/controller/get-files");
+const uploadFilesIntoStorage = require("../../../services/custom-store-manager/controller/upload-files-command");
+const _splitBufferBy = require("./utils/split-buffer-by-separator");
 
 async function handleMultipartData (req , res , dataBuffer , boundaryStr = null) {
 
@@ -12,6 +15,9 @@ async function handleMultipartData (req , res , dataBuffer , boundaryStr = null)
     
     const parts  = await _splitBufferBy(dataBuffer , Buffer.from(boundaryStr));
 
+    uploadFilesIntoStorage();
+    getFilesFromStorage();
+
     console.log({parts});
 
     res.end();
@@ -20,44 +26,3 @@ async function handleMultipartData (req , res , dataBuffer , boundaryStr = null)
 
 module.exports = handleMultipartData ;
 
-
-async function _splitBufferBy(dataBuffer , separator) {
-
-    const parts = [] ;
-
-    let start = 0 ;
-    let index = 0 ;
-
-    while ((index = await finBufferIndex(dataBuffer , separator , start)) !== -1) {
-
-        const part = dataBuffer.subarray(start , index);
-        parts.push(part);
-        start = index + separator.length ;
-        if(dataBuffer[start] === 0x0d && dataBuffer[start + 1] === 0x0a) {
-            start += 2 ;
-        }
-    }
-
-    parts.push(dataBuffer.subarray(start));
-
-    return parts ;
-}
-
-async function finBufferIndex(buffer , separator , start = 0) {
-    
-    for (let index = start ; index < buffer.length - separator.length ; index++) {
-        let found = true ;
-        for (let j = 0 ; j < separator.length ; j++) {
-            
-            if(buffer[index + j] !== separator[j]) {
-                found = false ;
-                break;
-            }
-        }
-
-        if(found === true) return index ;
-    }
-
-    return -1 ;
-
-}
