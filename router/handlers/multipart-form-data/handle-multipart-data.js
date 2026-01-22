@@ -20,31 +20,100 @@ async function handleMultipartData (req , res , dataBuffer , boundaryStr = null)
     const parts  = await _splitBufferBy(dataBuffer , Buffer.from(boundaryStr));
 
     for (const part of parts) {
-        await handleFormPart(part);
+
+        try {
+
+            const handledPart = await handleFormPart(part);
+            formDataCompiler.gulpOne(handledPart);
+        }
+        catch(e) {
+
+            console.log({e});
+        }
     }
     
+    formDataCompiler.complete();
+
     res.end();
     return ;
 }
 
 module.exports = handleMultipartData ;
 
-// handle form data piece
-async function handleFormPart(formDataItemBuffer) {
+// combine handling of the data
+async function handleFormPart (dataBuffer) {
     
-    const separatorBuffer = Buffer.from(`\r\n\r\n`);
+    try {
+        const [headersPart , bodyPart] = await splitBuffer(dataBuffer , Buffer.from(`\r\n\r\n`));
 
-    const separatorIndex = _splitBufferBy(formDataItemBuffer , separatorBuffer);
+        if(bodyPart === undefined) {
+            throw new Error('incorrect data part'.toUpperCase());
+        }
 
-    if(separatorIndex === -1) return console.log(`incorrect part`.toUpperCase());
+        // console.log({headersPart:headersPart.toString('utf-8') , bodyPart});
 
-    const headersPartBuffer = formDataItemBuffer.subarray(0 , separatorIndex);
-    let bodyBufferEndIndex = formDataItemBuffer.length ;
-    if(formDataItemBuffer[bodyBufferEndIndex - 2] === 0x0d && formDataItemBuffer[bodyBufferEndIndex - 1] === 0x0a) {
-        bodyBufferEndIndex -= 2 ;
+        const rows = await splitBuffer(headersPart , Buffer.from(`\r\n`));
+
+        const headers  = {};
+        rows.forEach(row => {
+            const [key , value] = row.toString('utf-8').split(': ');
+            if(key && value) {
+                
+                headers[key.toLowerCase()] = value;
+            }
+        });
+
+        const contentDispositionHeader = headers['content-disposition'] || null ;
+        const contentTypeHeader = headers['content-type'] || null ;
+
+        
+        const {name:nameInputAttr , filename} = await parseContentDispositionHeader(contentDispositionHeader);
+        
+        console.log({contentTypeHeader , nameInputAttr , filename});
+    }
+    catch (e) {
+        
+        console.log({e});
+    }
+    
+}
+
+async function parseNameInputAttrData (params) {
+    
+}
+
+async function parseContentDispositionHeader(contentDispositionHeader) {
+
+    const namematch  = contentDispositionHeader.match(/name="([^"]+)"/);
+    const filenamematch = contentDispositionHeader.match(/filename="([^"]+)"/);
+
+    return {
+        name:namematch === null ? null : namematch[1] ,
+        filename:filenamematch === null ? null : filenamematch[1] ,
+    }
+}
+
+async function splitBuffer(buffer , separator , depth = 0  , fn1 = f=>f , fn2 = f=>f) {
+    // let level = 0 ;
+    const parts = [] ;
+    let index = 0 ;
+    let start = 0;
+
+    while((index = await findBufferIndex(buffer , separator , start)) !== -1) {
+
+        // if(depth > 0 && ++level > depth) break ; 
+
+        const part = buffer.subarray(start , index);
+        parts.push(part);
+        start = index + separator.length ;
+
+        if(buffer[start] === 0x0d && buffer[start + 1] === 0x0a) {
+            start += 2 ;
+        }
+
     }
 
-    const bodyPartBuffer = formDataItemBuffer.subarray(separatorIndex + separatorBuffer.length , bodyBufferEndIndex);
-    
-    console.log({header:headersPartBuffer.toString('utf-8') , bodyPartBuffer});
+    parts.push(buffer.subarray(start));
+
+    return parts ;
 }

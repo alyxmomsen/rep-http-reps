@@ -2,7 +2,7 @@
 class FormDataCompiler {
 
     // gulp one 
-    gulp () {
+    gulpOne () {
 
     }
 

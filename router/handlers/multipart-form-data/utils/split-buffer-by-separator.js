@@ -4,6 +4,8 @@ async function _splitBufferBy(dataBuffer , separator) {
 
     const parts = [] ;
 
+    // if(separator.length < dataBuffer.length) return parts ;
+
     let start = 0 ;
     let index = 0 ;
 
