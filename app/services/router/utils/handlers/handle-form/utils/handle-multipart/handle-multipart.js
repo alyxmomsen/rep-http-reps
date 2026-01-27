@@ -1,6 +1,8 @@
 const splitBufferByBoundary = require("./utils/split-buffer");
 
 async function handleMultipartFormData(dataBuffer , payload) {
+
+    const multipartcompiler = new 
     
     console.log({dataBuffer , payload});
 
@@ -33,6 +35,12 @@ async function handleMultipartFormData(dataBuffer , payload) {
 }
 
 module.exports = handleMultipartFormData ;
+
+async function handlepart (part) {
+    
+
+
+}
 
 async function extractBoundary(boudaryStringLike) {
     
