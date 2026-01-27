@@ -59,7 +59,15 @@ class Router {
 
     async #parseQueryParams (rawURLQueryString) {
 
+        
+        
+        console.log({rawURLQueryString});
+        
         const params = {};
+
+        if(rawURLQueryString === undefined) {
+            return params ;
+        }
 
         rawURLQueryString.split('&').forEach((couple , i) => {
 
