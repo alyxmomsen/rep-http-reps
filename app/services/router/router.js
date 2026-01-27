@@ -21,7 +21,7 @@ class Router {
         
         for (const [ template , bundle] of methodRoutes) {
 
-            // console.log('method route couple' , template , bundle);
+            console.log('method route couple' , template , bundle);
 
             console.log('test' ,bundle.regex , bundle);
 
@@ -52,7 +52,7 @@ class Router {
     }
 
     async post (template , ...handlers) {
-        this.#addRoute(template , 'GET' , handlers);
+        this.#addRoute(template , 'POST' , handlers);
     }
 
     #routes ;

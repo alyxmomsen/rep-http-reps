@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <!-- 
+            enctype="text/plain"
+            enctype="application/x-www-form-urlencoded"
+            -->
+            <form
+            enctype="multipart/form-data"
+         action="/api/handle-form" method="post">
+        <input placeholder="video-1 descrition" type="text" name="meta.desc-1.description--video-1" id="">
+        <input type="file" name="subj.video-1.--" id="" accept=".mkv, .mp4">
+        <input type="file" name="subj.audio-1.--" id="" accept=".mp3, .wav">
+        <input type="file" name="subj.img-1.--" id="" accept=".png, .jpg">
+        <input placeholder="video-1 title" type="text" name="meta.title-1.title--video-1" id="">
+        <input placeholder="audio-1 title" type="text" name="meta.title-1.title--audio-1" id="">
+        <input placeholder="image-1 title" type="text" name="meta.title-1.title--img-1" id="">
+        <input type="submit" value="submit">
+        </form>
+    </div>
+</body>
+</html>
