@@ -1,11 +1,10 @@
+const MultipartCompiler = require("../../../../../../multipart-compiler/multipart-compiler");
 const splitBufferByBoundary = require("./utils/split-buffer");
 
 async function handleMultipartFormData(dataBuffer , payload) {
 
-    const multipartcompiler = new 
+    const multipartcompiler = new MultipartCompiler();
     
-    console.log({dataBuffer , payload});
-
     const { rawBoundaryStringLike , res } = payload ;
 
     if(!rawBoundaryStringLike) {
@@ -28,7 +27,21 @@ async function handleMultipartFormData(dataBuffer , payload) {
 
     const parts = await splitBufferByBoundary(dataBuffer , Buffer.from(boundaryLike));
 
-    console.log({parts});
+    for (const part of parts) {
+
+        try {
+
+            await multipartcompiler.gulpOnePart(part);
+        }
+        catch (e) {
+            // console.log({e});
+            console.log('incorrect part'.toUpperCase());
+        }
+
+    }
+
+    multipartcompiler;
+
     res.end();
 
     return ;
