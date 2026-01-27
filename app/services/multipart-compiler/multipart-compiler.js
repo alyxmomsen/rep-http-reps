@@ -6,10 +6,12 @@ class MultipartCompiler {
 
     async reset () {
         
+        // this.#files = new Map();
+        // for (const type of this.#types) {
+        //     this.#files.set(type);
+        // }
+
         this.#files = new Map();
-        for (const type of this.#types) {
-            this.#files.set(type);
-        }
     }
 
     async gulpOnePart(partBuffer) {
@@ -24,14 +26,12 @@ class MultipartCompiler {
 
         const semantic = await this.#parseSemanticData(nameAttr);
         
-        // console.log({body , semantic , filename , contentType});
-
         await this.#concatWithFiles({body , semantic , filename ,contentType});
                 
     }
     
-    async compile () {
-
+    async getCompiledItems () {
+        return this.#files ;
     }
 
     async #concatWithFiles (data) {
@@ -70,13 +70,6 @@ class MultipartCompiler {
             await handlerLike();
 
         }
-
-        for (const n of this.#queue) {
-            console.log({n});
-        }
-
-        console.log({files:this.#files , queue:this.#queue});
-
     }
 
 
@@ -135,23 +128,23 @@ class MultipartCompiler {
     
     #files;
     #queue;
-    #types;
+    // #types;
 
     constructor () {
 
         this.#queue = [] ;
 
-        const types = [
-            'subj' , 'meta'
-        ];
+        // const types = [
+        //     'subj' , 'meta'
+        // ];
 
-        this.#types = types ;
+        // this.#types = types ;
 
         this.#files = new Map();
 
-        types.forEach(type => {
-            this.#files.set(type , new Map()) ;
-        });
+        // types.forEach(type => {
+        //     this.#files.set(type , new Map()) ;
+        // });
     }
 }
 

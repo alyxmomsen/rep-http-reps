@@ -1,4 +1,6 @@
 const MultipartCompiler = require("../../../../../../multipart-compiler/multipart-compiler");
+const registry = require("../../../../../../registry/registry");
+const uploadService = require("../../../../../../upload-service/upload-service");
 const splitBufferByBoundary = require("./utils/split-buffer");
 
 async function handleMultipartFormData(dataBuffer , payload) {
@@ -39,8 +41,15 @@ async function handleMultipartFormData(dataBuffer , payload) {
         }
 
     }
+    
+    uploadService ;
 
-    multipartcompiler;
+    const compiledItems = await multipartcompiler.getCompiledItems();
+
+    for (const [_ , compiledItem] of compiledItems ) {
+    
+        registry.add(compiledItem , uploadService);
+    }
 
     res.end();
 
