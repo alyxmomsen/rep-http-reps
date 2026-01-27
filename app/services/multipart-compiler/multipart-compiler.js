@@ -1,7 +1,7 @@
-const _findIndex = require('../../utils/find-index');
-
 require('fs');
-
+const _findIndex = require('../../utils/find-index');
+const metaTypeHandler = require('./services/utils/meta-type-handler/meta-type-handler');
+const subjectTypeHandler = require('./services/utils/subject-type-handler/subject-type-handler.js');
 class MultipartCompiler {
 
     async reset () {
@@ -24,7 +24,7 @@ class MultipartCompiler {
 
         const semantic = await this.#parseSemanticData(nameAttr);
         
-        console.log({body , semantic , filename , contentType});
+        // console.log({body , semantic , filename , contentType});
 
         await this.#concatWithFiles({body , semantic , filename ,contentType});
                 
@@ -38,13 +38,29 @@ class MultipartCompiler {
 
         console.log('\x1b[33mstart concat\x1b[0m');
 
-        const {body , semantic , filename ,contentType} = data; 
+        const {body , semantic , filename , contentType} = data; 
 
-        const { type: partSemanticType, id1, name, target} = semantic ;
+        const { type: partSemanticType, id, name, target} = semantic ;
 
         const partTypeMatchers = [
-            await partTypeMatcherFactory('subj' , {files} , (context) => {console.log('subj type matcher...' , {context})}) ,
-            await partTypeMatcherFactory('meta' , {} , (context) => {console.log('meta type matcher...', {context})}) ,
+            await partTypeMatcherFactory('subj' , {...{
+                context:{
+                    files:this.#files , queue:this.#queue ,
+                } ,
+                payload: {
+                    body , semantic , filename , contentType
+                }
+            }} , 
+                subjectTypeHandler
+            ) , 
+            await partTypeMatcherFactory('meta' , {...{
+                context:{
+                    files:this.#files , queue:this.#queue ,
+                } ,
+                payload: {
+                    body , semantic , filename , contentType ,
+                }
+            }} , metaTypeHandler ) ,
         ] ;
 
         for (const matcher of partTypeMatchers) {
@@ -54,6 +70,12 @@ class MultipartCompiler {
             await handlerLike();
 
         }
+
+        for (const n of this.#queue) {
+            console.log({n});
+        }
+
+        console.log({files:this.#files , queue:this.#queue});
 
     }
 
@@ -68,9 +90,7 @@ class MultipartCompiler {
             type:type || null , id:id || null ,
             name:name || null , target: target || null ,
         }
-
     }
-
 
     async #parseContentDisposition (contentDisposition) {
 
@@ -118,6 +138,8 @@ class MultipartCompiler {
     #types;
 
     constructor () {
+
+        this.#queue = [] ;
 
         const types = [
             'subj' , 'meta'
