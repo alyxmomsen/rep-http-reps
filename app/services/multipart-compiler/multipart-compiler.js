@@ -20,15 +20,54 @@ class MultipartCompiler {
 
         if(!contentDisposition) throw new Error("x1b[31mno content-disposition in form data headerx1b[0m".toUpperCase());
 
-        const { name , filename } = await this.#parseContentDisposition(contentDisposition);
+        const { name:nameAttr , filename } = await this.#parseContentDisposition(contentDisposition);
 
+        const semantic = await this.#parseSemanticData(nameAttr);
         
-        
-        console.log({body , name , filename , contentType});
-        
+        console.log({body , semantic , filename , contentType});
+
+        await this.#concatWithFiles({body , semantic , filename ,contentType});
+                
     }
     
     async compile () {
+
+    }
+
+    async #concatWithFiles (data) {
+
+        console.log('\x1b[33mstart concat\x1b[0m');
+
+        const {body , semantic , filename ,contentType} = data; 
+
+        const { type: partSemanticType, id1, name, target} = semantic ;
+
+        const partTypeMatchers = [
+            await partTypeMatcherFactory('subj' , {files} , (context) => {console.log('subj type matcher...' , {context})}) ,
+            await partTypeMatcherFactory('meta' , {} , (context) => {console.log('meta type matcher...', {context})}) ,
+        ] ;
+
+        for (const matcher of partTypeMatchers) {
+
+            const handlerLike = await matcher(partSemanticType);
+            if(handlerLike === null) continue ;
+            await handlerLike();
+
+        }
+
+    }
+
+
+    async #parseSemanticData (nameAttr) {
+
+        const [subject , target] = nameAttr.split('--');
+
+        const [type , id , name] = subject.split('.');
+
+        return {
+            type:type || null , id:id || null ,
+            name:name || null , target: target || null ,
+        }
 
     }
 
@@ -75,6 +114,7 @@ class MultipartCompiler {
     }
     
     #files;
+    #queue;
     #types;
 
     constructor () {
@@ -95,9 +135,6 @@ class MultipartCompiler {
 
 module.exports  = MultipartCompiler ;
 
-async function partTypeMatcher(params) {
-    
-}
 
 async function splitPart (partBuffer) {
    
@@ -120,5 +157,21 @@ async function splitPart (partBuffer) {
     return {
         headers , 
         body ,
+    }
+}
+
+async function partTypeMatcherFactory (typeMatcherString  , context , handler) {
+    
+    return async (typeTestString) => {
+
+        if(typeTestString === typeMatcherString) {
+
+            return async () => {
+    
+                await handler(context);
+            }
+        }
+
+        return null ;
     }
 }
