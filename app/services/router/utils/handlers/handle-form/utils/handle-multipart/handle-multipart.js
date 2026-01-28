@@ -1,6 +1,6 @@
 const MultipartCompiler = require("../../../../../../multipart-compiler/multipart-compiler");
-const registry = require("../../../../../../registry/registry");
-const uploadService = require("../../../../../../upload-service/upload-service");
+const registry = require("../../../../../../../../services/registry/registry");
+const uploadService = require("../../../../../../../../services/upload-service/upload-service");
 const splitBufferByBoundary = require("./utils/split-buffer");
 
 async function handleMultipartFormData(dataBuffer , payload) {
