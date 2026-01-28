@@ -2,6 +2,10 @@ require('fs');
 
 class Router {
 
+    async handleRequest() {
+        
+    }
+
 
     async get(template  , ...handlers) {
         this.#addRoute(template , "GET" , handlers);
