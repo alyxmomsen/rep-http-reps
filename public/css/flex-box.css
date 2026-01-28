@@ -1,0 +1,17 @@
+
+.flx {
+
+    display: flex;
+}
+
+.flx-col {
+    flex-direction: column;
+}
+
+.flx-row {
+    flex-direction: row;
+}
+
+.flx-gap-dft {
+    gap: 9px;
+}

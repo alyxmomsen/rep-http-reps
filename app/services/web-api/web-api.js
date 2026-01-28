@@ -2,8 +2,11 @@ const { readFile } = require("fs/promises");
 const { join } = require("path");
 const handleForm = require("../router/utils/handlers/handle-form/handle-form");
 const Router = require("../router/router");
+const processPublicRequest = require("../router/utils/handlers/process-public/process-public-request");
 
 const router = new Router();
+
+router.get('/public/:type/:id', processPublicRequest);
 
 router.get('/test/:id/foo/:bar', async (req , res) => {
     

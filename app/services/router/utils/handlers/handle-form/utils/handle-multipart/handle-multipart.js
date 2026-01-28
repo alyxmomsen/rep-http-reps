@@ -51,7 +51,8 @@ async function handleMultipartFormData(dataBuffer , payload) {
         registry.add(compiledItem , uploadService);
     }
 
-    res.end();
+    res.writeHead(200);
+    res.end(JSON.stringify({foo:'bar'}));
 
     return ;
 }
