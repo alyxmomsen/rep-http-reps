@@ -1,8 +1,8 @@
 const { readFile } = require("fs/promises");
-const { Router } = require("../router/router");
 const { join } = require("path");
 const handleForm = require("../router/utils/handlers/handle-form/handle-form");
-require('fs');
+const Router = require("../router/router");
+
 const router = new Router();
 
 router.post('/api/handle-form' , async (req , res) => {

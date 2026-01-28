@@ -2,8 +2,48 @@ require('fs');
 
 class Router {
 
-    async handleRequest() {
+    async handleRequest(req , res) {
+        const { method:_method, url:fulUrl, headers } = req;
+        const method = _method.toUpperCase();
+        const methodRoutes = this.#routes.get(method);
+
+        if (methodRoutes === undefined) {
+            res.writeHead(403);
+            res.end();
+            console.log('x1b[32mno acceptedx1b[0m');
+            return 
+        }
+
+        const { url, rawQueryStringLike } = await this.#splitURL(fulUrl);
         
+        for (const [_ , routeBundle ] of methodRoutes) {
+            
+            const match = routeBundle.regex.exec(url);
+            if (match === null) continue;
+            
+            // ------------------------------------------
+            const params = {};
+            routeBundle.keys.forEach((key , i) => {
+
+                params[key] = match[i + 1];
+            });
+
+            const quueryParams = await this.#parseQueryParams(rawQueryStringLike);
+
+            req.params = params;
+            req.quueryParams = quueryParams;
+
+            // ------------------------------------------
+
+            await this.#executeMiddleware(req , res ,[...this.#middleware , ...routeBundle.middleware]);
+
+            await routeBundle.handler(req , res);
+
+            return;
+        }
+
+        res.writeHead(404);
+        res.end();
     }
 
 
@@ -13,6 +53,46 @@ class Router {
 
     async post(template , ...handlers) {
         this.#addRoute(template  ,"POST" , handlers);
+    }
+
+    async use(...middleware) {
+
+        middleware.forEach(mw => {
+
+            this.#middleware.push(mw);
+        });
+    }
+
+    async #executeMiddleware(req , res , middleware) {
+        let index = 0;
+        const next = async () => {
+            const handlerLike = middleware[index++];
+            if (handlerLike === undefined) return;
+            await handlerLike(req , res , next);
+        }
+
+        await next();
+    }
+
+    async #parseQueryParams(rawQueryStringLike) {
+
+        const params = {};
+
+        if (!rawQueryStringLike) return params;
+
+        const couples = rawQueryStringLike.split('&');
+
+        couples.forEach(couple => {
+
+            const [key , value ] = couple.split(':');
+
+            if (key && value) {
+                params[key.toLowerCase()] = value;
+            }
+
+        });
+
+        return params;
     }
 
     async #addRoute(template , method , handlers) {
@@ -86,3 +166,5 @@ class Router {
 
     }
 }
+
+module.exports = Router;
