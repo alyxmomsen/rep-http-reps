@@ -28,10 +28,10 @@ class Router {
                 params[key] = match[i + 1];
             });
 
-            const quueryParams = await this.#parseQueryParams(rawQueryStringLike);
+            const queryParams = await this.#parseQueryParams(rawQueryStringLike);
 
             req.params = params;
-            req.quueryParams = quueryParams;
+            req.queryParams = queryParams;
 
             // ------------------------------------------
 
@@ -84,7 +84,7 @@ class Router {
 
         couples.forEach(couple => {
 
-            const [key , value ] = couple.split(':');
+            const [key, value] = couple.split('=');
 
             if (key && value) {
                 params[key.toLowerCase()] = value;
