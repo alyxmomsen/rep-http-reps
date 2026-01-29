@@ -68,10 +68,13 @@ async function  typeMatcherFactory (matcherString , payload , handler ) {
     
     return async (testString) => {
 
+        //
         if(testString === matcherString) {
 
+            // this is that called in the context
             return async (dataBuffer) => {
     
+                // this is the handler defined in the context
                 await handler(dataBuffer , payload);
             }
         }

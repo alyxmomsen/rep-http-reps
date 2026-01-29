@@ -1,192 +1,143 @@
 require('fs');
 const _findIndex = require('../../utils/find-index');
-const metaTypeHandler = require('./services/utils/meta-type-handler/meta-type-handler');
-const subjectTypeHandler = require('./services/utils/subject-type-handler/subject-type-handler.js');
+const semanticParser = require('./services/semantic-parser/semantic-parser.js');
+const metaTypeHandler = require('./services/semantic-parser/utils/handlers/meta-type-handler.js');
+const subjectTypeHandler = require('./services/semantic-parser/utils/handlers/subject-type-handler.js');
 class MultipartCompiler {
 
-    async reset () {
+    async gulpOnePiece (rawPieceBuffer) {
+
+        const {headerspart , bodypart} = await this.#splitRawPiece(rawPieceBuffer);
+
+        const { contentDisposition: contentDispositionRawString , contentType } = await this.#parseHeadersPart(headerspart.toString('utf-8'));
+
+        const { name: contentDispName , filename: contentDispFilename } = await this.#parseContentDisposition(contentDispositionRawString);
+
+        const semantic = await semanticParser(contentDispName);
+
+        console.log({semantic , filename: contentDispFilename , contentType , bodypart});
+
+        const matcherFactory = await initSemanticTypeMatcherFactory({files:this.#files , queue:this.#queue});
+
+        const matchers = [
+            await matcherFactory('subj' , subjectTypeHandler) ,
+            await matcherFactory('meta' , metaTypeHandler) ,
+        ];
         
-        // this.#files = new Map();
-        // for (const type of this.#types) {
-        //     this.#files.set(type);
-        // }
-
-        this.#files = new Map();
-    }
-
-    async gulpOnePart(partBuffer) {
-
-        const {body , headers} = await splitPart(partBuffer);
-
-        const {contentDisposition , contentType} = await this.#parseHeaders(headers.toString('utf-8'));
-
-        if(!contentDisposition) throw new Error("x1b[31mno content-disposition in form data headerx1b[0m".toUpperCase());
-
-        const { name:nameAttr , filename } = await this.#parseContentDisposition(contentDisposition);
-
-        const semantic = await this.#parseSemanticData(nameAttr);
-        
-        await this.#concatWithFiles({body , semantic , filename ,contentType});
-                
-    }
-    
-    async getCompiledItems () {
-        return this.#files ;
-    }
-
-    async #concatWithFiles (data) {
-
-        console.log('\x1b[33mstart concat\x1b[0m');
-
-        const {body , semantic , filename , contentType} = data; 
-
-        const { type: partSemanticType, id, name, target} = semantic ;
-
-        const partTypeMatchers = [
-            await partTypeMatcherFactory('subj' , {...{
-                context:{
-                    files:this.#files , queue:this.#queue ,
-                } ,
-                payload: {
-                    body , semantic , filename , contentType
-                }
-            }} , 
-                subjectTypeHandler
-            ) , 
-            await partTypeMatcherFactory('meta' , {...{
-                context:{
-                    files:this.#files , queue:this.#queue ,
-                } ,
-                payload: {
-                    body , semantic , filename , contentType ,
-                }
-            }} , metaTypeHandler ) ,
-        ] ;
-
-        for (const matcher of partTypeMatchers) {
-
-            const handlerLike = await matcher(partSemanticType);
-            if(handlerLike === null) continue ;
-            await handlerLike();
-
+        const payload = {
+            filename:contentDispFilename ,
+            semantic , 
+            contentType , 
+            body:bodypart ,
         }
+
+        for (const matcher of matchers) {
+
+            const handler = await matcher(semantic.type);
+            if(handler === null) continue ;
+            await handler(payload);
+        }
+
+        console.log({files:this.#files , queue:this.#queue});
     }
 
+    async #aply () {
 
-    async #parseSemanticData (nameAttr) {
+    }
 
-        const [subject , target] = nameAttr.split('--');
+    async #parseContentDisposition (contentDispositionString) {
 
-        const [type , id , name] = subject.split('.');
+        const namematch = contentDispositionString.match(/name="([^"]+)"/);
+        const filenamematch = contentDispositionString.match(/filename="([^"]+)"/);
 
         return {
-            type:type || null , id:id || null ,
-            name:name || null , target: target || null ,
+            name:namematch ? namematch[1] : null ,
+            filename:filenamematch ? filenamematch[1] : null ,
         }
     }
 
-    async #parseContentDisposition (contentDisposition) {
-
-        const namematch = contentDisposition.match(/name="([^"]+)"/);
-        const filenamematch = contentDisposition.match(/filename="([^"]+)"/);
-
-        return {
-            name: namematch ? namematch[1] : null , 
-            filename: filenamematch ? filenamematch[1] : null , 
-        }
-
-    }
-
-    async #parseHeaders (headersString) {
-
-        const headers = await this.#splitHeaders(headersString);
-
-        return {
-            contentDisposition:headers['content-disposition'] || null ,
-            contentType:headers['content-type'] || null ,
-        }
-
-    }
-
-    async #splitHeaders (headersString) {
-
-        const separator = '\r\n' ;
-
-        const rows = headersString.split(separator);
+    async #parseHeadersPart (rawHeaderString) {
 
         const headers = {} ;
 
-        rows.forEach(row => {
-            const [key , value] = row.split(': ');
+        const headersSeparator = '\r\n' ;
+
+        const rawHeadersRows = rawHeaderString.split(headersSeparator);
+
+        rawHeadersRows.forEach(row => {
+            
+            const [ key , value ] = row.split(": ");
             if(key && value) {
                 headers[key.toLowerCase()] = value ;
             }
         });
 
-        return headers ;
+        return {
+            contentType:headers['content-type'] || null ,
+            contentDisposition:headers['content-disposition'] || null ,
+        }
+
     }
-    
+
+    async #splitRawPiece (rawPieceBuffer) {
+
+        const separatorBuffer =  Buffer.from('\r\n\r\n') ;
+
+        const separatorIndex = await _findIndex(rawPieceBuffer , separatorBuffer);
+
+        
+        if(separatorIndex === -1) {
+            throw new Error('incorrect piece'.toUpperCase()) ;
+        }
+
+        console.log({separatorIndex});
+        
+        const headerspart = rawPieceBuffer.subarray(0 , separatorIndex);
+        let bodyBufferEndIndex = rawPieceBuffer.length ;
+
+        if(rawPieceBuffer[bodyBufferEndIndex - 2] === 0x0d && rawPieceBuffer[bodyBufferEndIndex - 1] === 0x0a) {
+            bodyBufferEndIndex -= 2 ;
+        }
+
+        const bodypart = rawPieceBuffer.subarray(separatorIndex + separatorBuffer.length , bodyBufferEndIndex) ;
+
+        return {
+            headerspart , 
+            bodypart ,
+        }
+    }
+
     #files;
-    #queue;
-    // #types;
+    #queue ;
 
     constructor () {
-
-        this.#queue = [] ;
-
-        // const types = [
-        //     'subj' , 'meta'
-        // ];
-
-        // this.#types = types ;
-
         this.#files = new Map();
-
-        // types.forEach(type => {
-        //     this.#files.set(type , new Map()) ;
-        // });
+        this.#queue = [] ;
     }
 }
 
 module.exports  = MultipartCompiler ;
 
 
-async function splitPart (partBuffer) {
-   
-    const separatorstring = '\r\n\r\n' ;
-
-    const separatorBuffer = Buffer.from(separatorstring);
-
-    const separatorIndex = await _findIndex(partBuffer , separatorBuffer);
-
-    if(separatorIndex === -1) throw new Error('incorrect part'.toUpperCase());
-
-    const headers = partBuffer.subarray(0 , separatorIndex);
-    let bodyBufferEndIndex = partBuffer.length ;
-    if(partBuffer[bodyBufferEndIndex - 2] === 0x0d && partBuffer[bodyBufferEndIndex - 1] === 0x0a) {
-        bodyBufferEndIndex -= 2;
-    }
-
-    const body = partBuffer.subarray(separatorIndex + separatorBuffer.length , bodyBufferEndIndex);
-
-    return {
-        headers , 
-        body ,
-    }
-}
-
-async function partTypeMatcherFactory (typeMatcherString  , context , handler) {
+async function initSemanticTypeMatcherFactory (context) {
     
-    return async (typeTestString) => {
+    return async (typeMatcherString , handler) => {
 
-        if(typeTestString === typeMatcherString) {
+        return async (testTypeString) => {
 
-            return async () => {
-    
-                await handler(context);
+            if(testTypeString === typeMatcherString) {
+
+                return async (payload) => {
+
+                    await handler(context , payload) ;
+                }
             }
+
+            return null ;
+          
         }
 
-        return null ;
     }
+
 }
+

@@ -4,70 +4,45 @@ const uploadService = require("../../../../../../../../services/upload-service/u
 const splitBufferByBoundary = require("./utils/split-buffer");
 
 async function handleMultipartFormData(dataBuffer , payload) {
-
-    const multipartcompiler = new MultipartCompiler();
     
     const { rawBoundaryStringLike , res } = payload ;
 
-    if(!rawBoundaryStringLike) {
-        res.end('no boundary header data');
-        console.log('no boundary header data');
-        return ;
-    }
-    
-    
-    const boundaryLike = await extractBoundary(rawBoundaryStringLike);
-    
-    if(boundaryLike === null) {
-        
-        res.end('no boundary');
-        console.log('no boundary');
-        return ;
-    }
+    const boundary = await extractBoundary(rawBoundaryStringLike) ;
 
-    console.log({boundaryLike});
+    console.log({boundary});
 
-    const parts = await splitBufferByBoundary(dataBuffer , Buffer.from(boundaryLike));
+    const parts = await splitBufferByBoundary(dataBuffer , Buffer.from(boundary));
+
+    const multipartCompiller = new MultipartCompiler();
 
     for (const part of parts) {
 
         try {
 
-            await multipartcompiler.gulpOnePart(part);
+            await multipartCompiller.gulpOnePiece(part);
         }
-        catch (e) {
-            // console.log({e});
-            console.log('incorrect part'.toUpperCase());
+        catch (err) {
+
+            console.log({err});
         }
 
     }
-    
-    uploadService ;
-
-    const compiledItems = await multipartcompiler.getCompiledItems();
-
-    for (const [_ , compiledItem] of compiledItems ) {
-    
-        registry.add(compiledItem , uploadService);
-    }
-
-    res.writeHead(200);
-    res.end(JSON.stringify({foo:'bar'}));
-
-    return ;
+    res.writeHead(200 , 'ok' , {
+        'content-type':"application/json" ,
+    });
+    res.end(JSON.stringify({message:'hello from multipart-formdata handler'}));
 }
 
 module.exports = handleMultipartFormData ;
 
-async function handlepart (part) {
+async function extractBoundary (rawBoundaryString) {
     
+    const match = rawBoundaryString.match(/boundary=(----[^$\s;+=-]+)/);
 
+    if (!match) {
+        return null ;
+    }
 
-}
+    return `--${match[1]}` ;
 
-async function extractBoundary(boudaryStringLike) {
-    
-    const match = boudaryStringLike.match(/boundary=(----[^;\s$-+=]+)/);
-
-    return match ? `--${match[1]}` : null ;
 }

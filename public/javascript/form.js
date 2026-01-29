@@ -33,6 +33,14 @@ async function handleFormSubmit(ev) {
                 statuselem.innerHTML = 'DONE';
                 statuselem.style.color = 'red'
             }            
+        } , 
+        'message': {
+            handler(payload) {
+                console.log({payload});
+                const statuselem = document.getElementById('status-display');
+                statuselem.innerHTML = 'DONE';
+                statuselem.style.color = 'red'
+            }
         }
     }
     
@@ -51,7 +59,7 @@ async function handleFormSubmit(ev) {
         
         ev.target.reset();
 
-        handlerLike();
+        handlerLike(jsonResponse);
 
     }
     catch (err) {
