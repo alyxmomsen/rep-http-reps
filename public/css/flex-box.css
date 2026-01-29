@@ -4,6 +4,12 @@
     display: flex;
 }
 
+.flx-align-st {
+    align-items: start;
+}
+
+
+
 .flx-col {
     flex-direction: column;
 }

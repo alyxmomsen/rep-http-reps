@@ -5,6 +5,7 @@
 }
 
 body {
+    padding: 0 0;
     background-color: #27272d;
     color:antiquewhite
 }
@@ -12,11 +13,20 @@ body {
 .wrapper--main {
     width:666px;
     margin: 0 auto;
+    padding: 19px;
+    height: 100vh;
 }
 
 .wrapper {
     padding: 9px;
+    
+}
+
+.bdr {
     border: 1px solid #5b5b5b;
+}
+
+.bdr-r-4 {
     border-radius: 4px;
 }
 

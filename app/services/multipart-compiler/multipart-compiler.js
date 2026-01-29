@@ -37,13 +37,13 @@ class MultipartCompiler {
             if(handler === null) continue ;
             await handler(payload);
         }
-
-        console.log({files:this.#files , queue:this.#queue});
     }
 
-    async #aply () {
-
+    getAssembledFiles () {
+        return this.#files ;
     }
+
+    // utils
 
     async #parseContentDisposition (contentDispositionString) {
 

@@ -4,6 +4,25 @@ const uploadService = require("../../../../../../../../services/upload-service/u
 const splitBufferByBoundary = require("./utils/split-buffer");
 
 async function handleMultipartFormData(dataBuffer , payload) {
+
+    const assmbledFilesMIME = {
+        'video/x-matroska':{
+            handler:() => {
+                console.log('video');
+            }      
+        } ,
+        'audio/mpeg':{
+            handler:() => {
+                console.log();
+            }      
+        } ,
+        'image/jpeg':{
+            handler:() => {
+                console.log();
+            }      
+
+        } ,
+    }
     
     const { rawBoundaryStringLike , res } = payload ;
 
@@ -27,6 +46,20 @@ async function handleMultipartFormData(dataBuffer , payload) {
         }
 
     }
+
+    const assembledFilesMap = multipartCompiller.getAssembledFiles();
+
+    // ---- debug test
+
+        for (const [_ , file] of assembledFilesMap) {
+
+            const {handler} = assmbledFilesMIME[file.contentType]
+            if(handler)handler();
+        }
+
+
+    // -------------
+
     res.writeHead(200 , 'ok' , {
         'content-type':"application/json" ,
     });
