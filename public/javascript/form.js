@@ -4,6 +4,27 @@ window.addEventListener("DOMContentLoaded", async () => {
     
     await initForm();
 
+    // hard code
+
+    const playlist = document.getElementById('playlist');
+    
+    const response = await fetch('/api/get-playlist', { method: 'post' });
+    const jsondata = await response.json();
+
+    const { playlist:_playlist } = jsondata;
+
+    _playlist.forEach(elem => {
+
+        const newElem = document.createElement('div');
+
+        newElem.innerHTML = elem;
+
+        playlist.appendChild(newElem);
+
+    });
+
+    console.log({jsondata});
+
 });
 
 async function initForm() {

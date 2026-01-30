@@ -6,39 +6,58 @@ const { Readable } = require('stream');
 
 class FileManager {
 
-    async uploadFile(filename, body) {
+    async uploadFile(filename, bodyBuffer) {
 
-        return await  new Promise(async (res, rej) => {
-            
-            const testPath = join(this.#uploadDir, filename);
-            const fileexiststatus = await this.#checkIfFileExists(testPath);
-
-            if (fileexiststatus) {
-
-                rej({status:1 , message:`file < ${filename} > is the same`});
-                return;
-            }
-            
-            const readstr = Readable.from(body);
-            const writestr = createWriteStream(testPath);
-            readstr.pipe(writestr);
-            res({ status:0 , message:`file ${filename} uploaded`});
-        });
-
+        // console.log({ filename, body: bodyBuffer });
         
+        const testFilePath = join(this.#uploadDir, filename);
+
+        const { status } = await this.#checkIfFileExists(testFilePath);
+
+        if (status) {
+
+            return { status: 1, message: `file name already in use` };
+        }
+
+        const { status:uploadStatus , message:_message } = await this.#executeUpload(testFilePath, bodyBuffer);
+
+        return { status: 0, message: `filename is probably uploaded` };
     };
 
-    async #checkIfFileExists(filepathLike) {
+    async #executeUpload(filePath, bodyBuffer) {
+        
+        return await new Promise((res , rej) => {
+
+            const readstream = Readable.from(bodyBuffer);
+            const writestream = createWriteStream(filePath);
+    
+            readstream.pipe(writestream);
+    
+            readstream.on('end', () => {
+                res({status:0 , message:`file < ${filePath} > uploaded`});
+            });
+    
+            readstream.on('error', () => {
+                rej({status:1 , message:`file < ${filePath} > error`});
+            });
+
+
+        });
+        
+
+    }
+
+    async #checkIfFileExists(filepath) {
 
         try {
-            const stats = await stat(filepathLike);
+            const stats = await stat(filepath);
+            return {status:1 , message:`file < ${filepath} > is exists`};
+        }
+        catch (e) {
 
-            return 1;
+            return {status:0 ,message:`filename < ${filepath} > is vacantly`}
         }
-        catch (err) {
-            
-            return 0;
-        }
+        
     }
 
     #uploadDir;

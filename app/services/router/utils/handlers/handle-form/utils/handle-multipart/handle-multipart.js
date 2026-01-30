@@ -54,21 +54,17 @@ async function handleMultipartFormData(dataBuffer, payload) {
     
     for (const [_ , bundle] of assembledFilesMap.entries()) {
 
-        try {
-            
-            await registry.add(bundle , filemanager );
-        }
-        catch (err) {
-
-            const { message , code , err:_err } = err;
-
-            console.log({message , code , _err  , err});
-        }
+        await registry.add(bundle);
+        
     }
 
-    const allitems = await registry.getAllItems();
+    const allItems = await registry.getAllItems();
 
-    console.log({allitems});
+    console.log({allItems});
+
+    // const allitems = await registry.getAllItems();
+
+    // console.log({allitems});
 
     // -------------
 

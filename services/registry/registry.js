@@ -1,6 +1,6 @@
 const { randomBytes } = require('crypto');
 const filemanager = require('../upload-service/upload-service');
-const { extname, join, basename ,  } = require('path');
+const { extname, join, basename} = require('path');
 
 class Registy {
 
@@ -10,51 +10,58 @@ class Registy {
 
     async add(payload/* , filemanager */) {
 
-        const { filename, contentType,  title, body } = payload;
-    
+        const { filename , contentType , body , title } = payload;
+
         if (!body.length) {
-            return;
+            throw new Error('no body');
         }
 
         if (!filename) {
-            return;
+            throw new Error('filename is falsy');
         }
 
         const ext = extname(filename);
-        
-        if (ext.length <= 1) {
 
-            return;
+        if (!ext) {
+            throw new Error('filename has no extansion');
         }
 
         if (title.length) {
 
-            const newFilename = title.toString() + ext;
+            const newName = title.toString('utf-8') + ext;
+            const { message , status } = await filemanager.uploadFile(newName , body);
 
-            try {
+            console.log('uploading by title' , {message , status});
 
-                const { status: uploadStatus } = await filemanager.uploadFile(newFilename, body);
-                
-                const newId = randomBytes(32).toString("hex");
-                const item = {
-                    contentType,
-                    originalFilename:filename,
-                    filename:newFilename,
-                }
-
-                this.#items.set(newId , item);
-
-                console.log({ uploadStatus });
+            if (status) {
                 return;
             }
-            catch (err) {
 
-                console.log({err});
-
-            }
-            
-        }
+            const newId = randomBytes(32).toString('hex');
         
+            this.#items.set(newId, {
+                contentType,
+                filename,
+                originalName: filename,
+            });
+
+            return;
+        }
+
+        const { message , status } = await filemanager.uploadFile(filename , body);
+        console.log({status , message});
+            
+        if (status) return;
+
+        const newId = randomBytes(32).toString('hex');
+        
+        this.#items.set(newId, {
+            contentType,
+            filename,
+            originalName: filename,
+        });
+        
+
     }
 
     #items;
