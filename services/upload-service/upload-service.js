@@ -1,84 +1,54 @@
-const { createWriteStream } = require('fs');
+const { createWriteStream, Stats, createReadStream, read } = require('fs');
 const { stat } = require('fs/promises');
+const { createConnection } = require('net');
 const { join } = require('path');
 const { Readable } = require('stream');
 
-require('fs');
+class FileManager {
 
-class UploadService {
+    async uploadFile(filename, body) {
 
-
-    async uploadFile (filename , body) {
-
-
-        try {
-
-            const resolve = await new Promise((res ,rej) => {
-    
-                const readStream = Readable.from(body);
-                const writeStream = createWriteStream(join(this.#rootDir , filename));
-                readStream.pipe(writeStream);
-    
-                let size = 0 ;
-                readStream.on("data"  , async (chunk) => {
-                    size += chunk.length ;
-                });
-    
-                readStream.on("end" , async () => {
-                    
-                    console.log('succesfully uploaded!!' + ` size: ${size} ${filename}`);
-                    res(0); // succesfully uploaded
-                    
-                });
-     
-            }) ;
-        
-            return resolve ;
+        return await  new Promise(async (res, rej) => {
             
-        }
-        catch(e) {
-            console.log({e});
-            return 1 // smt wrong
-        }
-    }
+            const testPath = join(this.#uploadDir, filename);
+            const fileexiststatus = await this.#checkIfFileExists(testPath);
 
-    async checkIfExist (filenameString) {
+            if (fileexiststatus) {
 
-        const errors = {
-            'ENOENT': () => {
-                console.log('\x1b[32mfile is note exist\x1b[0m'.toString());
-            } ,
-        }
-
-        try {
-            const stats = await stat(join(this.#rootDir , filenameString));
-            // console.log({stats});
-            
-        }
-        catch (e) {
-
-            const handler = errors[e.code] ;
-
-            if(handler) handler();
-
-            if(e.code === 'ENOENT') {
-                return 0 ; // file is note exist
+                rej({status:1 , message:`file < ${filename} > is the same`});
+                return;
             }
+            
+            const readstr = Readable.from(body);
+            const writestr = createWriteStream(testPath);
+            readstr.pipe(writestr);
+            res({ status:0 , message:`file ${filename} uploaded`});
+        });
 
-            console.log({});
+        
+    };
+
+    async #checkIfFileExists(filepathLike) {
+
+        try {
+            const stats = await stat(filepathLike);
+
+            return 1;
         }
-
-        return 1 ; // file is exist
-
+        catch (err) {
+            
+            return 0;
+        }
     }
 
-    #rootDir;
+    #uploadDir;
 
-    constructor () {
-        this.#rootDir = join('.' , 'uploads');
+    constructor(path) {
+
+        this.#uploadDir = path; 
     }
 }
 
-const uploadService = new UploadService ;
 
-module.exports = uploadService ;
+const filemanager = new FileManager(join('.' , 'uploads')); 
+module.exports = filemanager ;

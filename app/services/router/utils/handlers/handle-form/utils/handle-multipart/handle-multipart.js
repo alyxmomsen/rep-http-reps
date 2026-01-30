@@ -1,9 +1,11 @@
 const MultipartCompiler = require("../../../../../../multipart-compiler/multipart-compiler");
 const registry = require("../../../../../../../../services/registry/registry");
-const uploadService = require("../../../../../../../../services/upload-service/upload-service");
 const splitBufferByBoundary = require("./utils/split-buffer");
+const filemanager = require("../../../../../../../../services/upload-service/upload-service");
 
-async function handleMultipartFormData(dataBuffer , payload) {
+async function handleMultipartFormData(dataBuffer, payload) {
+    
+
 
     const assmbledFilesMIME = {
         'video/x-matroska':{
@@ -49,17 +51,24 @@ async function handleMultipartFormData(dataBuffer , payload) {
 
     const assembledFilesMap = multipartCompiller.getAssembledFiles();
 
-    // ---- debug test
-
     
+    for (const [_ , bundle] of assembledFilesMap.entries()) {
 
-    for (const value of assembledFilesMap.entries()) {
+        try {
+            
+            await registry.add(bundle , filemanager );
+        }
+        catch (err) {
 
-        
+            const { message , code , err:_err } = err;
+
+            console.log({message , code , _err  , err});
+        }
     }
 
-    
+    const allitems = await registry.getAllItems();
 
+    console.log({allitems});
 
     // -------------
 

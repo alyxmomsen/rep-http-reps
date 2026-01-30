@@ -1,75 +1,65 @@
 const { randomBytes } = require('crypto');
-const uploadService = require('../upload-service/upload-service');
+const filemanager = require('../upload-service/upload-service');
+const { extname, join, basename ,  } = require('path');
 
 class Registy {
 
-    async add(payload , uploadservice) {
+    async getAllItems() {
+        return this.#items;
+    }
 
-        const {
-            semantic, body,
-            filename,contentType,
-            title , description
-        } = payload ;
+    async add(payload/* , filemanager */) {
 
-
-        if(!filename) {
-            console.log('filename is not given: ' ,{filename , payload});
-            return ;
+        const { filename, contentType,  title, body } = payload;
+    
+        if (!body.length) {
+            return;
         }
 
-        const newFilename = filename ;
+        if (!filename) {
+            return;
+        }
 
+        const ext = extname(filename);
+        
+        if (ext.length <= 1) {
 
-        // check if the same is exist
+            return;
+        }
 
-        for (const [_ , bundle] of this.#items) {
+        if (title.length) {
 
-            const _filename = bundle.filename ;
+            const newFilename = title.toString() + ext;
 
-            console.log({_filename , filename});
+            try {
 
-            if(filename === _filename) {
+                const { status: uploadStatus } = await filemanager.uploadFile(newFilename, body);
+                
+                const newId = randomBytes(32).toString("hex");
+                const item = {
+                    contentType,
+                    originalFilename:filename,
+                    filename:newFilename,
+                }
 
-                console.log(`\x1b[31mfile already exists as \x1b[33m${_filename}`);
-                return ;
+                this.#items.set(newId , item);
+
+                console.log({ uploadStatus });
+                return;
             }
+            catch (err) {
 
+                console.log({err});
+
+            }
+            
         }
-
-        // ------------------------------------------------
-
-        const status = await uploadService.checkIfExist(newFilename);
-
-        console.log({checkfilestatus:status});
-        if(status === 1) return; 
         
-        // ---------------------------------------------------
-
-        const uploadstatus = await uploadService.uploadFile(newFilename , body);
-        
-        if(uploadstatus === 1) return ;
-
-        // ---------------------------------------------------
-
-        const registryItemBundle = {
-            semantic ,
-            filename , 
-            contentType, 
-            title: title || null ,
-            description:description || null, 
-        }
-
-        this.#items.set(
-            randomBytes(32).toString("hex") , 
-            registryItemBundle ,
-        );
-
-        console.log({uploadstatus ,registryItemBundle });
-
     }
 
     #items;
-    constructor () {
+
+    constructor() {
         this.#items = new Map();
     }
 }
