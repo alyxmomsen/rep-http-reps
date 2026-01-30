@@ -51,11 +51,14 @@ async function handleMultipartFormData(dataBuffer , payload) {
 
     // ---- debug test
 
-        for (const [_ , file] of assembledFilesMap) {
+    
 
-            const {handler} = assmbledFilesMIME[file.contentType]
-            if(handler)handler();
-        }
+    for (const value of assembledFilesMap.entries()) {
+
+        
+    }
+
+    
 
 
     // -------------
