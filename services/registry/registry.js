@@ -41,8 +41,8 @@ class Registy {
         
             this.#items.set(newId, {
                 contentType,
-                filename,
-                originalName: filename,
+                filename:newName,
+                originalName:filename ,
             });
 
             return;

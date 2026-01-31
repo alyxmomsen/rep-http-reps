@@ -3,13 +3,27 @@ const { join } = require("path");
 const handleForm = require("../router/utils/handlers/handle-form/handle-form");
 const Router = require("../router/router");
 const processPublicRequest = require("../router/utils/handlers/process-public/process-public-request");
-const getPlaylist = require("../router/utils/handlers/get-playlist/get-playlist");
+const getMediaFilesMetaData = require("../router/utils/handlers/get-playlist/get-media-data");
+const { readFileSync, createReadStream } = require("fs");
 
 const router = new Router();
 
-router.post('/api/get-playlist', (req, res) => {
+router.get('/api/video-stream/:id' , (req  , res) => {
+
+    console.log('media content reauest');
+
+    res.writeHead(200 , 'ok' , {
+        'content-type':'video/mkv'
+    });
+
+    createReadStream(join('.' , 'uploads' , '7777777777777777777.mkv')).pipe(res) ;
+
     
-    getPlaylist(req, res);
+});
+
+router.post('/api/get-media-data', async (req, res) => {
+    
+    await getMediaFilesMetaData(req, res);
     
 });
 

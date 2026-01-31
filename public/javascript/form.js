@@ -1,94 +1,123 @@
 
 
 window.addEventListener("DOMContentLoaded", async () => {
+
+    await formhandler ();
+
     
-    await initForm();
-
-    // hard code
-
-    const playlist = document.getElementById('playlist');
-    
-    const response = await fetch('/api/get-playlist', { method: 'post' });
-    const jsondata = await response.json();
-
-    const { playlist:_playlist } = jsondata;
-
-    _playlist.forEach(elem => {
-
-        const newElem = document.createElement('div');
-
-        newElem.innerHTML = elem;
-
-        playlist.appendChild(newElem);
-
-    });
-
-    console.log({jsondata});
 
 });
 
-async function initForm() {
+async function getVideoStreamById (id) {
+    const body = document.body 
+    const videoHTML  = document.createElement('video');
+    videoHTML.style.width = '300px';
+    videoHTML.style.position = 'absolute';
+    videoHTML.style.top = 0;
+    videoHTML.style.right = 0;
+    videoHTML.style.backgroundColor = 'black';
     
-    const formelement = document.getElementById('form');
 
-    if (!formelement || formelement instanceof HTMLFormElement === false) return;
-    
-    formelement.addEventListener('submit', handleFormSubmit);
-    
+    videoHTML.controls = true ;
+
+    body.appendChild(videoHTML);
+
+
+    videoHTML.src = `/api/video-stream/${id}`;
+    videoHTML.load();
+
 }
 
-async function handleFormSubmit(ev) {
+async function updatePlayList () {
     
-    if (ev instanceof SubmitEvent === false) return;
-
-    ev.preventDefault();
+    const playlisContainerHTML = document.getElementById('playlist');
+    // playlisContainerHTML = 'updating...' ;
     
+    const response = await fetch('/api/get-media-data' , {method:'post'});
 
-    const responseResolver = {
-        'bar': {
-            handler() {
-                // const divelement = document.createElement('div')
+    const responseJSON = await response.json();
 
-                // divelement.
-                const statuselem = document.getElementById('status-display');
-                statuselem.innerHTML = 'DONE';
-                statuselem.style.color = 'red'
-            }            
-        } , 
-        'message': {
-            handler(payload) {
-                console.log({payload});
-                const statuselem = document.getElementById('status-display');
-                statuselem.innerHTML = 'DONE';
-                statuselem.style.color = 'red'
-            }
+    const { message , payload , status: customStatus } = responseJSON ;
+
+    console.log({responseJSON});
+
+    const {audio, video, images} = payload ;
+
+    await handleMediaContent('video' , video );
+    await handleMediaContent('audio' , audio);
+    await handleMediaContent('images' , images);
+
+}
+
+async function formhandler (params) {
+
+    const playlisContainerHTML = document.getElementById('playlist');
+    
+    await updatePlayList();
+
+    const formhtml  = document.getElementById('form');
+    formhtml.onsubmit = async (ev) => {
+
+        ev.preventDefault();
+
+        
+        try {
+            
+            playlisContainerHTML.innerHTML = 'update...' ;
+            const form = new FormData(formhtml);
+            const response = await fetch('/api/handle-form' , {method:'post' , body:form});
+
+            const responseJSON = await response.json();
+
+            const { message , payload , status: customStatus } = responseJSON ;
+
+            console.log({responseJSON});
+
+            const {audio, video, images} = payload ;
+            playlisContainerHTML.innerHTML = '' ;
+            await handleMediaContent('video' , video );
+            await handleMediaContent('audio' , audio);
+            await handleMediaContent('images' , images);
+        }
+        catch (e) {
+            console.log('smth wrong');
         }
     }
+}
+
+async function  handleMediaContent (title , dataArray) {
+
+    console.log({dataArray});
+
+    const playlisTargetElement = document.getElementById('playlist');
     
-    try {
-        
-        const formdata = new FormData(ev.target);
-        const response = await fetch('/api/handle-form', { method: "post", body: formdata });
-        
-        const jsonResponse = await response.json();
-
-        console.log({ jsonResponse });
-        
-        const code = jsonResponse['foo'];
-
-        const { handler: handlerLike } = responseResolver[code];
-        
-        ev.target.reset();
-
-        handlerLike(jsonResponse);
-
-    }
-    catch (err) {
-        
-        console.log({err});
-    }
-
+    const mediacontentwrapper =  document.createElement('div');
+    mediacontentwrapper.classList.add(['wrapper',  'bdr', 'bdr-r-4']);
     
-    console.log(formdata  ,ev.target);
+    const header = document.createElement('h3');
+    header.innerHTML = title ;
+    
+    const contentContainer = document.createElement('div');
+    contentContainer.classList.add(['wrapper',  'bdr', 'bdr-r-4']);
+    
+    mediacontentwrapper.appendChild(header);
+    mediacontentwrapper.appendChild(contentContainer);
 
+    dataArray.forEach(elem => {
+
+        const item = document.createElement('div');
+        item.setAttribute('x-item-id' , elem.id);
+
+        item.onclick = async (ev) => {
+            const mediaid = ev.target.getAttribute('x-item-id') ;
+            console.log(mediaid);
+            getVideoStreamById(mediaid);
+        }
+
+        item.innerHTML = elem.filename ;
+
+        contentContainer.appendChild(item);
+    });
+
+    playlisTargetElement.appendChild(mediacontentwrapper);
 }
