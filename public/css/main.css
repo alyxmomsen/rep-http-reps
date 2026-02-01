@@ -2,7 +2,29 @@
     
 }
 
+:root {
+    --color:#ffe4c4 ;
+    --backgroundColor:#1f1f2c;
+    --flex-gap:9px ;
+}
+
 body {
-    background-color: #1f1f2c;
-    color: #ffe4c4;
+    background-color: var(--backgroundColor);
+    color:var(--color);
+}
+
+.wrapper {
+    padding:9px ;
+}
+
+.brd--dft {
+    border:1px solid var(--color)
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-gap {
+    gap:var(--flex-gap);
 }

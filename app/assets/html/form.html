@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="wrapper--main">
-        <div>
+        <div class="wrapper brd--dft">
             <form action="/api/handle-form" method="post" enctype="multipart/form-data" id="form--main">
                 <input placeholder="title" type="text" name="meta.title-1.title--video-1" id="">
                 <input placeholder="title" type="text" name="meta.title-2.title--audio-1" id="">
@@ -21,12 +21,14 @@
                 <input type="file" name="subj.video-1.video--" accept=".mkv, mp4" id="">
                 <input type="file" name="subj.audio-1.audio--" accept=".mp3 , .wav" id="">
                 <input type="file" name="subj.image-1.image--" accept=".png , .jpeg" id="">
-                <input type="submit" value="go">
+                <div id="container--smt-btn" class="wrapper flex flx-gap">
+                    <input type="submit" value="go">
+                    <div id="status" class="wrapper brd--dft"></div>
+                    <div id="not-uploaded-list"></div>
+                </div>
             </form>
         </div>
-        <div id="status">
-            
-        </div>
+        <div id="playlist" class="wrapper brd--dft"></div>
     </div>
 </body>
 </html>

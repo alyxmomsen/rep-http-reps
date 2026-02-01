@@ -4,13 +4,19 @@ const { resourceLimits } = require("node:worker_threads");
 const processPublicFile = require("../../utils/public-files-manage/public-files-manager");
 const { readFile } = require("node:fs/promises");
 const handleForm = require("./services/handlers/handle-form/handle-form");
+const updatePlaylist = require("./services/handlers/update-playlilet-handler");
 
 const router = new Router();
+
+router.post('/api/get-playlist' , async (req ,res) => {
+
+    updatePlaylist(req , res);
+
+});
 
 router.post('/api/handle-form' , async (req , res) => {
     handleForm(req , res);
 });
-
 
 router.get('/form' , async (req , res) => {
 

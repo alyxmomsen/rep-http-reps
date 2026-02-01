@@ -57,7 +57,6 @@ async function multipartDataHandler (formdatabuffer , payload) {
     const notUploaded = [] ;
     for (const file of files) {
 
-
         const { filename } = file ;
         const uploadStatus = await registry.add(file);
         if(uploadStatus) {
