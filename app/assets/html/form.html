@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/css/main">
+    <script src="/public/javascript/main"></script>
+    <script src="/public/javascript/form"></script>
+    <title>Document</title>
+</head>
+<body>
+    <div class="wrapper--main">
+        <div>
+            <form action="/api/handle-form" method="post" enctype="multipart/form-data" id="form--main">
+                <input placeholder="title" type="text" name="meta.title-1.title--video-1" id="">
+                <input placeholder="title" type="text" name="meta.title-2.title--audio-1" id="">
+                <input placeholder="title" type="text" name="meta.title-3.title--image-1" id="">
+                <input placeholder="title" type="text" name="meta.description-1.description--video-1" id="">
+                <input placeholder="title" type="text" name="meta.description-2.description--audio-1" id="">
+                <input placeholder="title" type="text" name="meta.description-3.description--image-1" id="">
+                <input type="file" name="subj.video-1.video--" accept=".mkv, mp4" id="">
+                <input type="file" name="subj.audio-1.audio--" accept=".mp3 , .wav" id="">
+                <input type="file" name="subj.image-1.image--" accept=".png , .jpeg" id="">
+                <input type="submit" value="go">
+            </form>
+        </div>
+        <div id="status">
+            
+        </div>
+    </div>
+</body>
+</html>
