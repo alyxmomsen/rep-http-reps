@@ -1,0 +1,9 @@
+
+class Registry {
+
+    
+
+    constructor () {
+
+    }
+}
