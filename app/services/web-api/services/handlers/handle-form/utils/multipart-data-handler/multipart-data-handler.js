@@ -53,12 +53,25 @@ async function multipartDataHandler (formdatabuffer , payload) {
 
     const files = multipartCompiler.getAssembledDataArray();
 
+    const uploadedFiles = [];
+    const notUploaded = [] ;
     for (const file of files) {
 
-        registry.add(file);
+
+        const { filename } = file ;
+        const uploadStatus = await registry.add(file);
+        if(uploadStatus) {
+            notUploaded.push(filename);
+            continue ;
+        }
+
+        uploadedFiles.push(filename);
     }
 
-    res.end(JSON.stringify({payload:'nothing'}));
+    res.end(JSON.stringify({payload:{
+        uploaded:uploadedFiles ,
+        notUploaded ,
+    }}));
 }
 
 module.exports = multipartDataHandler ;

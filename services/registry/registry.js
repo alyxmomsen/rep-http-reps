@@ -32,9 +32,9 @@ class Registry {
 
         const uploadstatus = await filemanager.upload(filename , body);
 
-        // if(uploadstatus) {
-        //     return 2 ;
-        // }
+        if(uploadstatus) {
+            return 2 ;
+        }
 
         return 0 ;
 
