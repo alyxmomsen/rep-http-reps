@@ -1,4 +1,6 @@
+const registry = require("../../../../../../../../services/registry/registry");
 const findIndexInBuffer = require("../../../../../../../../utils/find-index-in-buffer");
+const MultipartDataCompiler = require("./multipart-data-compiler/compiler");
 
 async function multipartDataHandler (formdatabuffer , payload) {
 
@@ -14,12 +16,13 @@ async function multipartDataHandler (formdatabuffer , payload) {
 
     console.log(`multipart/form-data handler` , {formdatabuffer , contentTypeHeaderMetaData});
 
+    const multipartCompiler = new MultipartDataCompiler();
+
     for (const formdataPart of formdataparts) {
 
         try {
             const { body , headers:rawHeadersPart } = splitFormDataPart(formdataPart);
             
-
             const formdataHeaders = parseHeaders(rawHeadersPart.toString('utf-8'));
 
             const contentDisposition = formdataHeaders['content-disposition'] || null ;
@@ -39,14 +42,20 @@ async function multipartDataHandler (formdatabuffer , payload) {
                     target , type ,
                 }
             }
-
-            console.log({bundle});
             
+            multipartCompiler.gulpOnePiece(bundle);
         }
         catch (e) {
 
             console.log({e});
         }
+    }
+
+    const files = multipartCompiler.getAssembledDataArray();
+
+    for (const file of files) {
+
+        registry.add(file);
     }
 
     res.end(JSON.stringify({payload:'nothing'}));
