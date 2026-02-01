@@ -1,16 +1,14 @@
 const http = require('http');
-const { Router } = require('./router/router');
+const router = require('./app/services/web-api/web-api');
 
-const router = new Router();
+const httpserver = http.createServer(async (req  , res) => {
 
-const server = http.createServer((req , res) => {
-
-    router.handleRequest(req , res);
-
+    await router.handleRequest(req , res);
 });
 
-const port = 3333;
-const host = '0.0.0.0';
-server.listen(port, host , () => {
+const port = 3333 ;
+const host = '127.0.0.1';
+
+httpserver.listen(port , host, () => {
     console.log({port , host});
 });
