@@ -3,6 +3,8 @@ class Router {
 
     async handleRequest(req , res) {
 
+        const { url:fullURL , method} = req ;
+
         const {url , rawQueryStringLike} = this.#splitURL(fullURL);
 
         for (const [_ , routeBundle] of methodRoutes) {
@@ -37,6 +39,14 @@ class Router {
         }
     }
 
+    get(template , ...handlers) {
+        this.#addRoute(template , "GET" , handlers);
+    }
+
+    post(template , ...handlers) {
+        this.#addRoute(template , "POST" , handlers);
+    }
+
     use (...middleware) {
         middleware.forEach(mw => {
             this.#middleware.push(mw);
@@ -56,6 +66,8 @@ class Router {
 
     #addRoute (template , method , handlers) {
 
+        console.log({template , method , handlers});
+
         const colorizeConsole = {
             RED:'\x1b[31m' ,
             GREEN:'\x1b[32m' ,
@@ -63,13 +75,14 @@ class Router {
             DEF:'\x1b[0m' ,
         }
 
-        const { url:fullURL} = req ;
-
         const _method = method.toUpperCase(method);
+
+        console.log({_method});
 
         const methodRoutes = this.#routes.get(_method);
 
         if(!methodRoutes) {
+
             throw new Error(`this method < ${_method} > is not accepted`);
         }
 
@@ -86,6 +99,10 @@ class Router {
     }
 
     #compileRouteBundle (template , handlers) {
+        const keys = [];
+        const regexTemplate = template.replace(/:([^\/]+)/g  , (_ , key) => {
+
+        });
 
         return {
             keys ,
@@ -137,6 +154,11 @@ class Router {
         const acceptedMethods = [
             'get' , 'post'
         ] ;
+
+        acceptedMethods.forEach(_method => {
+            const method = _method.toUpperCase();
+            this.#routes.set(method , new Map());
+        });
     }
 }
 

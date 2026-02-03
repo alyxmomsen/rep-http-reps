@@ -1,6 +1,7 @@
-const http = require('http')
+const http = require('http');
+const router = require('./app/services/web-api/api');
 const httpserver = http.createServer((req , res) => {
-
+    router.handleRequest(req ,res);
 });
 
 const port = 3333;
