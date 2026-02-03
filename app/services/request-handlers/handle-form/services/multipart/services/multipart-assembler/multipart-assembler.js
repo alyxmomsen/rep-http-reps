@@ -1,45 +1,59 @@
 const findIndexInBuffer = require("../../../../../../../../utils/find-index-in-buffer");
+const metaTypeHandler = require("./utils/meta-semanthic-type-handler");
+const subjectTypeHandler = require("./utils/subject-semanthic-type-handler");
 
 class MultipartAssembler {
 
-    gulpOnePiece (piece) {  
-        
-        const {headers:headersPart , body} = splitPiece(piece);
-
-        const headers = this.#parseHeaders(headersPart.toString('utf-8'));
-
-        const contentDisposition = headers['content-disposition'] || null ;
-        const contentType = headers['content-Type'] || null ;
-
-        if(!contentDisposition) {
-            throw new Error(`no content disoposition`);
+    getAssembledItemsArr () {
+     
+        const arr = [];
+        for (const [semanticId , bundle] of this.#files.entries()) {
+            
+            arr.push(bundle);
         }
 
-        const { name: nameAttr , filename } = this.#parseContentDisposition(contentDisposition) ;
+        return arr ;
+    }
 
-        const { type:semanticType , id , name , target } = this.#parseNameAttribute(nameAttr);
+    gulpOnePiece (payload) {  
 
+        console.log('gulp one: ' , {payload});
+        
+        const {
+            body,
+            semantic,
+            filename,
+            contentType,
+        } = payload ;
+
+        const { 
+            type:semanticType,
+            id:semanthicId,
+            name:semanthicName,
+            target:semanthicTarget,
+        } = semantic ;
+
+        
         // assemble
-
+        
         const matcherContext = {
             files:this.#files , 
             queue:this.#queue , 
             payload:{
-                type:semanticType, filename, 
+                semantic ,
+                /* type:semanticType, */ filename, 
                 contentType, 
-                id, body, 
-                name, target, 
+                /* id:semanthicId, */ body, 
+                /* name:semanthicName, target:semanthicTarget,  */
             },
         }
-
+        
+        // console.log({payload , matcherContext});
         const factory = createMatcerFactory(matcherContext);
 
         const matchers = [
-            factory('subject' , (context) => {
-                const {  } = context ;
-                console.log('subject' ,{context});
-            }) ,
-            factory('meta' , (context) => {console.log('meta type')}) ,
+            factory('subject' , subjectTypeHandler) ,
+            factory('meta' , metaTypeHandler) ,
         ] ;
 
         for (const matcher of matchers) {
@@ -49,46 +63,6 @@ class MultipartAssembler {
             handler();
         }
     }
-
-    #parseNameAttribute (nameAttr) {
-
-        const [subj , target] = nameAttr.split('--') ;
-
-        const [type , id , name] = subj.split('.') ;
-
-        return {
-            type  , id ,
-            name , target,
-        }
-    }
-
-    #parseContentDisposition (contentDisposition) {
-
-        const namematch = contentDisposition.match(/name="([^"]+)"/);
-        const filenamematch = contentDisposition.match(/filename="([^"]+)"/);
-
-        return {
-            name: namematch ? namematch[1] : null ,
-            filename: filenamematch ? filenamematch[1] : null ,
-        }
-    }
-
-    #parseHeaders (headersString) {
-
-        const headers = {} ;
-
-        const headersRows = headersString.split('\r\n');
-
-        headersRows.forEach(row => {
-            const [key , value] = row.split(': ');
-            if(key && value) {
-                headers[key.toLowerCase()] = value ;
-            }
-        });
-
-        return headers ;
-
-    } 
 
     #files;
     #queue;
@@ -102,29 +76,6 @@ class MultipartAssembler {
 module.exports = MultipartAssembler ;
 
 // utils
-
-function splitPiece (piece) {
-
-    const separator = Buffer.from('\r\n\r\n') ;
-
-    const index = findIndexInBuffer(piece  ,separator);
-
-    if(index === -1) {
-        throw new Error('incorrect data part');
-    }
-
-    const headers = piece.subarray(0 , index);
-    let bodyEndBufferIndex = piece.length ;
-    if(piece[bodyEndBufferIndex - 2] === 0x0d && piece[bodyEndBufferIndex - 1] === 0x0a) {
-        bodyEndBufferIndex -= 2 ;
-    }
-    const body = piece.subarray(index + separator.length , bodyEndBufferIndex);
-    
-    return {
-        headers ,
-        body ,
-    }
-}
 
 function createMatcerFactory (context) {
     

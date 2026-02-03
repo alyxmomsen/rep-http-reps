@@ -13,45 +13,41 @@ async function handleForm (req , res) {
 
     const [contentType , contentTypeAttr] = contentTypeHeader.split('; ');
 
-    console.log({contentType: contentTypeHeader});
-
-    res.end(JSON.stringify({hello:'there'}));
-
-    const factory = await contentTypeMatcherFactory(req ,res , {contentType});
+    const factory = await contentTypeMatcherFactory({contentType});
 
     const matchers = [
-        factory('multipart/form-data' , {contentTypeAttr} , multipartHanldler),
-        factory('application/x-www-form-urlencoded' , {} , (req , res , payload) => {
+        await factory('multipart/form-data' , {contentTypeAttr} , multipartHanldler),
+        await factory('application/x-www-form-urlencoded' , {} , async (req , res , payload) => {
             console.log('application/x-www-form-urlencoded' , {payload});
         }),
-        factory('text/plain' , {} , (req , res , payload) => {
+        await factory('text/plain' , {} , async (req , res , payload) => {
             console.log('text/plain' , {payload});
         }),
     ] ;
 
     for (const matcher of matchers) {
-        const handler = matcher();
+        const handler = await matcher();
         if(!handler) continue ;
-        handler();
+        await handler(req ,res);
+        return ;
     }
-
 }
 
 module.exports = handleForm ;
 
-async function contentTypeMatcherFactory(req ,res , context) {
+async function contentTypeMatcherFactory(context) {
 
     const { contentType } = context ;
     
-    return (testContentType , payload , handler) => {
+    return async (testContentType , payload , handler) => {
 
-        return () => {
+        return async () => {
 
             if(testContentType === contentType ) {
     
-                return async () => {
+                return async (req , res) => {
                     
-                    handler(req ,res , payload);
+                    await handler(req ,res , payload);
                 }
             }
     

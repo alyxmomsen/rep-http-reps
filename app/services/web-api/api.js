@@ -11,7 +11,7 @@ router.get('/public/:type/:id' , async (req ,res) => {
 });
 
 router.post('/api/handle-form' , async (req , res) => {
-    handleForm(req , res);
+    await handleForm(req , res);
 });
 
 router.get('/form' , async (req , res) => {
