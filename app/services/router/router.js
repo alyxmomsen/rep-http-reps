@@ -3,9 +3,13 @@ class Router {
 
     async handleRequest(req , res) {
 
-        const { url:fullURL , method} = req ;
+        const { url:fullURL , method:_method} = req ;
 
         const {url , rawQueryStringLike} = this.#splitURL(fullURL);
+
+        const method = _method.toUpperCase();
+
+        const methodRoutes = this.#routes.get(method);
 
         for (const [_ , routeBundle] of methodRoutes) {
 
@@ -33,10 +37,13 @@ class Router {
 
             // ------------------------------
 
-            await this.#executeMiddleware(req ,res , [...this.#middleware , routeBundle.middleware]);
+            await this.#executeMiddleware(req ,res , [...this.#middleware , ...routeBundle.middleware]);
 
-            routeBundle.handler(req , res);
+            await routeBundle.handler(req , res);
+            return ;
         }
+
+        res.end();
     }
 
     get(template , ...handlers) {
@@ -66,7 +73,7 @@ class Router {
 
     #addRoute (template , method , handlers) {
 
-        console.log({template , method , handlers});
+        console.log('add new route...');
 
         const colorizeConsole = {
             RED:'\x1b[31m' ,
@@ -76,8 +83,6 @@ class Router {
         }
 
         const _method = method.toUpperCase(method);
-
-        console.log({_method});
 
         const methodRoutes = this.#routes.get(_method);
 
@@ -94,22 +99,23 @@ class Router {
 
         methodRoutes.set(template , routeBundle);
         
-        console.log(`${colorizeConsole.ORANGE}route ${_method} ${routeBundle.originalTemplate} just added${colorizeConsole.DEF}`);
+        console.log(`route ${_method} ${routeBundle.originalTemplate} just added`);
 
     }
 
     #compileRouteBundle (template , handlers) {
         const keys = [];
         const regexTemplate = template.replace(/:([^\/]+)/g  , (_ , key) => {
-
+            keys.push(key);
+            return '([^\/]+)';
         });
 
         return {
             keys ,
-            handler , 
-            middleware ,
-            originalTemplate ,
-
+            handler:handlers[handlers.length - 1] , 
+            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] ,
+            originalTemplate:template ,
+            regex:new RegExp(`^${regexTemplate}$`),
         }
     }
 
