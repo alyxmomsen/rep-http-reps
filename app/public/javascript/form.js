@@ -13,6 +13,8 @@ async function handleFormSubmit(ev , ...params) {
     
     ev.preventDefault();
 
+    const uploadStatusHTML = document.getElementById('container--upload-status');
+
     const formElem = ev.currentTarget;
 
     const formdata = new FormData(formElem);
@@ -26,6 +28,10 @@ async function handleFormSubmit(ev , ...params) {
         const jsonResponse = await response.json();
 
         console.log({jsonResponse});
+
+        const { message , uploaded} = jsonResponse ;
+
+        uploadStatusHTML.innerHTML = `${uploaded.map(item => `<li>${item.filename}</li>` ).join('\r\n')}`;
     }
     catch (e) {
         console.log({e});
