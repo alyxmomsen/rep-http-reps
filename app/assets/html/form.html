@@ -3,11 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/public/javascript/main"></script>
+    <script src="/public/javascript/form"></script>
+    <link rel="stylesheet" href="/public/css/main">
+    <link rel="stylesheet" href="/public/css/form">
     <title>Document</title>
 </head>
 <body>
     <div>
-        
+        <div>
+            <!-- <form id="form--main" action="" method="post" enctype="multipart/form-data"> -->
+            <!-- <form id="form--main" action="" method="post" enctype="text/plain"> -->
+            <form id="form--main" action="" method="post" enctype="application/x-www-form-urlencoded">
+                <div>
+                    <input placeholder="title" id="" type="text" name="meta.title-1.title--video-1">
+                    <input placeholder="description" id="" type="text" name="meta.description-1.description--video-1">
+                    <input id="" type="file" name="subject.video-1.video--*" accept=".mkv , .mp4">
+                </div>
+                <div>
+                    <input placeholder="title" id="" type="text" name="meta.title-2.title--img-1">
+                    <input placeholder="description" id="" type="text" name="meta.description-2.description--img-1">
+                    <input id="" type="file" name="subject.img-1.video--*" accept=".mkv , .mp4">
+                </div>
+                <div>
+                    <input placeholder="title" id="" type="text" name="meta.title-3.title--audio-1">
+                    <input placeholder="description" id="" type="text" name="meta.description-3.description--audio-1">
+                    <input id="" type="file" name="subject.audio-1.video--*" accept=".mkv , .mp4">
+                </div>
+                <div>
+                    <div>
+                        <input type="submit" value="submit">
+                    </div>
+                    <div id="container--upload-status"></div>
+                </div>
+            </form>
+        </div>
+        <div id="container--video"></div>
+        <div id="container--playlist"></div>
+        <!-- <div></div> -->
     </div>
 </body>
 </html>

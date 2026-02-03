@@ -43,6 +43,7 @@ class Router {
             return ;
         }
 
+        res.writeHead(404);
         res.end();
     }
 
