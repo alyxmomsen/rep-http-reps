@@ -1,4 +1,7 @@
+const database = require("../../../../../../services/database");
+const FormDataCompiler = require("../../../../../../services/form-data-compiler");
 const findIndexInBuffer = require("../../../../../../utils/find-index-in-buffer");
+const nameAttrParser = require("./utils/name-attr-parser");
 
 async function multipartTypeHandler(req ,res , payload) {
     
@@ -23,6 +26,8 @@ async function multipartTypeHandler(req ,res , payload) {
         
         const formdataPartsArr = splitFormData(wholeBuffer , Buffer.from(boundary) );
 
+        const formdatacompiler = new FormDataCompiler();
+
         for (const part of formdataPartsArr) {
 
             try {
@@ -34,33 +39,57 @@ async function multipartTypeHandler(req ,res , payload) {
                 const contentType = headers['content-type'] || null ;
                 const contentDisposition = headers['content-disposition'] || null ;
 
-                const { name , filename } = parseContentDisposition(contentDisposition);
+                const { name:nameAttr , filename } = parseContentDisposition(contentDisposition);
 
                 if (!contentDisposition) {
                     throw new Error('no content-disposition in data-part header'.toUpperCase());
                 }
-
-                console.log({name , filename , contentType , bodyPart});
-
                 
+                const semantic = nameAttrParser(nameAttr);
+
+                formdatacompiler.gulpPart({contentType , body:bodyPart , filename , semantic});
 
             }
             catch (e) {
                 console.log({e});
             }
 
+        }
+
+        const files = formdatacompiler.getFiles();
+
+        for (const [key , group] of files.entries()) {
+
+            const {tablename , fields} = group ;
+
+            database.add(tablename , fields);
+        }
+
+        console.log('database get items:' , {database:database.getTables()});
+
+        const databaseTables = database.getTables();
+
+        const fileTable = databaseTables.get('file');
+        for (const [key , item] of fileTable.entries()) {
+
+
+            console.log({key , item});
 
         }
 
+
+
+        res.end(JSON.stringify({foo:'bar'}));
+        return ;
+
     });
 
-    res.end(JSON.stringify({foo:'bar'}));
-    return ;
 }
 
 module.exports = multipartTypeHandler ;
 
 // utils
+
 
 function parseContentDisposition (contentDisposition) {
 
