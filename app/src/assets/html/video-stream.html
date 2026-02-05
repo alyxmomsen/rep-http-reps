@@ -10,19 +10,25 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="wrapper--main">
+    <div class="wrapper--main rel">
         <div class="menu--main">
             <a href="/form">form</a>
             <a href="/video-stream">video-stream</a>
         </div>
-        <div class="container flex flex-row flex-gap--1">
+        <div class="container flex flex-row flex-gap--1 flex--jtf-btw">
             <div class="container--video rel">
                 <div id="preload-screen" class="abs"></div>
                 <video id="video--html" controls class=""></video>
             </div>
-            <div id="playlist--video" class="wrapper">
-                no items
+            <div id="playlist--video--container">
+                <div id="playlist--video" class="wrapper">
+                    no items
+                </div>
+                <button>+</button>
             </div>
+        </div>
+        <div id="side-bar" class="abs-left-top">
+            sidebar
         </div>
     </div>
 </body>

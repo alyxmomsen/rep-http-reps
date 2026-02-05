@@ -1,10 +1,24 @@
 window.addEventListener("DOMContentLoaded" , async () => {
 
-    
+    sidebar();
+
     updatePlaylist();
-
-
 });
+
+async function sidebar(params) {
+    
+    const sideBar = document.getElementById('side-bar');
+    // const rect = sideBar.getBoundingClientRect();
+
+    
+    sideBar.onclick = (e) => {
+        const sidebarHTML = e.currentTarget;
+        const rect = sidebarHTML.getBoundingClientRect();
+        
+        console.log({rect});
+    }
+
+}
 
 async function handlePlaylistItemClick(ev) {
     
@@ -28,6 +42,10 @@ async function handlePlaylistItemClick(ev) {
     const id = playlistitem.getAttribute('x-id');
     
     const videoHTML = document.getElementById('video--html');
+    if(videoHTML instanceof HTMLVideoElement === false) return;
+    videoHTML.onended = () => {
+        alert('ended')
+    }
     videoHTML.src = `/api/get-video-stream-by-id/${id}` ;
     videoHTML.load();
     videoHTML.onloadeddata = () => {
@@ -97,7 +115,7 @@ function createPlaylistItem (plItemBundle , onclick = f=>f) {
     playlistItemContainer.setAttribute('x-id' , id);
     playlistItemContainer.innerHTML = filename ;
     playlistItemContainer.onclick = onclick ;
-    playlistItemContainer.className = 'playlist-item--container';
+    playlistItemContainer.className = 'playlist-item--container wrapper-1';
 
     return playlistItemContainer ;
 }

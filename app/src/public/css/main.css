@@ -24,13 +24,26 @@ body {
 }
 
 .wrapper--main {
-    width: 999px;
-    margin:0 auto ;
-    padding: 0 calc(9px * 4) calc(9px * 4) calc(9px * 4);
-    background-color: #44315a;
+	width: 999px;
+	margin: 0 auto;
+	padding: 0 calc(9px * 4) calc(9px * 4) calc(9px * 4);
+	background-color: #44315a;
+	overflow: hidden;
 }
 
 .wrapper {
+    border-radius: 4px;
+    border:1px solid #936d68;
+}
+
+.wrapper-1 {
+
+    padding:calc(9px * 1);
+    border-radius: 4px;
+    border:1px solid #936d68;
+}
+
+.wrapper-2 {
     padding:calc(9px * 2);
     border-radius: 4px;
     border:1px solid #936d68;
@@ -38,6 +51,12 @@ body {
 
 .rel {
     position: relative;
+}
+
+.abs-left-top {
+    position: absolute;
+    left: 0;
+    top:0;
 }
 
 .menu--main a {
