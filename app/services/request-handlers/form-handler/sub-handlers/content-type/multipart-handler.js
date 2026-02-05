@@ -39,11 +39,12 @@ async function multipartTypeHandler(req ,res , payload) {
                 const contentType = headers['content-type'] || null ;
                 const contentDisposition = headers['content-disposition'] || null ;
 
-                const { name:nameAttr , filename } = parseContentDisposition(contentDisposition);
-
                 if (!contentDisposition) {
                     throw new Error('no content-disposition in data-part header'.toUpperCase());
+
                 }
+
+                const { name:nameAttr , filename } = parseContentDisposition(contentDisposition);
                 
                 const semantic = nameAttrParser(nameAttr);
 
@@ -69,17 +70,16 @@ async function multipartTypeHandler(req ,res , payload) {
 
         const databaseTables = database.getTables();
 
+        const _files = [] ;
         const fileTable = databaseTables.get('file');
         for (const [key , item] of fileTable.entries()) {
 
-
+            _files.push(item.get('title'));
             console.log({key , item});
 
         }
 
-
-
-        res.end(JSON.stringify({foo:'bar'}));
+        res.end(JSON.stringify({foo:'bar' , payload:_files}));
         return ;
 
     });

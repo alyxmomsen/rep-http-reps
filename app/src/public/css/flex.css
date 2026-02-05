@@ -1,0 +1,27 @@
+:root {
+    --gap:9px;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex--col {
+    flex-direction: column;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.flex-gap--1 {
+    gap: calc(var(--gap) * 1) ;
+}
+
+.flex-gap--2 {
+    gap: calc(var(--gap) * 2) ;
+}
+
+.flex-gap--3 {
+    gap: calc(var(--gap) * 3) ;
+}

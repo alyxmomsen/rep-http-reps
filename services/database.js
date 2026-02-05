@@ -2,6 +2,23 @@ const { randomBytes } = require("node:crypto");
 
 class DataBase {
 
+    getTable(name) {
+        
+        console.log({tables:this.#tables , name});
+
+        const table = this.#tables.get(name);
+
+        return table ;
+    }
+
+    getItemById (tableMap , id) {
+
+        console.log({tableMap , id});
+
+        // tableMap.get(id);
+
+    }
+
     getTables () {
         return this.#tables ;
     }

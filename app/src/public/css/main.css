@@ -1,3 +1,40 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     background-color: #292c2c;
+}
+
+#form--main {
+    color: #bdbdbd;
+}
+
+#form--main input {
+    color: #bdbdbd;
+}
+
+#form--main input:focus {
+    color: salmon;
+}
+
+#form--main label:hover  {
+    color: salmon;
+    cursor: pointer;
+}
+
+.wrapper--main {
+    width: 999px;
+    margin:0 auto ;
+    padding: 0 calc(9px * 4) calc(9px * 4) calc(9px * 4);
+    background-color: #44315a;
+}
+
+.rel {
+    position: relative;
+}
+
+.menu--main a {
+
+    color:wheat;
 }

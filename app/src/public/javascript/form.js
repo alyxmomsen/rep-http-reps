@@ -11,7 +11,7 @@ window.addEventListener("DOMContentLoaded" , () => {
         try {
 
             const response = await fetch('/api/handle-form' , {method:'post' , body:formdata});
-            const responseJSON = response.json();
+            const responseJSON = await response.json();
 
             console.log({responseJSON});
         }

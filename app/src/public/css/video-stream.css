@@ -1,0 +1,35 @@
+#video--html {
+	width: 100%;
+	aspect-ratio: 16/9;
+}
+
+.container--video {
+	position: relative;
+	width: 600px;
+	height: 100%;
+}
+
+#preload-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+    z-index: -1;
+	background-color: #1e1a2200;
+    transition: background-color .2s ease-out;
+}
+
+.playlist-item--container {
+	
+	cursor: pointer;
+}
+
+.playlist-item--container:hover {
+
+	color: greenyellow;
+}
+
+.menu--main {
+	padding: calc(9px * 2) 0;
+}

@@ -19,10 +19,13 @@ async function publicHandler (req , res) {
         'css':{
             'main':join(rootPath , 'css' , 'main.css') ,
             'form':join(rootPath , 'css' , 'form.css') ,
+            'video-stream':join(rootPath , 'css' , 'video-stream.css') ,
+            'flex':join(rootPath , 'css' , 'flex.css') ,
         } ,
         'javascript':{
             'main':join(rootPath , 'javascript' , 'main.js'),
             'form':join(rootPath , 'javascript' , 'form.js'),
+            'video-stream':join(rootPath , 'javascript' , 'video-stream.js'),
         }
     }
 

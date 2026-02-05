@@ -1,0 +1,29 @@
+:root {
+    --scale:2 ;
+}
+
+.menu--main {
+	padding: calc(9px * 2) 0;
+}
+
+.wrapper--form-group {
+    display: flex;
+    flex-direction: column;
+    gap: calc(9px * var(--scale));
+    border: 1px solid #936d68;
+    border-radius: 4px;
+    padding: calc(9px * var(--scale));
+    transition: border .2s ease-out;
+}
+
+.wrapper--form-group:hover {
+    border-color: salmon;
+}
+
+input[type="submit"] , input[type="reset"]{
+    cursor: pointer;
+}
+
+input[type="submit"] , input[type="reset"]:hover {
+    color:salmon;
+}
