@@ -40,7 +40,7 @@ async function publicHandler (req , res) {
         return;
     }
 
-    console.log({path});
+    // console.log({path});
 
     try {
         const file = await readFile(path);

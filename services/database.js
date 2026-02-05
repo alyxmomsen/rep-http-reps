@@ -4,7 +4,7 @@ class DataBase {
 
     getTable(name) {
         
-        console.log({tables:this.#tables , name});
+        // console.log({tables:this.#tables , name});
 
         const table = this.#tables.get(name);
 
@@ -25,22 +25,24 @@ class DataBase {
 
     add(tableName , fields) {
 
+        const newTableItem = new Map();
+
+        for (const [key , bundle] of fields.entries()) {
+            console.log({key , bundle});
+            newTableItem.set(key , bundle);            
+        }
+
         if(!this.#tables.has(tableName)) {
             this.#tables.set(tableName , new Map());
         }
 
         const table = this.#tables.get(tableName);
-
-        const newTableItem = new Map();
+        
         table.set(
             randomBytes(32).toString('hex') ,
             newTableItem ,
         );
 
-        for (const [key , bundle] of fields.entries()) {
- 
-            newTableItem.set(key , bundle);            
-        }
     }
 
     #tables;

@@ -14,7 +14,7 @@ async function formhandler(req ,res) {
 
     const [contentType , contentTypeAttr ] = contentTypeHeader.split('; ') ;
 
-    console.log({contentType});
+    // console.log({contentType});
 
     switch (contentType) {
 

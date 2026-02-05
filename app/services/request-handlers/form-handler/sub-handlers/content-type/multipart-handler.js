@@ -66,7 +66,7 @@ async function multipartTypeHandler(req ,res , payload) {
             database.add(tablename , fields);
         }
 
-        console.log('database get items:' , {database:database.getTables()});
+        // console.log('database get items:' , {database:database.getTables()});
 
         const databaseTables = database.getTables();
 
@@ -75,7 +75,7 @@ async function multipartTypeHandler(req ,res , payload) {
         for (const [key , item] of fileTable.entries()) {
 
             _files.push(item.get('title'));
-            console.log({key , item});
+            // console.log({key , item});
 
         }
 

@@ -15,7 +15,7 @@ async function getVideoStreamById (req , res) {
         
     const table = database.getTable('file');
     
-    console.log({table})
+    // console.log({table})
 
     if(!table) {
         res.writeHead(404);
@@ -40,7 +40,7 @@ async function getVideoStreamById (req , res) {
     });
     rs.pipe(res);
 
-    console.log({fileById});
+    // console.log({fileById});
 
     return 
     res.end('nothing');
