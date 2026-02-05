@@ -73,3 +73,7 @@
 	left: -19%;
 	cursor: pointer;
 }
+
+#side-bar:hover {
+	left: -18%;
+}

@@ -1,5 +1,6 @@
 const { Readable } = require("stream");
 const database = require("../../../../services/database");
+const { createReadStream } = require("fs");
 
 async function getVideoStreamById (req , res) {
     
@@ -32,9 +33,13 @@ async function getVideoStreamById (req , res) {
         return ;
     }
 
-    const fileBuffer = fileById.get('*').body;
+    // const fileBuffer = fileById.get('*').body;
+    const filepath = fileById.get('*').uploadPath;
     
-    const rs = Readable.from(fileBuffer);
+
+    const rs = createReadStream(filepath);
+
+    // const rs = Readable.from(fileBuffer);
     res.writeHead(200 , 'ok' , {
         'content-type':fileById.get('*').contentType ,
     });

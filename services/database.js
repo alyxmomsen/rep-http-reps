@@ -1,6 +1,9 @@
 const { randomBytes } = require("node:crypto");
+const fsadapter = require("./fs-adapter");
 
 class DataBase {
+
+
 
     getTable(name) {
         
@@ -23,14 +26,51 @@ class DataBase {
         return this.#tables ;
     }
 
-    add(tableName , fields) {
+    async add(tableName , fields) {
+
+        console.log(`add new item into database < ${tableName} > table...` , fields);
 
         const newTableItem = new Map();
 
+        // copy all fields to new database table bundle
+        // but body is not
+        // body is storing into local filesystem
         for (const [key , bundle] of fields.entries()) {
-            console.log({key , bundle});
-            newTableItem.set(key , bundle);            
+            // console.log({key , bundle});
+
+            if(key === '*') {
+                
+                const body = bundle.body ;
+
+                if(body && !body.length) {
+                    throw new Error('empty file body');
+                }
+
+                const uploadstatus = await fsadapter.upload(body);
+
+                const { status , message , uploadPath } = uploadstatus;
+
+                console.log({uploadstatus});
+
+                if(status) {
+                    throw new Error('smth wrong with uploading');
+                }
+
+                // mutate bundle
+                // add next property
+                // the property name is UPLOADPATH
+                // and bundle.body (buffer data) will be deleted
+                // cose that already stored in a filesystem
+
+                bundle.uploadPath = uploadPath ;
+                bundle.body = null ;
+
+            }
+
+            newTableItem.set(key , bundle);    
         }
+
+        console.log({newTableItem});
 
         if(!this.#tables.has(tableName)) {
             this.#tables.set(tableName , new Map());

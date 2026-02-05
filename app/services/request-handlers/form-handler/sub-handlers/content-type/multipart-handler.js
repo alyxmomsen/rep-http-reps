@@ -20,7 +20,7 @@ async function multipartTypeHandler(req ,res , payload) {
         bufferDataParts.push(chunk);
     });
 
-    req.on('end' , () => {
+    req.on('end' , async () => {
 
         const wholeBuffer = Buffer.concat(bufferDataParts);
         
@@ -63,7 +63,14 @@ async function multipartTypeHandler(req ,res , payload) {
 
             const {tablename , fields} = group ;
 
-            database.add(tablename , fields);
+            try {
+
+                await database.add(tablename , fields);
+            }
+            catch (e) {
+                console.log('multipart-handler database error: ' , {e});
+            }
+
         }
 
         // console.log('database get items:' , {database:database.getTables()});
@@ -72,6 +79,12 @@ async function multipartTypeHandler(req ,res , payload) {
 
         const _files = [] ;
         const fileTable = databaseTables.get('file');
+
+        if(!fileTable) {
+            res.end(JSON.stringify({foo:'bar' , payload:_files}));
+            return ;
+        }
+
         for (const [key , item] of fileTable.entries()) {
 
             _files.push(item.get('title'));
