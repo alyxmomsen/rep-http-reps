@@ -7,6 +7,7 @@
 	position: relative;
 	width: 600px;
 	height: 100%;
+
 }
 
 #preload-screen {
@@ -18,6 +19,17 @@
     z-index: -1;
 	background-color: #1e1a2200;
     transition: background-color .2s ease-out;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#playlist--video {
+	transition: border-color .2s ease-out;
+}
+
+#playlist--video:hover {
+	border-color: salmon;
 }
 
 .playlist-item--container {
@@ -27,7 +39,7 @@
 
 .playlist-item--container:hover {
 
-	color: greenyellow;
+	color: salmon;
 }
 
 .menu--main {

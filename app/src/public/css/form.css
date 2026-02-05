@@ -27,3 +27,7 @@ input[type="submit"] , input[type="reset"]{
 input[type="submit"] , input[type="reset"]:hover {
     color:salmon;
 }
+
+#status--upload {
+    color:#facd72
+}

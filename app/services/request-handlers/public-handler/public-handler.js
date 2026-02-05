@@ -26,6 +26,9 @@ async function publicHandler (req , res) {
             'main':join(rootPath , 'javascript' , 'main.js'),
             'form':join(rootPath , 'javascript' , 'form.js'),
             'video-stream':join(rootPath , 'javascript' , 'video-stream.js'),
+        } ,
+        'img':{
+            'preloader--default' : join(rootPath , 'images' , 'circle-dots2.gif') ,
         }
     }
 

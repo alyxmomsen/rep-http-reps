@@ -30,6 +30,12 @@ body {
     background-color: #44315a;
 }
 
+.wrapper {
+    padding:calc(9px * 2);
+    border-radius: 4px;
+    border:1px solid #936d68;
+}
+
 .rel {
     position: relative;
 }

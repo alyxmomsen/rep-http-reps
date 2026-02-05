@@ -16,6 +16,12 @@ async function handlePlaylistItemClick(ev) {
         preloadScreen.zIndex = -1 ;          
     }
 
+    const gif = document.createElement('img');
+    gif.src = '/public/img/preloader--default' ;
+
+
+    preloadScreen.innerHTML = '';
+    preloadScreen.appendChild(gif);
     preloadScreen.style.zIndex = 1 ;
     preloadScreen.style.backgroundColor = '#1e1a22ff'
     
