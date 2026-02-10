@@ -1,9 +1,15 @@
 const {} = require('fs');
 const Router = require('../../services/router/router');
+const handleAsset = require('../../utils/handlers/handle-asset/handle-asset');
 
 const router = new Router();
 
 const loggerPrefix = 'WEB-CONTROLLER: ';
+
+
+router.get('/form' , (req , res) => {
+    handleAsset(req , res, 'html' , 'form');
+});
 
 router.get('/test/:id/foo/:bar' , async (req , res) => {
 
