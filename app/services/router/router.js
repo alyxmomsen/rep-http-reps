@@ -1,5 +1,18 @@
-
+const {} = require('fs');
+const loggerPreffix = 'Router: ' ;
 class Router {
+
+    async handleRequest (req , res) {
+
+        res.writeHead(404);
+        res.end();
+    }
+
+    use(...handlers) {
+        handlers.forEach(handler => {
+            this.middleware.push(handler);
+        });
+    }
 
     get(template , ...handlers) {
         this.#addRoute(template , "GET" , handlers);
@@ -21,8 +34,11 @@ class Router {
 
         const routeBundle = this.#makeRouteBundle(template , handlers);
 
-        methodRoutes.set();
+        const { originalTemplate } = routeBundle ;
 
+        methodRoutes.set(originalTemplate , routeBundle);
+
+        console.log(loggerPreffix , `new route < ${_method} ${originalTemplate} > just added`);
     }
 
     #makeRouteBundle (template , handlers) {
@@ -49,5 +65,14 @@ class Router {
     constructor () {
         this.#routes = new Map ;
         this.#middleware = [] ;
+
+        const defaultMethods = ['get' , 'post'] ;
+
+        defaultMethods.forEach(m => {
+            const _method = m.toUpperCase();
+            this.#routes.set(_method , new Map);
+        });
     }
 }
+
+module.exports = Router ;
