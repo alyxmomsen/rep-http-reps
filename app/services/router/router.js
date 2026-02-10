@@ -4,13 +4,48 @@ class Router {
 
     async handleRequest (req , res) {
 
-        const { method:_method } = req;
+        const { method:_method , url:fullURL } = req;
 
         const method = _method.toUpperCase();
 
         const methodRoutes = this.#routes.get(method);
 
-        console.log(loggerPreffix , {methodRoutes})
+        if(!methodRoutes) {
+            res.writeHead(404);
+            console.log(loggerPreffix , `required no defined method < ${method} > `);
+            res.end();
+            return ;
+        }
+
+        const {url,queryStringLike} = this.#splitURL(fullURL);
+
+        for (const [_ , routeBundle] of methodRoutes.entries()) {
+
+            const { regex , handler , keys , middleware } = routeBundle ;
+
+            const match = regex.exec(url);
+
+            if(!match) continue ;
+
+            // compile params
+            const params = {} ;
+            keys.forEach((key , i) => {
+                params[key] = match[i + 1] ;
+            });
+
+            const queryParams = this.#extractQueryParams(queryStringLike);
+            
+            req.params = params ;
+            req.queryParams = queryParams ;
+            // ==============
+
+            await this.#executeMiddleware(req , res , [...this.#middleware , ...middleware]);
+
+            await handler(req ,res);
+            return ;
+        }
+
+        console.log(loggerPreffix , {routes:this.#routes})
 
         res.writeHead(404);
         res.end();
@@ -28,6 +63,39 @@ class Router {
 
     post(template , ...handlers) {
         this.#addRoute(template , "POST" , handlers);
+    }
+
+    async #executeMiddleware (req , res , middlewareArr) {
+        let index = 0 ;
+
+        const next = async () => {
+            const handler = middlewareArr[index++] ;
+            if(!handler) return ;
+            await handler(req , res , next);
+        }
+
+        await next();
+    }
+
+    #extractQueryParams (queryStringLike) {
+        const params = {} ;
+        if(!queryStringLike) return params ;
+        const couples = queryStringLike.split('&');
+        couples.forEach(couple => {
+            const [key , value] = couple.split('=');
+            if(key && value) {
+                params[key.toLowerCase()] = value ;
+            }
+        });
+        return params ;
+    }
+
+    #splitURL (fullURL) {
+        const [_url , queryString] = fullURL.split('?');
+        return {
+            url: /.+\/$/.test(_url) ? _url.replace(/\/$/ , '') : _url ,
+            queryStringLike:queryString ,
+        }
     }
 
     #addRoute (template , method , handlers) {
