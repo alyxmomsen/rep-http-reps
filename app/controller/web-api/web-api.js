@@ -3,6 +3,8 @@ const Router = require('../../services/router/router');
 
 const router = new Router();
 
+const loggerPrefix = 'WEB-CONTROLLER: ';
+
 router.get('/test/:id/foo/:bar' , async (req , res) => {
 
     const { method , url , params , queryParams } = req ;

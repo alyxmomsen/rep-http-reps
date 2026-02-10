@@ -4,6 +4,14 @@ class Router {
 
     async handleRequest (req , res) {
 
+        const { method:_method } = req;
+
+        const method = _method.toUpperCase();
+
+        const methodRoutes = this.#routes.get(method);
+
+        console.log(loggerPreffix , {methodRoutes})
+
         res.writeHead(404);
         res.end();
     }
