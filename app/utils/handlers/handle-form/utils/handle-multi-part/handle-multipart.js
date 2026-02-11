@@ -41,7 +41,7 @@ async function handleTheMultipartContentTypeData(req , res , payload) {
 
                 const { groupId , tableName  , tableItemFieldName } = parseNameAttr(nameAttr);
 
-                groupAssembler.gulpOneGroupMemeber({
+                groupAssembler.gulpOneGroupMember({
                     contentType , filenameAttr , body ,
                     semantic: {
                         groupId , tableItemFieldName , tableName
