@@ -1,4 +1,4 @@
-const database = require("../data-base");
+const database = require("../data-base/data-base");
 
 function addFile ({
     originalFilename ,mime ,
@@ -19,11 +19,7 @@ function addFile ({
 
 }
 
-function addUser (payload) {
-
-    const {
-        name , lastname , email , password
-    } = payload ;
+function addUser ({name , lastname , email , password}) {
 
     if(!name || !email || !password) {
         throw new Error('DATABASE ERROR: requires name|email|password but no given');
@@ -37,5 +33,14 @@ function addUser (payload) {
     });
 
 }
+
+function getTable(tableName) {
+    database;
+    return {
+
+    }
+}
+
+
 
 module.exports = { addFile , addUser} ;
