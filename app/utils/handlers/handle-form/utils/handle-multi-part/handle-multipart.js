@@ -53,29 +53,30 @@ async function handleTheMultipartContentTypeData(req , res , payload) {
             }
         }
 
+        
         const groups = groupAssembler.getGroups();
-
+        
         groups.entries().forEach(([_ , groupBundle]) => {
-
+            
             const { tableName , tableItemFields} = groupBundle ;
 
             console.log({tableName ,tableItemFields});
 
             if(tableName === 'files') {
 
-                const title = tableItemFields.get('title') || {} ;
-                const description = tableItemFields.get('description') || {} ;
-                const file = tableItemFields.get('file') || {} ;
-                const filename = tableItemFields.get('filename') || {};
+                const _title = tableItemFields.get('title') || {} ;
+                const _description = tableItemFields.get('description') || {} ;
+                const _file = tableItemFields.get('file') || {} ;
+                const _filename = tableItemFields.get('filename') || {};
 
                 // const {contentType:mime , body:filebody} = (file && {});
                 
                 try {
         
-                    // addFile({
-                    //     contentType:file.contentType , description:description.body , filepath:'' ,
-                    //     originalFilename:filename.body ,title:title.body ,
-                    // });
+                    addFile({
+                        contentType:file.contentType , description:description.body , filepath:'' ,
+                        originalFilename:filename.body ,title:title.body ,
+                    });
                 }
                 catch(e) {
                     console.log({e});
