@@ -45,8 +45,6 @@ class Router {
             return ;
         }
 
-        console.log(loggerPreffix , {routes:this.#routes})
-
         res.writeHead(404);
         res.end();
     }

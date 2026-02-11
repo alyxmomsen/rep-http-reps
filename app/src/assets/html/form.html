@@ -7,10 +7,24 @@
 </head>
 <body>
     <div class="">
-        <form action="" method="post">
-            <input type="text" name="" id="">
-            <input type="submit" value="submit">
-            <input type="reset" value="reset">
+        <form action="/api/handle-form" method="post" enctype="multipart/form-data">
+            <div>
+                <input type="text" name="g1.files.title" id="">
+                <input type="text" name="g1.files.description" id="">
+                <input type="text" name="g1.files.meta-data" id="">
+                <input type="file" name="g1.filse.file" id="">
+            </div>
+            <div>
+                <input type="text" name="g2.users.name" id="">
+                <input type="text" name="g2.users.lastname" id="">
+            </div>
+            <div>
+                <input type="text" name="g1.files.smth" id="">
+            </div>
+            <div>
+                <input type="submit" value="">
+                <input type="reset" value="reset">
+            </div>
         </form>
     </div>
 </body>

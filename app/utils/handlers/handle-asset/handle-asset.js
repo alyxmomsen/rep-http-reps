@@ -5,6 +5,8 @@ const logPrefix = 'handle asset: ';
 
 async function handleAsset (req, res , type , id) {
     
+    console.log(logPrefix , 'start');
+
     const { params , queryParams } = req ;
 
     if(!params) {
