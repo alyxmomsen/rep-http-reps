@@ -16,54 +16,68 @@ class GroupAssembler {
             throw new Error('\x1b[33mno semantic data'.toUpperCase());
         }
 
+        const contentTypeMap = {
+            TEXTPLAIN:'text/plain',
+        }
+        
         const { groupId , tableName , tableItemFieldName } = semantic ;
 
-        const tableItemFields = [
+        const tableItemFieldsBundles = [
             {
                 tableName ,
-                fieldName:tableItemFieldName ,
-                fieldData: {
-                    body ,
-                    contentType:contentType || 'text/plain'
-                } ,
+                field:{
+                    name:tableItemFieldName ,
+                    data:{
+                        body ,
+                        contentType:contentType || contentTypeMap.TEXTPLAIN,
+                    }
+                },
             } ,
         ]
 
         if(filenameAttr) {
-            tableItemFields.push({
+            tableItemFieldsBundles.push({
                 tableName,
-                fieldName:'filename' ,
-                fieldData:{
-                    body:filenameAttr ,
-                    contentType:'text/plain' ,
-                }
+                field:{
+                    name:'filename' ,
+                    data:{
+                        body:filenameAttr ,
+                        contentType: contentTypeMap.TEXTPLAIN,
+                    }
+                },
             })
         }
 
-        tableItemFields.forEach(itemField => {
-            this.#setGroup(groupId  , itemField );
+        tableItemFieldsBundles.forEach(bundle => {
+            this.#setGroup(groupId  , bundle );
         });
 
     }
 
     #setGroup (groupId , payload) {
+        
+        const { tableName , field } = payload ;
 
-        const { tableName , fieldName , fieldData } = payload ;
+        if(!field || !tableName) {
+            throw new Error("!field || !tableName");
+        }
 
-        if(!this.#groups.has(groupId)) {
+        const { name , data } = field ;
+
+        const groupById = this.#groups.get(groupId);
+
+        if(!groupById) {
             this.#groups.set(groupId , {
                 tableName , 
                 tableItemFields:new Map([
-                    [fieldName , fieldData]
+                    [name , data]
                 ]),
             })
         }
 
-        const groupById = this.#groups.get(groupId);
-
         const { tableItemFields } = groupById ;
 
-        tableItemFields.set(fieldName , fieldData);
+        tableItemFields.set(name , data);
 
     }
     

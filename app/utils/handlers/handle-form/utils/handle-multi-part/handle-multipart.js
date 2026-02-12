@@ -64,19 +64,19 @@ async function handleTheMultipartContentTypeData(req , res , payload) {
 
             if(tableName === 'files') {
 
-                const _title = tableItemFields.get('title') || {} ;
-                const _description = tableItemFields.get('description') || {} ;
-                const _file = tableItemFields.get('file') || {} ;
-                const _filename = tableItemFields.get('filename') || {};
+                // const _title = tableItemFields.get('title') || {} ;
+                // const _description = tableItemFields.get('description') || {} ;
+                // const _file = tableItemFields.get('file') || {} ;
+                // const _filename = tableItemFields.get('filename') || {};
 
                 // const {contentType:mime , body:filebody} = (file && {});
                 
                 try {
         
-                    addFile({
-                        contentType:file.contentType , description:description.body , filepath:'' ,
-                        originalFilename:filename.body ,title:title.body ,
-                    });
+                //     addFile({
+                //         contentType:file.contentType , description:description.body , filepath:'' ,
+                //         originalFilename:filename.body ,title:title.body ,
+                //     });
                 }
                 catch(e) {
                     console.log({e});
