@@ -16,6 +16,14 @@ function addFile ({
     title , description , originalFileName , filename, filepath , mime
 }) {
 
+    // --- validate
+
+    if (!title || !description || !originalFileName || !filename || !filepath || !mime) {
+        throw new Error('some arguments are no valid');
+    }
+
+    // ============
+
     database.add('files' , {
         title , description , originalFileName , 
         filepath , filename , mime
