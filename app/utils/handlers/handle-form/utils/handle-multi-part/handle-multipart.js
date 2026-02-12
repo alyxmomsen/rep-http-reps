@@ -54,41 +54,45 @@ async function handleTheMultipartContentTypeData(req , res , payload) {
         }
 
         
-        const groups = groupAssembler.getGroups();
-        
-        groups.entries().forEach(([_ , groupBundle]) => {
+        // const groups = groupAssembler.getAllGroupsMap();
+
+        const fileGroups = groupAssembler.getGroupsByTableName('files');
+        // const userGroups = groupAssembler.getGroupsByTableName('users');
+
+        for (const fileGroup of fileGroups) {
+
+            const title = (fileGroup.get('title' , 'utf-8') || {}).body;
+            const description = (fileGroup.get('description' , 'utf-8') || {}).body;
+            const file = (fileGroup.get('file') || {});
+            const filename = (fileGroup.get('filename' , 'utf-8') || {}).body;
+
             
-            const { tableName , tableItemFields} = groupBundle ;
 
-            console.log({tableName ,tableItemFields});
+            console.log({title , description , file});
 
-            if(tableName === 'files') {
-
-                // const _title = tableItemFields.get('title') || {} ;
-                // const _description = tableItemFields.get('description') || {} ;
-                // const _file = tableItemFields.get('file') || {} ;
-                // const _filename = tableItemFields.get('filename') || {};
-
-                // const {contentType:mime , body:filebody} = (file && {});
-                
-                try {
-        
-                //     addFile({
-                //         contentType:file.contentType , description:description.body , filepath:'' ,
-                //         originalFilename:filename.body ,title:title.body ,
-                //     });
-                }
-                catch(e) {
-                    console.log({e});
-                }
+            try {
+    
+                addFile({
+                    title , description , 
+                    filename , filepath , 
+                    mime:file.contentType || null , 
+                    originalFileName:filename ,
+                });
             }
+            catch(e) {
+                console.log({e});
+            }
+            
 
-            // console.log(`group name: ${_} table name: ${groupBundle.tableName}`);
-            // groupBundle.groupItemFields.entries().forEach(([name , data]) => {
-            //     console.log(`fieldname: ${name}` , {data});
-            // });
-        });
-
+        }
+        
+        // const file = (files && files.get('title' , 'utf-8') || {}) ;
+        
+        // console.log(`group name: ${_} table name: ${groupBundle.tableName}`);
+        // groupBundle.groupItemFields.entries().forEach(([name , data]) => {
+        //     console.log(`fieldname: ${name}` , {data});
+        // });
+            
         res.end();
         return ;
     });

@@ -29,3 +29,5 @@ function addFile ({
         filepath , filename , mime
     });
 }
+
+module.exports = { addFile , addUser } ;

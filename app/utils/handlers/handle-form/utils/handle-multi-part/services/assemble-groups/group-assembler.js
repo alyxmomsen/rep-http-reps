@@ -1,8 +1,42 @@
 
 class GroupAssembler {
 
-    getGroups () {
+    getAllGroupsMap () {
+
         return this.#groups ;
+    }
+
+    getGroupsByTableName (tableName/* {tableName , fields:[]} */) {
+
+        // const _fields = {}
+
+        const tableNameGroups = [] ;
+
+        for (const [id , body] of this.#groups.entries()) {
+            const { tableItemFields , tableName:_tableName } = body ;
+            // const tableItemFields = body.tableItemFields ;
+            
+            if(tableName === _tableName) {
+
+                // tableItemFields.entries().forEach(([name , data]) => {
+
+                //     fields
+
+                // });
+
+                tableNameGroups.push(new SubGroup(tableItemFields));
+                
+                // return (fieldName , encoding) => {
+
+                //     const body = (tableItemFields.get(fieldName) || {})?.body ;
+
+                //     return (encoding && body) ? body.toString(encoding) : body ;
+
+                // }
+            }
+        }
+
+        return tableNameGroups ;
     }
 
     gulpOneGroupMember (payload) {
@@ -73,6 +107,7 @@ class GroupAssembler {
                     [name , data]
                 ]),
             })
+            return ;
         }
 
         const { tableItemFields } = groupById ;
@@ -89,3 +124,35 @@ class GroupAssembler {
 }
 
 module.exports = GroupAssembler ;
+
+class SubGroup {
+
+    get(fieldName , encoding) {
+
+        const fieldByName = this.#tableItemsFieldsMap.get(fieldName) ;
+
+        if(!fieldByName) {
+            return null ;
+        }
+
+        // const body = (fieldByName || {}).body ;
+        // const contentType = (fieldByName || {}).contentType ;
+
+        const {contentType , body} = fieldByName ;
+
+        return {
+            body:(encoding && body) ? body.toString(encoding) : body ,
+            contentType ,
+        } ;
+    }
+
+    #tableItemsFieldsMap ;
+
+    constructor (tableItemFieldsMap) {
+
+        
+        if(tableItemFieldsMap instanceof Map === false) throw new Error ('payload is not a Map')
+            
+        this.#tableItemsFieldsMap = tableItemFieldsMap
+    }
+}
