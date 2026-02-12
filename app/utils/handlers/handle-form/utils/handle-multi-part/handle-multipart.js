@@ -1,5 +1,6 @@
 const database = require("../../../../../../services/database/database");
 const { addFile } = require("../../../../../../services/database/utils/database-controller");
+const filemanager = require("../../../../../../services/file-manager/file-manager");
 const GroupAssembler = require("./services/assemble-groups/group-assembler");
 const parseNameAttr = require("./services/parse-name-attr/parse-name-attr");
 const parseHeadersPart = require("./utils/parse-part/parse-part");
@@ -25,7 +26,7 @@ async function handleTheMultipartContentTypeData(req , res , payload) {
         formDataChunks.push(chunk);
     });
 
-    req.on('end' , () => {
+    req.on('end' , async () => {
 
         const wholeBuffer = Buffer.concat(formDataChunks);
 
@@ -66,18 +67,34 @@ async function handleTheMultipartContentTypeData(req , res , payload) {
             const file = (fileGroup.get('file') || {});
             const filename = (fileGroup.get('filename' , 'utf-8') || {}).body;
 
-            
+            const { success , error , status } = await filemanager.upload(Buffer.from('hello world'));
 
-            console.log({title , description , file});
+            const { payload } = success ;
+
+            console.log({title , description , file , uploadResul:payload});
+
+            /* 
+            
+            необходимо реализовать обработку кейса,
+            когда данные о файле не сохранились в базу данных.
+            тогда нужно будет удалить сохраненный файл или
+            создать Observer ожидающий результата сохранения
+            что бы определиться что делать с файлом, сохранять или нет;
+
+            или другие вариации
+
+            */
 
             try {
     
-                addFile({
-                    title , description , 
-                    filename , filepath , 
+                const { success , error } = addFile({
+                    title , description ,  
                     mime:file.contentType || null , 
                     originalFileName:filename ,
+                    savedFileName:payload.filename ,
                 });
+
+                console.log({success , error});
             }
             catch(e) {
                 console.log({e});

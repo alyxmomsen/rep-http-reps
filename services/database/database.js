@@ -1,11 +1,23 @@
+const { error } = require("node:console");
+const { randomBytes } = require("node:crypto");
 
 class DataBase {
     
-    add(payload) {
+    add(tableName ,payload) {
 
         const {} = payload ;
-        console.log({payload});
+        // console.log({payload});
 
+        return {
+            success:{
+                code:0 ,
+                payload:{
+                    tableName:tableName ,
+                    fileId:randomBytes(32).toString('hex')
+                }
+            } , 
+            error:null ,
+        }
     }
 
     #files;

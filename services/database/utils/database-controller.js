@@ -1,3 +1,4 @@
+const LOG_PREFIX = 'DATABASE CONTROLLER: ';
 const database = require("../database")
 
 function addUser ({
@@ -13,21 +14,28 @@ function addUser ({
 }
 
 function addFile ({
-    title , description , originalFileName , filename, filepath , mime
+    title , description , originalFileName , savedFileName, mime
 }) {
 
     // --- validate
 
-    if (!title || !description || !originalFileName || !filename || !filepath || !mime) {
+    if (!title || !description || !originalFileName || !savedFileName || !mime) {
         throw new Error('some arguments are no valid');
     }
 
     // ============
 
-    database.add('files' , {
+    console.log(LOG_PREFIX , {title , description , originalFileName , savedFileName, mime});
+
+    const { success , error} = database.add('files' , {
         title , description , originalFileName , 
-        filepath , filename , mime
+        savedFileName , mime
     });
+
+    return {
+        success , error 
+    }
+
 }
 
 module.exports = { addFile , addUser } ;
