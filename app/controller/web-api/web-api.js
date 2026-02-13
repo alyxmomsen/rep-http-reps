@@ -3,6 +3,7 @@ const { loggerFactory } = require("../../../utils/logger");
 const Router = require("../../services/router/router");
 const { resolve, join } = require("path");
 const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
+const handleForm = require("../../services/req-handlers/handle-form/handle-form");
 
 const router = new Router();
 
@@ -14,7 +15,10 @@ router.use(
     (req , res , next) => {log('def' , 'Gmw 13');next()} ,
 );
 
+router.post('/handle-form' , handleForm);
+
 router.get('/public/:type/:id' , (req , res) => {
+    
 
     handlePublic(req , res);
 });

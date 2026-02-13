@@ -1,0 +1,155 @@
+const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
+const { loggerFactory } = require("../../../../../../../utils/logger");
+const parseName = require("./services/parse-name-input/parse-name");
+const splitFormDatPart = require("./utils/handle-part");
+
+const log = loggerFactory('handle multipart data' , '-u');
+async function handleMultipartData (req , res , {boundaryRawStr}) {
+
+    if(!boundaryRawStr) {
+        res.writeHead(400);
+        res.end('no boundary header data');
+        return ;
+    }
+
+    const boundary = extractBoundary(boundaryRawStr);
+
+    if(!boundary) {
+        fallback(res , 400 , 'no boundary' , 'no boundary');
+        return ;
+    }
+
+
+    const bufferChunks = [] ;
+    const MAXSIZE = 10_000_000 ;
+    let sizeCounter = 0 ;
+    req.on('data' , async (chunk) => {
+        // log('def' , 'chunk' , chunk.length)
+        // sizeCounter += chunk.length ;
+        // if(sizeCounter >= MAXSIZE) {
+        //     log('r' ,'too large file');
+        //     fallback(res , 400 , 'too large file' , JSON.stringify({mes:'too large'}));
+        //     // req.destroy();
+        //     return ;
+        // }
+
+
+        bufferChunks.push(chunk);
+    });
+
+    req.on('end' , async () => {
+
+        const wholebuffer = Buffer.concat(bufferChunks);
+
+        const formDataParts = splitFormDataBuffer(wholebuffer , Buffer.from(boundary));
+
+        for (const formDataPart of formDataParts) {
+
+            try {
+
+                const { headers , body } = splitFormDatPart(formDataPart);
+
+                const formDataPartHeaders = extractFormDataPartHeaders(headers.toString('utf-8'));
+                
+                const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
+                const contentType = formDataPartHeaders['content-type'] || null ;
+
+                const { filename: filenameAttr , name: nameAttr } = parseContentDisposition(contentDisposition);
+
+                const { groupId , tableName , tableItemFieldName } = parseName(nameAttr);
+
+                //  ============== validate semantic ==============================
+                
+                if(!groupId || !tableName || !tableItemFieldName) {
+                    log('r' , 'no valid semantic data')
+                    continue;
+                }
+
+                // ==================================================================
+
+                const bundle = {
+                    body ,
+                    contentType ,
+                    filenameAttr ,
+                    semantic: {
+                        groupId , tableName ,
+                        tableItemFieldName ,
+                    }
+                }
+
+                log('y' , {bundle});
+            }
+            catch (e) {
+                log('r' , 'split part error' , {e});
+            }
+
+
+        }
+
+        res.end(JSON.stringify({form:'handled'}));
+    });
+}
+
+module.exports = handleMultipartData ;
+
+
+function parseContentDisposition (contentDisposition) {
+
+    const _name = contentDisposition.match(/name="([^"]+)"/);
+    const _filename = contentDisposition.match(/filename="([^"]+)"/);
+
+    return {    
+        name: (_name && _name[1]) || null ,
+        filename: (_filename && _filename[1]) || null ,
+    }
+}
+
+function extractFormDataPartHeaders (headersString) {
+
+    const separator = '\r\n' ;
+
+    const headersRows = headersString.split(separator);
+
+    const headers = {} ;
+    headersRows.forEach(row => {
+        const [key , value] = row.split(': ');
+        if(key && value) {
+            headers[key.toLowerCase()] = value ;
+        }
+    });
+
+    return headers ;
+}
+
+
+function splitFormDataBuffer (formDataBuffer , boundaryBuffer) {
+
+    const parts = [] ;
+
+    let start = 0 ;
+    let index = 0;
+
+    while ((index = findIndexInBuffer(formDataBuffer , boundaryBuffer , start)) !== -1) {
+        parts.push(formDataBuffer.subarray(start , index));
+        start = index + boundaryBuffer.length ;
+        if(formDataBuffer[start] === 0x0d && formDataBuffer[start + 1] === 0x0a) {
+            start += 2 ;
+        }
+    }
+
+    parts.push(formDataBuffer.subarray(start));
+
+    return parts ;
+}
+
+function extractBoundary  (boundaryRawStr) {
+    const match = boundaryRawStr.match(/boundary=(----[^\/\\$\s]+)/);
+
+    return match && `--${match[1]}` ;
+}
+
+function fallback (res , statusCode , statusMessage = '' , resMessage = '') {
+
+    res.writeHead(statusCode , statusMessage , );
+    res.end(resMessage);
+}

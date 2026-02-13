@@ -68,7 +68,7 @@ async function handlePublic (req , res) {
 
     try {
         const file = await readFile(filepath, 'utf-8');
-        log('g' , 'successfully');
+        log('g' , `${type}/${id}`, ': ' , 'successfully');
         res.writeHead(200);
         res.end(file);
     }
