@@ -1,27 +1,43 @@
 const { readFile } = require("fs/promises");
 const { loggerFactory } = require("../../../utils/logger");
 const Router = require("../../services/router/router");
+const { resolve, join } = require("path");
+const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
 
 const router = new Router();
 
 const log = loggerFactory('route /test/:id/foo/:bar' , '-u');
 
 router.use(
-    (req , res , next) => {log('y' , 'Gmw 11');next()} ,
-    (req , res , next) => {log('y' , 'Gmw 12');next()} ,
-    (req , res , next) => {log('y' , 'Gmw 13');next()} ,
+    (req , res , next) => {log('def' , 'Gmw 11');next()} ,
+    (req , res , next) => {log('def' , 'Gmw 12');next()} ,
+    (req , res , next) => {log('def' , 'Gmw 13');next()} ,
 );
 
+router.get('/public/:type/:id' , (req , res) => {
+
+    handlePublic(req , res);
+});
+
 router.get('/form' , async (req , res) => {
+    
+    const log = loggerFactory('route: /form' , '-u');
 
     try {
-        const file = await readFile('.' , 'src' , 'assets' , 'html' , 'form.html');
-        
+        const file = await readFile(resolve(join('.' , 'app' , 'src' , 'assets' , 'html' , 'form.html')));
+        res.writeHead(200 , 'ok' , {
+            'content-type':'text/html' ,
+        });
+        res.end(file);
     }
     catch (e) {
-        console.log({e});
-    }
 
+        log('r' , {e});
+        
+        res.writeHead(500);
+        res.end();
+    }
+    
 });
 
 router.get(
@@ -31,10 +47,10 @@ router.get(
     (req , res , next) => {log('r' , 'lmw 3');next()} ,
     async (req , res) => {
         
-    const { method , url , params , queryParams } = req; 
-
-    res.writeHead(200 , 'ok' , {
-        'content-type':'application/json'
+        const { method , url , params , queryParams } = req; 
+        
+        res.writeHead(200 , 'ok' , {
+            'content-type':'application/json'
     });
 
     res.end(JSON.stringify({method , url , params , queryParams}));
