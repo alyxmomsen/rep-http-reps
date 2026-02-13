@@ -1,3 +1,4 @@
+const { readFile } = require("fs/promises");
 const { loggerFactory } = require("../../../utils/logger");
 const Router = require("../../services/router/router");
 
@@ -10,6 +11,18 @@ router.use(
     (req , res , next) => {log('y' , 'Gmw 12');next()} ,
     (req , res , next) => {log('y' , 'Gmw 13');next()} ,
 );
+
+router.get('/form' , async (req , res) => {
+
+    try {
+        const file = await readFile('.' , 'src' , 'assets' , 'html' , 'form.html');
+        
+    }
+    catch (e) {
+        console.log({e});
+    }
+
+});
 
 router.get(
     '/test/:id/foo/:bar' , 
