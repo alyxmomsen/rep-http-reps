@@ -26,6 +26,8 @@ function loggerFactory (prefix , flags) {
 
         const colorCode = (colorCodeLike !== undefined && colorCodeLike) || colorsmap.def ;
 
+        values = values.map(value => typeof value === 'string' ? (`\x1b[${colorCode}m` + value + `\x1b[${colorsmap.def}m`) : value);
+
         console.log( `\x1b[${colorCode}m` + `${prefix} :: ` + `\x1b[${colorsmap.def}m` , ...values);
     }
 }
