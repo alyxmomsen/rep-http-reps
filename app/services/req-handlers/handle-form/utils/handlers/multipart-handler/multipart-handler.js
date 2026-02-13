@@ -1,5 +1,7 @@
+const { createFile, createUser, readFileById, readFiles } = require("../../../../../../../services/database/controller/database-controller");
 const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
+const AssembleGroups = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
 const splitFormDatPart = require("./utils/handle-part");
 
@@ -43,6 +45,8 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const formDataParts = splitFormDataBuffer(wholebuffer , Buffer.from(boundary));
 
+        const assembler = new AssembleGroups();
+
         for (const formDataPart of formDataParts) {
 
             try {
@@ -77,16 +81,39 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                     }
                 }
 
+                // ----------------------------------------------
+
+                assembler.gulpOneBundle(bundle);
+
                 log('y' , {bundle});
             }
             catch (e) {
                 log('r' , 'split part error' , {e});
             }
-
-
         }
 
-        res.end(JSON.stringify({form:'handled'}));
+        const added = [] ;
+        assembler.getTableItems('files').forEach(tableItem => {
+            const fileId = createFile({...tableItem.get()});
+            // console.log({fileId});
+            added.push(fileId);
+        }) ;
+        
+        const allFiles = readFiles();
+
+        log('r' , {allFiles});
+
+        // files.forEach(userId => {
+        //     const userdata= readFileById(userId)
+
+        //     console.log({userdata});
+        // });
+
+
+        res.end(JSON.stringify({payload:{
+            added ,
+            allFiles ,
+        }}));
     });
 }
 

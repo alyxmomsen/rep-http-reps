@@ -6,8 +6,6 @@ const { readFile } = require("fs/promises");
 const log = loggerFactory('handle public' , '-u');
 
 async function handlePublic (req , res) {
-
-    log('def' , 'started...');
     
     const { params } = req ;
     

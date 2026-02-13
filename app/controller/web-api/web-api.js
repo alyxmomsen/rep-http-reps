@@ -4,6 +4,7 @@ const Router = require("../../services/router/router");
 const { resolve, join } = require("path");
 const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
+const { readFiles } = require("../../../services/database/controller/database-controller");
 
 const router = new Router();
 
@@ -14,6 +15,15 @@ router.use(
     (req , res , next) => {log('def' , 'Gmw 12');next()} ,
     (req , res , next) => {log('def' , 'Gmw 13');next()} ,
 );
+
+router.post('/get-all-files' , (req , res) => {
+
+    const files = readFiles();
+
+    res.end(JSON.stringify({files}));
+});
+
+router.post('/get-stream-by-id/:id' , f=>f);
 
 router.post('/handle-form' , handleForm);
 
