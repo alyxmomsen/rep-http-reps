@@ -81,7 +81,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                     }
                 }
 
-                // ----------------------------------------------
+                // ------------------------------------------------------------------
 
                 assembler.gulpOneBundle(bundle);
 
@@ -94,6 +94,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const added = [] ;
         assembler.getTableItems('files').forEach(tableItem => {
+            const { } = tableItem.get();
             const fileId = createFile({...tableItem.get()});
             // console.log({fileId});
             added.push(fileId);

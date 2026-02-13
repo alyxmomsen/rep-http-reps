@@ -28,6 +28,10 @@ class AssembleGroups {
         const { contentType , filenameAttr , body , semantic } = bundle ;
         const { groupId , tableName , tableItemFieldName } = semantic ;
 
+        if(!groupId || !tableName || !tableItemFieldName) {
+            throw new Error('no semantic data'.toUpperCase());
+        }
+
         const contentTypeMap = {
             TEXTPLAIN:'text/plain' ,
         }
@@ -90,8 +94,6 @@ class AssembleGroups {
         const { tableItemFields } = groupById ;
 
         tableItemFields.set(name , data);
-
-
     }
 
     #groups;
