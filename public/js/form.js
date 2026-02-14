@@ -1,59 +1,67 @@
 
-class Request_ {
+class RequestManager {
 
-    async exec(body = {}) {
+    async exec ({body = {}}) {
 
-        const { error , response } = await useFetch(this.#url , {method:this.#method , body});
+        const { error , response } = await useFetch({
+            url:this.#url , body , method: this.#method ,
+        })
 
-        await this.#executeMiddleware(response , [...this.#middleware]);
-        
         if(error) {
-            await this.#handleResponseError(error) ;
+            this.#handleError(error);
             return ;
         }
 
-        for (const handler of this.#handlers) {
-            await handler(response);
-        }
+        await this.#executeMiddleware(response , [...this.#middleware]);
+        await this.#executeHandlers(response ,this.#handlers);
+        
     }
 
-    use (...middleware) {
+    use(...middleware) {
         middleware.forEach(mw => {
             this.#middleware.push(mw) ;
         });
     }
 
-    async #handleResponseError (error) {
-        console.log({error});
-    }   
+    addHandlers (...handlers) {
+        handlers.forEach(h => {
+            this.#handlers.push(h);
+        });
+    }
 
-    async #executeMiddleware (response , middleware) {
+    async #handleError (error) {
+        console.log({error});
+    }
+
+    async #executeMiddleware (res , middleware) {
         let index = 0 ;
         const next = async () => {
             const handler = middleware[index++] ;
             if(!handler) return ;
-            await handler(response , next);
+            await handler(res);
         }
-
         await next();
     }
 
-    // #body;
+    async #executeHandlers (res) {
+        this.#handlers.forEach(h => {
+            h(res);
+        });
+    }
+
     #url;
-    #middleware ;
-    #handlers;
     #method;
+    #handlers;
+    #middleware;
 
-    constructor ({url , method , handlers = [] , middleware = []}) {
-
-        if(!url || !method) {
-            throw new Error('provided no url or method');
+    constructor ({url , method = 'get' , handlers = [] , middleware = []}) {
+        if(!url) {
+            throw new Error('url is not provided');
         }
-        
-        this.#url = url ;
-        this.#method  = method ;
-        this.#middleware = [...middleware] ;
+        this.#url = url; 
+        this.#method = method ;
         this.#handlers = [...handlers] ;
+        this.#middleware = [...middleware] ;
     }
 }
 
@@ -63,7 +71,7 @@ const htmlelems = {
     } ,
 }
 
-const formPostRequest = new Request_({
+const formPostRequest = new RequestManager({
     method:'post' ,url:'/handle-form' , 
     handlers:[
         async (res) => {
@@ -75,7 +83,7 @@ const formPostRequest = new Request_({
     ] ,
 }) ;
 
-const updatePlayListRequest = new Request_({
+const updatePlayListRequest = new RequestManager({
     url:'/get-all-files' , method:'post' ,
     handlers:[
         async (res) => {
@@ -102,7 +110,7 @@ window.addEventListener("DOMContentLoaded" , async () => {
 
     formHTML.onsubmit = async (ev) => {
         ev.preventDefault();
-        await formPostRequest.exec(formdata) ;
+        await formPostRequest.exec({body:formdata}) ;
     }
 
 });
@@ -111,15 +119,20 @@ window.addEventListener("DOMContentLoaded" , async () => {
 
 async function updatePlayList () {
     
-    updatePlayListRequest.use();
-    await updatePlayListRequest.exec();
+    updatePlayListRequest.use(() => {});
+    await updatePlayListRequest.exec({});
 
 
 }
 
 // utils
 
-async function useFetch(url , {method:_m = 'get' , body = {}}) {
+async function useFetch({url , method:_m = 'get' , body = {}}) {
+
+    if(!url) {
+
+        throw new Error('url is not provided');
+    }
 
     const method = _m.toLowerCase();
 
