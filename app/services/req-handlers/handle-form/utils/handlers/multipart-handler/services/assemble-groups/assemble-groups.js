@@ -1,8 +1,35 @@
 
 class GroupAssembler {
 
-    getAllGroups () {
-        return this.#groups ;
+    getAssemled () {
+        const groups = {}
+
+        for (const [groupId , groupBundle] of this.#groups.entries()) {
+
+            const { tableName , columns } = groupBundle ;
+    
+            const rowColumns = {}
+            
+            columns.entries().forEach(([tablename , colBundle]) => {
+                const { value , contentType } = colBundle ;
+                rowColumns[tablename] = {
+                    value ,
+                    contentType ,
+                }
+            })
+            
+            const groupByTableName = groups[tableName];
+    
+            if(!groupByTableName) {
+                groups[tableName] = [rowColumns] ;
+                continue ;
+            }
+    
+            groupByTableName.push(rowColumns);
+
+        }
+        
+        return groups ;
     }
 
     gulpOne ({groupId  , tableName , colName , colValue , colContentType}) {

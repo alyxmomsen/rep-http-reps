@@ -107,12 +107,18 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        assembler.getAllGroups().entries().forEach(([id , bundle]) => {
-            log('y' , id);
-            bundle.columns.entries().forEach(([name , value]) => {
-                log('y' ,{name , value})
-            })
+        const groups = assembler.getAssemled(); 
+
+        groups['files'].forEach(row => {
+            
+            console.log('files' , row);
         });
+
+        groups['users'].forEach(row => {
+            
+            console.log('users', row);
+        });
+
 
 
         // const added = [] ;
