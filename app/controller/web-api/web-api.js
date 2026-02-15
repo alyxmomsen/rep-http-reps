@@ -11,9 +11,9 @@ const router = new Router();
 const log = loggerFactory('route /test/:id/foo/:bar' , '-u');
 
 router.use(
-    (req , res , next) => {log('def' , 'Gmw 11');next()} ,
-    (req , res , next) => {log('def' , 'Gmw 12');next()} ,
-    (req , res , next) => {log('def' , 'Gmw 13');next()} ,
+    // (req , res , next) => {log('def' , 'Gmw 11');next()} ,
+    // (req , res , next) => {log('def' , 'Gmw 12');next()} ,
+    // (req , res , next) => {log('def' , 'Gmw 13');next()} ,
 );
 
 router.post('/get-all-files' , (req , res) => {
@@ -29,7 +29,6 @@ router.post('/handle-form' , handleForm);
 
 router.get('/public/:type/:id' , (req , res) => {
     
-
     handlePublic(req , res);
 });
 
@@ -56,9 +55,9 @@ router.get('/form' , async (req , res) => {
 
 router.get(
     '/test/:id/foo/:bar' , 
-    (req , res , next) => {log('r' , 'lmw 1');next()} ,
-    (req , res , next) => {log('r' , 'lmw 2');next()} ,
-    (req , res , next) => {log('r' , 'lmw 3');next()} ,
+    // (req , res , next) => {log('r' , 'lmw 1');next()} ,
+    // (req , res , next) => {log('r' , 'lmw 2');next()} ,
+    // (req , res , next) => {log('r' , 'lmw 3');next()} ,
     async (req , res) => {
         
         const { method , url , params , queryParams } = req; 
