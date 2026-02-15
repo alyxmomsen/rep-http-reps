@@ -1,88 +1,86 @@
 
 class GroupAssembler {
 
-    getAllAssembledGroups () {
+    getAssembledGroups () {
 
         const groups = {} ;
 
-        for (const [_ , group] of this.#groups.entries()) {
+        for (const [_ , groupBundle ] of this.#groups.entries()) {
+
+            const { tableName , columns } = groupBundle ;
 
             const row = {} ;
-
-            const { tableName , columns } = group ;
-
-            columns.entries().forEach(([colname , colBundle]) => {
-                row[colname] = colBundle ;
+            columns.entries().forEach(([colName , colBundle]) => {
+                row[colName] = colBundle ;
             });
 
             const groupByTableName = groups[tableName] ;
 
             if(!groupByTableName) {
                 groups[tableName] = [row] ;
-                continue ;
+                continue;
             }
 
-            groupByTableName.push(row);
+            groupByTableName.push(row) ;
         }
 
         return groups ;
     }
 
-    gulpOne ({groupId , tableName , colName , colValue , colContentType}) {
+    gulpOneColumnData ({groupId , tableName , colName , colValue , colContentType}) {
 
-        const bundle = {
-            group:{
-                id:groupId ,
-            } ,
-            table:{
+        const colBundle  = {
+            table: {
                 name:tableName ,
             } ,
             column: {
                 name:colName ,
                 value:colValue ,
-                contentType:colContentType || this.#colContentTypeDefault ,
+                contentType:colContentType || this.#columnContentTypeDefaulValue ,
             }
         }
 
-        this.#updateGroup(bundle);
+        this.#updateGroup(groupId , colBundle);
     }
 
-    #updateGroup (bundle) {
+    #updateGroup (groupId , bundle) {
 
-        const { group , table , column } = bundle ;
-        const { id:groupId } = group ;
+        const { table , column } = bundle ;
         const { name:tableName } = table ;
-        const { name:colName , value:colValue , contentType:colContentType } = column ;
+        const { 
+            name:colName , 
+            value:colValue ,
+            contentType:colContentType ,
+        } = column ;
 
         const groupById = this.#groups.get(groupId);
 
         if(!groupById) {
             this.#groups.set(groupId , {
                 tableName ,
-                columns: new Map([
+                columns: new Map ([
                     [colName , {
                         value:colValue ,
                         contentType:colContentType ,
                     }]
                 ]) ,
-            });
+            }) ;
             return ;
         }
 
         const { columns } = groupById ;
 
         columns.set(colName , {
-            value:colValue ,
-            contentType:colContentType ,
+            value:colValue , contentType:colContentType ,
         });
     }
 
-    #colContentTypeDefault;
     #groups;
+    #columnContentTypeDefaulValue ;
 
     constructor () {
         this.#groups = new Map();
-        this.#colContentTypeDefault = 'text/plain' ;
+        this.#columnContentTypeDefaulValue = 'text/plain' ;
     }
 }
 
