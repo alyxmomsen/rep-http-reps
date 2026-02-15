@@ -1,7 +1,7 @@
 const { createFile, createUser, readFileById, readFiles } = require("../../../../../../../services/database/controller/database-controller");
 const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
-const AssembleGroups = require("./services/assemble-groups/assemble-groups");
+const GroupAssembler = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
 const splitFormDatPart = require("./utils/handle-part");
 
@@ -45,7 +45,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const formDataParts = splitFormDataBuffer(wholebuffer , Buffer.from(boundary));
 
-        const assembler = new AssembleGroups();
+        const assembler = new GroupAssembler();
 
         for (const formDataPart of formDataParts) {
 
@@ -72,18 +72,33 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                 // ==================================================================
 
                 const bundle = {
-                    body ,
-                    contentType ,
-                    filenameAttr ,
-                    semantic: {
-                        groupId , tableName ,
-                        tableItemFieldName ,
+                    group: {
+                        id:groupId ,
+                    } ,
+                    table:{
+                        name:tableName ,
+                        col:{
+                            name:tableItemFieldName ,
+                            value:body ,
+                            contentType ,
+                        }
                     }
                 }
 
                 // ------------------------------------------------------------------
 
-                assembler.gulpOneBundle(bundle);
+                assembler.gulpOne({
+                    groupId , tableName ,
+                    colContentType:contentType ,
+                    colName:tableItemFieldName  , colValue:body ,
+                });
+
+                if(filenameAttr) {
+                    assembler.gulpOne({
+                        groupId , tableName ,
+                        colName:'filename' , colValue:filenameAttr ,
+                    })
+                }
 
                 log('y' , {bundle});
             }
@@ -92,17 +107,25 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const added = [] ;
-        assembler.getTableItems('files').forEach(tableItem => {
-            const { } = tableItem.get();
-            const fileId = createFile({...tableItem.get()});
-            // console.log({fileId});
-            added.push(fileId);
-        }) ;
-        
-        const allFiles = readFiles();
+        assembler.getAllGroups().entries().forEach(([id , bundle]) => {
+            log('y' , id);
+            bundle.columns.entries().forEach(([name , value]) => {
+                log('y' ,{name , value})
+            })
+        });
 
-        log('r' , {allFiles});
+
+        // const added = [] ;
+        // assembler.getTableItems('files').forEach(tableItem => {
+        //     const { } = tableItem.get();
+        //     const fileId = createFile({...tableItem.get()});
+        //     // console.log({fileId});
+        //     added.push(fileId);
+        // }) ;
+        
+        // const allFiles = readFiles();
+
+        // log('r' , {allFiles});
 
         // files.forEach(userId => {
         //     const userdata= readFileById(userId)
@@ -110,11 +133,12 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         //     console.log({userdata});
         // });
 
+        res.end();
 
-        res.end(JSON.stringify({payload:{
-            added ,
-            allFiles ,
-        }}));
+        // res.end(JSON.stringify({payload:{
+        //     added ,
+        //     allFiles ,
+        // }}));
     });
 }
 
