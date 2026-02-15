@@ -1,68 +1,58 @@
 
 class GroupAssembler {
 
-    getAssemled () {
-        const groups = {}
+    getAllAssembledGroups () {
 
-        for (const [groupId , groupBundle] of this.#groups.entries()) {
+        const groups = {} ;
 
-            const { tableName , columns } = groupBundle ;
-    
-            const rowColumns = {}
-            
-            columns.entries().forEach(([tablename , colBundle]) => {
-                const { value , contentType } = colBundle ;
-                rowColumns[tablename] = {
-                    value ,
-                    contentType ,
-                }
-            })
-            
-            const groupByTableName = groups[tableName];
-    
+        for (const [_ , group] of this.#groups.entries()) {
+
+            const row = {} ;
+
+            const { tableName , columns } = group ;
+
+            columns.entries().forEach(([colname , colBundle]) => {
+                row[colname] = colBundle ;
+            });
+
+            const groupByTableName = groups[tableName] ;
+
             if(!groupByTableName) {
-                groups[tableName] = [rowColumns] ;
+                groups[tableName] = [row] ;
                 continue ;
             }
-    
-            groupByTableName.push(rowColumns);
 
+            groupByTableName.push(row);
         }
-        
+
         return groups ;
     }
 
-    gulpOne ({groupId  , tableName , colName , colValue , colContentType}) {
+    gulpOne ({groupId , tableName , colName , colValue , colContentType}) {
 
         const bundle = {
             group:{
                 id:groupId ,
-            } , 
+            } ,
             table:{
                 name:tableName ,
             } ,
             column: {
                 name:colName ,
                 value:colValue ,
-                contentType:colContentType || this.#columnDefaultContentType ,
+                contentType:colContentType || this.#colContentTypeDefault ,
             }
         }
 
-        this.#updateGroup(bundle) ;
-
+        this.#updateGroup(bundle);
     }
 
     #updateGroup (bundle) {
 
         const { group , table , column } = bundle ;
-
         const { id:groupId } = group ;
         const { name:tableName } = table ;
-        const { 
-            name:colName ,
-            value:colValue ,
-            contentType:colContentType , 
-        } = column ;
+        const { name:colName , value:colValue , contentType:colContentType } = column ;
 
         const groupById = this.#groups.get(groupId);
 
@@ -87,12 +77,12 @@ class GroupAssembler {
         });
     }
 
+    #colContentTypeDefault;
     #groups;
-    #columnDefaultContentType ;
 
     constructor () {
         this.#groups = new Map();
-        this.#columnDefaultContentType = 'text/plain' ;
+        this.#colContentTypeDefault = 'text/plain' ;
     }
 }
 

@@ -107,7 +107,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const groups = assembler.getAssemled(); 
+        const groups = assembler.getAllAssembledGroups(); 
 
         groups['files'].forEach(row => {
             
