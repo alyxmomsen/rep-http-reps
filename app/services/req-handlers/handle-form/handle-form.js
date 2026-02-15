@@ -18,6 +18,8 @@ async function handleForm (req , res) {
 
     const [contentType , contentTypeAttrLike] = contentTypeHeader.split('; ');
 
+    log('r' ,{contentType , contentTypeAttrLike});
+
     switch (contentType) {
         case 'multipart/form-data' :
             await handleMultipartData(req , res ,{boundaryRawStr:contentTypeAttrLike});
