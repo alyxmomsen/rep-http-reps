@@ -87,14 +87,14 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
                 // ------------------------------------------------------------------
 
-                assembler.gulpOneColumnData({
+                assembler.gulpOne({
                     groupId , tableName ,
                     colContentType:contentType ,
                     colName:tableItemFieldName  , colValue:body ,
                 });
 
                 if(filenameAttr) {
-                    assembler.gulpOneColumnData({
+                    assembler.gulpOne({
                         groupId , tableName ,
                         colName:'filename' , colValue:filenameAttr ,
                     })
@@ -107,7 +107,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const groups = assembler.getAssembledGroups(); 
+        const groups = assembler.getAllAssmbledGroups(); 
 
         groups['files'].forEach(row => {
             
