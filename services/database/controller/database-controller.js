@@ -10,7 +10,7 @@ function createUser ({name , lastname}) {
 }   
 
 function createFile ({filename , mime , originalFilename , title , description}) {
-
+    console.log('create file'.toString());
     return database.create('FILES' ,{filename , mime , originalFilename , title , description});
 }
 

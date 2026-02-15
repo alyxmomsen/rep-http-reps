@@ -69,23 +69,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                     continue;
                 }
 
-                // ==================================================================
-
-                const bundle = {
-                    group: {
-                        id:groupId ,
-                    } ,
-                    table:{
-                        name:tableName ,
-                        col:{
-                            name:tableItemFieldName ,
-                            value:body ,
-                            contentType ,
-                        }
-                    }
-                }
-
-                // ------------------------------------------------------------------
+                // ==============================================================
 
                 assembler.gulpOne({
                     groupId , tableName ,
@@ -99,8 +83,6 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                         colName:'filename' , colValue:filenameAttr ,
                     })
                 }
-
-                log('y' , {bundle});
             }
             catch (e) {
                 log('r' , 'split part error' , {e});
@@ -109,42 +91,42 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const groups = assembler.getAllAssmbledGroups(); 
 
+        const addedFiles = [] ;
         groups['files'].forEach(row => {
-            
-            console.log('files' , row);
-        });
-
-        groups['users'].forEach(row => {
-            
-            console.log('users', row);
-        });
-
-
-
-        // const added = [] ;
-        // assembler.getTableItems('files').forEach(tableItem => {
-        //     const { } = tableItem.get();
-        //     const fileId = createFile({...tableItem.get()});
-        //     // console.log({fileId});
-        //     added.push(fileId);
-        // }) ;
         
-        // const allFiles = readFiles();
+            const { title , description , file , filename } = row ;
 
-        // log('r' , {allFiles});
+            if(!file?.value?.length) {
+                log('r' , 'file have not data')
+                return ;
+            }
 
-        // files.forEach(userId => {
-        //     const userdata= readFileById(userId)
+            const addedFile = createFile({
+                description:description?.value?.toString() || null , 
+                originalFilename:filename?.value?.toString() || null , 
+                title:title?.value?.toString() || null ,
+            });
 
-        //     console.log({userdata});
+            addedFiles.push(addedFile)
+        });
+
+        console.log({addedFiles});
+
+        // groups['users'].forEach(row => {
+            
+        //     console.log('users', row);
         // });
 
-        res.end();
+        res.writeHead(200);
+        res.end(JSON.stringify({
+            status:{
+                code:0 ,
+            } , 
+            payload: {
+                addedFiles ,
+            }
+        }));
 
-        // res.end(JSON.stringify({payload:{
-        //     added ,
-        //     allFiles ,
-        // }}));
     });
 }
 

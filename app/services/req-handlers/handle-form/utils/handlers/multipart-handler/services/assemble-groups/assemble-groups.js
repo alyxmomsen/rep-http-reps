@@ -12,7 +12,11 @@ class GroupAssembler {
             const row = {} ;
             columns.entries().forEach(([colName , colBundle]) => {
                 console.log({colName , colBundle});
-                row[colName] = colBundle ;
+                const {colValue:value , colContentType:contentType} = colBundle ;
+                row[colName] = {
+                    value ,
+                    contentType ,
+                } ;
             });
 
             const tableNameGroup = groups[tableName] ;
