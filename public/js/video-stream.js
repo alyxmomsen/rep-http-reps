@@ -70,27 +70,20 @@ window.addEventListener('DOMContentLoaded' , () => {
     
         // ----- main ----------------------------------------
     
-        // const html = {
-        //     form: {
-        //         main:{
-        //             id:'form--main' ,
-        //         } ,
-        //     } ,
-        //     btn: {
-        //         addform:{
-        //             id:'btn--add' ,
-        //         }
-        //     }
-        // }
-
-        const formelem = document.getElementById(html.form.main.id);
-        const addFormButton = document.getElementById(html.btn.addform.id);
-
-        formelem.onsubmit = (ev) => {
-            const formData = new FormData(formelem);
-            ev.preventDefault();
-            onformsubmit.exec({body:formData});
+        const html = {
+            btn: {
+                addform:{
+                    id:'btn--add' ,
+                }
+            }
         }
+
+        const updatePlaylist = new Request({
+            url:'/update-playlist' ,
+            handlers:[] ,
+            method:'post' ,
+            middleware:[] ,
+        });
 
         // -----------------------------------------------------
     

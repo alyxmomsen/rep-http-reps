@@ -16,6 +16,11 @@ router.use(
     // (req , res , next) => {log('def' , 'Gmw 13');next()} ,
 );
 
+router.get('/update-playlist' , (req , res) => {
+    const files = readFiles();
+    console.log();
+});
+
 router.post('/get-all-files' , (req , res) => {
 
     const files = readFiles();

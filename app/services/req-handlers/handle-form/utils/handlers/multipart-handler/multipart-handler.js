@@ -91,8 +91,6 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const groups = assembler.getAssembledGroups(); 
 
-        log('y' , {groups});
-
         const addedFiles = [] ;
         groups['files']?.forEach(row => {
         
@@ -107,6 +105,8 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                 description:description?.value?.toString() || null , 
                 originalFilename:filename?.value?.toString() || null , 
                 title:title?.value?.toString() || null ,
+                file:file?.value , mime:file?.contentType ,
+                // filename:
             });
 
             addedFiles.push(addedFile)
