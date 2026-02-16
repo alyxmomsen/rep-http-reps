@@ -37,7 +37,28 @@ router.get('/form' , async (req , res) => {
     const log = loggerFactory('route: /form' , '-u');
 
     try {
-        const file = await readFile(resolve(join('.' , 'app' , 'src' , 'assets' , 'html' , 'form.html')));
+        const file = await readFile(resolve(join('.' , 'app' , 'src' , 'assets' , 'html' , 'form', 'form.html')));
+        res.writeHead(200 , 'ok' , {
+            'content-type':'text/html' ,
+        });
+        res.end(file);
+    }
+    catch (e) {
+
+        log('r' , {e});
+        
+        res.writeHead(500);
+        res.end();
+    }
+    
+});
+
+router.get('/video-stream' , async (req , res) => {
+    
+    const log = loggerFactory('route: /form' , '-u');
+
+    try {
+        const file = await readFile(resolve(join('.' , 'app' , 'src' , 'assets' , 'html' , 'video', 'video.html')));
         res.writeHead(200 , 'ok' , {
             'content-type':'text/html' ,
         });

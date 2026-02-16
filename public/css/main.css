@@ -1,3 +1,32 @@
 body {
     background-color: rebeccapurple;
 }
+
+.wrapper--main {
+    width: 666px;
+    margin:0 auto;
+    padding: 9px;
+    border: 1px solid saddlebrown;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.gap-1 {
+    gap:calc(9px * 1) ;
+}
+
+.gap-2 {
+    gap:calc(9px * 2) ;
+}
+
+.flx-align-start {
+    align-items: start;
+}

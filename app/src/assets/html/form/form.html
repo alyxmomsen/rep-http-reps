@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/public/css/main">
+    <link rel="stylesheet" href="/public/css/form">
+    <script src="/public/javascript/form"></script>
+    <title>Document</title>
+</head>
+<body>
+    <div class="wrapper--main">
+        <div>
+            <!-- <form action="" method="post" enctype="multipart/form-data"> -->
+            <!-- <form action="" method="post" enctype="multipart/form-data"> -->
+            <form action="" method="post" enctype="multipart/form-data" id="form--main">
+                <button id="btn--add" type="button">+</button>
+                <div class="flex-col gap-2">
+                    <div class="flex-col gap-1 flx-align-start">
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g0.users.role" id="g0.users.role">
+                            <label class="clickable" for="g0.users.role">role</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g0.users.rights" id="g0.users.rights">
+                            <label class="clickable" for="g0.users.rights">rights</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g0.users.name" id="g0.users.name">
+                            <label class="clickable" for="g0.users.name">name</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g0.users.last-name" id="g0.users.last-name">
+                            <label class="clickable" for="g0.users.last-name">last name</label>
+                        </div>
+                    </div>
+                    <div class="flex-col gap-1 flx-align-start">
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g1.users.role" id="g1.users.role">
+                            <label class="clickable" for="g1.users.role">role</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g1.users.rights" id="g1.users.rights">
+                            <label class="clickable" for="g1.users.rights">rights</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g1.users.name" id="g1.users.name">
+                            <label class="clickable" for="g1.users.name">name</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g1.users.last-name" id="g1.users.last-name">
+                            <label class="clickable" for="g1.users.last-name">last name</label>
+                        </div>
+                    </div>
+                    <div class="flex-col gap-1 flx-align-start">
+                        <div>
+                            <input class="clickable" type="submit" value="submit">
+                        </div>
+                        <div>
+                            monitor
+                        </div>
+                    </div>
+                    <div class="flex-col gap-1">
+                        <h2>files</h2>
+                        <div id="files"></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

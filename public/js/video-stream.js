@@ -1,5 +1,4 @@
-
-window.addEventListener("DOMContentLoaded" , () => {
+window.addEventListener('DOMContentLoaded' , () => {
 
     (function () {
     
@@ -71,32 +70,18 @@ window.addEventListener("DOMContentLoaded" , () => {
     
         // ----- main ----------------------------------------
     
-        const html = {
-            form: {
-                main:{
-                    id:'form--main' ,
-                } ,
-            } ,
-            btn: {
-                addform:{
-                    id:'btn--add' ,
-                }
-            }
-        }
-
-        const onformsubmit = new Request({
-            url:'/handle-form' , 
-            handlers:[() => alert('hello world')] , 
-            middleware:[] , 
-            method:'post' ,
-        });
-
-        const onaddoneform = new Request({
-            url:'/handle-form' , 
-            handlers:[() => alert('hello world')] , 
-            middleware:[] , 
-            method:'post' ,
-        });
+        // const html = {
+        //     form: {
+        //         main:{
+        //             id:'form--main' ,
+        //         } ,
+        //     } ,
+        //     btn: {
+        //         addform:{
+        //             id:'btn--add' ,
+        //         }
+        //     }
+        // }
 
         const formelem = document.getElementById(html.form.main.id);
         const addFormButton = document.getElementById(html.btn.addform.id);
@@ -139,5 +124,6 @@ window.addEventListener("DOMContentLoaded" , () => {
         }
     
     })()
+
 
 });

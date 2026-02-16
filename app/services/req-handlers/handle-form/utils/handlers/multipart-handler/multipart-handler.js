@@ -94,7 +94,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         log('y' , {groups});
 
         const addedFiles = [] ;
-        groups['files'].forEach(row => {
+        groups['files']?.forEach(row => {
         
             const { title , description , file , filename } = row ;
 
@@ -111,13 +111,6 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
             addedFiles.push(addedFile)
         });
-
-        // console.log({addedFiles});
-
-        // groups['users'].forEach(row => {
-            
-        //     console.log('users', row);
-        // });
 
         res.writeHead(200);
         // res.end(JSON.stringify({

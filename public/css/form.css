@@ -6,3 +6,7 @@
     background-color: aqua;
     color: black;
 }
+
+input[type="submit"] {
+    padding: 9px;
+}

@@ -13,6 +13,8 @@ function loggerFactory (prefix , flags) {
         prefix = (flagsmap[flag] || (f=>f))(prefix) ;
     });
 
+    
+
     const colorsmap = {
         r:'31' ,
         g:'32' ,
