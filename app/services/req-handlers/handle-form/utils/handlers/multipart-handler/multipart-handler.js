@@ -89,7 +89,9 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const groups = assembler.getAllAssmbledGroups(); 
+        const groups = assembler.getAllAssembledGroups(); 
+
+        log('y' , {groups});
 
         const addedFiles = [] ;
         groups['files'].forEach(row => {
@@ -110,7 +112,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             addedFiles.push(addedFile)
         });
 
-        console.log({addedFiles});
+        // console.log({addedFiles});
 
         // groups['users'].forEach(row => {
             
@@ -118,12 +120,21 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         // });
 
         res.writeHead(200);
+        // res.end(JSON.stringify({
+        //     status:{
+        //         code:0 ,
+        //     } , 
+        //     payload: {
+        //         addedFiles ,
+        //     }
+        // }));
+
         res.end(JSON.stringify({
             status:{
                 code:0 ,
-            } , 
+            } ,
             payload: {
-                addedFiles ,
+                foo:'bar' ,
             }
         }));
 

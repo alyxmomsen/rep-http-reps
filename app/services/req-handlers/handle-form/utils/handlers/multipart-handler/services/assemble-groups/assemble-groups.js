@@ -1,84 +1,75 @@
 
 class GroupAssembler {
 
-    getAllAssmbledGroups () {
+    getAllAssembledGroups () {
 
         const groups = {} ;
 
-        for (const [ _grId , groupBundle ] of this.#groups.entries()) {
-            
-            const { tableName , columns } = groupBundle ;
+        for (const [_ , group] of this.#groups) {
 
             const row = {} ;
-            columns.entries().forEach(([colName , colBundle]) => {
-                console.log({colName , colBundle});
-                const {colValue:value , colContentType:contentType} = colBundle ;
-                row[colName] = {
-                    value ,
-                    contentType ,
-                } ;
-            });
-
-            const tableNameGroup = groups[tableName] ;
-
-            if(!tableNameGroup) {
-                groups[tableName] = [row] ;
+            const { tableName  , columns } = group ;
+            for (const [colname , colData] of columns) {
+                row[colname] = colData ;
+            }
+            
+            const groupByTableName = groups[tableName] ;
+            if(!groupByTableName) {
+                groups[tableName] = [row];
                 continue ;
             }
 
-            tableNameGroup.push(row);
+            groupByTableName.push(row);
         }
 
         return groups ;
     }
 
-    gulpOne ({groupId , tableName , colName  ,colValue , colContentType}) {
+    gulpOne ({groupId  , tableName , colName , colValue , colContentType}) {
 
-        // console.log({groupId , tableName , colName , colValue ,colContentType});
-
-        const columnBundle = {
+        const column = {
             name:colName ,
             value:colValue ,
             contentType:colContentType || this.#columnContentTypeDefaultValue ,
-        } ;
+        }
 
-        this.#updateGroup(groupId , tableName , columnBundle );
+        this.#updateGroup(groupId , tableName , column) ;
 
     }
 
-    #updateGroup (groupId , tableName , columnBundle) {
+    #updateGroup (groupId , tableName , column) {
 
-        const { name:colName , value:colValue , contentType:colContentType } = columnBundle;
+        const { name: colName , value: colValue , contentType: colContentType } = column ;
 
         const groupById = this.#groups.get(groupId);
 
         if(!groupById) {
             this.#groups.set(groupId , {
-                tableName , 
-                columns: new Map ([
+                tableName ,
+                columns:new Map([
                     [colName , {
-                        colValue , 
-                        colContentType ,
+                        value: colValue , 
+                        contentType: colContentType ,
                     }]
-                ]) ,
+                ]),
             });
             return ;
         }
 
-        const { columns } = groupById;
+        const { columns } = groupById ;
 
         columns.set(colName , {
-            colValue ,
-            colContentType ,
+            value: colValue , contentType: colContentType
         });
+
     }
 
-    #groups ;
-    #columnContentTypeDefaultValue;
+    #columnContentTypeDefaultValue ;
+    #groups;
 
     constructor () {
-        this.#groups = new Map () ;
         this.#columnContentTypeDefaultValue = 'text/plain' ;
+        this.#groups = new Map();
     }
 }
 
