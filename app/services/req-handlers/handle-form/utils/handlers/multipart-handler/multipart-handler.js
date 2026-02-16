@@ -89,7 +89,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const groups = assembler.getAllAssembledGroups(); 
+        const groups = assembler.getAssembledGroups(); 
 
         log('y' , {groups});
 
