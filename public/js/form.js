@@ -1,137 +1,118 @@
 
-class RequestManager {
+window.addEventListener("DOMContentLoaded"  , () => {
 
-    async exec (body = {}) {
-        const { error , response } = await useFetch({ 
-            url:this.#url , 
-            method:this.#method ,
-            body ,
-        });
-
-        if(error) {
-            this.handleError(error);
-            return ;
-        }
-
-        await this.#executeMiddleware(response , [...this.#middleware]);
-        await this.#executeHandlers(response , [...this.#handlers]);
-    }
-
-    addHandles (...handlers) {
-        handlers.forEach(hr => {
-            this.#handlers.push(hr);
-        });
-    }
-
-    use (...middleware) {
-        middleware.forEach(mw => {
-            this.#middleware.push(mw);
-        });
-    }
-
-    handleError (error) {
-        console.log({error});
-    }
-
-    async #executeHandlers (response , handlers) {
-        handlers.forEach(async (handler) => {
-            await handler(response);
-        });
-    }
-
-    async #executeMiddleware (response , middleware) {
-        let index = 0 ;
-        const next = async () => {
-            const handler = middleware[index++] ;
-            if(!handler) return ;
-            await handler(response , next);
-        }
-        await next() ;
-    }
-
-    #url;
-    #method;
-    #handlers;
-    #middleware ;
-
-    constructor ({method = 'get' , url , handlers = [] , middleware = []}) {
-
-        if(!url) {
-            throw new Error('no url provided') ;
-        }
-
-        this.#url = url ;
-        this.#method = method ;
-        this.#handlers = [...handlers] ;
-        this.#middleware = [...middleware] ;
-    }
-}
-
-const htmlElements = {
-    'FORM_MAIN':{
-        id:'form--main' ,
-    }
-}
-
-const formsubmit = new RequestManager({
-    url:'/handle-form' , 
-    method:'post' ,
-    handlers:[
-        async (response) => {
-            const json = await response.json();
-            console.log({response , json});
-        }
-    ] ,
-    middleware:[] ,
-});
-
-document.addEventListener('DOMContentLoaded' , async () => {
-
-
-    const formHTML = document.getElementById(htmlElements.FORM_MAIN.id);
+    (() => {
     
-    const form = new FormData(formHTML);
-
-    const response = await fetch('/handle-form' , {method:'post' , body:form});
+        const globals = {
+            rest: {
+                method: {
+                    'GET':{
+                        fetch:'get',
+                    }
+                }
+            }
+        }  
+        
+        // --------------------------
+        
+        class Request {
+         
+            async exec ({body}) {
+        
+                const {response , error } = await useFetch({url:this.#url , body , method:this.#method});
     
-    console.log({formHTML , response:await response.json()});
+                if(error) {
+                    this.#handleError(error);
+                    return;
+                }
+    
+                await this.#executeMiddleware(response , [...this.#middleware]);
+                await this.#executeHandlers(response , [...this.#handlers]);
+            }
+    
+            use (...middleware) {
+                middleware.forEach(mw => {
+                    this.#middleware.push();
+                });
+            }
 
-    const formdata = new FormData(formHTML);
+            addHandlers (...handlers) {
+                handlers.forEach(h => this.#handlers.push(h));
+            }
+    
+            #handleError (error) {
+                console.log({error});
+            }
+    
+            async #executeHandlers (response  , handlers) {
+                handlers.forEach(async (h) => await h(response));
+            }
+            
+            async #executeMiddleware (response , middleware) {
+                let index = 0 ;
+                const next = async () => {
+                    const handlerLike = middleware[index++] ;
+                    if(!handlerLike) return ;
+                    handlerLike(response , next);
+                }
+                await next();
+            }
+    
+            #url;
+            #method;
+            #handlers;
+            #middleware ;
+            
+            constructor (url , method = globals.rest.method.GET.fetch , middleware = [] , handlers = []) {
+                const _m = method.toLowerCase();
+                this.#method = _m ;
+                this.#url = url ;    
+                this.#middleware = [...middleware] ;
+                this.#handlers = [...handlers] ;
+            }
+        }
 
-    formHTML.onsubmit = async (ev) => {
-        ev.preventDefault();
-        await formsubmit.exec(form);
-    }
+        // main =========
+    
+        const formsubmitRequest = new Request('/handle-form' , 'post' , [] , [async (res) => console.log({res:await res.json()})]) ;
+
+        const formHTML = document.getElementById('form--main');
+
+        const formdata = new FormData(formHTML);
+
+        formHTML.onsubmit = async (ev) => {
+            ev.preventDefault();
+            await formsubmitRequest.exec({body:formdata});
+        }
+        
+    
+        // ==============
+        
+        async function useFetch ({url , method:m = globals.rest.method.GET.fetch , body = {}}) {
+            
+            const method = m.toLowerCase();
+        
+            try {
+        
+                const response = await fetch(url , {
+                    method ,
+                    body:method === globals.rest.method.GET.fetch ? {} : body ,
+                });
+                return {
+                    response ,
+                }
+            }
+            catch (e) {
+                console.log({e});
+                return {
+                    error: {
+                        details:e ,
+                    } ,
+                }
+            }
+        
+        }
+    
+    })();
 
 });
-
-async function useFetch ({url , method:_m = 'get'  , body = {}}) {
-
-    if(!url) {
-        throw new Error ('no url');
-    }
-
-    const method = _m.toLowerCase();
-
-    console.log({url , method , body});
-
-    try {
-        const response = await fetch(url , {
-            method , 
-            body: method === 'get' ? {} : body ,
-        });
-
-        return {
-            response,
-        } ;
-    }
-    catch (e) {
-        console.log({e});
-        return {
-            error:{
-                details:e,
-            } ,
-        }
-    }
-
-}
