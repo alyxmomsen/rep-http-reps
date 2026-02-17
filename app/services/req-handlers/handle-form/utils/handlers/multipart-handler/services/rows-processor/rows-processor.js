@@ -3,6 +3,12 @@ const { loggerFactory } = require("../../../../../../../../../utils/logger");
 const log = loggerFactory('group processor' , '-u');
 class GroupProccessor {
 
+    sendResponse(res) {
+
+        res.writeHead(200);
+        res.end(JSON.stringify({foo:'bar'}));
+    }
+
     async execute(tablename , payload) {
         const tableNameHandlers = this.#routes.get(tablename);
 
@@ -37,7 +43,7 @@ groupsprocessor.addRouteHandler('files' , async (row) => {
 
     const { title , description , file , filename } = row ;
     
-    console.log('files handler'.toUpperCase() , {row});
+    console.log('files handler'.toUpperCase() , {row: row});
 
     if(!file?.value?.length) {
         log('r' , 'file have not data')

@@ -96,56 +96,15 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         // ------------------------------------------
 
-
-        // get groups by tables names
-
         const groups = groupBundler.getAssembledGroups(); 
 
-        
         for (const [tablename , tableRows] of Object.entries(groups)) {
-
-            tableRows.forEach(row => {
-
-                groupsprocessor.execute(tablename , row);
+            tableRows.forEach(async (row) => {
+                await groupsprocessor.execute(tablename , row);
             });
-
         }
 
         console.log({groups});
-
-        // const files = groups['files'] || [] ;
-        // const users = groups['users'] || [] ;
-        
-        // process groups 
-
-        const addedFiles = [] ;
-        for (const row of /* files */[]) {
-
-            // const { title , description , file , filename } = row ;
-    
-            // if(!file?.value?.length) {
-            //     log('r' , 'file have not data')
-            //     return ;
-            // }
-
-            // console.log('fooo barrr');
-    
-            // const addedFile = await createFile({
-            //     description:description?.value?.toString() || null , 
-            //     originalFilename:filename?.value?.toString() || null , 
-            //     title:title?.value?.toString() || null ,
-            //     file:file?.value , mime:file?.contentType ,
-            //     // filename:
-            // });
-    
-            // console.log({addedFile});
-
-            // if(!addedFile) {
-            //     continue;
-            // }
-    
-            // addedFiles.push(addedFile)
-        }
 
         res.writeHead(200);
         res.end(JSON.stringify({
