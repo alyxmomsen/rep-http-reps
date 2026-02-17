@@ -17,17 +17,18 @@ function createFile ({filename , mime , originalFilename , title , description ,
     
     if(file && file.length) {
 
-        const newFIlePath = resolve(join('.' , 'uploads' , randomBytes(32).toString('utf-8')));
+        // const newFIlePath = resolve(join('.' , 'uploads' , randomBytes(32).toString('utf-8')));
 
-        const rs = Readable.from(file);
-        const ws = createWriteStream(newFIlePath);
-        rs.on('end' , () => {
-            
-        });
+        // const rs = Readable.from(file);
+        // const ws = createWriteStream(newFIlePath);
+        // rs.on('end' , () => {
+
+        // });
         
-        console.log('create file'.toString() , {filename , mime , originalFilename , title , description , file} );
-        return database.create('FILES' ,{filename , mime , originalFilename , title , description});
     }
+    
+    console.log('create file'.toString() , {filename , mime , originalFilename , title , description , file} );
+    return database.create('FILES' ,{filename , mime , originalFilename , title , description});
 
 }
 
