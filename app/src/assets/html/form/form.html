@@ -16,7 +16,7 @@
             <form action="" method="post" enctype="multipart/form-data" id="form--main">
                 <button id="btn--add" type="button">+</button>
                 <div class="flex-col gap-2">
-                    <!-- <div class="flex-col gap-1 flx-align-start">
+                    <div class="flex-col gap-1 flx-align-start">
                         <div class="flex-row gap-1">
                             <input type="text" name="g0.users.role" id="g0.users.role">
                             <label class="clickable" for="g0.users.role">role</label>
@@ -33,7 +33,7 @@
                             <input type="text" name="g0.users.last-name" id="g0.users.last-name">
                             <label class="clickable" for="g0.users.last-name">last name</label>
                         </div>
-                    </div> -->
+                    </div>
                     <div class="flex-col gap-1 flx-align-start">
                         <div class="flex-row gap-1">
                             <input type="text" name="g1.files.title" id="g1.users.role">
@@ -49,6 +49,20 @@
                         </div>
                     </div>
                     <div class="flex-col gap-1 flx-align-start">
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g2.files.title" id="g2.files.title">
+                            <label class="clickable" for="g2.files.title">title</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="text" name="g2.files.description" id="g2.files.description">
+                            <label class="clickable" for="g2.files.description">description</label>
+                        </div>
+                        <div class="flex-row gap-1">
+                            <input type="file" name="g2.files.file" id="g2.files.file" accept=".mkv , .mp4">
+                            <label class="clickable" for="g2.files.file">file</label>
+                        </div>
+                    </div>
+                    <div class="flex-col gap-1 flx-align-start">
                         <div>
                             <input class="clickable" type="submit" value="submit">
                         </div>
@@ -58,7 +72,9 @@
                     </div>
                     <div class="flex-col gap-1">
                         <h2>files</h2>
-                        <div id="files"></div>
+                        <div id="files">
+
+                        </div>
                     </div>
                 </div>
             </form>

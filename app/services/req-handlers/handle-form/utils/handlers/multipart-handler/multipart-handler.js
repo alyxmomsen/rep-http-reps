@@ -1,12 +1,16 @@
 const { createFile, createUser, readFileById, readFiles } = require("../../../../../../../services/database/controller/database-controller");
 const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
-const GroupAssembler = require("./services/assemble-groups/assemble-groups");
+const GroupBundler = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
+const groupsprocessor = require("./services/rows-processor/rows-processor");
 const splitFormDatPart = require("./utils/handle-part");
 
 const log = loggerFactory('handle multipart data' , '-u');
 async function handleMultipartData (req , res , {boundaryRawStr}) {
+   
+
+    console.log('multipart form data');
 
     if(!boundaryRawStr) {
         res.writeHead(400);
@@ -45,7 +49,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const formDataParts = splitFormDataBuffer(wholebuffer , Buffer.from(boundary));
 
-        const assembler = new GroupAssembler();
+        const groupBundler = new GroupBundler();
 
         for (const formDataPart of formDataParts) {
 
@@ -71,16 +75,17 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
                 // ==============================================================
 
-                assembler.gulpOne({
+                groupBundler.gulpOneColumnData({
                     groupId , tableName ,
                     colContentType:contentType ,
                     colName:tableItemFieldName  , colValue:body ,
                 });
 
                 if(filenameAttr) {
-                    assembler.gulpOne({
+                    groupBundler.gulpOneColumnData({
                         groupId , tableName ,
                         colName:'filename' , colValue:filenameAttr ,
+                        // colContentType: 
                     })
                 }
             }
@@ -89,45 +94,68 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const groups = assembler.getAssembledGroups(); 
+        // ------------------------------------------
 
-        const addedFiles = [] ;
-        groups['files']?.forEach(row => {
+
+        // get groups by tables names
+
+        const groups = groupBundler.getAssembledGroups(); 
+
         
-            const { title , description , file , filename } = row ;
+        for (const [tablename , tableRows] of Object.entries(groups)) {
 
-            if(!file?.value?.length) {
-                log('r' , 'file have not data')
-                return ;
-            }
+            tableRows.forEach(row => {
 
-            const addedFile = createFile({
-                description:description?.value?.toString() || null , 
-                originalFilename:filename?.value?.toString() || null , 
-                title:title?.value?.toString() || null ,
-                file:file?.value , mime:file?.contentType ,
-                // filename:
+                groupsprocessor.execute(tablename , row);
             });
 
-            addedFiles.push(addedFile)
-        });
+        }
+
+        console.log({groups});
+
+        // const files = groups['files'] || [] ;
+        // const users = groups['users'] || [] ;
+        
+        // process groups 
+
+        const addedFiles = [] ;
+        for (const row of /* files */[]) {
+
+            // const { title , description , file , filename } = row ;
+    
+            // if(!file?.value?.length) {
+            //     log('r' , 'file have not data')
+            //     return ;
+            // }
+
+            // console.log('fooo barrr');
+    
+            // const addedFile = await createFile({
+            //     description:description?.value?.toString() || null , 
+            //     originalFilename:filename?.value?.toString() || null , 
+            //     title:title?.value?.toString() || null ,
+            //     file:file?.value , mime:file?.contentType ,
+            //     // filename:
+            // });
+    
+            // console.log({addedFile});
+
+            // if(!addedFile) {
+            //     continue;
+            // }
+    
+            // addedFiles.push(addedFile)
+        }
 
         res.writeHead(200);
-        // res.end(JSON.stringify({
-        //     status:{
-        //         code:0 ,
-        //     } , 
-        //     payload: {
-        //         addedFiles ,
-        //     }
-        // }));
-
         res.end(JSON.stringify({
             status:{
                 code:0 ,
             } ,
-            payload: {
-                foo:'bar' ,
+            success:{
+                payload: {
+                    addedFiles ,
+                }
             }
         }));
 
@@ -197,3 +225,4 @@ function fallback (res , statusCode , statusMessage = '' , resMessage = '') {
     res.writeHead(statusCode , statusMessage , );
     res.end(resMessage);
 }
+

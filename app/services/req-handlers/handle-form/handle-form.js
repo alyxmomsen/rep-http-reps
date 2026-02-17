@@ -4,11 +4,10 @@ const handleMultipartData = require("./utils/handlers/multipart-handler/multipar
 const log = loggerFactory('handle form' , '-u');
 
 async function handleForm (req , res) {
-
     const { headers } = req ;
-
+    
     const contentTypeHeader = headers['content-type'] ;
-
+    
     if(!contentTypeHeader) {
         log('y' , 'no header');
         res.writeHead(400);
@@ -16,6 +15,7 @@ async function handleForm (req , res) {
         return ;
     }
 
+    
     const [contentType , contentTypeAttrLike] = contentTypeHeader.split('; ');
 
     log('r' ,{contentType , contentTypeAttrLike});

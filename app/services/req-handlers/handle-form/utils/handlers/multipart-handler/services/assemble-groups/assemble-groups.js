@@ -1,76 +1,76 @@
-
-class GroupAssembler {
+class GroupBundler {
 
     getAssembledGroups () {
 
         const groups = {} ;
 
-        for (const [_ , { tableName , columns }] of this.#groups.entries()) {
-            
+        for (const [_ , groupAsTableRow] of this.#groups.entries()) {
+
+            const { tableName , columns} = groupAsTableRow ;
+
             const row = {} ;
-            for (const [colName , data ] of columns) {
-                row[colName] = data ; 
-            } 
+            for (const [ colName , colValue ] of columns) {
+                // const { value , contentType } = colValue ;
+                row[colName] = colValue ;
+            }
 
-            const groupsByTablename = groups[tableName] ;
-
-            if(!groupsByTablename) {
+            const groupByTableName = groups[tableName] ;
+            
+            if(!groupByTableName) {
                 groups[tableName] = [row] ;
                 continue ;
             }
 
-            groupsByTablename.push(row) ;
+            groupByTableName.push(row);
         }
-
+        
         return groups ;
     }
 
-    gulpOne ({groupId , tableName , colName , colValue , colContentType}) {
-
+    gulpOneColumnData({groupId , tableName , colName , colValue , colContentType}) {
+        
         const column = {
             name:colName ,
-            value:colValue , 
-            contentType:colContentType || this.#colContentTypeDefaultValue ,
+            value:colValue ,
+            contentType:colContentType || /* typeof colValue === 'string' &&  */this.#columnDefaultContentType ,
         }
 
-        this.#updateGroup(groupId  ,tableName , column);
+        this.#updateTableRow(groupId  ,tableName , column);
 
     }
 
-    #groups ;
-    #colContentTypeDefaultValue;
+    #updateTableRow (groupId , tableName , column) {
 
-    #updateGroup (groupId , tableName , column) {
+        const { name , value , contentType } = column ;
 
-        const { name: colName , value: colValue , contentType: colContentType } = column ;
+        const groupByID = this.#groups.get(groupId);
 
-        const groupByGroupId = this.#groups.get(groupId);
-
-        if(!groupByGroupId) {
+        if(!groupByID) {
             this.#groups.set(groupId , {
-                tableName , 
+                tableName ,
                 columns:new Map([
-                    [colName , {
-                        value: colValue , contentType: colContentType
+                    [name , {
+                        value , 
+                        contentType ,
                     }]
                 ]) ,
             });
+
             return ;
         }
 
-        const { columns } = groupByGroupId ;
+        const { columns:row } = groupByID;
 
-        columns.set(colName , {
-            value:colValue , contentType:colContentType ,
-        });
-
+        row.set(name , {value , contentType});
     }
-    
-    constructor () {
 
-        this.#groups = new Map();
-        this.#colContentTypeDefaultValue = 'text/plain' ;
+    #groups;
+    #columnDefaultContentType ;
+
+    constructor () {
+        this.#groups = this.#groups = new Map()
+        this.#columnDefaultContentType = 'text/plain' ;
     }
 }
 
-module.exports = GroupAssembler ;
+module.exports = GroupBundler ;

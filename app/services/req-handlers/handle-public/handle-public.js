@@ -33,6 +33,7 @@ async function handlePublic (req , res) {
             filemap: {
                 'main':'main.css' ,
                 'form':'form.css' ,
+                'video-stream':'video-stream.css' ,
             }
         } ,
         'javascript': {

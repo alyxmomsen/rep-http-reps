@@ -24,9 +24,11 @@ class DataBase {
 
     getTableItemById (tablename , itemId) {
 
+        console.log({tablename , itemId});
+
         const tableByName = this.#tables.get(tablename);
 
-        if(!tablename) return null ;
+        if(!tableByName) return null ;
 
         const itemById = tableByName.get(itemId);
 

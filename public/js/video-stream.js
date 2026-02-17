@@ -4,8 +4,12 @@ window.addEventListener('DOMContentLoaded' , () => {
     
         class Request  {
         
-            async exec({body = {}}) {
-                const { response , error } = await useFetch({url:this.#url , body , method:this.#method});
+            async exec({body={} , url=undefined}) {
+                console.log(this.#url);
+                const { response , error } = await useFetch({
+                    url:url || this.#url , 
+                    body:this.#method === 'get' ? {} : body , 
+                    method:this.#method});
     
                 if(error) {
                     this.handleError(error);
@@ -54,7 +58,7 @@ window.addEventListener('DOMContentLoaded' , () => {
             #middleware ;
     
             constructor ({method:_m = 'get' , url , handlers = [] , middleware = []}) {
-    
+                console.log({_m , url , handlers , middleware});
                 if(!url) {
                     throw new Error('no url provided');
                 }
@@ -68,7 +72,7 @@ window.addEventListener('DOMContentLoaded' , () => {
             }        
         }
     
-        // ----- main ----------------------------------------
+        // --------------------------- main ---------------------------
     
         const html = {
             btn: {
@@ -78,14 +82,42 @@ window.addEventListener('DOMContentLoaded' , () => {
             }
         }
 
+        // ---
+        
         const updatePlaylist = new Request({
-            url:'/update-playlist' ,
+            url:'/api/get-all-files' ,
             handlers:[] ,
-            method:'post' ,
+            method:'get' ,
             middleware:[] ,
         });
 
-        // -----------------------------------------------------
+        updatePlaylist.exec({});
+
+        // ---
+
+        const videoIdLocalstorageData = searchLocalStorage('video-id');
+        const videoelem = document.getElementById('video--main');
+        if(videoelem instanceof HTMLVideoElement === false) return ;
+        
+        videoelem.onload = () => {
+            console.log('load');
+        }
+        
+        videoelem.onloadstart = () => {
+            
+            console.log('load stafrt');
+        }
+        
+        videoelem.onloadeddata = () => {
+            
+            console.log('loaded data');
+        }
+
+        (videoIdLocalstorageData && videoelem) && (videoelem.src = `/api/video-stream/${videoIdLocalstorageData}`) && videoelem.load() ;
+
+
+
+        // ------------------------------------------------------------
     
         async function useFetch ({url , body = {} , method:_m = 'get'}) {
             
@@ -98,7 +130,7 @@ window.addEventListener('DOMContentLoaded' , () => {
             try {
                 const response = await fetch(url , {
                     method ,
-                    body:method === 'get' ? {} : body , 
+                    ...(method === 'get' ? {} : body) ,
                 });
     
                 return {
@@ -113,10 +145,17 @@ window.addEventListener('DOMContentLoaded' , () => {
                     } ,
                 }
             }
-    
         }
     
     })()
 
 
 });
+
+function searchLocalStorage (itemName) {
+
+    const vid = localStorage.getItem(itemName);
+
+    return vid ;
+
+}

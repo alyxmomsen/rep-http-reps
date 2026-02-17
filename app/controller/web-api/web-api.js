@@ -5,6 +5,7 @@ const { resolve, join } = require("path");
 const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
 const { readFiles } = require("../../../services/database/controller/database-controller");
+const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
 
 const router = new Router();
 
@@ -16,28 +17,28 @@ router.use(
     // (req , res , next) => {log('def' , 'Gmw 13');next()} ,
 );
 
-router.get('/update-playlist' , (req , res) => {
+router.get('/api/update-playlist' , (req , res) => {
     const files = readFiles();
     console.log();
 });
 
-router.post('/get-all-files' , (req , res) => {
-
+router.get('/api/get-all-files' , (req , res) => {
+    console.log('get all files');
     const files = readFiles();
 
     res.end(JSON.stringify({files}));
 });
 
-router.post('/get-stream-by-id/:id' , f=>f);
+router.get('/api/video-stream/:id' , handleStream);
 
-router.post('/handle-form' , handleForm);
+router.post('/api/handle-form' , handleForm);
 
 router.get('/public/:type/:id' , (req , res) => {
     
     handlePublic(req , res);
 });
 
-router.get('/form' , async (req , res) => {
+router.get('/l/form' , async (req , res) => {
     
     const log = loggerFactory('route: /form' , '-u');
 
@@ -58,7 +59,7 @@ router.get('/form' , async (req , res) => {
     
 });
 
-router.get('/video-stream' , async (req , res) => {
+router.get('/l/video-stream' , async (req , res) => {
     
     const log = loggerFactory('route: /form' , '-u');
 
