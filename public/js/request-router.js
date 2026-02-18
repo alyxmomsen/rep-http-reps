@@ -9,13 +9,21 @@ class RequestRouter {
             return ;
         }
 
+        for (const handler of this.#onRequestStartHandlers) {
+            handler();
+        }
+
         await this.#executeMiddleware(response , [...this.#middleware]);
         for (const handler of this.#handlers) {
             await handler(response);
         }    
     }
 
-    
+    onRequestStart (...handlers) {
+        handlers.forEach(handler => {
+            this.#onRequestStartHandlers.push(handler) ;
+        });
+    }
     
     useMiddleware (...middleware) {
         middleware.forEach(mw => {
@@ -76,8 +84,16 @@ class RequestRouter {
     #method ;
     #handlers ;
     #middleware ;
+
+    #onRequestStartHandlers ;
     
-    constructor (url , method , handlers , middleware) {
+    constructor (
+        url , 
+        method , 
+        handlers = [] , 
+        middleware = [] , 
+        onRequestStart = []
+    ) {
         
         if(!url) throw new Error('router :: incorrect url provided ');
         
@@ -89,5 +105,7 @@ class RequestRouter {
         this.#method = method ;
         this.#handlers = [...handlers] ;
         this.#middleware = [...middleware] ;
+
+        this.#onRequestStartHandlers = [...onRequestStart] ;
     }
 }

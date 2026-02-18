@@ -12,21 +12,21 @@ window.addEventListener("DOMContentLoaded" , () => {
         
         // --------------------------------------
     
+        const r = new RequestRouter(
+            '/api/handle-form' , 'post' , 
+            [
+                async (res) => {
+                    console.log(await res.json())
+                } ,
+            ] , 
+            // [
+            //     async (res , next) => {console.log(`mw 1`) ; next()},
+            //     async (res , next) => {console.log(`mw 2`) ; next()},
+            //     async (res , next) => {console.log(`mw 3`) ; next()},
+            // ]
+        );
+
         form.addEventListener("submit" , async (e) => {
-            
-            const r = new RequestRouter(
-                '/api/handle-form' , 'post' , 
-                [
-                    async (res) => {
-                        console.log(await res.json())
-                    } ,
-                ] , 
-                [
-                    async (res , next) => {console.log(`mw 1`) ; next()},
-                    async (res , next) => {console.log(`mw 2`) ; next()},
-                    async (res , next) => {console.log(`mw 3`) ; next()},
-                ]
-            );
             
             e.preventDefault();
             
