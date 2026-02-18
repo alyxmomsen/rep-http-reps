@@ -99,24 +99,30 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         const groups = groupBundler.getAssembledGroups(); 
 
         for (const [tablename , tableRows] of Object.entries(groups)) {
-            tableRows.forEach(async (row) => {
+
+            for (const row of tableRows) {
                 await groupsprocessor.execute(tablename , row , res);
-            });
+            }
+
+            // tableRows.forEach(async (row) => {
+            //     await groupsprocessor.execute(tablename , row , res);
+            // });
         }
 
         console.log({groups});
 
-        res.writeHead(200);
-        res.end(JSON.stringify({
-            status:{
-                code:0 ,
-            } ,
-            success:{
-                payload: {
-                    // addedFiles ,
-                }
-            }
-        }));
+        // res.writeHead(200);
+        // res.end(JSON.stringify({
+        //     status:{
+        //         code:0 ,
+        //     } ,
+        //     success:{
+        //         payload: {
+        //             // addedFiles ,
+        //         }
+        //     }
+        // }));
+        res.sendResponseData(200 , 'ok');
 
     });
 }

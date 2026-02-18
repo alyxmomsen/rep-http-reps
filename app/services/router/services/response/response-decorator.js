@@ -25,14 +25,18 @@ class ResponseDecorator {
     // decorate
 
     addResponseData(key , value) {
+        console.log('\x1b[31maddResponseData\x1b[0m' , {key , value});
         this.responseData.payload[key] = value ;
+        console.log('\x1b[31maddResponseData\x1b[0m' , this.responseData);
+        
     }
-
+    
     sendResponseData (statusCode , statusMessage) {
+        console.log('\x1b[31msendResponseData\x1b[0m' , this.responseData);
         this.#originalResponse.writeHead(statusCode , statusMessage , {
             'content-type':'apllication/json' ,
         });
-        this.#originalResponse.end(this.responseData);
+        this.#originalResponse.end(JSON.stringify(this.responseData));
     }
 
     responseData ;
