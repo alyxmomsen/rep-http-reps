@@ -42,6 +42,7 @@ async function handlePublic (req , res) {
                 'main':'main.js' ,
                 'form':'form.js' ,
                 'video-stream':'video-stream.js' ,
+                'rq-router':'request-router.js',
             }
         } ,
     }
