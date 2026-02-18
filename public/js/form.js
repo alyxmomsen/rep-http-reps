@@ -5,11 +5,28 @@ window.addEventListener("DOMContentLoaded" , () => {
 
     (function() {
 
+        // ----------- get html elems -----------
+        
         const form = document.getElementById('form--main');
+        const formSubmitStatus = document.getElementById('status--form-submit');
+        
+        // --------------------------------------
     
         form.addEventListener("submit" , async (e) => {
-    
-            const r = new RequestRouter('/api/handle-form' , 'post' , [async (res) => {console.log(await res.json())}] , [async (res , next) => {alert('mw')}]);
+            
+            const r = new RequestRouter(
+                '/api/handle-form' , 'post' , 
+                [
+                    async (res) => {
+                        console.log(await res.json())
+                    } ,
+                ] , 
+                [
+                    async (res , next) => {console.log(`mw 1`) ; next()},
+                    async (res , next) => {console.log(`mw 2`) ; next()},
+                    async (res , next) => {console.log(`mw 3`) ; next()},
+                ]
+            );
             
             e.preventDefault();
             
@@ -22,6 +39,7 @@ window.addEventListener("DOMContentLoaded" , () => {
             // console.log({response:await response.json() , error});
     
         });
+
     })()
 
 

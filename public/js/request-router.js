@@ -67,7 +67,7 @@ class RequestRouter {
         const next = async () => {
             const handler = middleware[index++] ;
             if(!handler) return ;
-            await handler(responseByFetch);
+            await handler(responseByFetch , next);
         }
         await next();
     }
@@ -91,4 +91,3 @@ class RequestRouter {
         this.#middleware = [...middleware] ;
     }
 }
-alert();
