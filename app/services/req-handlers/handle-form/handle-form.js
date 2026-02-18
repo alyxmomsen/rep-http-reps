@@ -4,6 +4,8 @@ const handleMultipartData = require("./utils/handlers/multipart-handler/multipar
 const log = loggerFactory('handle form' , '-u');
 
 async function handleForm (req , res) {
+
+    console.log('foo bar baz');
     const { headers } = req ;
     
     const contentTypeHeader = headers['content-type'] ;

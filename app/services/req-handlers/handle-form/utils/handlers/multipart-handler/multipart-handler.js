@@ -113,7 +113,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             } ,
             success:{
                 payload: {
-                    addedFiles ,
+                    // addedFiles ,
                 }
             }
         }));
