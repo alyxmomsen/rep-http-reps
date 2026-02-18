@@ -1,12 +1,13 @@
 const {} = require('fs') ;
 const { loggerFactory } = require('../../../utils/logger');
+const ResponseDecorator = require('./services/response/response-decorator');
 const log = loggerFactory('router' , '-u');
 class Router {
 
     async handleRequest(req , res) {
 
         // этот объект работает с конкретным объектом ServerResponse
-        const routerResponse = new RouterResponse (res) ;
+        const routerResponse = new ResponseDecorator (res) ;
 
         // ----------------------------
 
@@ -49,7 +50,7 @@ class Router {
 
             await this.#executeMiddleware(req ,res , [...this.#middleware , ...middleware]);
 
-            await handler(req , res);
+            await handler(req , routerResponse);
             return ;
         }
 
