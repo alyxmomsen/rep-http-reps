@@ -9,6 +9,17 @@ body {
     border: 1px solid saddlebrown;
 }
 
+/* prefix: pos */
+
+.pos-res {
+    position:relative ;
+}
+
+.pos-abs {
+    position:absolute ;
+}
+
+
 /* prefix: flx */
 
 .flx {
@@ -35,4 +46,12 @@ body {
 
 .flx-align-start {
     align-items: start;
+}
+
+.flx-align-ctr {
+    align-items: center;
+}
+
+.flx-jtf-ctr {
+    justify-content: center;
 }

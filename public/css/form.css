@@ -1,3 +1,7 @@
+:root {
+    --ref-value:9px;
+}
+
 .clickable {
     cursor: pointer;
 }
@@ -9,4 +13,22 @@
 
 input[type="submit"] {
     padding: 9px;
+}
+
+.modal-window {
+    position: absolute;
+    top:10vh;
+    right:31vw ;
+    width: 200px;
+    height: 200px;
+    background-color: #202036;
+    color: antiquewhite;
+    display: none;
+}
+
+#modal-window__btn--close {
+    cursor: pointer;
+    position:absolute;
+    top:calc(var(--ref-value) * 1) ;
+    left:calc(var(--ref-value) * 1) ;
 }
