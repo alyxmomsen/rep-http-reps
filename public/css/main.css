@@ -9,21 +9,27 @@ body {
     border: 1px solid saddlebrown;
 }
 
-.flex-col {
+/* prefix: flx */
+
+.flx {
+    display: flex;
+}
+
+.flx-col {
     display: flex;
     flex-direction: column;
 }
 
-.flex-row {
+.flx-row {
     display: flex;
     flex-direction: row;
 }
 
-.gap-1 {
+.flx-gap-1 {
     gap:calc(9px * 1) ;
 }
 
-.gap-2 {
+.flx-gap-2 {
     gap:calc(9px * 2) ;
 }
 

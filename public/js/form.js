@@ -5,38 +5,45 @@ window.addEventListener("DOMContentLoaded" , () => {
 
     (function() {
 
-        // ----------- get html elems -----------
+        // -- grab html elems --
         
         const form = document.getElementById('form--main');
         const formSubmitStatus = document.getElementById('status--form-submit');
         
-        // --------------------------------------
+        // -- instance a submit handler -- 
     
-        const r = new RequestRouter(
-            '/api/handle-form' , 'post' , 
-            [
-                async (res) => {
-                    console.log(await res.json())
-                } ,
-            ] , 
-            // [
-            //     async (res , next) => {console.log(`mw 1`) ; next()},
-            //     async (res , next) => {console.log(`mw 2`) ; next()},
-            //     async (res , next) => {console.log(`mw 3`) ; next()},
-            // ]
+        const submitHandler = new RequestRouter(
+            '/api/handle-form' , 'post'
         );
+
+        // -- config the submit handler --
+
+        submitHandler.addHandlers(async (res) => {
+            try {
+                const jsonResponse = await res.json();
+                const { } = jsonResponse ;
+                formSubmitStatus.innerHTML = '<div class="clickable">uploaded!</div>'
+                console.log({jsonResponse});
+
+            }catch (e) {
+                console.log({e});
+            }
+        });
+
+        // ================================
 
         form.addEventListener("submit" , async (e) => {
             
             e.preventDefault();
             
             const formdata = new FormData (form) ;
+
+            submitHandler.onBeforeRequestStarted(() => {
+                formSubmitStatus.innerHTML = 'uploading...';
+            });
             
-            await r.exec(formdata);
+            await submitHandler.exec(formdata);
             
-            // const {response  , error} = await RequestRouter.UseFetch('/api/handle-form' ,'post' ,formdata) ;
-    
-            // console.log({response:await response.json() , error});
     
         });
 

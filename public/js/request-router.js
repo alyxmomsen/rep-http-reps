@@ -2,26 +2,38 @@ class RequestRouter {
 
     async exec (body = {}) {
 
+        // on-before-request-started
+
+        for (const handler of this.#onBeforeRequestStartHandlers) {
+            handler();
+        }
+
+        // =========================
+
         const { error , response } = await RequestRouter.UseFetch(this.#url , this.#method , body);
+
+        // =========================
 
         if(error) {
             console.error({error});
             return ;
         }
 
-        for (const handler of this.#onRequestStartHandlers) {
-            handler();
-        }
+        // =========================
 
         await this.#executeMiddleware(response , [...this.#middleware]);
         for (const handler of this.#handlers) {
             await handler(response);
         }    
+
+        // on-after-request-handled
+        // ...
+        // ------------------------
     }
 
-    onRequestStart (...handlers) {
+    onBeforeRequestStarted (...handlers) {
         handlers.forEach(handler => {
-            this.#onRequestStartHandlers.push(handler) ;
+            this.#onBeforeRequestStartHandlers.push(handler) ;
         });
     }
     
@@ -85,7 +97,7 @@ class RequestRouter {
     #handlers ;
     #middleware ;
 
-    #onRequestStartHandlers ;
+    #onBeforeRequestStartHandlers ;
     
     constructor (
         url , 
@@ -106,6 +118,6 @@ class RequestRouter {
         this.#handlers = [...handlers] ;
         this.#middleware = [...middleware] ;
 
-        this.#onRequestStartHandlers = [...onRequestStart] ;
+        this.#onBeforeRequestStartHandlers = [...onRequestStart] ;
     }
 }
