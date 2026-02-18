@@ -1,5 +1,6 @@
 const { createFile } = require("../../../../../../../../../services/database/controller/database-controller");
 const { loggerFactory } = require("../../../../../../../../../utils/logger");
+const ResponseDecorator = require("../../../../../../../router/services/response/response-decorator");
 const log = loggerFactory('group processor' , '-u');
 class GroupProccessor {
 
@@ -9,11 +10,11 @@ class GroupProccessor {
         res.end(JSON.stringify({foo:'bar'}));
     }
 
-    async execute(tablename , payload , callback) {
+    async execute(tablename , payload , routerResponse) {
         const tableNameHandlers = this.#routes.get(tablename);
 
         for (const handler of tableNameHandlers) {
-            await handler(payload);
+            await handler(payload , routerResponse);
         }
     }
 
@@ -29,15 +30,21 @@ class GroupProccessor {
     }
 
     #routes;
+    // #routerResponse ;
 
-    constructor () {
+    constructor (/* routerResponse */) {
+        // const fallbackMessage = `routerResponse is not instance of the ResponseDecorator class` ;
+        // if(!routerResponse instanceof ResponseDecorator) throw new Error(fallbackMessage);
+        // this.#routerResponse = routerResponse ;
         this.#routes = new Map() ;
     }
 }
 
 const groupsprocessor = new GroupProccessor();
 
-groupsprocessor.addRouteHandler('files' , async (row) => {
+groupsprocessor.addRouteHandler('files' , async (row , routerResponse) => {
+
+    console.log({routerResponse});
 
     const addedFiles=  [] ;
 
@@ -67,10 +74,13 @@ groupsprocessor.addRouteHandler('files' , async (row) => {
     
     addedFiles.push(addedFile)
 
-    console.log('files handler'.toUpperCase());
+    if(routerResponse instanceof ResponseDecorator === false) throw new Error('incorrect ResponseDecorator');
+    routerResponse.addResponseData('addedFiles' , addedFile) ;
+
+    console.log('files handler'.toUpperCase() , {responseData:routerResponse.responseData.payload});
 });
 
-groupsprocessor.addRouteHandler('users' , (row) => {
+groupsprocessor.addRouteHandler('users' , (row , routerResponse) => {
 
     const {} = row ;
 

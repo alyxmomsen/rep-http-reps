@@ -100,7 +100,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         for (const [tablename , tableRows] of Object.entries(groups)) {
             tableRows.forEach(async (row) => {
-                await groupsprocessor.execute(tablename , row);
+                await groupsprocessor.execute(tablename , row , res);
             });
         }
 
