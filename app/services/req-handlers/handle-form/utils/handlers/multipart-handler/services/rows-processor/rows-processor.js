@@ -9,7 +9,7 @@ class GroupProccessor {
         res.end(JSON.stringify({foo:'bar'}));
     }
 
-    async execute(tablename , payload) {
+    async execute(tablename , payload , callback) {
         const tableNameHandlers = this.#routes.get(tablename);
 
         for (const handler of tableNameHandlers) {

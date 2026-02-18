@@ -5,6 +5,11 @@ class Router {
 
     async handleRequest(req , res) {
 
+        // этот объект работает с конкретным объектом ServerResponse
+        const routerResponse = new RouterResponse (res) ;
+
+        // ----------------------------
+
         const { method:m , url:fullURL } = req ;
         const method = m.toUpperCase();
 
