@@ -44,7 +44,7 @@ window.addEventListener("DOMContentLoaded" , () => {
 
         mainModalwindow.addEventListener("click" , (e) => {
             e.stopImmediatePropagation();
-            alert();
+            e.currentTarget.style.display = 'none' ;
         });
 
         /* ----------------------- */
@@ -76,11 +76,6 @@ window.addEventListener("DOMContentLoaded" , () => {
 
         // -- add listeners on these html elems
 
-        // statusModalwindowCloseButton.addEventListener("click" , (e) => {
-        //     e.preventDefault();
-        //     playlistStatuslog.style.display = 'none' ;
-        // });
-
         form.addEventListener("submit" , async (e) => {
             
             e.preventDefault();
@@ -104,14 +99,14 @@ window.addEventListener("DOMContentLoaded" , () => {
 
 // ------------------------------------------------------------------
 
-class HTMLelement_  {
+// class HTMLelement_  {
 
-    #elem;
+//     #elem;
 
-    #listeners;
+//     #listeners;
 
-    constructor (elem) {
-        this.#elem ;
-    }
-}
+//     constructor (elem) {
+//         this.#elem ;
+//     }
+// }
 

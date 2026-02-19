@@ -5,7 +5,7 @@ const { resolve } = require("path");
 const { createWriteStream } = require("fs");
 const FileManager = require("../../file-manager/file-manager");
 
-const database = new DataBase();
+// const database = new DataBase();
 
 function createUser ({name , lastname}) {
 
@@ -76,4 +76,4 @@ function readFiles () {
     return 
 }
 
-module.exports = { createFile , createUser , readFileById , readFiles} ;
+// module.exports = { createFile , createUser , readFileById , readFiles} ;

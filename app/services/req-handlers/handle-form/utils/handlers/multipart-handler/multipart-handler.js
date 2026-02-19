@@ -1,7 +1,8 @@
 const { createFile, createUser, readFileById, readFiles } = require("../../../../../../../services/database/controller/database-controller");
+const dbController = require("../../../../../../../services/database/controller/db-controller");
 const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
-const GroupBundler = require("./services/assemble-groups/assemble-groups");
+const GroupAssembler = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
 const groupsprocessor = require("./services/rows-processor/rows-processor");
 const splitFormDatPart = require("./utils/handle-part");
@@ -49,7 +50,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const formDataParts = splitFormDataBuffer(wholebuffer , Buffer.from(boundary));
 
-        const groupBundler = new GroupBundler();
+        const groupAssembler = new GroupAssembler();
 
         for (const formDataPart of formDataParts) {
 
@@ -75,17 +76,16 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
                 // ==============================================================
 
-                groupBundler.gulpOneColumnData({
-                    groupId , tableName ,
-                    colContentType:contentType ,
-                    colName:tableItemFieldName  , colValue:body ,
+                groupAssembler.gulpOne({
+                    groupId , tableName , colName:tableItemFieldName ,
+                    colContenttype:contentType , colValue:body ,
                 });
 
                 if(filenameAttr) {
-                    groupBundler.gulpOneColumnData({
+                    groupAssembler.gulpOne({
                         groupId , tableName ,
                         colName:'filename' , colValue:filenameAttr ,
-                        // colContentType: 
+                        // colContentType will be default; 'text/plain'
                     })
                 }
             }
@@ -96,14 +96,15 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         // ------------------------------------------
 
-        const groups = groupBundler.getAssembledGroups(); 
+        const groups = groupAssembler.getAssembledGroupsByTableName(); 
 
         for (const [tablename , tableRows] of Object.entries(groups)) {
 
             for (const row of tableRows) {
-                await groupsprocessor.execute(tablename , row , res);
+                console.log({row});
+                dbController.setRow(tablename , row , res);
             }
-
+            
             // tableRows.forEach(async (row) => {
             //     await groupsprocessor.execute(tablename , row , res);
             // });

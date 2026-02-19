@@ -34,9 +34,10 @@ input[type="submit"] {
 }
 
 #tool-tip--response-logs {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 200px;
-    height: 200px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 200px;
+	height: 200px;
+	background-color: #282734;
 }

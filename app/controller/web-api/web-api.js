@@ -4,7 +4,7 @@ const Router = require("../../services/router/router");
 const { resolve, join } = require("path");
 const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
-const { readFiles } = require("../../../services/database/controller/database-controller");
+// const { readFiles } = require("../../../services/database/controller/database-controller");
 const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
 
 const router = new Router();
@@ -18,13 +18,13 @@ router.use(
 );
 
 router.get('/api/update-playlist' , (req , res) => {
-    const files = readFiles();
+    // const files = readFiles();
     console.log();
 });
 
 router.get('/api/get-all-files' , (req , res) => {
     console.log('get all files');
-    const files = readFiles();
+    // const files = readFiles();
 
     res.end(JSON.stringify({files}));
 });

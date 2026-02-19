@@ -1,8 +1,9 @@
 const { randomBytes } = require('crypto');
-const {} = require('fs');
 class DataBase {
 
     create(tablename , fields) {
+
+        console.log('db; creator:', {tablename , fields});
 
         const tableByName = this.#tables.get(tablename);
 
@@ -62,4 +63,6 @@ class DataBase {
     }
 }
 
-module.exports = DataBase ;
+const database = new DataBase ;
+
+module.exports = { database } ;
