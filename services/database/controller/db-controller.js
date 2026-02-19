@@ -1,3 +1,4 @@
+const ResponseDecorator = require("../../../app/services/router/services/response/response-decorator");
 const { database } = require("../database");
 
 class DBController {
@@ -15,6 +16,12 @@ class DBController {
     //     }
     // }
 
+    getRow (table , rowId , res) {
+        for (const [a , b] of this.#getHandlers.entries()) {
+            console.log({a , b});
+        }
+    }
+
     async setRow (tablename , payload , res) {
 
         const tablenameHandlers = this.#createHandlers.get(tablename);
@@ -24,11 +31,17 @@ class DBController {
         }
 
         for (const handler of tablenameHandlers) {
-            await handler(payload);
+            await handler(payload , res);
         }
     }
 
-    onCreate (tablename , handler) {
+    addGetter (tablename , handler , res) {
+
+        this.#getHandlers.get(tablename);
+
+    }
+
+    addCreator (tablename , handler) {
         
         const tablenameHandlers  = this.#createHandlers.get(tablename);
 
@@ -41,39 +54,87 @@ class DBController {
     }
 
     #createHandlers ;
-    #readHandlers;
+    // #readHandlers;
+
+    #getHandlers;
 
     constructor () {
         this.#createHandlers = new Map();
+        this.#getHandlers = new Map();
     }
 }
 
-const dbController = new DBController ;
+const dbController = new DBController();
 
-dbController.onCreate('files' , (payload) => {
+dbController.addGetter('files' , () => {
+
+    database.getAllByTableName();
+
+});
+
+dbController.addCreator('files' , (payload , res) => {
     
-    console.log('db controller handler : create' , {payload});
+    console.log('db controller handler : create "file"' , {payload});
     
     const { title , description , file , filename } = payload ;
 
-    database.create('files' , {
+    const addedRow = database.create('files' , {
         title:title?.value?.toString() || null ,
         description:description?.value?.toString() || null ,
         originalFilename:filename?.value?.toString() || null ,
         FSFilename:'no file name' ,
     });
     
+    if(res instanceof ResponseDecorator === false) return ;
+
+    let responsepayload = res.getPayload();
+    const { files } = responsepayload ;
+    if(!files) {
+        responsepayload.files = {
+            added:[addedRow] , 
+        } ;
+        return ;
+    }
+    if(!files.added) {
+        files.added = [addedRow] ;
+        return ;
+    }
+    files.added.push(addedRow);
+    responsepayload = {...responsepayload , files} ;
+    res.addPayloadValue('files' , files);
 
 });
 
-// dbController.addHandler('files' , () => {
+dbController.addCreator('users' , (payload , res) => {
+    console.log('db controller handler : create "user"' , {payload});
+    
+    const { role , rights , name } = payload ;
+    const lastname = payload['last-name'] ;
 
-// });
+    const addedRow = database.create('users' , {
+        role:role?.value?.toString() || null ,
+        rights:rights?.value?.toString() || null ,
+        name:name?.value?.toString() || null ,
+        lastname:lastname?.value?.toString() || null ,
+    });
+    
+    if(res instanceof ResponseDecorator === false) return ;
 
-// dbController.addHandler('files' , () => {
+    let responsepayload = res.getPayload();
+    const { users } = responsepayload ;
+    if(!users) {
+        responsepayload.users = {
+            added:[addedRow] ,
+        } ;
+        return ;
+    }
+    if(!users.added) {
+        users.added = [addedRow] ;
+        return ;
+    }
+    users.added.push(addedRow);
+    responsepayload = {...responsepayload , users} ;
+    res.addPayloadValue('files' , users);
+});
 
-// });
-
-
-
-module.exports = dbController ;
+module.exports = { dbController }

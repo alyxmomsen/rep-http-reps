@@ -1,6 +1,24 @@
 const { randomBytes } = require('crypto');
 class DataBase {
 
+    getAllByTableName (tablename) {
+        
+        const rows = [] ;
+
+        const tablenameRows = this.#tables.get(tablename);
+
+        if(!tablenameRows) {
+            return rows ;
+        }
+
+        // for (const [] of tablenameRows) {
+
+        // }
+
+        console.log(tablenameRows , rows);
+
+    }
+
     create(tablename , fields) {
 
         console.log('db; creator:', {tablename , fields});
@@ -20,7 +38,7 @@ class DataBase {
 
         console.log({tableByName});
 
-        return id ;
+        return {id , fields} ;
     }
 
     getTableItemById (tablename , itemId) {

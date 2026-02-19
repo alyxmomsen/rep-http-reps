@@ -1,6 +1,6 @@
-const {} = require('fs') ;
 const { loggerFactory } = require('../../../utils/logger');
 const ResponseDecorator = require('./services/response/response-decorator');
+
 const log = loggerFactory('router' , '-u');
 class Router {
 

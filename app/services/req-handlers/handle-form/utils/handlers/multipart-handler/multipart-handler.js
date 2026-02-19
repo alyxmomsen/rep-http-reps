@@ -1,16 +1,14 @@
-const { createFile, createUser, readFileById, readFiles } = require("../../../../../../../services/database/controller/database-controller");
-const dbController = require("../../../../../../../services/database/controller/db-controller");
+
+const { dbController } = require("../../../../../../../services/database/controller/db-controller");
 const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
 const GroupAssembler = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
-const groupsprocessor = require("./services/rows-processor/rows-processor");
 const splitFormDatPart = require("./utils/handle-part");
 
 const log = loggerFactory('handle multipart data' , '-u');
 async function handleMultipartData (req , res , {boundaryRawStr}) {
    
-
     console.log('multipart form data');
 
     if(!boundaryRawStr) {
@@ -112,17 +110,6 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         console.log({groups});
 
-        // res.writeHead(200);
-        // res.end(JSON.stringify({
-        //     status:{
-        //         code:0 ,
-        //     } ,
-        //     success:{
-        //         payload: {
-        //             // addedFiles ,
-        //         }
-        //     }
-        // }));
         res.sendResponseData(200 , 'ok');
 
     });

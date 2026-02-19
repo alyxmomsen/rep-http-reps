@@ -1,4 +1,3 @@
-const { createFile } = require("../../../../../../../../../services/database/controller/database-controller");
 const { loggerFactory } = require("../../../../../../../../../utils/logger");
 const ResponseDecorator = require("../../../../../../../router/services/response/response-decorator");
 const log = loggerFactory('group processor' , '-u');

@@ -4,8 +4,8 @@ const Router = require("../../services/router/router");
 const { resolve, join } = require("path");
 const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
-// const { readFiles } = require("../../../services/database/controller/database-controller");
 const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
+const { dbController } = require("../../../services/database/controller/db-controller");
 
 const router = new Router();
 
@@ -24,9 +24,10 @@ router.get('/api/update-playlist' , (req , res) => {
 
 router.get('/api/get-all-files' , (req , res) => {
     console.log('get all files');
-    // const files = readFiles();
+    
+    dbController.getRow('files');
 
-    res.end(JSON.stringify({files}));
+    res.end(JSON.stringify({files:'no files'}));
 });
 
 router.get('/api/video-stream/:id' , handleStream);

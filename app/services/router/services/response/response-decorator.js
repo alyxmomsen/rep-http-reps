@@ -1,56 +1,69 @@
-const { ServerResponse } = require("node:http");
+const { ServerResponse } = require("http");
 
 class ResponseDecorator {
 
-    // methods like on original ServerResponse
-    
-    write(chunk) {
-        return this.#originalResponse.write(chunk);
+    // overwrite
+
+    writeHead (...value) {
+        return this.#originalResponse.writeHead(...value);
     }
-    
+
     end(data) {
         return this.#originalResponse.end(data);
     }
-    
-    get writable() {
-        return this.#originalResponse.writable;
-    }
-    
-    writeHead(...args) {
-        return this.#originalResponse.writeHead(...args);
-    }
-    
-    #originalResponse ; 
 
-    // decorate
-
-    addResponseData(key , value) {
-        console.log('\x1b[31maddResponseData\x1b[0m' , {key , value});
-        this.responseData.payload[key] = value ;
-        console.log('\x1b[31maddResponseData\x1b[0m' , this.responseData);
-        
-    }
-    
-    sendResponseData (statusCode , statusMessage) {
-        console.log('\x1b[31msendResponseData\x1b[0m' , this.responseData);
-        this.#originalResponse.writeHead(statusCode , statusMessage , {
-            'content-type':'apllication/json' ,
-        });
-        this.#originalResponse.end(JSON.stringify(this.responseData));
+    get writable () {
+        return this.#originalResponse.writable ;
     }
 
-    responseData ;
+    write (chunk) {
+        return this.#originalResponse.write(chunk);
+    }
 
-    constructor (res) {
-        if(res instanceof ServerResponse === false ) throw new Error ('given object is not instance of the ServerResponse class') ;
-        this.#originalResponse = res; 
-        // ---
-        this.responseData = {
-            payload:{
+    #originalResponse;
 
-            } ,
+
+    // current
+
+    addPayloadValue (key  ,value) {
+        this.#responseData.payload = { 
+            ...this.#responseData.payload ,
+            [key]:value
         } ;
 
+        console.log({responseData:this.#responseData});
+    }
+
+    getPayload () {
+        return this.#responseData.payload ;
+    }
+
+    // updatePayloadValue (key , value) {
+    //     this.#responseData.payload = {
+    //         ...this.#responseData.payload , 
+    //         [key]:{
+    //             ...(this.#responseData.payload[key] ? {[]})
+    //         }
+    //     }
+    // }
+
+    sendResponseData (statusCode , statusMessage) {
+
+        this.#originalResponse.writeHead(statusCode , statusMessage , {
+            'content-type':'application/json' ,
+        });
+        this.#originalResponse.end(JSON.stringify(this.#responseData));
+    }
+
+    #responseData;
+
+    constructor (res) {
+        if(res instanceof ServerResponse === false) throw new Error('"res" is not instance of the ServerResponse class');
+        this.#originalResponse = res; 
+
+        this.#responseData = {
+            payload:{} ,
+        } ;
     }
 }
 
