@@ -2,122 +2,91 @@ class RequestRouter {
 
     async exec (body = {}) {
 
-        // on-before-request-started
-
-        for (const handler of this.#onBeforeRequestStartHandlers) {
-            handler();
+        for (const handler of this.#beforeRequestHandlers) {
+            await handler();
         }
-
-        // =========================
 
         const { error , response } = await RequestRouter.UseFetch(this.#url , this.#method , body);
 
-        // =========================
-
         if(error) {
-            console.error({error});
+            console.log({error});
             return ;
         }
 
-        // =========================
-
-        await this.#executeMiddleware(response , [...this.#middleware]);
         for (const handler of this.#handlers) {
             await handler(response);
-        }    
+        }
 
-        // on-after-request-handled
-        // ...
-        // ------------------------
     }
 
-    onBeforeRequestStarted (...handlers) {
-        handlers.forEach(handler => {
-            this.#onBeforeRequestStartHandlers.push(handler) ;
+    onBeforeRequest (...handlers) {
+        
+        for (const handler of handlers) {
+            this.#beforeRequestHandlers.push(handler);
+        }
+    }
+
+    addHandlers (...handlers) {
+        handlers.forEach(h5r => {
+            this.#handlers.push(h5r);
         });
     }
-    
-    useMiddleware (...middleware) {
+
+    async useMiddleware (...middleware) {
         middleware.forEach(mw => {
             this.#middleware.push(mw);
         });
     }
-    
-    addHandlers (...handlers) {
-        handlers.forEach((handler) => {
-            this.#handlers.push(handler);
-        });
-    }
-    
-    static async UseFetch (url , method = 'get' , body = {}) {
-        
-        if(!url) throw new Error('usefetch :: incorrect url provided');
-        if(!method) throw new Error('usefetch :: incorrect method provided');
 
-        const _method = method.toLowerCase();
-
-        try {
-
-            const response = await fetch (url , {
-                method:_method ,
-                ...(_method === 'get' ? {} : {body}) ,
-            }) ;
-
-            return {
-                response ,
-            }
-        }
-        catch (e) {
-            return {
-                error:{
-                    message:{
-                        native:e ,
-                    } ,
-                } ,
-            }
-        }
-    } 
-
-    #handleError (err) {
-        console.log({err});
-    }
-    
-    async #executeMiddleware (responseByFetch , middleware) {
+    async #executeMidddleware (response , ...middleware) {
         let index = 0 ;
         const next = async () => {
             const handler = middleware[index++] ;
             if(!handler) return ;
-            await handler(responseByFetch , next);
+            await handler(response , next);
         }
-        await next();
+        await next () ;
+    }
+
+    static async UseFetch (url , method , body) {
+
+        if(!url) throw new Error ('usefetch: no url was provided');
+        const _method = method.toLowerCase();
+
+        try {
+            const response = await fetch(url , {
+                method:_method , 
+                ... (_method === 'get' ? {} : {body}) ,
+            });
+            return {
+                response: response ,
+            }
+        }
+        catch (e) {
+            console.log({e});
+            return {
+                error:{
+                    details:e ,
+                }
+            }
+        }
+
     }
 
     #url ;
     #method ;
     #handlers ;
     #middleware ;
+    #beforeRequestHandlers ;
 
-    #onBeforeRequestStartHandlers ;
-    
-    constructor (
-        url , 
-        method , 
-        handlers = [] , 
-        middleware = [] , 
-        onRequestStart = []
-    ) {
-        
-        if(!url) throw new Error('router :: incorrect url provided ');
-        
-        if(!method) throw new Error('router :: incorrect method provided');
+    constructor ({url , method  , handlers = [] , middleware = [] , beforeRequestHandlers = []}) {
 
-        const _method = method.toLowerCase();
+        if(!url) throw new Error('no url given');
 
         this.#url = url ;
         this.#method = method ;
         this.#handlers = [...handlers] ;
         this.#middleware = [...middleware] ;
-
-        this.#onBeforeRequestStartHandlers = [...onRequestStart] ;
+        this.#beforeRequestHandlers = [] ;
     }
 }
