@@ -74,9 +74,11 @@ dbController.addGetter('files' , () => {
 
 dbController.addCreator('files' , (payload , res) => {
     
-    console.log('db controller handler : create "file"' , {payload});
     
     const { title , description , file , filename } = payload ;
+    
+    console.log('db controller handler : create "file"' , {title , description , file , filename} , {payload});
+    
 
     const addedRow = database.create('files' , {
         title:title?.value?.toString() || null ,

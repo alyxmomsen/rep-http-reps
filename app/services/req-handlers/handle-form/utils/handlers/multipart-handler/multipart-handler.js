@@ -1,6 +1,6 @@
 
 const { dbController } = require("../../../../../../../services/database/controller/db-controller");
-const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
+// const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
 const GroupAssembler = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
@@ -9,173 +9,164 @@ const splitFormDatPart = require("./utils/handle-part");
 const log = loggerFactory('handle multipart data' , '-u');
 async function handleMultipartData (req , res , {boundaryRawStr}) {
    
-    console.log('multipart form data');
-
     if(!boundaryRawStr) {
-        res.writeHead(400);
-        res.end('no boundary header data');
         return ;
     }
 
-    const boundary = extractBoundary(boundaryRawStr);
+    const boundaryMatch = boundaryRawStr.match(/boundary=([^;\s$]+)/);
 
-    if(!boundary) {
-        fallback(res , 400 , 'no boundary' , 'no boundary');
+    if(!boundaryMatch) {
         return ;
     }
 
+    const boundaryBuffer = Buffer.from(`--${boundaryMatch[1]}`) ;
 
-    const bufferChunks = [] ;
-    const MAXSIZE = 10_000_000 ;
-    let sizeCounter = 0 ;
-    req.on('data' , async (chunk) => {
-        // log('def' , 'chunk' , chunk.length)
-        // sizeCounter += chunk.length ;
-        // if(sizeCounter >= MAXSIZE) {
-        //     log('r' ,'too large file');
-        //     fallback(res , 400 , 'too large file' , JSON.stringify({mes:'too large'}));
-        //     // req.destroy();
-        //     return ;
-        // }
-
-
-        bufferChunks.push(chunk);
+    const formDataBufferChunks =  [];
+    req.on('data' , (chunk) => {
+        formDataBufferChunks.push(chunk);
     });
 
-    req.on('end' , async () => {
+    req.on("end" , () => {
+        const wholebuffer = Buffer.concat(formDataBufferChunks);
 
-        const wholebuffer = Buffer.concat(bufferChunks);
-
-        const formDataParts = splitFormDataBuffer(wholebuffer , Buffer.from(boundary));
-
+        const formDataBufferParts = splitFormDataBuffer(wholebuffer , boundaryBuffer );
         const groupAssembler = new GroupAssembler();
-
-        for (const formDataPart of formDataParts) {
+        for (const formDataBufferPart of formDataBufferParts) {
 
             try {
-
-                const { headers , body } = splitFormDatPart(formDataPart);
-
-                const formDataPartHeaders = extractFormDataPartHeaders(headers.toString('utf-8'));
-                
-                const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
-                const contentType = formDataPartHeaders['content-type'] || null ;
-
-                const { filename: filenameAttr , name: nameAttr } = parseContentDisposition(contentDisposition);
-
-                const { groupId , tableName , tableItemFieldName } = parseName(nameAttr);
-
-                //  ============== validate semantic ==============================
-                
-                if(!groupId || !tableName || !tableItemFieldName) {
-                    log('r' , 'no valid semantic data')
-                    continue;
-                }
-
-                // ==============================================================
+                // start parsing ...
+                const { headers:headersPartBuffer , body:bodyPartBuffer } = splitDataBufferPart(formDataBufferPart);
+                const headers = extractHeaders(headersPartBuffer.toString('utf-8'));
+                const contentDispositionHeader = headers['content-disposition'] || null ;
+                const contentTypeHeader = headers['content-type'] || null ;
+                const { filename , name:nameAttr } = parseContentDisposition(contentDispositionHeader);
+                const { groupId , tableName , colName } = parseNameAttr(nameAttr);
+                // ... end parsing
 
                 groupAssembler.gulpOne({
-                    groupId , tableName , colName:tableItemFieldName ,
-                    colContenttype:contentType , colValue:body ,
+                    groupId , tableName , 
+                    colName , colValue:bodyPartBuffer , colContenttype:contentTypeHeader
                 });
 
-                if(filenameAttr) {
-                    groupAssembler.gulpOne({
-                        groupId , tableName ,
-                        colName:'filename' , colValue:filenameAttr ,
-                        // colContentType will be default; 'text/plain'
-                    })
-                }
+                if(filename) groupAssembler.gulpOne({
+                    groupId , tableName , 
+                    colName:'filename' , colValue:filename , colContenttype:'text/plain' , 
+                })
+
+                console.log({filename , semantic: {groupId , tableName ,colName} , contentTypeHeader , bodyPartBuffer});
             }
             catch (e) {
-                log('r' , 'split part error' , {e});
+                console.log({e});
             }
         }
 
-        // ------------------------------------------
+        const rowsByTablename = groupAssembler.getAssembledGroupsByTableName();
 
-        const groups = groupAssembler.getAssembledGroupsByTableName(); 
+        for (const [tableName , rows] of Object.entries(rowsByTablename)) {
 
-        for (const [tablename , tableRows] of Object.entries(groups)) {
-
-            for (const row of tableRows) {
-                console.log({row});
-                dbController.setRow(tablename , row , res);
+            for (const row of rows) {
+                dbController.setRow(tableName , row , res);
             }
-            
-            // tableRows.forEach(async (row) => {
-            //     await groupsprocessor.execute(tablename , row , res);
-            // });
         }
 
-        console.log({groups});
-
-        res.sendResponseData(200 , 'ok');
+        res.end(JSON.stringify({payload:{
+            hello:'world' ,
+        }}));
 
     });
+    
 }
 
 module.exports = handleMultipartData ;
 
-
-function parseContentDisposition (contentDisposition) {
-
-    const _name = contentDisposition.match(/name="([^"]+)"/);
-    const _filename = contentDisposition.match(/filename="([^"]+)"/);
-
-    return {    
-        name: (_name && _name[1]) || null ,
-        filename: (_filename && _filename[1]) || null ,
+function parseNameAttr (nameAttr) {
+    const [ groupId , tableName , colName ] = nameAttr.split('.') ;
+    return {
+        groupId:groupId || null , tableName:tableName || null , colName:colName || null
     }
 }
 
-function extractFormDataPartHeaders (headersString) {
+function parseContentDisposition (contentDispositionHeaderString) {
 
-    const separator = '\r\n' ;
+    const namematch = contentDispositionHeaderString.match(/name="([^"]+)"/) ;
+    const filenamematch = contentDispositionHeaderString.match(/filename="([^"]+)"/) ;
 
-    const headersRows = headersString.split(separator);
+    return {
+        name:(namematch && namematch[1]) || null , 
+        filename:(filenamematch && filenamematch[1]) || null , 
+    }
+}
+
+function extractHeaders (headerString) {
 
     const headers = {} ;
-    headersRows.forEach(row => {
-        const [key , value] = row.split(': ');
-        if(key && value) {
-            headers[key.toLowerCase()] = value ;
-        }
-    });
+
+    const rawHeaders = headerString.split('\r\n');
+    for (const rawHeader of rawHeaders) {
+        const [key , value ] = rawHeader.split(': ');
+        if(!key || !value) continue ;
+        headers[key.toLowerCase()] = value ;
+    }
 
     return headers ;
 }
 
+function splitDataBufferPart (formDataBufferPart) {
+
+    const separatorBuffer = Buffer.from(`\r\n\r\n`);
+
+    const separatorIndex = findIndexInBuffer(formDataBufferPart , separatorBuffer);
+    
+    if(separatorIndex === -1) {
+        throw new Error('incorrect part data'.toUpperCase());
+    }
+
+    const headers = formDataBufferPart.subarray(0 , separatorIndex);
+
+    let bodyBufferEndIndex = formDataBufferPart.length ;
+
+    if(formDataBufferPart[bodyBufferEndIndex - 2] === 0x0d && formDataBufferPart[bodyBufferEndIndex -1] === 0x0a) {
+        bodyBufferEndIndex -= 2 ;
+    }
+
+    const body = formDataBufferPart.subarray(separatorIndex + separatorBuffer.length , bodyBufferEndIndex);
+
+    return {
+        headers ,
+        body ,
+    }
+}
 
 function splitFormDataBuffer (formDataBuffer , boundaryBuffer) {
 
     const parts = [] ;
-
-    let start = 0 ;
-    let index = 0;
-
+    let start = 0; 
+    let index = 0 ;
     while ((index = findIndexInBuffer(formDataBuffer , boundaryBuffer , start)) !== -1) {
+
         parts.push(formDataBuffer.subarray(start , index));
         start = index + boundaryBuffer.length ;
         if(formDataBuffer[start] === 0x0d && formDataBuffer[start + 1] === 0x0a) {
             start += 2 ;
         }
     }
-
     parts.push(formDataBuffer.subarray(start));
-
     return parts ;
 }
 
-function extractBoundary  (boundaryRawStr) {
-    const match = boundaryRawStr.match(/boundary=(----[^\/\\$\s]+)/);
+function findIndexInBuffer (dataBufffer , separatorBuffer , start = 0) {
 
-    return match && `--${match[1]}` ;
+    for (let index = start ; index < dataBufffer.length - separatorBuffer.length ; index++) {
+        let found = true ;
+        for (let j = 0 ; j < separatorBuffer.length ; j++) {
+            if(dataBufffer[index + j] !== separatorBuffer[j]) {
+                found = false ;
+                break;
+            }
+        }
+        if(found === true) {
+            return index ;
+        }
+    }
+    return -1 ;
 }
-
-function fallback (res , statusCode , statusMessage = '' , resMessage = '') {
-
-    res.writeHead(statusCode , statusMessage , );
-    res.end(resMessage);
-}
-
