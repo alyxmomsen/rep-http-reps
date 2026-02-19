@@ -16,14 +16,14 @@ input[type="submit"] {
 }
 
 .modal-window {
-    position: absolute;
-    top:10vh;
-    right:31vw ;
-    width: 200px;
-    height: 200px;
-    background-color: #202036;
-    color: antiquewhite;
-    display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: #202036a6;
+	color: antiquewhite;
+	display: none;
 }
 
 #modal-window__btn--close {
@@ -31,4 +31,12 @@ input[type="submit"] {
     position:absolute;
     top:calc(var(--ref-value) * 1) ;
     left:calc(var(--ref-value) * 1) ;
+}
+
+#tool-tip--response-logs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px;
+    height: 200px;
 }

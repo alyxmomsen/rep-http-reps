@@ -28,7 +28,10 @@ window.addEventListener("DOMContentLoaded" , () => {
         
         const form = document.getElementById('form--main');
         const formSubmitStatus = document.getElementById('status--form-submit');
-        const statusModalwindowCloseButton = document.getElementById('modal-window__btn--close');
+        const responseLogTooltip = document.getElementById('tool-tip--response-logs');
+        responseLogTooltip.addEventListener('click' , (e) => {
+            e.stopPropagation();
+        });
         
         /* ----------------------- */
 
@@ -36,13 +39,13 @@ window.addEventListener("DOMContentLoaded" , () => {
         const playlistDefaultStyle = {
             display:'flex'
         } ;
-        const playlistStatuslog = document.getElementById('modal-window--playlist-status-log');
-        playlistStatuslog.style.display = 'none';
-        // playlistStatuslog.setDefaultStyles = function (elem) {
-        //     console.log(this);
-        //     this.style.display = 'flex' ;
-        // }
-        // playlistStatuslog.setDefaultStyles();
+        const mainModalwindow = document.getElementById('modal-window--main');
+        mainModalwindow.style.display = 'none';
+
+        mainModalwindow.addEventListener("click" , (e) => {
+            e.stopImmediatePropagation();
+            alert();
+        });
 
         /* ----------------------- */
         
@@ -58,10 +61,11 @@ window.addEventListener("DOMContentLoaded" , () => {
             try {
                 const jsonResponse = await res.json();
                 const { } = jsonResponse ;
+                responseLogTooltip.innerHTML = '<div>responsed data</div>';
                 formSubmitStatus.innerHTML = '<div class="clickable">uploaded!</div>'
                 console.log({jsonResponse});
 
-                playlistStatuslog.style.display = playlistDefaultStyle.display;
+                mainModalwindow.style.display = playlistDefaultStyle.display;
 
             }catch (e) {
                 console.log({e});
@@ -72,10 +76,10 @@ window.addEventListener("DOMContentLoaded" , () => {
 
         // -- add listeners on these html elems
 
-        statusModalwindowCloseButton.addEventListener("click" , (e) => {
-            e.preventDefault();
-            playlistStatuslog.style.display = 'none' ;
-        });
+        // statusModalwindowCloseButton.addEventListener("click" , (e) => {
+        //     e.preventDefault();
+        //     playlistStatuslog.style.display = 'none' ;
+        // });
 
         form.addEventListener("submit" , async (e) => {
             
@@ -85,7 +89,7 @@ window.addEventListener("DOMContentLoaded" , () => {
 
             submitHandler.onBeforeRequestStarted(() => {
                 formSubmitStatus.innerHTML = 'uploading...';
-                playlistStatuslog.style.display = 'none';
+                mainModalwindow.style.display = 'none';
             });
             
             await submitHandler.exec(formdata);
@@ -99,4 +103,15 @@ window.addEventListener("DOMContentLoaded" , () => {
 });
 
 // ------------------------------------------------------------------
+
+class HTMLelement_  {
+
+    #elem;
+
+    #listeners;
+
+    constructor (elem) {
+        this.#elem ;
+    }
+}
 
