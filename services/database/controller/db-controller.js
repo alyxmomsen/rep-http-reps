@@ -1,142 +1,131 @@
 const ResponseDecorator = require("../../../app/services/router/services/response/response-decorator");
 const { database } = require("../database");
 
+const table = {
+    FILES:'FILES' ,
+    USERS:'USERS' ,
+}
+
+const crudType = {
+    CREATE:'CREATE' ,
+    READ:'READ' ,
+    UPDATE:'UPDATE' ,
+    DELETE:'DELETE' ,
+}
 class DBController {
-
-    // async exec(crudtype , {tablename , payload}) {
-
-    //     const tablenameHandlers = this.#createHandlers.get(tablename);
-    //     if(!tablenameHandlers) {
-    //         console.log('\x1b[48;2;255;0;255mno handlers by this tablename\x1b[0m');
-    //         return ;
-    //     }
     
-    //     for (const handler of tablenameHandlers) {
-    //         await handler(payload);
-    //     }
-    // }
+    async addRow (tablename , payload) {
 
-    getRow (table , rowId , res) {
-        for (const [a , b] of this.#getHandlers.entries()) {
-            console.log({a , b});
-        }
-    }
+        const result = await this.#execCRUD(crudType.CREATE , tablename , payload);
 
-    async setRow (tablename , payload , res) {
-
-        const tablenameHandlers = this.#createHandlers.get(tablename);
-        if(!tablenameHandlers) {
-            console.log('\x1b[48;2;255;0;255mno handlers by this tablename\x1b[0m');
-            return ;
-        }
-
-        for (const handler of tablenameHandlers) {
-            await handler(payload , res);
-        }
-    }
-
-    addGetter (tablename , handler , res) {
-
-        this.#getHandlers.get(tablename);
+        return result ;
 
     }
 
-    addCreator (tablename , handler) {
+    async getRow (tablename , payload) {
+
+        const result = await this.#execCRUD(crudType.READ , tablename , payload);
+
+        return {
+            ...result ,
+        }
+    }
+
+    async #execCRUD (crudType , tablename , payload) {
+        const crudTypeHandlers = this.#crud.get(crudType);
+        if(!crudTypeHandlers) {
+            return {error:'incorrect crud type'} ;
+        }
         
-        const tablenameHandlers  = this.#createHandlers.get(tablename);
+        const tablenameBundle = crudTypeHandlers.get(tablename) ;
 
-        if(!tablenameHandlers) {
-            this.#createHandlers.set(tablename , [handler]);
-            return ;
+        if(!tablenameBundle) {
+            return {error:'incorrect table name'};
         }
 
-        tablenameHandlers.push(handler);
+        const { middleware , handler } = tablenameBundle ;
+        console.log({middleware , handler});
+        await this.#executeMiddleware({} , middleware);
+        const handlerResult = await handler(payload);
+
+        return handlerResult;
     }
 
-    #createHandlers ;
-    // #readHandlers;
+    async #executeMiddleware (payload , middleware) {
+        let index = 0;
+        const next = async () => {
+            const handler = middleware[index++];
+            if(!handler) return ;
+            await handler(payload);
+        }
+        await next();
+    }
 
-    #getHandlers;
+
+    addHandler (type , tablename , ...handlers ) {
+        console.log({type , tablename , handlers});
+        const typeHandlers = this.#crud.get(type);
+        if(!typeHandlers) {
+            throw new Error('incorrect CRUD type');
+        }
+
+        // const tablenameBundle = typeHandlers.get(tablename);
+
+        const bundle = {
+            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] ,
+            handler:handlers[handlers.length - 1] ,
+        } ;
+
+        typeHandlers.set(tablename , bundle);
+
+        // if(!tablenameBundle) {
+        //     typeHandlers.set(tablename , bundle);
+        //     return ;
+        // }
+
+        // tablenameBundle.set(tablename);
+    }
+
+    #crud ;
 
     constructor () {
-        this.#createHandlers = new Map();
-        this.#getHandlers = new Map();
+
+        const crud = [
+            crudType.CREATE  , crudType.READ ,
+            crudType.UPDATE , crudType.DELETE ,
+        ] ;
+
+        this.#crud = new Map();
+
+        crud.forEach(type => {
+            this.#crud.set(
+                type.toUpperCase() , 
+                new Map()
+            ) ;
+        });
+
     }
 }
 
 const dbController = new DBController();
 
-dbController.addGetter('files' , () => {
+dbController.addHandler(crudType.CREATE , table.FILES , async (payload) => {
+    const { row , res:response } = payload ;
 
-    database.getAllByTableName();
+    const { title , description , file , filename } = row ;
 
-});
-
-dbController.addCreator('files' , (payload , res) => {
-    
-    
-    const { title , description , file , filename } = payload ;
-    
-    console.log('db controller handler : create "file"' , {title , description , file , filename} , {payload});
-    
-
-    const addedRow = database.create('files' , {
-        title:title?.value?.toString() || null ,
-        description:description?.value?.toString() || null ,
-        originalFilename:filename?.value?.toString() || null ,
-        FSFilename:'no file name' ,
+    const result = database.createRow(table.FILES , {
+        title:title?.value?.toString('utf-8') ,
+        description:description?.value?.toString('utf-8') ,
+        filename:filename?.value?.toString('utf-8') ,
     });
     
-    if(res instanceof ResponseDecorator === false) return ;
+    return result
+}) ;
 
-    let responsepayload = res.getPayloadData();
-    const { files } = responsepayload ;
-    if(!files) {
-        responsepayload.files = {
-            added:[addedRow] , 
-        } ;
-        return ;
-    }
-    if(!files.added) {
-        files.added = [addedRow] ;
-        return ;
-    }
-    files.added.push(addedRow);
-    responsepayload = {...responsepayload , files} ;
-    res.addPayloadValue('files' , files);
-
-});
-
-dbController.addCreator('users' , (payload , res) => {
-    console.log('db controller handler : create "user"' , {payload});
-    
-    const { role , rights , name } = payload ;
-    const lastname = payload['last-name'] ;
-
-    const addedRow = database.create('users' , {
-        role:role?.value?.toString() || null ,
-        rights:rights?.value?.toString() || null ,
-        name:name?.value?.toString() || null ,
-        lastname:lastname?.value?.toString() || null ,
-    });
-    
-    if(res instanceof ResponseDecorator === false) return ;
-
-    let responsepayload = res.getPayloadData();
-    const { users } = responsepayload ;
-    if(!users) {
-        responsepayload.users = {
-            added:[addedRow] ,
-        } ;
-        return ;
-    }
-    if(!users.added) {
-        users.added = [addedRow] ;
-        return ;
-    }
-    users.added.push(addedRow);
-    responsepayload = {...responsepayload , users} ;
-    res.addPayloadValue('files' , users);
-});
+dbController.addHandler(crudType.READ , table.FILES , async (payload) => {
+    const {  } = payload ;
+    console.log(`${crudType.READ} ${table.FILES}` , {payload});
+}) ;
 
 module.exports = { dbController }

@@ -13,9 +13,12 @@ async function handleStream (req , res) {
         return ;
     }
 
-    const { id } = params ;
-    dbController.getRow('files' , null , res);
-    const filelike = false && 'await readFileById(id)';
+    res.end();
+    return
+
+    const { id:fileId } = params ;
+
+    const filelike = dbController.getRow('files' , {fileId});
     
     if(!filelike) {
         

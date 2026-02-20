@@ -1,83 +1,46 @@
 const { randomBytes } = require('crypto');
 class DataBase {
 
-    getAllByTableName (tablename) {
-        
-        const rows = [] ;
-
-        const tablenameRows = this.#tables.get(tablename);
-
-        if(!tablenameRows) {
-            return rows ;
-        }
-
-        // for (const [] of tablenameRows) {
-
-        // }
-
-        console.log(tablenameRows , rows);
-
-    }
-
-    create(tablename , fields) {
-
-        console.log('db; creator:', {tablename , fields});
-
-        const tableByName = this.#tables.get(tablename);
+    createRow (tablename , row) {
 
         const id = randomBytes(32).toString('hex');
 
-        if(!tableByName) {
-            this.#tables.set(tablename , new Map([
-                [id , fields]
-            ]));
-            return id ;
+        const nameTable = this.#tables.get(tablename);
+        if(!nameTable) {
+            this.#tables.set(tablename , new Map([[id ,row]]));
+            return {
+                id ,
+                row ,
+            } ;
         }
 
-        tableByName.set(id , fields);
+        nameTable.set(id , row);
 
-        console.log({tableByName});
-
-        return {id , fields} ;
-    }
-
-    getTableItemById (tablename , itemId) {
-
-        console.log({tablename , itemId});
-
-        const tableByName = this.#tables.get(tablename);
-
-        if(!tableByName) return null ;
-
-        const itemById = tableByName.get(itemId);
-
-        return itemById || null ;
+        return {
+            id , 
+            row ,
+        }
 
     }
 
-    getTableItems (tablename) {
+    readRow (tablename , rowId) {
 
-        const items = [] ;
+        this.#tables.get(tablename);
 
-        const tableByName = this.#tables.get(tablename);
+    }
 
-        if(!tableByName) return items ;
+    createTable () {
 
-        tableByName.entries().forEach(([itemId , fields]) => {
-            items.push({
-                id:itemId ,
-                fields ,
-            });
-        });
+    }
 
-        return items ;
+    readTable () {
 
     }
 
     #tables;
 
     constructor () {
-        this.#tables = new Map ();
+        this.#tables = new Map();
     }
 }
 

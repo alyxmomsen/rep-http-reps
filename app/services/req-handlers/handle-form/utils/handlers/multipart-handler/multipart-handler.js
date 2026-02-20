@@ -26,7 +26,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         formDataBufferChunks.push(chunk);
     });
 
-    req.on("end" , () => {
+    req.on("end" , async () => {
         const wholebuffer = Buffer.concat(formDataBufferChunks);
 
         const formDataBufferParts = splitFormDataBuffer(wholebuffer , boundaryBuffer );
@@ -52,8 +52,6 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                     groupId , tableName , 
                     colName:'filename' , colValue:filename , colContenttype:'text/plain' , 
                 })
-
-                console.log({filename , semantic: {groupId , tableName ,colName} , contentTypeHeader , bodyPartBuffer});
             }
             catch (e) {
                 console.log({e});
@@ -62,14 +60,24 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
 
         const rowsByTablename = groupAssembler.getAssembledGroupsByTableName();
 
+        const addRowResults = [];
         for (const [tableName , rows] of Object.entries(rowsByTablename)) {
-
             for (const row of rows) {
-                dbController.setRow(tableName , row , res);
+                const addRowResult = await dbController.addRow(tableName.toUpperCase() , {row, res});
+                addRowResults.push(addRowResult);
             }
         }
-
-        res.sendResponsePayloadData(200 ,'ok');
+        res.writeHead(200 , 'ok' , {
+            "content-type":'application/json' ,
+        });
+        res.end(JSON.stringify({
+            payload:{
+                files:{
+                    added:addRowResults ,
+                }
+            }
+        }));
+        // res.sendResponsePayloadData(200 ,'ok');
     });
     
 }

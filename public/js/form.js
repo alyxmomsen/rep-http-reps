@@ -21,21 +21,29 @@ window.addEventListener('DOMContentLoaded' , async () => {
     const modalWindow = document.getElementById("modal-window--main");
     const toolTipMain = document.getElementById("tool-tip--main");
     const toolTipContent = document.getElementById("tool-tip--content");
+    const formSubmitStatusContainer = document.getElementById("status--form-submit");
     
     // ------------------
 
     const submitRequest = new RequestRouter ('/api/handle-form' , 'post' , [] , []) ;
 
-    submitRequest.addOnBeforeRequest(async () => beforeSubmit({modalWindow ,toolTipContent}));
-    submitRequest.addListener(async (responseRawData) => submitHandler({
-        responseRawData , modalWindow , toolTipContent ,
+    submitRequest.addOnBeforeRequest(async () => beforeSubmit({
+        modalWindow ,toolTipContent , formSubmitStatusContainer
     }));
+
+    submitRequest.addListener(async (responseRawData) => submitHandler({
+        responseRawData , modalWindow , toolTipContent , formSubmitStatusContainer ,
+    }));
+
+    // ---------------------------
 
     formMain.addEventListener("submit" , async (e) => {
         e.preventDefault();
         const formdata = new FormData(formMain);
         await submitRequest.exec(formdata);
     });
+
+    // ---------------------------
 
     modalWindow.addEventListener("click" , (e) => {
         e.currentTarget.style.display = 'none' ;
@@ -47,16 +55,19 @@ window.addEventListener('DOMContentLoaded' , async () => {
 
 async function beforeSubmit (context) {
 
-    const { modalWindow , toolTipContent } = context ;
+    const { modalWindow , toolTipContent , formSubmitStatusContainer } = context ;
     toolTipContent.innerHTML = '';
+    formSubmitStatusContainer.innerHTML = 'upload...'
     
 }
 
 async function submitHandler (context) {
     const { 
         responseRawData , modalWindow , 
-        toolTipContent
+        toolTipContent , formSubmitStatusContainer
     } = context ;
+
+    formSubmitStatusContainer.innerHTML = 'done!' ;
 
     try {
         const JSONResponseData = await responseRawData.json();
@@ -66,13 +77,11 @@ async function submitHandler (context) {
         const { files } = JSONResponseData.payload || {} ;
         const { added } = files || {added:[]} ;
 
-        console.log({added , files});
-
         for (const addedFile of added) {
-            console.log({addedFile});
-            const {id , fields} = addedFile ;
+
+            const {id , row} = addedFile ;
             
-            const { title , description } = fields ;
+            const { title , description } = row ;
 
             const divElem = createElement(
                 'a' , `<span>${'video: '.toUpperCase()}</span><span>: </span><span>${title}</span>` ,
