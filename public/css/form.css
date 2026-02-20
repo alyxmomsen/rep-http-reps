@@ -44,5 +44,9 @@ input[type="submit"] {
 }
 
 #tool-tip--content {
-	
+	display: flex;
+	flex-direction: column;
+	gap: var(--ref-value);
+	color: wheat;
 }
+

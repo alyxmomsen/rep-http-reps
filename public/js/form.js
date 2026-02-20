@@ -77,6 +77,7 @@ async function submitHandler (context) {
         const { files } = JSONResponseData.payload || {} ;
         const { added } = files || {added:[]} ;
 
+        let index = 0 ;
         for (const addedFile of added) {
 
             const {id , row} = addedFile ;
@@ -84,7 +85,7 @@ async function submitHandler (context) {
             const { title , description } = row ;
 
             const divElem = createElement(
-                'a' , `<span>${'video: '.toUpperCase()}</span><span>: </span><span>${title}</span>` ,
+                'a' , `<span>${++index}.</span><span>${'video: '.toUpperCase()}</span><span>: </span><span>${title}</span>` ,
                 [] , [['href' , '/l/video-stream']] ,
                 ['click' , (e) => {
                     localStorage.setItem('video-id' ,id);

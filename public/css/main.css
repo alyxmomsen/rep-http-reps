@@ -9,6 +9,33 @@ body {
     border: 1px solid saddlebrown;
 }
 
+a {
+
+    color: aliceblue;
+    text-decoration: none;
+}
+
+a:link {
+
+    color: inherit;
+}
+
+a:visited {
+    
+    color: inherit;
+}
+
+a:hover {
+    
+    color: inherit;
+    text-decoration: underline;
+}
+
+a:active {
+    
+    color: inherit;
+}
+
 /* prefix: pos */
 
 .pos-res {
