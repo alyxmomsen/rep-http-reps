@@ -1,5 +1,6 @@
 const { Readable } = require("node:stream");
 const { dbController } = require("../../../../services/database/controller/db-controller");
+const { filemanager } = require("../../../../services/file-manager/file-manager");
 
 async function handleStream (req , res) {
     
@@ -19,10 +20,11 @@ async function handleStream (req , res) {
 
     console.log({error , success});
 
-    res.end(JSON.stringify({}));
-    return;
+    const { filename } = success.row || {} ;
+
+    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(filename);
     
-    if(!filelike) {
+    if(filemanagerError) {
         
         res.writeHead(400);
         res.end(JSON.stringify({message:'no file by id'}));
@@ -36,13 +38,15 @@ async function handleStream (req , res) {
         return ;
     }
 
-    console.log();
     res.writeHead(200  ,'ok' , {
-        'content-type' : filelike.mime
+        'content-type' : /* filelike.mime */'video/x-matroska' ,
     });
-    const rs = Readable.from(filelike.file);
+    const rs = Readable.from(/* filelike.file */filemanagerSuccess.file);
     rs.on('data' , (chunk) => {
         console.log({chunk});
+    })
+    rs.on('error' , (err) => {
+        console.log({err});
     })
     rs.pipe(res);
 }

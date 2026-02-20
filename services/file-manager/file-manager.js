@@ -6,7 +6,11 @@ const { join, resolve } = require("node:path");
 const { Readable } = require("node:stream");
 
 class FileManager {
-
+    /**
+     * 
+     * @param {Buffer} data 
+     * @returns {Promise<{status:number;success?:any;error?:{details:any}}>}
+     */
     async write (data) {
 
         return await new Promise((res , rej) => {
@@ -20,9 +24,7 @@ class FileManager {
                 res({
                     status:0 ,
                     success:{
-                        payload:{
-                            filename:fileNewname ,
-                        } ,
+                        filename:fileNewname ,
                     }
                 });
             });
@@ -73,4 +75,6 @@ class FileManager {
     }
 }
 
-module.exports = FileManager ;
+const filemanager = new FileManager() ;
+
+module.exports = { filemanager } ;

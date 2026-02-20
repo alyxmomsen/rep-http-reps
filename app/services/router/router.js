@@ -7,7 +7,7 @@ class Router {
     async handleRequest(req , res) {
 
         // этот объект работает с конкретным объектом ServerResponse
-        const routerResponse = new ResponseDecorator (res) ;
+        // const routerResponse = new ResponseDecorator (res) ;
 
         // ----------------------------
 
@@ -50,7 +50,7 @@ class Router {
 
             await this.#executeMiddleware(req ,res , [...this.#middleware , ...middleware]);
 
-            await handler(req , routerResponse);
+            await handler(req , /* routerResponse */res);
             return ;
         }
 

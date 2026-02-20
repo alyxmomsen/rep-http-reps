@@ -1,4 +1,5 @@
 const ResponseDecorator = require("../../../app/services/router/services/response/response-decorator");
+const { filemanager } = require("../../file-manager/file-manager");
 const { database } = require("../database");
 
 const crudType = {
@@ -162,7 +163,7 @@ dbController.addListener(crudType.CREATE , table.FILES , async (payload) => {
 
     const { row } = payload ;
 
-    const { title , filename , file , description } = row || {} ;
+    const { title , filename: originalFilename , file , description } = row || {} ;
 
     if(false) {
         return {
@@ -172,10 +173,48 @@ dbController.addListener(crudType.CREATE , table.FILES , async (payload) => {
         }
     }
 
+    if(!file) {
+        return {
+            error:{
+                message:`file data is not given` ,
+                subject:{
+                    file ,
+                } ,
+            } ,
+        }
+    }
+
+    const { value:fileData , contentType } = file ;
+
+    if(!contentType) {
+        return {
+            error:{
+                message:`file mime is not given` ,
+                subject:{
+                    contentType ,
+                } ,
+            } ,
+        }
+    }
+
+    const { status , error  , success } = await filemanager.write(fileData);
+
+    if(error) {
+        return {
+            error:{
+                message:`smth wrong with fileuploading` ,
+            }
+        }
+    }
+
+    const { filename } = success || {} ;
+
     const databaseResult = database.createRow(table.FILES , {
         title:title?.value?.toString('utf-8') ,
         description:description?.value?.toString('utf-8') , 
-        filename:filename?.value?.toString('utf-8') , 
+        filename:originalFilename?.value?.toString('utf-8') , 
+        mime:contentType || null ,
+        filename:filename || null ,
     } );
 
     return {

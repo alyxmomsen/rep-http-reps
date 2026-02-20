@@ -19,7 +19,6 @@ router.use(
 
 router.get('/api/update-playlist' , (req , res) => {
     // const files = readFiles();
-    console.log();
 });
 
 router.get('/api/get-all-files' , (req , res) => {

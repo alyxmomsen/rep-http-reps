@@ -43,14 +43,10 @@ const groupsprocessor = new GroupProccessor();
 
 groupsprocessor.addRouteHandler('files' , async (row , routerResponse) => {
 
-    console.log({routerResponse});
-
     const addedFiles=  [] ;
 
     const { title , description , file , filename } = row ;
-    
-    console.log('files handler'.toUpperCase() , {row: row});
-
+   
     if(!file?.value?.length) {
         log('r' , 'file have not data')
         return ;
@@ -64,8 +60,6 @@ groupsprocessor.addRouteHandler('files' , async (row , routerResponse) => {
         // filename:
     });
 
-    console.log({addedFile});
-
     if(!addedFile) {
         console.log('\x1b[38;2;255;0;255mfile is not added\x1b[0m');
         return;
@@ -76,14 +70,11 @@ groupsprocessor.addRouteHandler('files' , async (row , routerResponse) => {
     if(routerResponse instanceof ResponseDecorator === false) throw new Error('incorrect ResponseDecorator');
     routerResponse.addResponseData('addedFiles' , addedFile) ;
 
-    console.log('files handler'.toUpperCase() , {responseData:routerResponse.responseData.payload});
 });
 
 groupsprocessor.addRouteHandler('users' , (row , routerResponse) => {
 
     const {} = row ;
-
-    console.log('users handler'.toUpperCase() , {row});
 });
 
 
