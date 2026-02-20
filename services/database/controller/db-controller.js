@@ -18,12 +18,12 @@ class DBController {
     /**
      * 
      * @param {string} tableName 
-     * @param {any} payload
-     * @returns {Promise<{error?:any ; success?:any}>}
+     * @param {any} payload 
+     * @returns {Promise<{error?:any; success?:any}>}
      */
     async createRow (tableName , payload) {
         const { error , success } = await this.#execCRUD(crudType.CREATE , tableName , payload);
-        
+
         if(error) {
             return {
                 error ,
@@ -38,8 +38,8 @@ class DBController {
     /**
      * 
      * @param {string} tableName 
-     * @param {any} payload
-     * @returns {Promise<{error?:any ; success?:any}>}
+     * @param {any} payload 
+     * @returns {Promise<{error?:any; success?:any}>}
      */
     async readRow (tableName , payload) {
         const { error , success } = await this.#execCRUD(crudType.READ , tableName , payload);
@@ -57,91 +57,92 @@ class DBController {
 
     /**
      * 
-     * @param {string} crudType 
-     * @param {string} tableName 
-     * @param {*} payload 
-     * @returns {Promise<{success?:any;error?:any}>}
+     * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
+     * @param {string} tablename 
+     * @param {any} payload 
+     * @returns {Promise<{success?:{result:any};error?:{message:string;subject:string}}>}
      */
-    async #execCRUD (crudType , tableName , payload) {
-        
+    async #execCRUD (crudType , tablename , payload) {
+
         const crudTypeHandlers = this.#crud.get(crudType);
 
         if(!crudTypeHandlers) {
             return {
-                error: {
-                    message:'incorrect crud type' ,
+                error:{
+                    message:'incorrect CRUD type' ,
                     subject:crudType ,
                 }
             }
         }
-        
-        const tablenameBundle = crudTypeHandlers.get(tableName);
-        
+
+        const tablenameBundle = crudTypeHandlers.get(tablename);
+
         if(!tablenameBundle) {
             return {
-                error: {
+                error:{
                     message:'incorrect table name' ,
-                    subject:tableName ,
-                }
+                    subject:tablename ,
+                } ,
             }
         }
-        
-        const {
-            handler , 
-            middleware ,
-        } = tablenameBundle ;
 
-        await this.#executeMiddleware({} ,middleware);
-        const handlerResult = await handler(payload);
+        const { handler , middleware } = tablenameBundle ;
+
+        await this.#executeMiddleware(middleware , {});
+        
+        const handlerResult = await handler(payload) ;
 
         return {
             success:{
                 result:handlerResult ,
-            }
+            } ,
         }
     }
 
     /**
      * 
-     * @param {'CREATE'|'READ'|'UPDATE'|'DELETE'} crudType 
-     * @param {string} tableName 
-     * @param {((payload:any) => ({response?:any , error?:any}))[]} handlers 
+     * @param {((context:any , next:() => Promise<any>) => Promise<any>)[]} middleware 
+     * @param {any} context 
      */
-    addListener (crudType , tableName  , ...handlers) {
+    async #executeMiddleware (middleware , context) {
+        let index = 0 ;
+        const next = async () => {
+            const handlerLike = middleware[index++] ;
+            if(!handlerLike) return ;
+            await handlerLike(context  , next);
+        }
+        await next();
+    }
 
-        const _crudType = crudType.toUpperCase();
+    /**
+     * 
+     * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
+     * @param {string} tableName 
+     * @param {((payload:any) => ({error?:any , success?:any}))[]} handlers 
+     */
+    addListener (crudType , tableName , ...handlers) {
+
+        const _crudType = crudType.toUpperCase() ;
 
         const crudTypeHandlers = this.#crud.get(_crudType);
 
         if(!crudTypeHandlers) {
-            throw new Error(`this crud type ${crudType} is not ...`);
+            throw new Error(`crud type ${_crudType}`);
         }
 
         const bundle = {
-            handler:handlers[handlers.length - 1] ,
-            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] ,
+            handler:handlers[handlers.length - 1] , 
+            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] , 
         }
 
         crudTypeHandlers.set(tableName , bundle);
     }
 
-    /**
-     * 
-     * @param {((next:() => void) => Promise)[]} middleware 
-     */
-    async #executeMiddleware (middleware) {
-        let index = 0 ;
-        const next = async () => {
-            const handlerLike = middleware[index++] ;
-            if(!handlerLike) return ;
-            await handlerLike(next);
-        }
-        await next();
-    }
-    
     #crud ;
-
+    
     constructor () {
+
+        this.#crud = new Map();
 
         const crudTypes = [
             crudType.CREATE ,
@@ -150,37 +151,29 @@ class DBController {
             crudType.DELETE ,
         ] ;
 
-        const tables = [
-            table.FILES ,
-            table.USERS ,
-        ] ;
-
-        this.#crud = new Map();
-
-        crudTypes.forEach(type => {
-            this.#crud.set(type , new Map());
+        crudTypes.forEach(crudType => {
+            
+            this.#crud.set(crudType , new Map());
         });
-
     }
 }
 
 const dbController = new DBController();
 
 dbController.addListener(crudType.CREATE , table.FILES , (payload) => {
-    
-    console.log('create file handler' , { payload });
 
     const { row } = payload ;
 
-    const { title , description , filename , file } = row || {} ;
+    const { title , filename , file , description } = row || {} ;
 
-    const databaseresult = database.createRow(table.FILES , {
-        title:title?.value?.toString('utf-8') , 
-        description:description?.value?.toString('utf-8') ,
-        filename:filename?.value?.toString('utf-8') ,
-    });
+    const databaseResult = database.createRow(table.FILES , {
+        title:title?.value?.toString('utf-8') ,
+        description:description?.value?.toString('utf-8') , 
+        filename:filename?.value?.toString('utf-8') , 
+    } );
 
-    return databaseresult ;
+    return databaseResult ;
+
 });
 
 module.exports = { dbController }
