@@ -69,7 +69,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        res.sendResponseData(200 ,'ok');
+        res.sendResponsePayloadData(200 ,'ok');
     });
     
 }

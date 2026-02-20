@@ -2,68 +2,71 @@ const { ServerResponse } = require("http");
 
 class ResponseDecorator {
 
-    // overwrite
+    addPayloadField (fieldName , value) {
 
-    writeHead (...value) {
-        return this.#originalResponse.writeHead(...value);
+        const payloadField = this.#responseData.payload[fieldName] ;
+
+        if(!payloadField) {
+            this.#responseData.payload = {
+                ...this.#responseData.payload , 
+                [fieldName]:value ,
+            } ;
+            return ;
+        }
+
+        payloadField = value instanceof Object ? {...value} : value ;
+
+        this.#responseData.payload = {...this.#responseData.payload , [fieldName]:value} ;
     }
 
-    end(data) {
-        return this.#originalResponse.end(data);
-    }
-
-    get writable () {
-        return this.#originalResponse.writable ;
-    }
-
-    write (chunk) {
-        return this.#originalResponse.write(chunk);
-    }
-
-    #originalResponse;
-
-
-    // current
-
-    addPayloadValue (key  ,value) {
-        this.#responseData.payload = { 
-            ...this.#responseData.payload ,
-            [key]:value
-        } ;
-
-        console.log({responseData:this.#responseData});
-    }
-
-    getPayload () {
+    getPayloadData () {
         return this.#responseData.payload ;
     }
 
-    // updatePayloadValue (key , value) {
-    //     this.#responseData.payload = {
-    //         ...this.#responseData.payload , 
-    //         [key]:{
-    //             ...(this.#responseData.payload[key] ? {[]})
-    //         }
-    //     }
-    // }
+    sendResponsePayloadData (statusCode , statusMessage) {
 
-    sendResponseData (statusCode , statusMessage) {
-
-        this.#originalResponse.writeHead(statusCode , statusMessage , {
-            'content-type':'application/json' ,
+        this.#originalServerResonse.writeHead(statusCode , statusMessage , {
+            "content-type":"application/json" ,
         });
-        this.#originalResponse.end(JSON.stringify(this.#responseData));
+
+        this.#originalServerResonse.end(JSON.stringify(this.#responseData));
     }
+
 
     #responseData;
 
+    // overwrite
+
+    write (...args) {
+        return this.#originalServerResonse.write(...args)
+    }
+
+    end(...args) {
+        return this.#originalServerResonse.end(...args);
+    }
+
+    writeHead (...args) {
+        return this.#originalServerResonse.writeHead(...args);
+    }
+
+    get wrtable () {
+        return this.#originalServerResonse.writable
+    }
+
+    #originalServerResonse ;
+
     constructor (res) {
-        if(res instanceof ServerResponse === false) throw new Error('"res" is not instance of the ServerResponse class');
-        this.#originalResponse = res; 
+
+        if(res instanceof ServerResponse === false) {
+            throw new Error(`this is not ServerResponse`);
+        }
+
+        this.#originalServerResonse = res ;
 
         this.#responseData = {
             payload:{} ,
-        } ;
+            status:0 ,
+        }
     }
 }
 

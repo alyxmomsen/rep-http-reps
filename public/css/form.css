@@ -37,9 +37,10 @@ input[type="submit"] {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	width: 200px;
+	min-width: 200px;
 	height: 200px;
 	background-color: #282734;
+	padding: calc(var(--ref-value) * 2);
 }
 
 #tool-tip--content {

@@ -89,7 +89,7 @@ dbController.addCreator('files' , (payload , res) => {
     
     if(res instanceof ResponseDecorator === false) return ;
 
-    let responsepayload = res.getPayload();
+    let responsepayload = res.getPayloadData();
     const { files } = responsepayload ;
     if(!files) {
         responsepayload.files = {
@@ -122,7 +122,7 @@ dbController.addCreator('users' , (payload , res) => {
     
     if(res instanceof ResponseDecorator === false) return ;
 
-    let responsepayload = res.getPayload();
+    let responsepayload = res.getPayloadData();
     const { users } = responsepayload ;
     if(!users) {
         responsepayload.users = {

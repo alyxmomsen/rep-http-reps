@@ -1,4 +1,5 @@
 const { Readable } = require("node:stream");
+const { dbController } = require("../../../../services/database/controller/db-controller");
 
 async function handleStream (req , res) {
     
@@ -13,7 +14,8 @@ async function handleStream (req , res) {
     }
 
     const { id } = params ;
-    const filelike = await readFileById(id);
+    dbController.getRow('files' , null , res);
+    const filelike = false && 'await readFileById(id)';
     
     if(!filelike) {
         
