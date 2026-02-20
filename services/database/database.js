@@ -23,9 +23,41 @@ class DataBase {
 
     }
 
+    /**
+     * 
+     * @param {string} tablename 
+     * @param {string} rowId 
+     * @returns {{error?:{message:string};success?:{row:any}}}
+     */
     readRow (tablename , rowId) {
 
-        this.#tables.get(tablename);
+        const _tableName = tablename.toUpperCase();
+
+        const nameTable = this.#tables.get(_tableName);
+
+        if(!nameTable) {
+            return {
+                error:{
+                    message:`no table ${_tableName}` ,
+                } ,
+            }
+        }
+
+        const IDRow = nameTable.get(rowId);
+
+        if(!IDRow) {
+            return {
+                error:{
+                    message:`no row by id: ${rowId}` ,
+                } ,
+            }
+        }
+
+        return {
+            success: {
+                row:IDRow ,
+            } ,
+        }
 
     }
 

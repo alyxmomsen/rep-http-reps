@@ -90,12 +90,10 @@ class DBController {
 
         await this.#executeMiddleware(middleware , {});
         
-        const handlerResult = await handler(payload) ;
+        const { success , error } = await handler(payload) ;
 
         return {
-            success:{
-                result:handlerResult ,
-            } ,
+            success ,
         }
     }
 
@@ -118,7 +116,7 @@ class DBController {
      * 
      * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
      * @param {string} tableName 
-     * @param {((payload:any) => ({error?:any , success?:any}))[]} handlers 
+     * @param {((payload:any) => Promise<{success?:any;error?:any}>)[]} handlers 
      */
     addListener (crudType , tableName , ...handlers) {
 
@@ -160,11 +158,19 @@ class DBController {
 
 const dbController = new DBController();
 
-dbController.addListener(crudType.CREATE , table.FILES , (payload) => {
+dbController.addListener(crudType.CREATE , table.FILES , async (payload) => {
 
     const { row } = payload ;
 
     const { title , filename , file , description } = row || {} ;
+
+    if(false) {
+        return {
+            error:{
+
+            }
+        }
+    }
 
     const databaseResult = database.createRow(table.FILES , {
         title:title?.value?.toString('utf-8') ,
@@ -172,7 +178,29 @@ dbController.addListener(crudType.CREATE , table.FILES , (payload) => {
         filename:filename?.value?.toString('utf-8') , 
     } );
 
-    return databaseResult ;
+    return {
+        success:{
+            ...databaseResult ,
+        }
+    } ;
+
+});
+
+dbController.addListener(crudType.READ , table.FILES , async (payload) => {
+
+    const { fileId } = payload ;
+
+    const { error , success } = database.readRow(table.FILES , fileId);
+
+    if(error) {
+        return {
+            error ,
+        }
+    }
+
+    return {
+        success ,
+    }
 
 });
 

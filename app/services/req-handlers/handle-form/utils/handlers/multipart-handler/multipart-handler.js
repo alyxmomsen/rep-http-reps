@@ -67,8 +67,9 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                 if(error) {
                     continue ;
                 }
-                const { result } = success ;
-                addRowResults.push(result);
+                const { id , row:tableRow } = success ;
+                console.log({error , success});
+                addRowResults.push({id , row:tableRow});
             }
         }
         res.writeHead(200 , 'ok' , {
