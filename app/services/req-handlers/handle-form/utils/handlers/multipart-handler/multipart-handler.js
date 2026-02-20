@@ -69,10 +69,7 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        res.end(JSON.stringify({payload:{
-            hello:'world' ,
-        }}));
-
+        res.sendResponseData(200 ,'ok');
     });
     
 }

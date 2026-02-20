@@ -33,11 +33,15 @@ input[type="submit"] {
     left:calc(var(--ref-value) * 1) ;
 }
 
-#tool-tip--response-logs {
+#tool-tip--main {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	width: 200px;
 	height: 200px;
 	background-color: #282734;
+}
+
+#tool-tip--content {
+	
 }
