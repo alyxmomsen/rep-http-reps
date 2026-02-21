@@ -43,12 +43,12 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
                 const { groupId , tableName , colName } = parseNameAttr(nameAttr);
                 // ... end parsing
 
-                groupAssembler.gulpOne({
+                groupAssembler.gulpOnceColData({
                     groupId , tableName , 
                     colName , colValue:bodyPartBuffer , colContenttype:contentTypeHeader
                 });
 
-                if(filename) groupAssembler.gulpOne({
+                if(filename) groupAssembler.gulpOnceColData({
                     groupId , tableName , 
                     colName:'filename' , colValue:filename , colContenttype:'text/plain' , 
                 })
@@ -58,11 +58,11 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
             }
         }
 
-        const rowsByTablename = groupAssembler.getAssembledGroupsByTableName();
-
+        const rowsByTablename = groupAssembler.groupsSortedByTableName();
         const addRowResults = [];
         for (const [tableName , rows] of Object.entries(rowsByTablename)) {
             for (const row of rows) {
+                console.log({row});
                 const { error , success } = await dbController.createRow(tableName.toUpperCase() , {row, res});
                 if(error) {
                     continue ;

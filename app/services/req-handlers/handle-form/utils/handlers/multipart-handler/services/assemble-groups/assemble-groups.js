@@ -1,77 +1,61 @@
 
 class GroupAssembler {
 
-    getAssembledGroupsByTableName () {
-        
-        const groupsByTableName = {} ;
+    groupsSortedByTableName () {
 
-        for (const [groupId , groupData] of this.#groups) {
+        const groups = {} ;
+
+        for (const [_ , tableRow ] of this.#groups.entries()) {
 
             const row = {} ;
+            const { tableName , columns } = tableRow ;
 
-            const { tableName , columns } = groupData ;
-
-            for (const [colName , colData] of columns) {
-                row[colName] = colData ; 
+            for (const [ colName , colData ] of columns.entries()) {
+                row[colName] = colData ;
             }
 
-            const groupByTablename = groupsByTableName[tableName];
+            const tableNameRow = groups[tableName] ;
 
-            if(!groupByTablename) {
-                groupsByTableName[tableName] = [row] ;
+            if(!tableNameRow) {
+                groups[tableName] = [row] ;
                 continue ;
             }
 
-            groupByTablename.push(row);
-
+            tableNameRow.push(row);
         }
 
-        return groupsByTableName ;
+        return groups ;
     }
 
-    gulpOne ({groupId , tableName , colName , colValue , colContenttype}) {
-
-        const column = {
-            colName ,
-            data: {
-                value:colValue ,
-                contentType:colContenttype || this.#colContenttypeDefaultvalue ,
-            }
-        }
-
-        this.#updateGroup(groupId , tableName , column);
-    }
-
-    #updateGroup(groupId , tableName , column) {
-
-        const { colName  , data: colData } = column ;
-
-        const groupByGroupId = this.#groups.get(groupId);
+    gulpOnceColData ({groupId, tableName , colName , colValue , colContentType}) {
         
-        if(!groupByGroupId) {
+        const columndata = {
+            value:colValue ,
+            contentType:colContentType || this.#columnDefaulContentType ,
+        }
+
+        const groupById = this.#groups.get(groupId);
+        if(!groupById) {
             this.#groups.set(groupId , {
                 tableName , 
-                columns:new Map([
-                    [colName , {
-                        ...colData ,
-                    }]
-                ]) ,
+                columns: new Map([[
+                    colName , columndata ,
+                ]]) ,
             });
             return ;
         }
 
-        const { columns } = groupByGroupId ;
+        const { columns } = groupById ;
 
-        columns.set(colName , {...colData});
-
+        columns.set(colName , columndata);
     }
 
     #groups;
-    #colContenttypeDefaultvalue ;
+    #columnDefaulContentType ; 
 
     constructor () {
         this.#groups = new Map();
-        this.#colContenttypeDefaultvalue = 'text/plain' ;
+        this.#columnDefaulContentType = 'text/plain' ;
     }
 }
 
