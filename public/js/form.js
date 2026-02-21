@@ -115,7 +115,6 @@ function createElement (type , innerHTML = '' , styles = [] , attr = [] , ...eve
         });
 
         attr.forEach(([key , value]) => {
-            console.log({key ,value});
             elem.setAttribute(key , value);
         });
 

@@ -1,78 +1,237 @@
+const ResponseDecorator = require("../../../app/services/router/services/response/response-decorator");
+const { filemanager } = require("../../file-manager/file-manager");
+const { database } = require("../database");
 
-class GroupAssembler {
+const crudType = {
+    CREATE:'CREATE',
+    READ:'READ',
+    UPDATE:'UPDATE',
+    DELETE:'DELETE',
+}
 
-    getAssembledGroupsByTableName () {
+const table = {
+    FILES:'FILES' ,
+    USERS:'USERS' ,
+}
+
+class DBController {
+
+    /**
+     * 
+     * @param {string} tableName 
+     * @param {any} payload 
+     * @returns {Promise<{error?:any; success?:any}>}
+     */
+    async createRow (tableName , payload) {
+        const { error , success } = await this.#execCRUD(crudType.CREATE , tableName , payload);
+
+        if(error) {
+            return {
+                error ,
+            }
+        }
+
+        return {
+            success ,
+        }
+    }
+
+    /**
+     * 
+     * @param {string} tableName 
+     * @param {any} payload 
+     * @returns {Promise<{error?:any; success?:any}>}
+     */
+    async readRow (tableName , payload) {
+        const { error , success } = await this.#execCRUD(crudType.READ , tableName , payload);
         
-        const groupsByTableName = {} ;
-
-        for (const [groupId , groupData] of this.#groups) {
-
-            const row = {} ;
-
-            const { tableName , columns } = groupData ;
-
-            for (const [colName , colData] of columns) {
-                row[colName] = colData ; 
-            }
-
-            const groupByTablename = groupsByTableName[tableName];
-
-            if(!groupByTablename) {
-                groupsByTableName[tableName] = [row] ;
-                continue ;
-            }
-
-            groupByTablename.push(row);
-
-        }
-
-        return groupsByTableName ;
-    }
-
-    gulpOne ({groupId , tableName , colName , colValue , colContenttype}) {
-
-        const column = {
-            colName ,
-            data: {
-                value:colValue ,
-                contentType:colContenttype || this.#colContenttypeDefaultvalue ,
+        if(error) {
+            return {
+                error ,
             }
         }
 
-        this.#updateGroup(groupId , tableName , column);
+        return {
+            success ,
+        }
     }
 
-    #updateGroup(groupId , tableName , column) {
+    /**
+     * 
+     * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
+     * @param {string} tablename 
+     * @param {any} payload 
+     * @returns {Promise<{success?:{result:any};error?:{message:string;subject:string}}>}
+     */
+    async #execCRUD (crudType , tablename , payload) {
 
-        const { colName  , data: colData } = column ;
+        const crudTypeHandlers = this.#crud.get(crudType);
 
-        const groupByGroupId = this.#groups.get(groupId);
+        if(!crudTypeHandlers) {
+            return {
+                error:{
+                    message:'incorrect CRUD type' ,
+                    subject:crudType ,
+                }
+            }
+        }
+
+        const tablenameBundle = crudTypeHandlers.get(tablename);
+
+        if(!tablenameBundle) {
+            return {
+                error:{
+                    message:'incorrect table name' ,
+                    subject:tablename ,
+                } ,
+            }
+        }
+
+        const { handler , middleware } = tablenameBundle ;
+
+        await this.#executeMiddleware(middleware , {});
         
-        if(!groupByGroupId) {
-            this.#groups.set(groupId , {
-                tableName , 
-                columns:new Map([
-                    [colName , {
-                        ...colData ,
-                    }]
-                ]) ,
-            });
-            return ;
+        const { success , error } = await handler(payload) ;
+
+        return {
+            success ,
         }
-
-        const { columns } = groupByGroupId ;
-
-        columns.set(colName , {...colData});
-
     }
 
-    #groups;
-    #colContenttypeDefaultvalue ;
+    /**
+     * 
+     * @param {((context:any , next:() => Promise<any>) => Promise<any>)[]} middleware 
+     * @param {any} context 
+     */
+    async #executeMiddleware (middleware , context) {
+        let index = 0 ;
+        const next = async () => {
+            const handlerLike = middleware[index++] ;
+            if(!handlerLike) return ;
+            await handlerLike(context  , next);
+        }
+        await next();
+    }
 
+    /**
+     * 
+     * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
+     * @param {string} tableName 
+     * @param {((payload:any) => Promise<{success?:any;error?:any}>)[]} handlers 
+     */
+    addListener (crudType , tableName , ...handlers) {
+
+        const _crudType = crudType.toUpperCase() ;
+
+        const crudTypeHandlers = this.#crud.get(_crudType);
+
+        if(!crudTypeHandlers) {
+            throw new Error(`crud type ${_crudType}`);
+        }
+
+        const bundle = {
+            handler:handlers[handlers.length - 1] , 
+            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] , 
+        }
+
+        crudTypeHandlers.set(tableName , bundle);
+    }
+
+    #crud ;
+    
     constructor () {
-        this.#groups = new Map();
-        this.#colContenttypeDefaultvalue = 'text/plain' ;
+
+        this.#crud = new Map();
+
+        const crudTypes = [
+            crudType.CREATE ,
+            crudType.READ ,
+            crudType.UPDATE ,
+            crudType.DELETE ,
+        ] ;
+
+        crudTypes.forEach(crudType => {
+            
+            this.#crud.set(crudType , new Map());
+        });
     }
 }
 
-module.exports = GroupAssembler ;
+const dbController = new DBController();
+
+dbController.addListener(crudType.CREATE , table.FILES , async (payload) => {
+
+    const { row } = payload ;
+
+    const { title , filename: originalFilename , file , description } = row || {} ;
+
+    if(!file) {
+        return {
+            error:{
+                message:`file data is not given` ,
+                subject:{
+                    file ,
+                } ,
+            } ,
+        }
+    }
+
+    const { value:fileData , contentType } = file ;
+
+    if(!contentType) {
+        return {
+            error:{
+                message:`file mime is not given` ,
+                subject:{
+                    contentType ,
+                } ,
+            } ,
+        }
+    }
+
+    const { status , error  , success } = await filemanager.write(fileData);
+
+    if(error) {
+        return {
+            error:{
+                message:`smth wrong with fileuploading` ,
+            }
+        }
+    }
+
+    const { filename } = success || {} ;
+
+    database
+
+    const databaseResult = database.createRow(table.FILES , {
+        title:title?.value?.toString('utf-8') ,
+        description:description?.value?.toString('utf-8') , 
+        filename:originalFilename?.value?.toString('utf-8') , 
+        mime:contentType || null ,
+        filename:filename || null ,
+    } );
+
+    return {
+        success:{
+            ...databaseResult ,
+        }
+    } ;
+
+});
+
+dbController.addListener(crudType.READ , table.FILES , async (payload) => {
+
+    const { fileId } = payload ;
+    const { error , success } = database.readRow(table.FILES , fileId);
+
+    if(error) {
+        return {
+            error ,
+        }
+    }
+
+    return {
+        success ,
+    }
+
+});

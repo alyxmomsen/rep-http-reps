@@ -62,13 +62,14 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         const addRowResults = [];
         for (const [tableName , rows] of Object.entries(rowsByTablename)) {
             for (const row of rows) {
-                console.log({row});
-                const { error , success } = await dbController.createRow(tableName.toUpperCase() , {row, res});
+                const { error , success } = await dbController.execTransaction( "CREATE" , tableName.toUpperCase() , {row, res});
+                console.log('mp-handler' , {error , success});
                 if(error) {
                     continue ;
                 }
-                const { id , row:tableRow } = success ;
-                addRowResults.push({id , row:tableRow});
+                const { data } = success ;
+                const { rowId , row:_row } = data || {} ; 
+                addRowResults.push({id:rowId || null , row:_row || null});
             }
         }
         res.writeHead(200 , 'ok' , {

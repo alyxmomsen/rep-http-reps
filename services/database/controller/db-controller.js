@@ -2,96 +2,93 @@ const ResponseDecorator = require("../../../app/services/router/services/respons
 const { filemanager } = require("../../file-manager/file-manager");
 const { database } = require("../database");
 
-const crudType = {
-    CREATE:'CREATE',
-    READ:'READ',
-    UPDATE:'UPDATE',
-    DELETE:'DELETE',
+const transaction = {
+    CREATE:'CREATE' ,
+    READ:'READ' ,
+    UPDATE:'UPDATE' ,
+    DELETE:'DELETE' ,
 }
 
-const table = {
+const tablename = {
     FILES:'FILES' ,
     USERS:'USERS' ,
 }
-
 class DBController {
 
     /**
      * 
+     * @param {'CREATE'|'READ'|'UPDATE'|'DELETE'} transactionType 
      * @param {string} tableName 
-     * @param {any} payload 
-     * @returns {Promise<{error?:any; success?:any}>}
+     * @param  {((payload) => Promise<any>)[]} handlers 
      */
-    async createRow (tableName , payload) {
-        const { error , success } = await this.#execCRUD(crudType.CREATE , tableName , payload);
+    addListener (transactionType , tableName , ...handlers) {
 
-        if(error) {
-            return {
-                error ,
-            }
+        const _transactionType = transactionType.toUpperCase();
+
+        const transactionBundle = {
+            handler:handlers[handlers.length - 1] ,
+            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] ,
         }
 
-        return {
-            success ,
+        const typeTransactions = this.#transactions.get(_transactionType);
+
+        if(!typeTransactions) {
+            throw new Error(`incorrect transaction type ${_transactionType}`);
         }
+
+        typeTransactions.set(tableName , transactionBundle) ;
+
+    }
+
+    useMiddleware (...middleware) {
+        middleware.forEach(mw => {
+            this.#middleware.push(mw);
+        });
     }
 
     /**
      * 
+     * @param {'CREATE'|'READ'|'UPDATE'|'DELETE'} transactionType 
      * @param {string} tableName 
      * @param {any} payload 
-     * @returns {Promise<{error?:any; success?:any}>}
      */
-    async readRow (tableName , payload) {
-        const { error , success } = await this.#execCRUD(crudType.READ , tableName , payload);
+    async execTransaction (transactionType , tableName , payload) {
+
+        const _transactionType = transactionType.toUpperCase();
+        const _tableName = tableName.toUpperCase();
         
-        if(error) {
-            return {
-                error ,
-            }
-        }
-
-        return {
-            success ,
-        }
-    }
-
-    /**
-     * 
-     * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
-     * @param {string} tablename 
-     * @param {any} payload 
-     * @returns {Promise<{success?:{result:any};error?:{message:string;subject:string}}>}
-     */
-    async #execCRUD (crudType , tablename , payload) {
-
-        const crudTypeHandlers = this.#crud.get(crudType);
-
-        if(!crudTypeHandlers) {
+        const typeTransactions = this.#transactions.get(transactionType);
+        
+        if(!typeTransactions) {
             return {
                 error:{
-                    message:'incorrect CRUD type' ,
-                    subject:crudType ,
-                }
-            }
-        }
-
-        const tablenameBundle = crudTypeHandlers.get(tablename);
-
-        if(!tablenameBundle) {
-            return {
-                error:{
-                    message:'incorrect table name' ,
-                    subject:tablename ,
+                    mesage:`no transaction type ${_transactionType}` ,
                 } ,
             }
         }
 
-        const { handler , middleware } = tablenameBundle ;
+        const transactionBundle =  typeTransactions.get(_tableName);
 
-        await this.#executeMiddleware(middleware , {});
-        
-        const { success , error } = await handler(payload) ;
+        if(!transactionBundle) {
+            return {
+                error: {
+                    message:`no tablename transaction` ,
+                    subjects:{
+                        tableName:_tableName ,
+                    }
+                }
+            }
+        }
+
+        const { handler , middleware } = transactionBundle ;
+
+        const { success , error } = await handler(payload);
+
+        if(error) {
+            return {
+                error ,
+            }
+        }
 
         return {
             success ,
@@ -100,136 +97,77 @@ class DBController {
 
     /**
      * 
-     * @param {((context:any , next:() => Promise<any>) => Promise<any>)[]} middleware 
-     * @param {any} context 
+     * @param {((payload) => Promise<void>)[]} middleware 
+     * @param {*} payload 
      */
-    async #executeMiddleware (middleware , context) {
+    async #executeMiddleware (middleware , payload) {
         let index = 0 ;
         const next = async () => {
-            const handlerLike = middleware[index++] ;
-            if(!handlerLike) return ;
-            await handlerLike(context  , next);
+            const handler = middleware[index++] ;
+            if(!handler) return ;
+            await handler(payload);
         }
-        await next();
+        await next() ;
     }
 
-    /**
-     * 
-     * @param {'CREATE'|'READ' |'UPDATE' |'DELETE'} crudType 
-     * @param {string} tableName 
-     * @param {((payload:any) => Promise<{success?:any;error?:any}>)[]} handlers 
-     */
-    addListener (crudType , tableName , ...handlers) {
+    #transactions;
+    #middleware;
 
-        const _crudType = crudType.toUpperCase() ;
-
-        const crudTypeHandlers = this.#crud.get(_crudType);
-
-        if(!crudTypeHandlers) {
-            throw new Error(`crud type ${_crudType}`);
-        }
-
-        const bundle = {
-            handler:handlers[handlers.length - 1] , 
-            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] , 
-        }
-
-        crudTypeHandlers.set(tableName , bundle);
-    }
-
-    #crud ;
-    
     constructor () {
 
-        this.#crud = new Map();
+        this.#transactions = new Map();
+        this.#middleware = [] ;
 
-        const crudTypes = [
-            crudType.CREATE ,
-            crudType.READ ,
-            crudType.UPDATE ,
-            crudType.DELETE ,
-        ] ;
+        const transactions = [
+            transaction.CREATE ,
+            transaction.READ ,
+            transaction.UPDATE ,
+            transaction.DELETE ,
+        ];
 
-        crudTypes.forEach(crudType => {
-            
-            this.#crud.set(crudType , new Map());
+        transactions.forEach(transactionType => {
+            this.#transactions.set(transactionType , new Map());
         });
     }
 }
 
 const dbController = new DBController();
 
-dbController.addListener(crudType.CREATE , table.FILES , async (payload) => {
+dbController.addListener(transaction.READ , tablename.FILES , async (payload) => {
+    const { rowId } = payload ;
+    console.log({payload});
 
-    const { row } = payload ;
-
-    const { title , filename: originalFilename , file , description } = row || {} ;
-
-    if(false) {
-        return {
-            error:{
-
-            }
-        }
-    }
-
-    if(!file) {
-        return {
-            error:{
-                message:`file data is not given` ,
-                subject:{
-                    file ,
-                } ,
-            } ,
-        }
-    }
-
-    const { value:fileData , contentType } = file ;
-
-    if(!contentType) {
-        return {
-            error:{
-                message:`file mime is not given` ,
-                subject:{
-                    contentType ,
-                } ,
-            } ,
-        }
-    }
-
-    const { status , error  , success } = await filemanager.write(fileData);
+    const { error , success } = database.readRow(tablename.FILES , rowId );
 
     if(error) {
+        console.log({error});
+        return {
+            error ,
+        }
+    }
+
+    const { row } = success ;
+    console.log({row});
+    return {
+        success ,
+    }
+});
+
+dbController.addListener(transaction.CREATE , tablename.FILES , async (payload) => {
+
+    const { row:tableRowData ,  } = payload ;
+
+    const { title , description , file , filename } = tableRowData ;
+
+    if(!file || !file?.value) {
         return {
             error:{
-                message:`smth wrong with fileuploading` ,
+
             }
         }
     }
 
-    const { filename } = success || {} ;
-
-    const databaseResult = database.createRow(table.FILES , {
-        title:title?.value?.toString('utf-8') ,
-        description:description?.value?.toString('utf-8') , 
-        filename:originalFilename?.value?.toString('utf-8') , 
-        mime:contentType || null ,
-        filename:filename || null ,
-    } );
-
-    return {
-        success:{
-            ...databaseResult ,
-        }
-    } ;
-
-});
-
-dbController.addListener(crudType.READ , table.FILES , async (payload) => {
-
-    const { fileId } = payload ;
-
-    const { error , success } = database.readRow(table.FILES , fileId);
+    const { status , error , success } = await filemanager.write(file.value);
 
     if(error) {
         return {
@@ -237,8 +175,26 @@ dbController.addListener(crudType.READ , table.FILES , async (payload) => {
         }
     }
 
+    const { filename:dbFilename } = success ;
+
+    const databaseResult = database.createRow(tablename.FILES , {
+        title:title?.value?.toString('utf-8') ,
+        description:description?.value?.toString('utf-8') ,
+        originalFileName:filename?.value?.toString('utf-8') ,
+        filename:dbFilename ,
+    });
+    
+    const { id , row } = databaseResult ;
+
+    console.log('create file' , {tableRowData , id , row});
+
     return {
-        success ,
+        success:{
+            data:{
+                rowId:id ,
+                row ,
+            }
+        }
     }
 
 });

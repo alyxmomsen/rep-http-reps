@@ -14,13 +14,26 @@ async function handleStream (req , res) {
         return ;
     }
 
-    const { id:fileId } = params ;
+    const { id:rowId } = params ;
 
-    const { error , success } = await dbController.readRow('FILES' , {fileId});
+    const { error , success } = await dbController.execTransaction( 'READ' , 'FILES' , {rowId});
 
-    console.log({error , success});
+    console.log('video stream' , {error , success , rowId});
+
+    if(error) {
+        return {
+            error ,
+        }
+    }
 
     const { filename } = success.row || {} ;
+
+    if(!filename) {
+
+        res.writeHead(500);
+        res.end(JSON.stringify({message:'internal error'}));
+        return ;
+    }
 
     const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(filename);
     

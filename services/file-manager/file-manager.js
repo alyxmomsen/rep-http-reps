@@ -55,7 +55,6 @@ class FileManager {
             }
         }
         catch (e) {
-            console.log({e});
             return {
                 error:{
                     details:e ,

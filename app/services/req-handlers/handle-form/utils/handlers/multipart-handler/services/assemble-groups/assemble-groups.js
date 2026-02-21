@@ -1,6 +1,10 @@
 
 class GroupAssembler {
 
+    /**
+     * 
+     * 
+     */
     groupsSortedByTableName () {
 
         const groups = {} ;

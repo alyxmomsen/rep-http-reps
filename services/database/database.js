@@ -16,6 +16,8 @@ class DataBase {
 
         nameTable.set(id , row);
 
+        console.log({nameTable});
+
         return {
             id , 
             row ,
@@ -32,7 +34,6 @@ class DataBase {
     readRow (tablename , rowId) {
 
         const _tableName = tablename.toUpperCase();
-
         const nameTable = this.#tables.get(_tableName);
 
         if(!nameTable) {
