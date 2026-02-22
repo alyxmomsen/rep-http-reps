@@ -1,5 +1,6 @@
 
 const { dbController } = require("../../../../../../../services/database/controller/db-controller");
+const { database } = require("../../../../../../../services/database/database");
 // const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
 const { loggerFactory } = require("../../../../../../../utils/logger");
 const GroupAssembler = require("./services/assemble-groups/assemble-groups");
@@ -62,16 +63,25 @@ async function handleMultipartData (req , res , {boundaryRawStr}) {
         const addRowResults = [];
         for (const [tableName , rows] of Object.entries(rowsByTablename)) {
             for (const row of rows) {
+            
+                
                 const { error , success } = await dbController.execTransaction( "CREATE" , tableName.toUpperCase() , {row, res});
-                console.log('mp-handler' , {error , success});
+
                 if(error) {
                     continue ;
                 }
                 const { data } = success ;
                 const { rowId , row:_row } = data || {} ; 
                 addRowResults.push({id:rowId || null , row:_row || null});
+
+                // const table = database.getTable(tableName.toUpperCase());
+                // const rowbyid = table.row(rowId);
+                // const allrows = table.rows();
+                // console.log({rowbyid , allrows , rowId});
             }
         }
+
+
         res.writeHead(200 , 'ok' , {
             "content-type":'application/json' ,
         });

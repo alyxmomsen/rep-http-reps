@@ -1,3 +1,13 @@
 video {
    width: 100%; 
+   aspect-ratio: 16/9;
+}
+
+.video--video-container {
+	/* flex: 1; */
+	flex-basis: 50%;
+}
+
+.video--palylist-container {
+	flex-basis: 50%;
 }

@@ -135,8 +135,6 @@ const dbController = new DBController();
 
 dbController.addListener(transaction.READ , tablename.FILES , async (payload) => {
     const { rowId } = payload ;
-    console.log({payload});
-
     const { error , success } = database.readRow(tablename.FILES , rowId );
 
     if(error) {

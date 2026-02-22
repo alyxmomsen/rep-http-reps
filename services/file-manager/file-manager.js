@@ -1,4 +1,3 @@
-const { error } = require("node:console");
 const { randomBytes } = require("node:crypto");
 const { createWriteStream } = require("node:fs");
 const { readFile } = require("node:fs/promises");

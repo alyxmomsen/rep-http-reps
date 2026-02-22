@@ -1,164 +1,202 @@
+const { ServerResponse, IncomingMessage } = require('node:http');
 const { loggerFactory } = require('../../../utils/logger');
 const ResponseDecorator = require('./services/response/response-decorator');
 
 const log = loggerFactory('router' , '-u');
 class Router {
+    /**
+     * 
+     * @param {IncomingMessage} req 
+     * @param {ServerResponse} res 
+     */
+    async handleRequest (req , res) {
 
-    async handleRequest(req , res) {
+        const { method:_m , url:fullURL } = req; 
 
-        // этот объект работает с конкретным объектом ServerResponse
-        // const routerResponse = new ResponseDecorator (res) ;
+        const method = _m.toUpperCase();
 
-        // ----------------------------
-
-        const { method:m , url:fullURL } = req ;
-        const method = m.toUpperCase();
-
-        const methodRoutes  = this.#routes.get(method);
+        const methodRoutes = this.#routes.get(method);
 
         if(!methodRoutes) {
-            res.writeHead(403);
+            res.writeHead(400);
             res.end();
             return ;
         }
 
-        const { url , queryStringLike } = this.#splitURL(fullURL);
+        for (const [ _ , routeBundle ] of methodRoutes.entries()) {
 
-        for (const [_t , routebundle] of methodRoutes.entries()) {
-            
-            const { regex , handler , middleware , keys } = routebundle ;
+            const { 
+                regex: routeTemplateRegex , keys:routeParamsKeys ,
+                originalTemplate , handler:routeHandler , 
+                middleware:routeMiddleware , 
+            } = routeBundle ;
 
-            const urlmatch = regex.exec(url);
+            const { url , queryStringLike } = this.#splitURL(fullURL);
 
-            if(!urlmatch) continue ;
+            const urlMatch = routeTemplateRegex.exec(url);
 
-            // bundle params
-            
-            const params = {} ; 
-            keys.forEach((key , i) => {
-                params[key] = urlmatch[i + 1] ;
-            });
+            if(!urlMatch) continue ;
+
+            // compile params
+
+            const params = {} ;
+
+            let i = 0 ;
+            for (const key of routeParamsKeys) {
+                params[key] = urlMatch[i + 1] ;
+                i++ ;
+            }
 
             const queryParams = this.#extractQueryParams(queryStringLike);
 
             req.params = params ;
             req.queryParams = queryParams ;
 
-            log('def' , {params , queryParams})
+            // --------------
 
-            // ===============
+            await this.#executeMiddleware(req , res , this.#middleware) ;
+            await this.#executeMiddleware(req , res , routeMiddleware) ;
 
-            await this.#executeMiddleware(req ,res , [...this.#middleware , ...middleware]);
-
-            await handler(req , /* routerResponse */res);
-            return ;
+            await routeHandler(req , res);
+            return;
         }
 
         res.writeHead(404);
         res.end();
     }
 
+    get (template , ...handlers) {
+        this.#addRoute(template , "GET" , handlers);    
+    }
+
+    post (template , ...handlers) {
+        this.#addRoute(template , "POST" , handlers);    
+    }
+
+    /**
+     * 
+     * @param  {((req:IncomingMessage , res:ServerResponse , next:(() => Promise<void>)) => Promise<void>)[]} middleware 
+     */
     use (...middleware) {
-        middleware.forEach(mw => this.#middleware.push(mw));
+        middleware.forEach(mw => {
+            this.#middleware.push(mw);
+        });
     }
 
-    get(template , ...handlers) {
-        this.#addRoute(template , 'GET' , handlers);
+    /**
+     * 
+     * @param {string|null} queryStringLike 
+     * @returns {any}
+     */
+    #extractQueryParams (queryStringLike) {
+        const params = {} ;
+        if(!queryStringLike) {
+            return params ;
+        }
+        const couples = queryStringLike.split('&');
+        for (const couple of couples) {
+            const [key  , value] = couple.split('=');
+            if(!key || !value) continue ;
+            params[key.toLowerCase()] = value ;
+        }
+        return params ;
     }
 
-    post(template , ...handlers) {
-        this.#addRoute(template , 'POST' , handlers);
+    /**
+     * 
+     * @param {string} fullURL 
+     * @returns {{url:string;queryStringLike:string|null}}
+     */
+    #splitURL (fullURL) {
+
+        const [ _url , queryString ] = fullURL.split('?');
+        return {
+            url:/\.+\/$/.test(_url) ? _url.replace(/\/$/ , '') : _url , 
+            queryStringLike:queryString || null ,
+        }
     }
 
-    async #executeMiddleware (req ,res , middlewareArr) {
+    
+    /**
+     * 
+     * @param {string} template 
+     * @param {string} method 
+     * @param {((req:IncomingMessage , res:ServerResponse , next:(() => vloid)) => void)[]} handlers 
+    */
+    #addRoute (template , method , handlers) {
+       
+       const _method = method ;
+       
+       const methodRoutes = this.#routes.get(_method);
+       
+       if(!methodRoutes) {
+            throw new Error(`incorrect method ${_method}`);
+        }
+        
+        const routeBundle =  this.#assembleRouteBundle(template  , handlers);
+
+        const { originalTemplate } = routeBundle ;
+
+        methodRoutes.set(originalTemplate , routeBundle);
+
+        console.log(`\x1b[38;2;255;0;255madded route ${_method} ${template}\x1b[0m`);
+    }
+    
+    /**
+     * 
+     * @param {IncomingMessage} req 
+     * @param {ServerResponse} res 
+     * @param {((req:IncomingMessage , res:ServerResponse , next:(() => vloid)) => Promise<any>)[]} middleware
+     */
+    async #executeMiddleware (req ,res , middleware) {
         let index = 0 ;
         const next = async () => {
-            const handlerLike = middlewareArr[index++] ;
-            if(!handlerLike) return ;
-            await handlerLike(req , res , next) ;
+            const handler = middleware[index];
+            if(!handler) return ;
+            await handler(req , res , next);
         }
         await next();
     }
 
-    #splitURL (fullURL) {
-
-        const [_url , queryStringLike ] = fullURL.split('?');
-
-        return {
-            url:/.+\/$/.test(_url) ? _url.replace(/\/$/ , '') : _url ,
-            queryStringLike ,
-        } 
-    }
-
-    #extractQueryParams (queryStringLike) {
-        const params = {} ;
-
-        if(!queryStringLike) return params ;
-        
-        const couples = queryStringLike.split('&');
-
-        couples.forEach(couple => {
-            const [key , value] = couple.split('=');
-            if(key && value) {
-                params[key.toLowerCase()] = value ;
-            }
-        });
-
-        return params ;
-
-    }
-
-    #addRoute (template , method , handlers) {
-
-        const _method = method.toUpperCase();
-
-        const methodRoutes = this.#routes.get(_method);
-
-        if(!methodRoutes) throw new Error(`method ${_method} is not defined`) ;
-
-        const routeBundle = this.#assembleRouteBundle(template , handlers);
-
-        const {originalTemplate:_template} = routeBundle ;
-
-        methodRoutes.set(_template , routeBundle);
-
-        log('def' , `route ${_method} ${_template}`) ;
-    }
-
+    /**
+     * 
+     * @param {string} template 
+     * @param {((req:IncomingMessage , res:ServerResponse , next:(() => vloid)) => void)[]} handlers 
+     */
     #assembleRouteBundle (template , handlers) {
-
         const keys = [] ;
-
         const regexTemplate = template.replace(/:([^\/]+)/g , (_ , key) => {
             keys.push(key);
-            return '([^\/]+)' ;
+            return '([^\/]+)';
         });
 
-        return {
+        const bundle = {
             keys ,
-            handler: handlers[handlers.length - 1], 
-            middleware: handlers.length > 1 ? handlers.slice(0 , -1) : [] ,
-            regex: new RegExp(`^${regexTemplate}$`) ,
+            handler:handlers[handlers.length - 1] , 
+            middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] , 
+            regex:new RegExp(`^${regexTemplate}$`) ,
             originalTemplate:template ,
         }
+
+        return bundle ;
     }
 
     #routes;
-    #middleware ;
+    #middleware;
 
     constructor () {
-        
-        this.#routes = new Map () ;
+
+        this.#routes = new Map();
         this.#middleware = [] ;
 
         const methods = [
-            'get' , 'post'
-        ];
+            'get' , 'post' ,
+        ] ;
 
         methods.forEach(m => {
-            const method = m.toUpperCase();
-            this.#routes.set(method , new Map());
+            this.#routes.set(m.toUpperCase() , new Map()) ;
         });
+
 
     }
 }

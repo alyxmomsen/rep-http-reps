@@ -6,6 +6,7 @@ const handlePublic = require("../../services/req-handlers/handle-public/handle-p
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
 const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
 const { dbController } = require("../../../services/database/controller/db-controller");
+const { database } = require("../../../services/database/database");
 
 const router = new Router();
 
@@ -24,9 +25,17 @@ router.get('/api/update-playlist' , (req , res) => {
 router.get('/api/get-all-files' , (req , res) => {
     console.log('get all files');
     
-    dbController.getRow('files');
+    const { error , success } = database.readTable('files');
 
-    res.end(JSON.stringify({files:'no files'}));
+    if(error) {
+        res.writeHead(400);
+        res.end();
+        return ;
+    }
+
+    const { rows } = success ;
+
+    res.end(JSON.stringify({files:rows || []}));
 });
 
 router.get('/api/video-stream/:id' , handleStream);

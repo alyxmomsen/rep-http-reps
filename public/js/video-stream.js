@@ -1,5 +1,5 @@
 
-window.addEventListener('DOMContentLoaded' , () => {
+window.addEventListener('DOMContentLoaded' , async () => {
     
     // grab html
 
@@ -12,5 +12,17 @@ window.addEventListener('DOMContentLoaded' , () => {
         video.load();
     }
 
+    const response = await fetch('/api/get-all-files', {
+        method:'get' ,
+    });
+
+    const { files } = await response.json() ;
+
+    console.log({files});
+
+
+    files.forEach(file => {
+        console.log(file);
+    });
     
 });
