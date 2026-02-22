@@ -8,7 +8,7 @@ class FileManager {
     /**
      * 
      * @param {Buffer} data 
-     * @returns {Promise<{status:number;success?:any;error?:{details:any}}>}
+     * @returns {Promise<{status:number;success?:{filename:string};error?:{details:any}}>}
      */
     async write (data) {
 

@@ -7,6 +7,7 @@ const { loggerFactory } = require("../../../../../../../utils/logger");
 const GroupAssembler = require("./services/assemble-groups/assemble-groups");
 const parseName = require("./services/parse-name-input/parse-name");
 const splitFormDatPart = require("./utils/handle-part");
+const { DBControllerFactory } = require("../../../../../../../services/database/controller/dbcontr");
 
 const log = loggerFactory('handle multipart data' , '-u');
 /**
@@ -33,13 +34,14 @@ async function handleMultipartData (req , res , payload) {
 
     const formdataBufferChunks = [] ;
     let formDataChunkCapacity = 0 ;
-    req.on("data"  , (chunk) => {
+    req.on("data"  , async (chunk) => {
 
         formDataChunkCapacity += chunk.length ;
         formdataBufferChunks.push(chunk);
     })
 
-    req.on("end" , () => {
+    req.on("end" , async () => {
+        const groupAssembler = new GroupAssembler();
         console.log(`form data capacity ${formDataChunkCapacity}`);
         const wholeFormDataBuffer = Buffer.concat(formdataBufferChunks);
 
@@ -55,14 +57,49 @@ async function handleMultipartData (req , res , payload) {
                 }
                 const { filename: fileName , name:nameAttr } = parseContentDisposition(contentDisposition);
                 const { groupId , tableName , colName } = parseNameAttr(nameAttr);
-                console.log({fileContentType , fileName , groupId , tableName , colName , bodyPart});
+
+                // grouping
+                if(fileName) {
+                    groupAssembler.gulpOneceColumnData({
+                        groupId , tableName , colName:'filename' , 
+                        colValue:fileName , colContentType:'text/plain' ,
+                    });
+                }
+                
+                groupAssembler.gulpOneceColumnData({
+                    groupId , tableName , colName , colValue:bodyPart , colContentType:fileContentType
+                });
+                // --------
             }
             catch (e) {
                 console.log({e});
             }
         }
         
+        const groupsByTableName = groupAssembler.getRowsGroupedByTableName();
 
+        const added = [] ;
+        for (const [ tablename , rows ] of Object.entries(groupsByTableName)) {
+            try {
+                const dbController = DBControllerFactory(tablename) ;
+                for (const row of rows) {
+                    console.log({row});
+                    const { error , success } = await dbController.createRow(row);
+                    console.log('controller success response' , {error , success});
+                    added.push({...success});
+                }
+            }
+            catch (e) {
+                console.log({e});
+            }
+        }
+
+   
+        res.end(JSON.stringify({payload:{
+            files:{
+                added ,
+            }
+        }}));
     });
 
 }

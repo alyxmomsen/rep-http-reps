@@ -119,24 +119,36 @@ class DataBase {
         }
     }
 
+    /**
+     * 
+     * @param {string} tablename 
+     * @param {Object<string,string>} row 
+     * @returns {{success:{id:string;row:string}}}
+     */
     createRow (tablename , row) {
+
+        console.log('create row: ' , {tablename , row});
 
         const id = randomBytes(32).toString('hex');
 
         const nameTable = this.#tables.get(tablename);
         if(!nameTable) {
+            console.log('check 1');
             this.#tables.set(tablename , new Map([[id ,row]]));
             return {
-                id ,
-                row ,
-            } ;
+                success:{
+                    id , row ,
+                }
+            }
         }
-
+        
+        console.log('check 2');
         nameTable.set(id , row);
 
         return {
-            id , 
-            row ,
+            success:{
+                id , row ,
+            }
         }
 
     }
