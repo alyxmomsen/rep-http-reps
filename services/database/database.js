@@ -57,6 +57,7 @@ class DataBase {
      * 
      * @param {string} tablename 
      * @param {string} id 
+     * @returns {{error?:{message:string;subjects?:any};success:{row:any}}}
      * 
      */
     getRow_(tablename , id) {

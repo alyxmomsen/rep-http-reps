@@ -14,10 +14,14 @@ class Strategy {
         console.log(`default method createRow`);
         return 
     }
-    
-    readRow () {
+
+    /**
+     * @param {string} id 
+     * @returns {{error:{message:string;subjects:any};success:{row:any}}}
+     */
+    readRow (id) {
         console.log(`default method readRow`);
-        return
+        return 
     }
     
     readAllRowsByTableName () {
@@ -86,6 +90,29 @@ class FilesStrategy extends Strategy {
             } ,
         }
 
+    }
+
+    /**
+     * 
+     * @param {string} id 
+     * @returns {{error:{message:string;subjects:any};success:{row:any}}}
+     */
+    readRow (id) {
+        const { success , error } = database.getRow_('files' , id);
+
+        if(error) {
+            return {
+                error: {
+                    ...error ,
+                } ,
+            }
+        }
+
+        return {
+            success:{
+                ...success ,
+            }
+        }
     }
 
     constructor () {

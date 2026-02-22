@@ -24,8 +24,26 @@ class DataBaseController {
         }
     }
     
-    readRow () {
-        this.#validationStrategy.readRow();
+    /**
+     * @param {string} id 
+     * @returns {{error:{message:string;subjects:any};success:{row:any}}}
+     */
+    readRow (id) {
+        const { error , success } = this.#validationStrategy.readRow(id);
+
+        if(error) {
+            return {
+                error:{
+                    ...error ,
+                } ,
+            }
+        }
+
+        return  {
+            success:{
+                ...success ,
+            }
+        }
     }
 
     readAllRowsByTableName () {

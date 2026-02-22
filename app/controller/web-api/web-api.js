@@ -5,7 +5,6 @@ const { resolve, join } = require("path");
 const handlePublic = require("../../services/req-handlers/handle-public/handle-public");
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
 const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
-const { dbController } = require("../../../services/database/controller/db-controller");
 const { database } = require("../../../services/database/database");
 
 const router = new Router();

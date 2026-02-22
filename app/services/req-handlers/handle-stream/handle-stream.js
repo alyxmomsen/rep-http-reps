@@ -1,6 +1,6 @@
 const { Readable } = require("node:stream");
-const { dbController } = require("../../../../services/database/controller/db-controller");
 const { filemanager } = require("../../../../services/file-manager/file-manager");
+const { DBControllerFactory } = require("../../../../services/database/controller/dbcontr");
 
 async function handleStream (req , res) {
     
@@ -16,26 +16,31 @@ async function handleStream (req , res) {
 
     const { id:rowId } = params ;
 
-    const { error , success } = await dbController.execTransaction( 'READ' , 'FILES' , {rowId});
+    const dbController__files  = DBControllerFactory('files');
 
-    console.log('video stream' , {error , success , rowId});
+    const { error , success } = dbController__files.readRow(rowId);
 
     if(error) {
-        return {
-            error ,
-        }
+        console.log({error});
+        res.writeHead(500);
+        res.end(JSON.stringify({message:'internal error'}));
+        return ;
     }
 
-    const { filename } = success.row || {} ;
+    const { row } = success || {} ;
 
-    if(!filename) {
+    console.log('handle stream: ' , {row});
+
+    const { dbFilename } = row || {} ;
+
+    if(!dbFilename) {
 
         res.writeHead(500);
         res.end(JSON.stringify({message:'internal error'}));
         return ;
     }
 
-    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(filename);
+    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(dbFilename);
     
     if(filemanagerError) {
         
