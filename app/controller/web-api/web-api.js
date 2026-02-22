@@ -6,10 +6,11 @@ const handlePublic = require("../../services/req-handlers/handle-public/handle-p
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
 const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
 const { database } = require("../../../services/database/database");
+const { DBControllerFactory } = require("../../../services/database/controller/dbcontr");
 
 const router = new Router();
 
-const log = loggerFactory('route /test/:id/foo/:bar' , '-u');
+const log = loggerFactory('router-controller' , '-u');
 
 router.use(
     // (req , res , next) => {log('def' , 'Gmw 11');next()} ,
@@ -21,10 +22,16 @@ router.get('/api/update-playlist' , (req , res) => {
     // const files = readFiles();
 });
 
+const filesDbController = DBControllerFactory('files');
 router.get('/api/get-all-files' , (req , res) => {
-    console.log('get all files');
-    
-    const { error , success } = database.readTable('files');
+
+    log('y' , 'get all files');
+
+    // const { error , success } = database.readTable('files');
+
+    const { error , success} = filesDbController.readAllRowsByTableName();
+
+    log('r' , {error  , success});
 
     if(error) {
         res.writeHead(400);

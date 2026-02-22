@@ -33,7 +33,10 @@ class FileManager {
                     status:1 ,
                     error:{
                         message:'fail during writing' ,
-                        details:e ,
+                        subject:{
+                            native:e ,
+                            location:'FileManager::write' ,
+                        }
                     } ,
                 });
             });

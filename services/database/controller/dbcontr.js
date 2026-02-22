@@ -13,14 +13,14 @@ class DataBaseController {
             return {
                 error:{
                     ...error ,
-                }
+                } ,
             }
-        } 
+        }
 
         return {
-            success:{
+            success: {
                 ...success ,
-            }
+            } ,
         }
     }
     
@@ -29,9 +29,10 @@ class DataBaseController {
      * @returns {{error:{message:string;subjects:any};success:{row:any}}}
      */
     readRow (id) {
+        console.log('dbcontroller readrow');
         const { error , success } = this.#validationStrategy.readRow(id);
 
-        if(error) {
+        if (error) {
             return {
                 error:{
                     ...error ,
@@ -39,15 +40,28 @@ class DataBaseController {
             }
         }
 
-        return  {
-            success:{
+        return {
+            success: {
                 ...success ,
-            }
+            } ,
         }
+
     }
 
     readAllRowsByTableName () {
-        this.#validationStrategy.readAllRowsByTableName();
+        const { success , error } = this.#validationStrategy.readAllRows();
+        if(error) {
+            return {
+                error:{
+                    ...error ,
+                } ,
+            }
+        }
+        return {
+            success: {
+                ...success ,
+            } ,
+        }
     }
 
     #validationStrategy ;
@@ -68,14 +82,11 @@ class DataBaseController {
  */
 function DBControllerFactory (tablename) {
 
-    console.log({tablename ,validationStrategies });
-
-    const tablenameStrategy = validationStrategies.get(tablename || {});
-
-    if(!tablenameStrategy || (tablenameStrategy instanceof Strategy === false)) throw new Error(`no strategy`);
-
-    return new DataBaseController(tablenameStrategy) ;
-
+    const strategy = validationStrategies.get(tablename);
+    if(!strategy || strategy instanceof Strategy === false) {
+        throw new Error(`no table ${tablename} strategy`);
+    }
+    return new DataBaseController (strategy) ;
 }
 
 module.exports = { DBControllerFactory , validationStrategies } ;

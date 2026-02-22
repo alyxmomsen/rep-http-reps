@@ -1,66 +1,81 @@
+const { validationStrategies, Strategy } = require("./behaviors/strategies");
 
-class GroupAssembler {
+class DataBaseController {
 
     /**
      * 
-     * 
+     * @param {Object.<string,Object.<string,any>>} data 
      */
-    groupsSortedByTableName () {
+    async createRow (data) {
+        const { error , success } = await this.#validationStrategy.createRow(data);
 
-        const groups = {} ;
-
-        for (const [_ , tableRow ] of this.#groups.entries()) {
-
-            const row = {} ;
-            const { tableName , columns } = tableRow ;
-
-            for (const [ colName , colData ] of columns.entries()) {
-                row[colName] = colData ;
+        if(error) {
+            return {
+                error:{
+                    ...error ,
+                }
             }
+        } 
 
-            const tableNameRow = groups[tableName] ;
-
-            if(!tableNameRow) {
-                groups[tableName] = [row] ;
-                continue ;
+        return {
+            success:{
+                ...success ,
             }
+        }
+    }
+    
+    /**
+     * @param {string} id 
+     * @returns {{error:{message:string;subjects:any};success:{row:any}}}
+     */
+    readRow (id) {
+        const { error , success } = this.#validationStrategy.readRow(id);
 
-            tableNameRow.push(row);
+        if(error) {
+            return {
+                error:{
+                    ...error ,
+                } ,
+            }
         }
 
-        return groups ;
+        return  {
+            success:{
+                ...success ,
+            }
+        }
     }
 
-    gulpOnceColData ({groupId, tableName , colName , colValue , colContentType}) {
-        
-        const columndata = {
-            value:colValue ,
-            contentType:colContentType || this.#columnDefaulContentType ,
-        }
-
-        const groupById = this.#groups.get(groupId);
-        if(!groupById) {
-            this.#groups.set(groupId , {
-                tableName , 
-                columns: new Map([[
-                    colName , columndata ,
-                ]]) ,
-            });
-            return ;
-        }
-
-        const { columns } = groupById ;
-
-        columns.set(colName , columndata);
+    readAllRowsByTableName () {
+        this.#validationStrategy.readAllRowsByTableName();
     }
 
-    #groups;
-    #columnDefaulContentType ; 
+    #validationStrategy ;
 
-    constructor () {
-        this.#groups = new Map();
-        this.#columnDefaulContentType = 'text/plain' ;
+    /**
+     * 
+     * @param {Strategy} strategy 
+     */
+    constructor (strategy) {
+        this.#validationStrategy = strategy ;
     }
 }
 
-module.exports = GroupAssembler ;
+/**
+ * 
+ * @param {string} tablename 
+ * @returns {DataBaseController}
+ */
+function DBControllerFactory (tablename) {
+
+    console.log({tablename ,validationStrategies });
+
+    const tablenameStrategy = validationStrategies.get(tablename || {});
+
+    if(!tablenameStrategy || (tablenameStrategy instanceof Strategy === false)) throw new Error(`no strategy`);
+
+    return new DataBaseController(tablenameStrategy) ;
+
+}
+
+module.exports = { DBControllerFactory , validationStrategies } ;
