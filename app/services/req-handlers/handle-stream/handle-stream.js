@@ -29,18 +29,16 @@ async function handleStream (req , res) {
 
     const { row } = success || {} ;
 
-    console.log('handle stream: ' , {row});
+    const { FSFilename } = row || {} ;
 
-    const { dbFilename } = row || {} ;
-
-    if(!dbFilename) {
+    if(!FSFilename) {
 
         res.writeHead(500);
         res.end(JSON.stringify({message:'internal error'}));
         return ;
     }
 
-    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(dbFilename);
+    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(FSFilename);
     
     if(filemanagerError) {
         

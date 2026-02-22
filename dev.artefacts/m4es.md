@@ -4,7 +4,7 @@
 - [x] http router: 13:04 22.02.2026;
 - [x] frontend request-router: 13:37;
 - [x] server-side response-manager: 20260220;
-- [ ] database:
+- [/] database:
 - [/] filemanager:
 
 <!-- - [x] group assembler ; -->

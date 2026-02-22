@@ -4,125 +4,6 @@ class DataBase {
     /**
      * 
      * @param {string} tablename 
-     * @param {any} data 
-     * @returns {void}
-     */
-    setRow_ (tablename , data) {
-
-        const nameTable = this.#tables.get(tablename);
-
-        const id = randomBytes(32).toString('hex');
-
-        if(!nameTable) {
-            this.#tables.set(tablename , new Map([[
-                id , data ,
-            ]])) ;
-            return ;
-        }
-
-        nameTable.set(id , data);
-    }
-
-    /**
-     * 
-     * @param {string} tablename 
-     * 
-     */
-    getAllRows_ (tablename) {
-
-        const nameTable = this.#tables.get(tablename);
-
-        if(!nameTable) {
-            return {
-                error:{
-                    message:'no table ' + tablename,
-                    subjects:{nameTable , tablename} ,
-                } ,
-            }
-        }
-
-        const rows = {} ;
-        for (const [key , value] of nameTable) {
-            rows[key] = value ;
-        }
-
-        return {
-            success:{
-                rows ,
-            }
-        }
-    }
-
-    /**
-     * 
-     * @param {string} tablename 
-     * @param {string} id 
-     * @returns {{error?:{message:string;subjects?:any};success:{row:any}}}
-     * 
-     */
-    getRow_(tablename , id) {
-
-        const nameTable = this.#tables.get(tablename);
-
-        if(!nameTable) {
-            return {
-                error:{
-                    message:'no table ' + tablename,
-                    subjects:{nameTable} ,
-                } ,
-            }
-        }
-
-        const row = nameTable.get(id);
-
-        if(!row) {
-            return {
-                error:{
-                    message:'no row by id ' + id,
-                    subjects:{nameTable , id} ,
-                } ,
-            }
-        }
-
-        return {
-            success:{
-                row ,
-            }
-        }
-
-    }
-
-    /**
-     * 
-     * @param {string} tablename 
-     * @returns {{error?:{message?:string;subjects?:any};success?:{table:Table}}}
-     */
-    getTable(tablename) {
-
-        const nameTable = this.#tables.get(tablename);
-
-        if(!nameTable) {
-            
-            return {
-                error:{
-                    message:'' ,
-                    subjects:{
-                        nameTable ,
-                    } ,
-                }
-            }
-        }
-
-        return {
-            success: {
-                table: new Table(nameTable) ,
-            } ,
-        }
-    }
-
-    /**
-     * 
-     * @param {string} tablename 
      * @param {Object<string,string>} row 
      * @returns {{success:{id:string;row:string}}}
      */
@@ -162,6 +43,7 @@ class DataBase {
      */
     readRow (tablename , rowId) {
 
+        console.log({tablename , rowId});
         const _tableName = tablename.toUpperCase();
         const nameTable = this.#tables.get(_tableName);
 
@@ -191,6 +73,11 @@ class DataBase {
 
     }
 
+    /**
+     * 
+     * @param {*} tableName 
+     * @returns 
+     */
     readTable (tableName) {
         const _tableName = tableName.toUpperCase();
         const tableByName = this.#tables.get(_tableName);
@@ -199,6 +86,7 @@ class DataBase {
             return {
                 error:{
                     message:'no table by name ' + _tableName ,
+                    subject:'',
                 } ,
             }
         }

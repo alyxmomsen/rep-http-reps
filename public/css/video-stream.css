@@ -8,6 +8,19 @@ video {
 	flex-basis: 50%;
 }
 
-.video--palylist-container {
+.video--palylist-wrapper {
 	flex-basis: 50%;
 }
+
+.playlist-item {
+	background-color: #663399;
+	cursor: pointer;
+	transition: all .2s ease-out;
+	padding: 9px;
+}
+
+.playlist-item:hover {
+	background-color: #a591b9;
+	padding-left: calc(9px * 2);
+}
+
