@@ -32,6 +32,7 @@ class FileManager {
                 rej({
                     status:1 ,
                     error:{
+                        message:'fail during writing' ,
                         details:e ,
                     } ,
                 });

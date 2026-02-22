@@ -56,8 +56,7 @@ class FilesStrategy extends Strategy {
         if(error) {
             return {
                 error:{
-                    message:'filemanager error' ,
-                    subjects:{file , error} ,
+                    ...error ,
                 } ,
             }
         }
@@ -76,9 +75,8 @@ class FilesStrategy extends Strategy {
         if(dberror) {
             return {
                 error:{
-                    message:'db error' ,
-                    subjects:{dberror , data}
-                }
+                    ...dberror ,
+                } ,
             }
         }
 
