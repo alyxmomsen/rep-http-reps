@@ -1,4 +1,5 @@
 
+const { IncomingMessage, ServerResponse } = require("node:http");
 const { dbController } = require("../../../../../../../services/database/controller/db-controller");
 const { database } = require("../../../../../../../services/database/database");
 // const findIndexInBuffer = require("../../../../../../../utils/find-index-in-buffer");
@@ -8,185 +9,199 @@ const parseName = require("./services/parse-name-input/parse-name");
 const splitFormDatPart = require("./utils/handle-part");
 
 const log = loggerFactory('handle multipart data' , '-u');
-async function handleMultipartData (req , res , {boundaryRawStr}) {
+/**
+ * 
+ * @param {IncomingMessage} req 
+ * @param {ServerResponse} res 
+ * @param {any} param2 
+ */
+async function handleMultipartData (req , res , payload) {
    
+    const { boundaryRawStr } = payload ;
+
+    const FILEMAXSIZE = 1024 * 1024 * 100 // 100 Mb
+
     if(!boundaryRawStr) {
-        return ;
+        throw new Error(`no boundary header string`) ;
     }
 
-    const boundaryMatch = boundaryRawStr.match(/boundary=([^;\s$]+)/);
+    const boundaryHeaderMatch = boundaryRawStr.match(/boundary=(----[^\/]+)/);
 
-    if(!boundaryMatch) {
-        return ;
+    if(!boundaryHeaderMatch) {
+        throw new Error(`no boundary provided`);
     }
 
-    const boundaryBuffer = Buffer.from(`--${boundaryMatch[1]}`) ;
+    const formdataBufferChunks = [] ;
+    let formDataChunkCapacity = 0 ;
+    req.on("data"  , (chunk) => {
 
-    const formDataBufferChunks =  [];
-    req.on('data' , (chunk) => {
-        formDataBufferChunks.push(chunk);
-    });
+        formDataChunkCapacity += chunk.length ;
+        formdataBufferChunks.push(chunk);
+    })
 
-    req.on("end" , async () => {
-        const wholebuffer = Buffer.concat(formDataBufferChunks);
+    req.on("end" , () => {
+        console.log(`form data capacity ${formDataChunkCapacity}`);
+        const wholeFormDataBuffer = Buffer.concat(formdataBufferChunks);
 
-        const formDataBufferParts = splitFormDataBuffer(wholebuffer , boundaryBuffer );
-        const groupAssembler = new GroupAssembler();
-        for (const formDataBufferPart of formDataBufferParts) {
-
+        const parts = splitFormDataBuffer(wholeFormDataBuffer , Buffer.from(`--${boundaryHeaderMatch[1]}`));
+        for (const part of parts) {
             try {
-                // start parsing ...
-                const { headers:headersPartBuffer , body:bodyPartBuffer } = splitDataBufferPart(formDataBufferPart);
-                const headers = extractHeaders(headersPartBuffer.toString('utf-8'));
-                const contentDispositionHeader = headers['content-disposition'] || null ;
-                const contentTypeHeader = headers['content-type'] || null ;
-                const { filename , name:nameAttr } = parseContentDisposition(contentDispositionHeader);
+                const { body:bodyPart , headers:headersPart } = splitFormDataBufferPart(part);
+                const headers = parseHeaders(headersPart.toString('utf-8'));
+                const contentDisposition = headers['content-disposition'] || null;
+                const fileContentType = headers['content-type'] || null;
+                if(!contentDisposition) {
+                    throw new Error(`no content-disposition in formdata-part header segment`);
+                }
+                const { filename: fileName , name:nameAttr } = parseContentDisposition(contentDisposition);
                 const { groupId , tableName , colName } = parseNameAttr(nameAttr);
-                // ... end parsing
-
-                groupAssembler.gulpOnceColData({
-                    groupId , tableName , 
-                    colName , colValue:bodyPartBuffer , colContenttype:contentTypeHeader
-                });
-
-                if(filename) groupAssembler.gulpOnceColData({
-                    groupId , tableName , 
-                    colName:'filename' , colValue:filename , colContenttype:'text/plain' , 
-                })
+                console.log({fileContentType , fileName , groupId , tableName , colName , bodyPart});
             }
             catch (e) {
                 console.log({e});
             }
         }
+        
 
-        const rowsByTablename = groupAssembler.groupsSortedByTableName();
-        const addRowResults = [];
-        for (const [tableName , rows] of Object.entries(rowsByTablename)) {
-            for (const row of rows) {
-            
-                
-                const { error , success } = await dbController.execTransaction( "CREATE" , tableName.toUpperCase() , {row, res});
-
-                if(error) {
-                    continue ;
-                }
-                const { data } = success ;
-                const { rowId , row:_row } = data || {} ; 
-                addRowResults.push({id:rowId || null , row:_row || null});
-
-                // const table = database.getTable(tableName.toUpperCase());
-                // const rowbyid = table.row(rowId);
-                // const allrows = table.rows();
-                // console.log({rowbyid , allrows , rowId});
-            }
-        }
-
-
-        res.writeHead(200 , 'ok' , {
-            "content-type":'application/json' ,
-        });
-        res.end(JSON.stringify({
-            payload:{
-                files:{
-                    added:addRowResults ,
-                }
-            }
-        }));
-        // res.sendResponsePayloadData(200 ,'ok');
     });
-    
+
 }
 
 module.exports = handleMultipartData ;
 
+/**
+ * 
+ * @param {string} nameAttr
+ * @returns {{groupId:string|null;tableName:string|null;colName:string|null;}} 
+ */
 function parseNameAttr (nameAttr) {
-    const [ groupId , tableName , colName ] = nameAttr.split('.') ;
+
+    const [ groupId , tableName , colName ] = nameAttr.split('.');
+
+    if(!groupId || !tableName || !colName) {
+        throw new Error(`incorrect name attribute`);
+    }
+
     return {
-        groupId:groupId || null , tableName:tableName || null , colName:colName || null
+        groupId:groupId || null ,
+        tableName:tableName || null ,
+        colName: colName || null ,
     }
 }
 
+/**
+ * 
+ * @param {string} contentDispositionHeaderString 
+ * @returns {{name:string|null;filename:string|null}}
+ */
 function parseContentDisposition (contentDispositionHeaderString) {
 
-    const namematch = contentDispositionHeaderString.match(/name="([^"]+)"/) ;
-    const filenamematch = contentDispositionHeaderString.match(/filename="([^"]+)"/) ;
+    const namematch = contentDispositionHeaderString.match(/name="([^"]+)"/);
+    const filenamematch = contentDispositionHeaderString.match(/filename="([^"]+)"/);
 
     return {
-        name:(namematch && namematch[1]) || null , 
-        filename:(filenamematch && filenamematch[1]) || null , 
+        name:namematch ? namematch[1] : null ,
+        filename:filenamematch ? filenamematch[1] : null ,
     }
 }
 
-function extractHeaders (headerString) {
-
+/**
+ * 
+ * @param {string} formDataHeadersString 
+ * @returns {{Object.<string ,any>}}
+ */
+function parseHeaders (formDataHeadersString) {
     const headers = {} ;
-
-    const rawHeaders = headerString.split('\r\n');
-    for (const rawHeader of rawHeaders) {
-        const [key , value ] = rawHeader.split(': ');
-        if(!key || !value) continue ;
+    const headersRows = formDataHeadersString.split('\r\n') ;
+    headersRows.forEach(headerRow => {
+        const [key , value] = headerRow.split(": ");
         headers[key.toLowerCase()] = value ;
-    }
-
+    });
     return headers ;
 }
 
-function splitDataBufferPart (formDataBufferPart) {
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} formDataPart 
+ * @returns {{headers:Buffer<ArrayBuffer>;body:Buffer<ArrayBuffer>}}
+ */
+function splitFormDataBufferPart (formDataPart) {
 
-    const separatorBuffer = Buffer.from(`\r\n\r\n`);
+    const separatorBuffer = Buffer.from('\r\n\r\n');
 
-    const separatorIndex = findIndexInBuffer(formDataBufferPart , separatorBuffer);
-    
-    if(separatorIndex === -1) {
-        throw new Error('incorrect part data'.toUpperCase());
+    const separatorBufferIndex = findIndexInBufferBySeparator(formDataPart , separatorBuffer) ;
+
+    if(separatorBufferIndex === -1) {
+        throw new Error(`incorrect form-data part`);
     }
 
-    const headers = formDataBufferPart.subarray(0 , separatorIndex);
+    const headers = formDataPart.subarray(0 , separatorBufferIndex);
 
-    let bodyBufferEndIndex = formDataBufferPart.length ;
-
-    if(formDataBufferPart[bodyBufferEndIndex - 2] === 0x0d && formDataBufferPart[bodyBufferEndIndex -1] === 0x0a) {
-        bodyBufferEndIndex -= 2 ;
+    let bodyPartBufferEndIndex = formDataPart.length ;
+    if(formDataPart[bodyPartBufferEndIndex - 2] === 0x0d && formDataPart[bodyPartBufferEndIndex - 1]) {
+        bodyPartBufferEndIndex -= 2 ;
     }
 
-    const body = formDataBufferPart.subarray(separatorIndex + separatorBuffer.length , bodyBufferEndIndex);
+    const body = formDataPart.subarray(
+        separatorBufferIndex + separatorBuffer.length, 
+        bodyPartBufferEndIndex
+    );
+
+    console.log(headers.toString('utf-8'));
 
     return {
-        headers ,
+        headers , 
         body ,
     }
 }
 
-function splitFormDataBuffer (formDataBuffer , boundaryBuffer) {
+
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} data 
+ * @param {Buffer<ArrayBuffer>} boundary 
+ * @returns {Buffer<ArrayBuffer>[]}
+ */
+function splitFormDataBuffer (data , boundary) {
+
+    log('r'  , data , boundary.toString('utf-8'));
 
     const parts = [] ;
-    let start = 0; 
+    let start = 0;
     let index = 0 ;
-    while ((index = findIndexInBuffer(formDataBuffer , boundaryBuffer , start)) !== -1) {
 
-        parts.push(formDataBuffer.subarray(start , index));
-        start = index + boundaryBuffer.length ;
-        if(formDataBuffer[start] === 0x0d && formDataBuffer[start + 1] === 0x0a) {
+    while ((index = findIndexInBufferBySeparator(data , boundary , start)) !== -1) {
+        const part = data.subarray(start , index) ;
+        parts.push(part);
+        start = index + boundary.length ;
+        if(part[part.length - 2] === 0x0d && part[part.length - 1] === 0x0a) {
             start += 2 ;
         }
     }
-    parts.push(formDataBuffer.subarray(start));
+
+    parts.push(data.subarray(start));
+
     return parts ;
 }
 
-function findIndexInBuffer (dataBufffer , separatorBuffer , start = 0) {
-
-    for (let index = start ; index < dataBufffer.length - separatorBuffer.length ; index++) {
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} data 
+ * @param {Buffer<ArrayBuffer>} separator 
+ * @param {number} start 
+ * @returns {number}
+ */
+function findIndexInBufferBySeparator (data , separator , start = 0) {
+    
+    for (let index = start ; index < data.length - separator.length ; index++) {
         let found = true ;
-        for (let j = 0 ; j < separatorBuffer.length ; j++) {
-            if(dataBufffer[index + j] !== separatorBuffer[j]) {
+        for (let j = 0 ; j < separator.length ; j++) {
+            if(data[index + j] !== separator[j]) {
                 found = false ;
-                break;
+                break ;
             }
         }
-        if(found === true) {
-            return index ;
-        }
+        if(found === true) return index ;
     }
     return -1 ;
 }
