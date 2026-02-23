@@ -7,6 +7,7 @@ window.addEventListener('DOMContentLoaded' , async () => {
 
     // =====
     const videoId = localStorage.getItem('video-id');
+
     if(videoId) {
         video.src = `/api/video-stream/${videoId}` ;
         video.load();

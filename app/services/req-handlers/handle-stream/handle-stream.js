@@ -1,6 +1,8 @@
 const { Readable } = require("node:stream");
 const { filemanager } = require("../../../../services/file-manager/file-manager");
 const { DBControllerFactory } = require("../../../../services/database/controller/dbcontr");
+const { loggerFactory } = require("../../../../utils/logger");
+const log = loggerFactory('handle stream' , '-u');
 
 async function handleStream (req , res) {
     
@@ -20,6 +22,8 @@ async function handleStream (req , res) {
 
     const { error , success } = dbController__files.readRow(rowId);
 
+    log('r' , {error , success});
+
     if(error) {
         console.log({error});
         res.writeHead(500);
@@ -29,16 +33,16 @@ async function handleStream (req , res) {
 
     const { row } = success || {} ;
 
-    const { FSFilename } = row || {} ;
+    const { filesystemFilename } = row || {} ;
 
-    if(!FSFilename) {
+    if(!filesystemFilename) {
 
         res.writeHead(500);
         res.end(JSON.stringify({message:'internal error'}));
         return ;
     }
 
-    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(FSFilename);
+    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(filesystemFilename);
     
     if(filemanagerError) {
         

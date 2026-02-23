@@ -25,7 +25,7 @@ class DataBaseController {
      * @returns {{error?:{message:string;location:string;subject:Object};success?:Object}} 
      */
     readAllRowsByTableName () {
-        const { error , success } = this.#validationStrategy.readAllRows();
+        const { error , success } = this.#validationStrategy.readAllRowsByTableName();
         if(error) {
             return {
                 error ,

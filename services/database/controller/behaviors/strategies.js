@@ -93,12 +93,19 @@ class FilesStrategy extends Strategy {
     }
     
     /**
+     * @param {string} rowId 
      * @returns {{error?:{location:string;message:string;subject:Object};success:any}}
     */
-    readRow () {
-       
-        console.log(`FilesStrategy::readRow`);
-        return {}
+    readRow (rowId) {
+        log('y' , `FilesStrategy::readRow` , rowId);
+        const { error , success } = database.readRow(tablename.FILES , rowId);
+        if(error) {
+            return {
+                error ,
+            }
+        }
+
+        return {success}
     }
     
     /**
@@ -106,8 +113,15 @@ class FilesStrategy extends Strategy {
      * @returns {{error?:{location:string;message:string;subject:Object};success?:Object}
     */
     readAllRowsByTableName () {
-        console.log(`FilesStrategy::readAllRowsByTableName`);
-        return {}
+        log('y' , `FilesStrategy::readAllRowsByTableName`);
+        const {error , success} = database.readTable(tablename.FILES);
+        if(error) {
+            return {
+                error ,
+            }
+        }
+
+        return {success}
     }
 
     constructor () {
