@@ -75,8 +75,9 @@ async function handleMultipartData (req , res , payload) {
 
         const added = [] ;
         for (const [ tablename , rows ] of Object.entries(groupsByTableName)) {
+            const normalizedTableName = tablename.toUpperCase();
             try {
-                const dbController = DBControllerFactory(tablename) ;
+                const dbController = DBControllerFactory(normalizedTableName) ;
                 for (const row of rows) {
                     console.log({row});
                     const { error , success } = await dbController.createRow(row);

@@ -4,89 +4,61 @@ class DataBaseController {
 
     /**
      * 
-     * @param {Object.<string,Object.<string,any>>} data 
+     * @param {Object.<string,{value:Buffer<ArrayBuffer>;contentType:string}>} data
+     * @returns {Promise<{error?:{message:string;location:string;subject:Object};success?:Object}>} 
      */
     async createRow (data) {
-        const { error , success } = await this.#validationStrategy.createRow(data);
-
-        if(error) {
-            return {
-                error:{
-                    ...error ,
-                } ,
-            }
-        }
-
-        return {
-            success: {
-                ...success ,
-            } ,
-        }
+        const { success , error } = await this.#validationStrategy.createRow(data);
+        return error ? {error} : {success}
     }
-    
+
     /**
-     * @param {string} id 
-     * @returns {{error:{message:string;subjects:any};success:{row:any}}}
+     * 
+     * @returns {{error?:{message:string;location:string;subject:Object};success?:Object}} 
      */
     readRow (id) {
-        console.log('dbcontroller readrow');
-        const { error , success } = this.#validationStrategy.readRow(id);
-
-        if (error) {
-            return {
-                error:{
-                    ...error ,
-                } ,
-            }
-        }
-
-        return {
-            success: {
-                ...success ,
-            } ,
-        }
-
+        const { success , error } = this.#validationStrategy.readRow(id);
+        return error ? {error} : {success};
     }
 
+    /**
+     * @returns {{error?:{message:string;location:string;subject:Object};success?:Object}} 
+     */
     readAllRowsByTableName () {
-        const { success , error } = this.#validationStrategy.readAllRows();
+        const { error , success } = this.#validationStrategy.readAllRows();
         if(error) {
             return {
-                error:{
-                    ...error ,
-                } ,
+                error ,
             }
         }
+
         return {
-            success: {
-                ...success ,
-            } ,
+            success ,
         }
     }
 
-    #validationStrategy ;
+    #validationStrategy;
 
     /**
      * 
      * @param {Strategy} strategy 
      */
     constructor (strategy) {
-        this.#validationStrategy = strategy ;
+        if(!strategy || (strategy instanceof Strategy === false)) {
+            throw new Error(`incorrect strategy object`);
+        }
+        this.#validationStrategy = strategy ; 
     }
+
 }
 
-/**
- * 
- * @param {string} tablename 
- * @returns {DataBaseController}
- */
-function DBControllerFactory (tablename) {
 
-    const strategy = validationStrategies.get(tablename);
-    if(!strategy || strategy instanceof Strategy === false) {
-        throw new Error(`no table ${tablename} strategy`);
+function DBControllerFactory (tableName) {
+    const strategy = validationStrategies.get(tableName);
+    if(!strategy || (strategy instanceof Strategy === false)) {
+        throw new Error(`incorrect tablename`);
     }
-    return new DataBaseController (strategy) ;
+    return new DataBaseController(strategy);
 }
 
 module.exports = { DBControllerFactory , validationStrategies } ;

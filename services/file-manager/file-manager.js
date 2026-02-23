@@ -21,7 +21,6 @@ class FileManager {
     
             rs.on('end' , () => {
                 res({
-                    status:0 ,
                     success:{
                         filename:fileNewname ,
                     }
@@ -30,8 +29,8 @@ class FileManager {
 
             rs.on('error' , (e) => {
                 rej({
-                    status:1 ,
                     error:{
+                        location:'FileManager::write' ,
                         message:'fail during writing' ,
                         subject:{
                             native:e ,
@@ -48,6 +47,11 @@ class FileManager {
 
     }
 
+    /**
+     * 
+     * @param {string} filename 
+     * @returns {Promise<{error?:{location:string;message?:string;subject?:Object};success?:Object}>}
+     */
     async read (filename) {
         try {
             const file = await readFile(join(this.#uploadDir , filename));
@@ -60,6 +64,8 @@ class FileManager {
         catch (e) {
             return {
                 error:{
+                    message:'read file error' ,
+                    location:'FileManager::read' ,
                     details:e ,
                 } ,
             }
@@ -67,7 +73,9 @@ class FileManager {
     }
 
     async remove () {
-
+        return {
+            
+        }
     }
 
     #uploadDir;

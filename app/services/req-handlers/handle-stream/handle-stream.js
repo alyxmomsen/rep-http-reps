@@ -16,7 +16,7 @@ async function handleStream (req , res) {
 
     const { id:rowId } = params ;
 
-    const dbController__files  = DBControllerFactory('files');
+    const dbController__files  = DBControllerFactory("FILES");
 
     const { error , success } = dbController__files.readRow(rowId);
 

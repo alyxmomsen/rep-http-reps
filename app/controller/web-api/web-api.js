@@ -22,12 +22,12 @@ router.get('/api/update-playlist' , (req , res) => {
     // const files = readFiles();
 });
 
-const filesDbController = DBControllerFactory('files');
+const filesDbController = DBControllerFactory('FILES');
 router.get('/api/get-all-files' , (req , res) => {
 
     log('y' , 'get all files');
 
-    // const { error , success } = database.readTable('files');
+    // const { error , success } = database.readTable("FILES");
 
     const { error , success} = filesDbController.readAllRowsByTableName();
 
