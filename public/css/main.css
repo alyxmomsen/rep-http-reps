@@ -5,14 +5,13 @@
 }
 
 body {
-    background-color: rebeccapurple;
+	background-color: #242935;
+	color: #9e9890;
 }
 
 .wrapper--main {
     width: 666px;
     margin:0 auto;
-    padding: 9px;
-    border: 1px solid saddlebrown;
 }
 
 a {
@@ -87,4 +86,12 @@ a:active {
 
 .flx-jtf-ctr {
     justify-content: center;
+}
+
+.flx-jtf-start {
+    justify-content: start;
+}
+
+.flx-align-self-end {
+    align-self: flex-end;
 }

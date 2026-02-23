@@ -24,6 +24,8 @@ input[type="submit"] {
 	background-color: #202036a6;
 	color: antiquewhite;
 	display: none;
+	padding: calc(9px * 2);
+	overflow: scroll;
 }
 
 #modal-window__btn--close {
@@ -33,12 +35,9 @@ input[type="submit"] {
     left:calc(var(--ref-value) * 1) ;
 }
 
-#tool-tip--main {
+#tool-tip--added-files {
 	display: flex;
-	justify-content: center;
-	align-items: center;
-	min-width: 200px;
-	height: 200px;
+	min-width: 400px;
 	background-color: #282734;
 	padding: calc(var(--ref-value) * 2);
 }
@@ -50,3 +49,24 @@ input[type="submit"] {
 	color: wheat;
 }
 
+#form--main-container {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+/* classes */
+
+.tool-tip {
+	display: flex;
+	min-width: 400px;
+	background-color: #4f4f57;
+	padding: calc(var(--ref-value) * 2);
+	min-height: 99px;
+	border-radius: 4px;
+	flex-direction: column;
+	justify-content: center;
+}

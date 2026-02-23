@@ -27,12 +27,28 @@ window.addEventListener('DOMContentLoaded' , async () => {
 
         const { rowId , rowData } = file ;
 
-        const { title } = rowData || {} ;
+        const { title , description } = rowData || {} ;
 
-        const newElem = createElement('div' , title , [], [['class' ,'playlist-item']] , ['click' , () => {
-            video.src = `/api/video-stream/${rowId}` ;
-            video.load();
-        }]);
+        let elem = null ;
+
+        const newElem = createElement(
+            'div' , 
+            title , 
+            [], 
+            [['class' ,'playlist-item']] , 
+            ['click' , () => {video.src = `/api/video-stream/${rowId}` ;video.load();}] ,
+            ['mouseenter' , (e) => {
+                e.stopPropagation();
+                elem = createElement('div' , description , [] , [['class' , 'elem-tool-tip']] , ['mouseenter' ,(e) => {
+                    e.stopPropagation();
+                }]);
+                newElem.appendChild(elem);
+            }] ,
+            ['mouseleave' , () => {
+                elem.remove();
+                elem = null ;
+            }] ,
+        );
 
         playlist.appendChild(newElem);
 

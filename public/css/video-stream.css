@@ -22,5 +22,15 @@ video {
 .playlist-item:hover {
 	background-color: #a591b9;
 	padding-left: calc(9px * 2);
+	position: relative;
 }
 
+.elem-tool-tip {
+	position: absolute;
+	top:100%; 
+	left:10%;
+	padding: 9px;
+	background-color: #33404b;
+	color: wheat;
+	width: max-content;
+}

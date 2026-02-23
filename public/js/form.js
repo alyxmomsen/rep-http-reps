@@ -3,37 +3,37 @@
 
 window.addEventListener('DOMContentLoaded' , async () => {
 
-    for (const elem of document.getElementsByTagName('a')) {
-        elem.addEventListener('click' , (e) => {
-            e.stopPropagation();
-        });
-    }
-
-    for (const elem of document.getElementsByTagName('div')) {
-        elem.addEventListener('click' , (e) => {
-            e.stopPropagation();
-        });
-    }
+    let tooltips = [] ;
 
     // grab html elements
 
     const formMain = document.getElementById("form--main");
     const modalWindow = document.getElementById("modal-window--main");
-    const toolTipMain = document.getElementById("tool-tip--main");
-    const toolTipContent = document.getElementById("tool-tip--content");
     const formSubmitStatusContainer = document.getElementById("status--form-submit");
     
-    // ------------------
+    // instance RequestRouters
 
     const submitRequest = new RequestRouter ('/api/handle-form' , 'post' , [] , []) ;
+    const getAllFilesRequest = new RequestRouter ('/api/get-all-files' , 'get' , [] , []) ;
 
-    submitRequest.addOnBeforeRequest(async () => beforeSubmit({
-        modalWindow ,toolTipContent , formSubmitStatusContainer
+    submitRequest.addOnBeforeRequest(async () => {
+        beforeSubmit({
+            modalWindow , 
+            formSubmitStatusContainer ,
+        });
+    });
+
+    submitRequest.addListener(async (responseRawData) => await submitHandler({
+        responseRawData ,
+        modalWindow, tooltips ,
+        formSubmitStatusContainer, formMain , 
+        getAllFilesRequest ,
     }));
 
-    submitRequest.addListener(async (responseRawData) => submitHandler({
-        responseRawData , modalWindow , toolTipContent , formSubmitStatusContainer ,
-    }));
+    getAllFilesRequest.addListener(async (rawResponse) => {
+        await getAllFilesHandler({rawResponse , modalWindow}) ;
+    });
+
 
     // ---------------------------
 
@@ -46,6 +46,13 @@ window.addEventListener('DOMContentLoaded' , async () => {
     // ---------------------------
 
     modalWindow.addEventListener("click" , (e) => {
+
+        if(e.currentTarget !== modalWindow) return 
+
+        while (modalWindow.firstChild) {
+            modalWindow.firstChild.remove();
+        }
+
         e.currentTarget.style.display = 'none' ;
     });
 });
@@ -53,75 +60,192 @@ window.addEventListener('DOMContentLoaded' , async () => {
 
 // ====================================================================
 
+
+async function getAllFilesHandler (context) {
+
+    const { rawResponse , modalWindow } = context ;
+    // console.log(await rawResponse.json());
+    const { files } = await rawResponse.json()
+
+    const createInner = (text) => {
+        const inner = document.createElement('p');
+        inner.innerText = `- ${text}` ;
+        return inner ;
+    }
+
+    const tooltip = createToolTip(
+        '' , 
+        'all files: \r\n' , 
+        [
+            ['click' , () => console.log('tooltip')] ,
+        ] , 
+        ...files.map(elem => createInner(elem.rowData.title))
+    );
+
+    modalWindow.appendChild(tooltip);
+
+}
+
 async function beforeSubmit (context) {
 
-    const { modalWindow , toolTipContent , formSubmitStatusContainer } = context ;
-    toolTipContent.innerHTML = '';
+    const { modalWindow , formSubmitStatusContainer } = context ;
     formSubmitStatusContainer.innerHTML = 'upload...'
-    
 }
 
 async function submitHandler (context) {
+
     const { 
         responseRawData , modalWindow , 
-        toolTipContent , formSubmitStatusContainer
+        formSubmitStatusContainer, formMain ,
+        getAllFilesRequest , tooltips , 
     } = context ;
+
+    formMain.reset();
 
     formSubmitStatusContainer.innerHTML = 'done!' ;
 
     try {
+
         const JSONResponseData = await responseRawData.json();
         console.log({JSONResponseData});
         modalWindow.style.display = 'flex' ;
 
         const { files } = JSONResponseData.payload || {} ;
         const { added } = files || {added:[]} ;
-
+        
         let index = 0 ;
         for (const addedFile of added) {
-
+            
             const {id , row} = addedFile ;
             
             const { title , description } = row ;
-
-            const divElem = createElement(
-                'a' , `<span>${++index}.</span><span>${'video: '.toUpperCase()}</span><span>: </span><span>${title}</span>` ,
-                [] , [['href' , '/l/video-stream']] ,
-                ['click' , (e) => {
-                    localStorage.setItem('video-id' ,id);
-                }] , 
-                // ['mouseover' , (e) => {console.log('on')}] ,
-                // ['mouseleave' , (e) => {console.log('lieved')}] ,
-
+            
+            const addedOneTooltip = createToolTip(
+                'tool-tip--content', 
+                title , 
+                [
+                    ['click' , (e) => {
+                        localStorage.setItem('video-id' ,id);
+                    }] ,
+                ] ,
+                createLink(
+                    'read more...' , 
+                    `/l/video-stream` , 
+                    'flx-align-self-end',
+                ) ,
             );
-
-            toolTipContent.appendChild(divElem);
+            
+            modalWindow.appendChild(addedOneTooltip);
         }
 
+        setTimeout(
+            () => {
+                getAllFilesRequest.exec();
+            } , 1000 
+        );
     }
     catch(e) {
         console.error({e});
     }
 }
 
-function createElement (type , innerHTML = '' , styles = [] , attr = [] , ...eventListeners) {
+function createElement (type , innerText = '' , childs = [] , styles = [] , attr = [] , ...eventListeners) {
     try {
-        const elem = document.createElement(type);
-        elem.innerHTML = innerHTML ;
+        const baseElem = document.createElement(type);
+        baseElem.innerText = innerText ;
+
+        childs.forEach(child => {
+            baseElem.appendChild(child);
+        });
 
         eventListeners.forEach(listener => {
             const [evName , handler] = listener ;
-            elem.addEventListener(evName , handler);
+            baseElem.addEventListener(evName , handler);
         });
 
         attr.forEach(([key , value]) => {
-            elem.setAttribute(key , value);
+            baseElem.setAttribute(key , value);
         });
 
-        return elem ;
+        return baseElem ;
     }
     catch (e) {
         console.error({e});
         return null ;
     }
+}
+
+/**
+ * 
+ * @param  {...string} tagsNames 
+ */
+function setStoppropagationGlobally (...tagsNames) {
+    tagsNames.forEach(tagName => {
+        const elems = document.getElementsByTagName(tagName);
+        for (const elem of elems) {
+            elem.addEventListener('click' , (e) => {
+                e.stopPropagation();
+            });
+        }
+    });
+}
+
+/**
+ * 
+ * @param {string} type 
+ */
+function createEl (type , text , eventListeners = [] , ...children) {
+    const baseElement = document.createElement(type);
+    baseElement.innerText
+}
+
+/**
+ * 
+ * @param {string} id 
+ * @param {string} innerText 
+ * @param {([string , ((e:Event) => void)])[]} eventListeners 
+ * @param  {...HTMLElement} children 
+ */
+function createToolTip (id='' , innerText = '' , eventListeners = [] , ...children) {
+
+    const baseElem = document.createElement('div');
+    baseElem.className = 'tool-tip' ;
+    baseElem.id = '' ;
+    baseElem.innerText = innerText ;
+
+    children.forEach(elem => {
+        baseElem.appendChild(elem);
+    });
+
+    baseElem.addEventListener('click' , (e) => {
+        e.stopPropagation();
+    });
+    eventListeners.forEach(([name , handler]) => {
+        console.log({name , handler});
+        baseElem.addEventListener(name , handler);
+    });
+
+    return baseElem ;
+}
+
+/**
+ * 
+ * @param {string} innerText 
+ * @param {string} href 
+ * @param {...([string , ((e:Event) => void)])} eventListeners 
+ */
+function createLink (innerText = '' , href = '' , className = '' , ...eventListeners) {
+
+    const baseElement = document.createElement('a');
+    baseElement.innerText = innerText ;
+
+    baseElement.href = href ;
+
+    baseElement.classList = className ;
+
+    eventListeners.forEach(([listenerName , handler]) => {
+        baseElement.addEventListener(listenerName , handler);
+    });
+
+    return baseElement ;
 }
