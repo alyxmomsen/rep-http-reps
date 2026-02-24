@@ -19,9 +19,6 @@ window.addEventListener('DOMContentLoaded' , async () => {
 
     const { files } = await response.json() ;
 
-    console.log({files});
-
-
     const playlist =document.getElementById('video--playlist');
     files.forEach(file => {
 
@@ -36,7 +33,9 @@ window.addEventListener('DOMContentLoaded' , async () => {
             title , 
             [], 
             [['class' ,'playlist-item']] , 
-            ['click' , () => {video.src = `/api/video-stream/${rowId}` ;video.load();}] ,
+            ['click' , () => {
+                video.src = `/api/video-stream/${rowId}` ;video.load();
+            }] ,
             ['mouseenter' , (e) => {
                 e.stopPropagation();
                 elem = createElement('div' , description , [] , [['class' , 'elem-tool-tip']] , ['mouseenter' ,(e) => {

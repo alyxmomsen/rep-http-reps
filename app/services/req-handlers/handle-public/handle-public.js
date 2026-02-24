@@ -1,5 +1,5 @@
 
-const { join, resolve } = require("path");
+const { join, resolve, extname } = require("path");
 const { loggerFactory } = require("../../../../utils/logger");
 const { readFile } = require("fs/promises");
 
@@ -45,6 +45,12 @@ async function handlePublic (req , res) {
                 'rq-router':'request-router.js',
             }
         } ,
+        'picture': {
+            path:join(publicDir , 'pictures') ,
+            filemap: {
+                'default':'preloader-1.gif' ,
+            }
+        } ,
     }
     
     const {path , filemap} = (typerouter[type] || {}) ;
@@ -67,10 +73,16 @@ async function handlePublic (req , res) {
 
     const filepath = join(path , filename) ;
 
+    const extn = extname(filepath);
+
+    console.log(((extn && (extn === '.gif') && {'content-type':'image/gif'}) || {}));
+
     try {
-        const file = await readFile(filepath, 'utf-8');
+        const file = await readFile(filepath);
         log('g' , `${type}/${id}`, ': ' , 'successfully');
-        res.writeHead(200);
+        res.writeHead(200 , 'ok', {
+            ...((extn && (extn === '.gif') && {'content-type':'image/gif'}) || {})
+        });
         res.end(file);
     }
     catch (e) {
