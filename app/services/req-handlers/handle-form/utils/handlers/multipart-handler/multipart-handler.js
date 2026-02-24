@@ -55,13 +55,13 @@ async function handleMultipartData (req , res , payload) {
 
                 // grouping
                 if(fileName) {
-                    groupAssembler.gulpOneceColumnData({
+                    groupAssembler.addOneColumnData({
                         groupId , tableName , colName:'filename' , 
                         colValue:fileName , colContentType:'text/plain' ,
                     });
                 }
                 
-                groupAssembler.gulpOneceColumnData({
+                groupAssembler.addOneColumnData({
                     groupId , tableName , colName , colValue:bodyPart , colContentType:fileContentType
                 });
                 // --------
@@ -71,7 +71,8 @@ async function handleMultipartData (req , res , payload) {
             }
         }
         
-        const groupsByTableName = groupAssembler.getRowsGroupedByTableName();
+        const groupsByTableName = groupAssembler.getRowsGropedByTableName();
+        console.log({groupsByTableName});
 
         const added = [] ;
         for (const [ tablename , rows ] of Object.entries(groupsByTableName)) {
