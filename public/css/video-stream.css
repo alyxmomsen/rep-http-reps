@@ -3,6 +3,13 @@ video {
    aspect-ratio: 16/9;
 }
 
+#video-player--main-container {
+	border: 1px solid #3c444b;
+	padding: calc(9px * 2);
+	background-color: #28323b;
+	border-radius: 4px;
+}
+
 .video--video-container {
 	/* flex: 1; */
 	flex-basis: 50%;
@@ -13,14 +20,15 @@ video {
 }
 
 .playlist-item {
-	background-color: #663399;
+	background-color: #28323b;
 	cursor: pointer;
 	transition: all .2s ease-out;
 	padding: 9px;
+	border-radius: 4px;
 }
 
 .playlist-item:hover {
-	background-color: #a591b9;
+	background-color: #2a434a52;
 	padding-left: calc(9px * 2);
 	position: relative;
 }
@@ -34,3 +42,12 @@ video {
 	color: wheat;
 	width: max-content;
 }
+
+#video--main-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	height: 100vh;
+	padding: 9px;
+}
+
