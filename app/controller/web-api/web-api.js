@@ -12,7 +12,7 @@ const router = new Router();
 
 const log = loggerFactory('router-controller' , '-u');
 
-router.use(
+router.useMiddleware(
     // (req , res , next) => {log('def' , 'Gmw 11');next()} ,
     // (req , res , next) => {log('def' , 'Gmw 12');next()} ,
     // (req , res , next) => {log('def' , 'Gmw 13');next()} ,
