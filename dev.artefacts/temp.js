@@ -1,63 +1,68 @@
-const { validationStrategies, Strategy } = require("./behaviors/strategies");
 
-class DataBaseController {
+class GroupAssembler {
 
     /**
      * 
-     * @param {Object.<string,{value:Buffer<ArrayBuffer>;contentType:string}>} data
-     * @returns {Promise<{error?:{message:string;location:string;subject:Object};success?:Object}>} 
+     * @param {{groupId?:string;tableName?:string;colName?:string;colValue?:string;colContentType?:string}} data 
+     * @returns {void}
      */
-    async createRow (data) {
-        const { success , error } = await this.#validationStrategy.createRow(data);
-        return error ? {error} : {success}
+    gulpOneceColumnData (data) {
+
+        const { groupId , tableName , colName , colValue , colContentType } = data ;
+
+        const columnBundle = {
+            value:colValue ,
+            contentType:colContentType || 'text/plain' ,
+        }
+
+        const groupById = this.#groups.get(groupId);
+
+        if(!groupById) {
+            this.#groups.set(groupId , {
+                tableName , 
+                columns: new Map([[
+                    colName , columnBundle
+                ]]) ,
+            }); 
+            return ;
+        }
+
+        const { columns } = groupById ;
+
+        columns.set(colName , columnBundle);
     }
 
     /**
      * 
-     * @returns {{error?:{message:string;location:string;subject:Object};success?:Object}} 
+     * @returns {Object.<string ,Object.<string,string>[]>}
      */
-    readRow (id) {
-        const { success , error } = this.#validationStrategy.readRow(id);
-        return error ? {error} : {success};
-    }
+    getRowsGroupedByTableName () {
+        const groups = {} ;
 
-    /**
-     * @returns {{error?:{message:string;location:string;subject:Object};success?:Object}} 
-     */
-    readAllRowsByTableName () {
-        const { error , success } = this.#validationStrategy.readAllRowsByTableName();
-        if(error) {
-            return {
-                error ,
+        for (const [ _groupId , group ] of this.#groups.entries()) {
+
+            const row = {} ;
+            const { tableName , columns } = group ;
+            for (const [ colname , colData ] of columns) {
+                row[colname] = colData ;
             }
+
+            const tablenameGroups = groups[tableName] ;
+
+            if(!tablenameGroups) {
+                groups[tableName] = [row] ;
+                continue ;
+            }
+
+            tablenameGroups.push(row);
         }
 
-        return {
-            success ,
-        }
+        return groups ;
     }
 
-    #validationStrategy;
+    #groups;
 
-    /**
-     * 
-     * @param {Strategy} strategy 
-     */
-    constructor (strategy) {
-        if(!strategy || (strategy instanceof Strategy === false)) {
-            throw new Error(`incorrect strategy object`);
-        }
-        this.#validationStrategy = strategy ; 
+    constructor () {
+        this.#groups = new Map();
     }
-
 }
-
-
-function DBControllerFactory (tableName) {
-    const strategy = validationStrategies.get(tableName);
-    if(!strategy || (strategy instanceof Strategy === false)) {
-        throw new Error(`incorrect tablename`);
-    }
-    return new DataBaseController(strategy);
-}
-
