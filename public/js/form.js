@@ -16,21 +16,21 @@ window.addEventListener('DOMContentLoaded' , async () => {
     const submitRequest = new RequestRouter ('/api/handle-form' , 'post' , [] , []) ;
     const getAllFilesRequest = new RequestRouter ('/api/get-all-files' , 'get' , [] , []) ;
 
-    submitRequest.addOnBeforeRequest(async () => {
-        beforeSubmit({
+    submitRequest.addBeforeRequestListeners(async () => {
+        handleBeforeSubmit({
             modalWindow , 
             formSubmitStatusContainer ,
         });
     });
 
-    submitRequest.addListener(async (responseRawData) => await submitHandler({
+    submitRequest.addListeners(async (responseRawData) => await submitHandler({
         responseRawData ,
         modalWindow, tooltips ,
         formSubmitStatusContainer, formMain , 
         getAllFilesRequest ,
     }));
 
-    getAllFilesRequest.addListener(async (rawResponse) => {
+    getAllFilesRequest.addListeners(async (rawResponse) => {
         await getAllFilesHandler({rawResponse , modalWindow}) ;
     });
 
@@ -86,7 +86,7 @@ async function getAllFilesHandler (context) {
 
 }
 
-async function beforeSubmit (context) {
+async function handleBeforeSubmit (context) {
 
     const { modalWindow , formSubmitStatusContainer } = context ;
     formSubmitStatusContainer.innerHTML = 'upload...'

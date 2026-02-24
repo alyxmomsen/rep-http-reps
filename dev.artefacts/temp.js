@@ -1,92 +1,105 @@
-const { validationStrategies, Strategy } = require("./behaviors/strategies");
 
-class DataBaseController {
+class RequestRouter {
 
-    /**
-     * 
-     * @param {Object.<string,Object.<string,any>>} data 
-     */
-    async createRow (data) {
-        const { error , success } = await this.#validationStrategy.createRow(data);
+    async exec (body = {}) {
 
+        for (const handler of this.#beforeRequestHandlers) {
+            await handler();
+        }
+
+        const { response: responseRawData , error } = await RequestRouter.UseFetch(this.#url , this.#method , body);
+
+        
         if(error) {
-            return {
-                error:{
-                    ...error ,
-                } ,
-            }
+            console.error({error});
+            return ;
         }
-
-        return {
-            success: {
-                ...success ,
-            } ,
-        }
-    }
-    
-    /**
-     * @param {string} id 
-     * @returns {{error:{message:string;subjects:any};success:{row:any}}}
-     */
-    readRow (id) {
-        console.log('dbcontroller readrow');
-        const { error , success } = this.#validationStrategy.readRow(id);
-
-        if (error) {
-            return {
-                error:{
-                    ...error ,
-                } ,
-            }
-        }
-
-        return {
-            success: {
-                ...success ,
-            } ,
-        }
-
-    }
-
-    readAllRowsByTableName () {
-        const { success , error } = this.#validationStrategy.readAllRows();
-        if(error) {
-            return {
-                error:{
-                    ...error ,
-                } ,
-            }
-        }
-        return {
-            success: {
-                ...success ,
-            } ,
+        
+        await this.#executeMiddleware(responseRawData , [...this.#middleware]);
+        
+        for (const handler of this.#handlers) {
+            await handler(responseRawData) ;
         }
     }
 
-    #validationStrategy ;
+    useMiddleware (...middleware) {
+        for (const handler of middleware) {
+            this.#middleware.push(handler);
+        }
+    }
 
-    /**
-     * 
-     * @param {Strategy} strategy 
-     */
-    constructor (strategy) {
-        this.#validationStrategy = strategy ;
+    addOnBeforeRequest (...handlers) {
+        for (const handler of handlers) {
+            this.#beforeRequestHandlers.push(handler);
+        }
+    }
+
+    addListener (...handlers) {
+        for (const handler of handlers) {
+            this.#handlers.push(handler);
+        }
+    }
+
+    static async UseFetch (url , method = 'get' , body = {}) {
+        
+        const _method = method.toLowerCase();
+        
+        try {
+            if(!url) {
+                throw new Error('fetch: incorrect url provided');
+            }
+
+            const response = await fetch(url , {
+                method:_method ,
+                ...(_method === 'get' ? {} : {body}) ,
+            });
+
+            return {
+                response ,
+            }
+        }
+        catch (e) {
+            console.error({e});
+            return {
+                error: {
+                    details:e ,
+                } ,
+            }
+        }
+    }
+
+    async #executeMiddleware (responseRawData , middleware) {
+        let index = 0 ;
+        const next = async () => {
+            const handlerLike = middleware[index++] ;
+            if(!handlerLike) return ;
+            await handlerLike(responseRawData , next);
+        }
+
+        await next();
+    }
+
+    #url ;
+    #method ;
+    #handlers ;
+    #middleware ;
+
+    #beforeRequestHandlers ;
+
+    constructor (url , method = 'GET'  , handlers = [] , middleware = [] ) {
+        if(!url) {
+            throw new Error('RequestRouter constructor: incorrect url provided');
+        }
+
+        this.#url = url ;
+
+        const _method = method.toLowerCase();
+        this.#method = _method ;
+
+        this.#handlers = [...handlers] ;
+        this.#middleware = [...middleware] ;
+
+        this.#beforeRequestHandlers = [] ;
+
     }
 }
-
-/**
- * 
- * @param {string} tablename 
- * @returns {DataBaseController}
- */
-function DBControllerFactory (tablename) {
-
-    const strategy = validationStrategies.get(tablename);
-    if(!strategy || strategy instanceof Strategy === false) {
-        throw new Error(`no table ${tablename} strategy`);
-    }
-    return new DataBaseController (strategy) ;
-}
-
-module.exports = { DBControllerFactory , validationStrategies } ;
