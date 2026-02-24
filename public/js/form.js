@@ -13,25 +13,25 @@ window.addEventListener('DOMContentLoaded' , async () => {
     
     // instance RequestRouters
 
-    const submitRequest = new RequestRouter ('/api/handle-form' , 'post' , [] , []) ;
-    const getAllFilesRequest = new RequestRouter ('/api/get-all-files' , 'get' , [] , []) ;
+    const submitRequest = new RequestRouter ({url:'/api/handle-form' , method:'post'}) ;
+    const getAllFilesRequest = new RequestRouter ({url:'/api/get-all-files' , method:'get'}) ;
 
-    submitRequest.addBeforeRequestListeners(async () => {
-        handleBeforeSubmit({
+    submitRequest.addBeforeRequestListeners(async (context) => {
+        await handleBeforeSubmit({
             modalWindow , 
-            formSubmitStatusContainer ,
+            formSubmitStatusContainer , context
         });
     });
 
-    submitRequest.addListeners(async (responseRawData) => await submitHandler({
+    submitRequest.addListeners(async (responseRawData  , context) => await submitHandler({
         responseRawData ,
         modalWindow, tooltips ,
         formSubmitStatusContainer, formMain , 
-        getAllFilesRequest ,
+        getAllFilesRequest , context ,
     }));
 
-    getAllFilesRequest.addListeners(async (rawResponse) => {
-        await getAllFilesHandler({rawResponse , modalWindow}) ;
+    getAllFilesRequest.addListeners(async (rawResponse, context) => {
+        await getAllFilesHandler({rawResponse , modalWindow, context}) ;
     });
 
 
@@ -40,7 +40,7 @@ window.addEventListener('DOMContentLoaded' , async () => {
     formMain.addEventListener("submit" , async (e) => {
         e.preventDefault();
         const formdata = new FormData(formMain);
-        await submitRequest.exec(formdata);
+        await submitRequest.exec(formdata , {});
     });
 
     // ---------------------------
@@ -61,9 +61,9 @@ window.addEventListener('DOMContentLoaded' , async () => {
 // ====================================================================
 
 
-async function getAllFilesHandler (context) {
+async function getAllFilesHandler (payload) {
 
-    const { rawResponse , modalWindow } = context ;
+    const { rawResponse , modalWindow , context } = payload ;
     // console.log(await rawResponse.json());
     const { files } = await rawResponse.json()
 
@@ -88,17 +88,17 @@ async function getAllFilesHandler (context) {
 
 async function handleBeforeSubmit (context) {
 
-    const { modalWindow , formSubmitStatusContainer } = context ;
+    const { modalWindow , formSubmitStatusContainer , context:globContext } = context ;
     formSubmitStatusContainer.innerHTML = 'upload...'
 }
 
-async function submitHandler (context) {
+async function submitHandler (payload) {
 
     const { 
         responseRawData , modalWindow , 
         formSubmitStatusContainer, formMain ,
-        getAllFilesRequest , tooltips , 
-    } = context ;
+        getAllFilesRequest , tooltips , context ,
+    } = payload ;
 
     formMain.reset();
 
@@ -138,6 +138,7 @@ async function submitHandler (context) {
             modalWindow.appendChild(addedOneTooltip);
         }
 
+        // demo timeout
         setTimeout(
             () => {
                 getAllFilesRequest.exec();
@@ -177,21 +178,6 @@ function createElement (type , innerText = '' , childs = [] , styles = [] , attr
 
 /**
  * 
- * @param  {...string} tagsNames 
- */
-function setStoppropagationGlobally (...tagsNames) {
-    tagsNames.forEach(tagName => {
-        const elems = document.getElementsByTagName(tagName);
-        for (const elem of elems) {
-            elem.addEventListener('click' , (e) => {
-                e.stopPropagation();
-            });
-        }
-    });
-}
-
-/**
- * 
  * @param {string} type 
  */
 function createEl (type , text , eventListeners = [] , ...children) {
@@ -220,6 +206,7 @@ function createToolTip (id='' , innerText = '' , eventListeners = [] , ...childr
     baseElem.addEventListener('click' , (e) => {
         e.stopPropagation();
     });
+
     eventListeners.forEach(([name , handler]) => {
         console.log({name , handler});
         baseElem.addEventListener(name , handler);

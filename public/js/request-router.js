@@ -1,33 +1,19 @@
 
 class RequestRouter {
 
-
     /**
      * 
-     * @param  {...((payload) => void)} handlers 
-     */
-    addBeforeRequestListeners (...handlers) {
-        handlers.forEach(handler => {
-            this.#beforeRequestListeners.push(handler);
-        });
-    }
-
-    /**
-     * 
-     * @param  {...((response:Response , next:(() => void)) => void)} handlers 
-     */
-    addListeners (...handlers) {
-        handlers.forEach(handler => {
-            this.#handlers.push(handler);
-        });
-    }
-
-    /**
      * @param {Object} body 
+     * @param {Object} context 
      * @returns {Promise<void>}
      */
-    async exec(body = {}) {
-        const { success  , error } = await RequestRouter.UseFetch(this.#url , this.#method , body);
+    async exec (body = {} , context = {}) {
+
+        for (const handler of this.#beforeRequestHandlers) {
+            await handler(context);
+        }
+        
+        const { error , success } = await RequestRouter.UseFetch(this.#url , this.#method , body);
 
         if(error) {
             return {
@@ -37,59 +23,37 @@ class RequestRouter {
 
         const { response } = success ;
 
-        await this.#executeMiddleware(response , this.#middleware);
+        await this.#executeMiddleware(response , context , this.#middleware);
 
-        for ( const handler of this.#handlers) {
-            await handler(response);
+        for (const handler of this.#handlers) {
+            await handler(response , context);
         }
+
     }
-
-    /**
-     * @param {string} url 
-     * @param {Object} body 
-     * @returns {Promise<{success?:{response:Response};error?:{message:string;subject:any;location:string}}>}
-     */
-    static async UseFetch (url , method = "get" , body = {}) {
-        
-        try {
-            
-            if(!url) throw new Error(`incorrect url`) ;
-    
-            const normilizedMethod = method ;
-    
-            const response = await fetch(url, {
-                method:normilizedMethod,
-                ...(normilizedMethod === 'get' ? {} : {body}), 
-            });
-
-            return {
-                success:{
-                    response ,
-                }
-            }
-        }
-        catch (e) {
-            console.log({e});
-            return {
-                error:{
-                    message:'fetch error' ,
-                    location:'RequestRouter::UseFetch' ,
-                    subject:e ,
-                }
-            }
-        }
-    }
-
-    #url;
-    #method;
-
-    #beforeRequestListeners;
-    #middleware ;
-    #handlers ;
 
     /**
      * 
-     * @param  {...((response:Response , next:(() => void)) => Promise<void>)} midddleware 
+     * @param  {...((response:Response,context?:Object) => Promise<void>)[]} handlers 
+     */
+    addListeners (...handlers) {
+        handlers.forEach(handler => {
+            this.#handlers.push(handler);
+        });
+    }
+
+    /**
+     * 
+     * @param  {...((context:Object) => Promise<void>)[]} handlers 
+     */
+    addBeforeRequestListeners (...handlers) {
+        handlers.forEach(handler => {
+            this.#beforeRequestHandlers.push(handler);
+        });
+    }
+
+    /**
+     * 
+     * @param  {...((response:Response, context?:Object) => Promise)} midddleware 
      */
     useMiddleware (...midddleware) {
         midddleware.forEach(mw => {
@@ -97,34 +61,87 @@ class RequestRouter {
         });
     }
 
-    /**
-     * 
-     * @param {Response} response 
-     * @param {((response:Response , next:(() => void)) => void)[]} middleware 
-     * @returns {Promise<any>}
-     */
-    async #executeMiddleware (response,  middleware) {
-        let index = 0;
-        const next = async () => {
-            const handler = middleware[index++];
-            const {} = (handler && handler(response , context)) || {};
+    static async UseFetch (url , method = "get" , body = {}) {
+
+        const normalizedMethod = method.toLowerCase();
+
+        try {
+
+            if(!url) throw new Error({
+                message:'incorrect url' ,
+                subject:url ,
+            });
+
+            console.log(normalizedMethod , url);
+            const response = await fetch(url , {
+                method:normalizedMethod ,
+                ...(normalizedMethod === 'get' ? {} : {body}) ,
+            });
+
+            return {
+                success:{
+                    response ,
+                } ,
+            }
+
         }
-        await next();
+        catch (e) {
+
+            console.log({e});
+            return {
+                error:{
+                    location:'RequestRouter::UseFetch' ,
+                    message:'fetch error' ,
+                    subject:e ,
+                }
+            }
+        }
     }
 
     /**
      * 
-     * @param {string} url 
-     * @param {string} method 
-     * @param {((response:Response , next:(() => void)) => Promise<void>)[]} handlers 
-     * @param {((response:Response , next:(() => void)) => Promise<void>)[]} middleware 
+     * @param {Response} response 
+     * @param {Object} context 
+     * @param {((response:Response, context?:Object) => Promise<void>)[]} middleware 
      */
-    constructor (url , method = 'GET'  , beforeRequestHandlers = [], handlers = [] , middleware = [] ) {
-        if(!url) throw new Error (`incorrect url`) ;
+    async #executeMiddleware (response , context , middleware) {
+        // stack capacity is not controlled !!!!
+        let index = 0 ;
+        const next = async () => {
+            const handler = middleware[index++];
+            if(!handler) return ;
+            await handler(response , context);
+        }
+        await next();
+    }
+
+    #url;
+    #method;
+
+    #beforeRequestHandlers;
+    #middleware;
+    #handlers;
+
+    /**
+     * 
+     * @param {{
+     * url:string;
+     * method?:string;
+     * beforeRequest?:((context:Object)=>Promise<void>)[];
+     * middleware?:((response:Response, contenxt:Object , next:(()=>Promise<void>))=>Promise<void>)[];
+     * handlers?:((response:Response,context:Object)=>Promise<void>)[]
+     * }} param0 
+     */
+    constructor ({url , method = 'get' , beforeRequest = [] , middleware = [] , handlers = []}) {
+        if(!url) throw new Error('incorrect url');
+        
         this.#url = url ;
         this.#method = method.toLowerCase() ;
-        this.#handlers = [...handlers] ;
+
+        this.#beforeRequestHandlers = [...beforeRequest] ;
         this.#middleware = [...middleware] ;
-        this.#beforeRequestListeners = [...beforeRequestHandlers] ;
+        this.#handlers = [...handlers] ;
+
+        console.log(this.#method , this.#url);
     }
 }
