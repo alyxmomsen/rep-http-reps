@@ -1,3 +1,4 @@
+const { extname:pathExtname } = require("path");
 const { loggerFactory } = require("../../../../utils/logger");
 const { filemanager } = require("../../../file-manager/file-manager");
 const { database } = require("../../database");
@@ -5,64 +6,87 @@ const log = loggerFactory('validation strategies' , '-u') ;
 
 const validationStrategies = new Map();
 
-const tablename = {
+const dbtablename = {
     FILES:'FILES' ,
+    USERS:'USERS' ,
 }
 
 class Strategy {
-    /**
-     * @param {Object.<string,{value:Buffer<ArrayBuffer>;contentType:string}>} data
-     * @returns {Promise<{error?:{location:string;message:string;subject:Object};sucess:Object}>} 
-     */
-    async createRow (data) {
-        console.log(`default Strategy::createRow`);
-        return {}
-    }
     
     /**
-     * @returns {{error?:{location:string;message:string;subject:Object};success?:Object}}
-    */
-    readRow () {
-        console.log(`default Strategy::readRow`);
-        return {}
-    }
-    
-    /**
-     * 
-     * @returns {{error?:{location:string;message:string;subject:Object};success?:Object}}
+     * @param {Object.<string,any>} data 
+     * @returns {Promise<{error:{subject:Object;location:string;message:string};success:Object}>}
      */
-    readAllRowsByTableName () {
-        console.log(`default Strategy::readAllRowsByTableName`);
-        return {}
+    async createRow(data) {
+        console.log(`default method: Strategy::createRow` , {data});
+        return {};
     }
+
+    /**
+     * @param {string} rowId 
+     * @returns {{error:{subject:Object;location:string;message:string};success:Object}}
+     */
+    async readRow(rowId) {
+        console.log(`default method: Strategy::readRow` , {rowId});
+        return {};
+    }
+
+    /**
+     * @returns {{error:{subject:Object;location:string;message:string};success:Object}}
+     */
+    async readAllRowsByTableName() {
+        console.log(`default method: Strategy::readAllRowsByTableName`);
+        return {};
+    }
+
     constructor () {}
 }
 
 class FilesStrategy extends Strategy {
 
     /**
-     * @param {Object.<string,{value:Buffer<ArrayBuffer>;contentType:string}>} data 
-     * @returns {{error?:{loacation:string;message:string;subject:Object};success?:Object}}
+     * 
+     * @param {{
+     *     title?:{value:Buffer<ArrayBuffer>;contentType:string};
+     *     description?:{value:Buffer<ArrayBuffer>;contentType:string};
+     *     file?:{value:Buffer<ArrayBuffer>;contentType:string};
+     *     filename?:{value:Buffer<ArrayBuffer>;contentType:string};
+     * }} data 
+     * @returns {Promise<{
+     *     success?:{
+     *          id: string;
+     *          row: string;
+     *     };
+     *     error?:{location:string;message:string;subject:Object};
+     * }>}
      */
     async createRow (data) {
 
-        const { title , description  , filename , file } = data ;
+        const { title, description, filename:originalFilename, file } = data ;
 
-        log('r' , {data});
-
-        const filedata = file?.value ;
-
-        if(!filedata?.length) {
+        if(!file?.value?.length) {
             return {
                 error:{
-                    loacation:`FilesStrategy::createRow` ,
-                    message:'incorrect file data' ,
-                    subject:{file} ,
-                } ,
+                    location:'FilesStrategy::createRow',
+                    message:'incorrect file',
+                    subject:file ,
+                }
             }
         }
 
-        const { error , success } = await filemanager.write(filedata);
+        const { value:fileBody , contentType } = file ;
+        
+        if(fileBody instanceof Buffer === false) {
+            return {
+                error:{
+                    location:'FilesStrategy::createRow',
+                    message:'file body is not a Buffer',
+                    subject:{file} ,
+                }
+            }
+        }
+
+        const { success , error } = await filemanager.write(fileBody);
 
         if(error) {
             return {
@@ -70,58 +94,79 @@ class FilesStrategy extends Strategy {
             }
         }
 
-        const { filename:filesystemFilename } = success ;
-
-        const {error:dbError  ,success:dbsuccess} = database.createRow(tablename.FILES ,{
-            title:title?.value?.toString('utf-8') || null ,
-            description:description?.value?.toString('utf-8') || null ,
-            filesystemFilename:filesystemFilename || null ,
-            originalFilename:filename?.value?.toString('utf-8') || null ,
-        });
-
-        if(dbError) {
+        if(!success) {
             return {
-                error:dbError ,
+                error:{
+                    location:'FilesStrategy::createRow',
+                    message:'incorrect a success object',
+                    subject:{success} ,
+                }
             }
         }
 
-        log()
+        const { filename } = success ;
+
+        const originalFilenameValueString = originalFilename?.value?.toString('utf-8') ;
+
+        const extname = originalFilenameValueString && pathExtname(originalFilenameValueString) ;
+
+        const { success:dbsuccess } = database.createRow(dbtablename.FILES ,{
+            title:title?.value?.toString('utf-8') || null ,
+            description:description?.value?.toString('utf-8') || null ,
+            originalFilename:originalFilename?.value?.toString('utf-8') || null ,
+            filesystemFilename:filename || null ,
+            mime:contentType || null ,
+            extname:extname || null ,
+        });
+
+        log('r'  , {dbsuccess})
 
         return {
             success:dbsuccess ,
         }
     }
-    
-    /**
-     * @param {string} rowId 
-     * @returns {{error?:{location:string;message:string;subject:Object};success:any}}
-    */
-    readRow (rowId) {
-        log('y' , `FilesStrategy::readRow` , rowId);
-        const { error , success } = database.readRow(tablename.FILES , rowId);
-        if(error) {
-            return {
-                error ,
-            }
-        }
 
-        return {success}
-    }
-    
     /**
      * 
-     * @returns {{error?:{location:string;message:string;subject:Object};success?:Object}
-    */
-    readAllRowsByTableName () {
-        log('y' , `FilesStrategy::readAllRowsByTableName`);
-        const {error , success} = database.readTable(tablename.FILES);
+     * @param {string} rowId 
+     * @returns {{
+     *     success?:{row:Object.<string,any>};
+     *     error?:{location:string;message:string;subject:Object};
+     * }}
+     */
+    readRow (rowId) {
+
+        const { error , success } = database.readRow(dbtablename.FILES , rowId);
+
         if(error) {
             return {
                 error ,
             }
         }
 
-        return {success}
+        return {
+            success ,
+        };
+    }
+
+    /**
+     * 
+     * @returns {{
+     *     success?:{row:Object.<string,any>};
+     *     error?:{location:string;message:string;subject:Object};
+     * }}
+     */
+    readAllRowsByTableName () {
+        const { error , success } = database.readTable(dbtablename.FILES);
+        if(error) {
+            return {
+                error ,
+            }
+        }
+
+        return {
+            success ,
+        }
     }
 
     constructor () {
@@ -136,7 +181,7 @@ class UsersStrategy extends Strategy {
     }
 }
 
-validationStrategies.set(tablename.FILES , new FilesStrategy());
+validationStrategies.set(dbtablename.FILES , new FilesStrategy());
 // validationStrategies.set('users' , new FilesStrategy());
 
 module.exports = { validationStrategies , Strategy }

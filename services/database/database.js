@@ -39,7 +39,7 @@ class DataBase {
      * 
      * @param {string} tablename 
      * @param {string} rowId 
-     * @returns {{error?:{message:string};success?:{row:any}}}
+     * @returns {{error?:{message:string;location:string;subject:Object};success?:{row:Object.<string,any>}}}
      */
     readRow (tablename , rowId) {
 
@@ -60,7 +60,9 @@ class DataBase {
         if(!IDRow) {
             return {
                 error:{
+                    location:'DataBase::readRow' ,
                     message:`no row by id: ${rowId}` ,
+                    subject:{IDRow} ,
                 } ,
             }
         }

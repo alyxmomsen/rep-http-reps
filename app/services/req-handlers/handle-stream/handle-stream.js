@@ -18,12 +18,12 @@ async function handleStream (req , res) {
 
     const { id:rowId } = params ;
 
+    
     const dbController__files  = DBControllerFactory("FILES");
-
+    
     const { error , success } = dbController__files.readRow(rowId);
-
-    log('r' , {error , success});
-
+    log('r' , {rowId});
+    
     if(error) {
         console.log({error});
         res.writeHead(500);
