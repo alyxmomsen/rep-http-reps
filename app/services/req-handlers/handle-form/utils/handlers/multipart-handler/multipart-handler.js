@@ -2,7 +2,7 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
 const { loggerFactory } = require("../../../../../../../utils/logger");
 const GroupAssembler = require("./services/assemble-groups/assemble-groups");
-const { DBControllerFactory } = require("../../../../../../../services/database/controller/dbcontr");
+const { DBControllerFactory } = require("../../../../../../../services/database/controller/db-controller");
 
 const log = loggerFactory('handle multipart data' , '-u');
 /**

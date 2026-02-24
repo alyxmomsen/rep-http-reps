@@ -1,7 +1,7 @@
 const { Readable } = require("node:stream");
 const { filemanager } = require("../../../../services/file-manager/file-manager");
-const { DBControllerFactory } = require("../../../../services/database/controller/dbcontr");
 const { loggerFactory } = require("../../../../utils/logger");
+const { DBControllerFactory } = require("../../../../services/database/controller/db-controller");
 const log = loggerFactory('handle stream' , '-u');
 
 async function handleStream (req , res) {

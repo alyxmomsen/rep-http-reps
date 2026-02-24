@@ -6,7 +6,7 @@ const handlePublic = require("../../services/req-handlers/handle-public/handle-p
 const handleForm = require("../../services/req-handlers/handle-form/handle-form");
 const handleStream = require("../../services/req-handlers/handle-stream/handle-stream");
 const { database } = require("../../../services/database/database");
-const { DBControllerFactory } = require("../../../services/database/controller/dbcontr");
+const { DBControllerFactory } = require("../../../services/database/controller/db-controller");
 
 const router = new Router();
 
