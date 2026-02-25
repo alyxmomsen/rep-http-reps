@@ -15,31 +15,35 @@ class Strategy {
     
     /**
      * @param {Object.<string,any>} data 
-     * @returns {Promise<{error:{subject:Object;location:string;message:string};success:Object}>}
+     * @returns {Promise<{success?:Object.<string,any>;error?:{location:string;message:string;subjects:Object.<string,any>}}>}
      */
     async createRow(data) {
         console.log(`default method: Strategy::createRow` , {data});
-        return {};
+        return {
+            success:{}
+        };
     }
 
     /**
      * @param {string} rowId 
-     * @returns {{error:{subject:Object;location:string;message:string};success:Object}}
+     * @returns {{success?:Object.<string,any>;error?:{location:string;message:string;subjects:Object.<string,any>}}}
      */
     async readRow(rowId) {
         console.log(`default method: Strategy::readRow` , {rowId});
-        return {};
+        return {
+            success:{}
+        };
     }
 
     /**
-     * @returns {{error:{subject:Object;location:string;message:string};success:Object}}
+     * @returns {{success?:Object.<string,any>;error?:{location:string;message:string;subjects:Object.<string,any>}}}
      */
     async readAllRowsByTableName() {
         console.log(`default method: Strategy::readAllRowsByTableName`);
-        return {};
+        return {
+            success:{}
+        };
     }
-
-    constructor () {}
 }
 
 class FilesStrategy extends Strategy {
