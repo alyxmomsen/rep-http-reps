@@ -2,6 +2,8 @@ const { Readable } = require("node:stream");
 const { filemanager } = require("../../../../services/file-manager/file-manager");
 const { loggerFactory } = require("../../../../utils/logger");
 const { DBControllerFactory } = require("../../../../services/database/controller/db-controller");
+const { DB_CONSTANTS } = require("../../../../services/database/database");
+// const { DB_TABLES_FIELDNAMES } = require("../../../../services/database/controller/behaviors/strategies");
 const log = loggerFactory('handle stream' , '-u');
 
 async function handleStream (req , res) {
@@ -18,8 +20,7 @@ async function handleStream (req , res) {
 
     const { id:rowId } = params ;
 
-    
-    const dbController__files  = DBControllerFactory("FILES");
+    const dbController__files  = DBControllerFactory(DB_CONSTANTS.tables.FILES.tablename);
     
     const { error , success } = dbController__files.readRow(rowId);
     log('r' , {rowId});
@@ -31,18 +32,22 @@ async function handleStream (req , res) {
         return ;
     }
 
-    const { row } = success || {} ;
 
-    const { filesystemFilename } = row || {} ;
+    const row = success[DB_CONSTANTS.SUCCESS.keys.ROW] ; // !! need to refactor 
 
-    if(!filesystemFilename) {
+    // const { FILE } = DB_TABLES_FIELDNAMES ;
+
+    const filename = row[DB_CONSTANTS.tables.FILES.keys.FILESYSTEM_FILENAME] || {} ;
+
+    if(!filename) {
 
         res.writeHead(500);
         res.end(JSON.stringify({message:'internal error'}));
         return ;
     }
 
-    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(filesystemFilename);
+
+    const { error:filemanagerError , success:filemanagerSuccess } = await filemanager.read(filename);
     
     if(filemanagerError) {
         

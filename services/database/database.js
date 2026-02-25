@@ -1,4 +1,39 @@
 const { randomBytes } = require('crypto');
+
+const DB_CONSTANTS = {
+    SUCCESS: {
+        keys:{
+            ID:'id' ,
+            ROW:'row' ,
+        }
+    } ,
+    tables:{
+        FILES: {
+            tablename:'FILES',
+            keys:{
+                TITLE:'title' ,
+                DESCRIPTION:'description',
+                ORIGINAL_FILENAME:'originalFilename',
+                FILESYSTEM_FILENAME:'fileSystemFilename',
+                MIME:'mime',
+                EXTNAME:'extname',
+                CONTENT_TYPE:'content-type' ,
+            }
+        },
+        USERS:{
+            tablename:'USERS',
+            keys:{
+                TITLE:'title' ,
+                DESCRIPTION:'description',
+                ORIGINAL_FILENAME:'originalFilename',
+                FILESYSTEM_FILENAME:'fileSystemFilename',
+                MIME:'mime',
+                EXTNAME:'extname',
+                CONTENT_TYPE:'content-type' ,
+            }
+        } ,
+    }
+}
 class DataBase {
 
     /**
@@ -19,7 +54,8 @@ class DataBase {
             this.#tables.set(tablename , new Map([[id ,row]]));
             return {
                 success:{
-                    id , row ,
+                    [DB_CONSTANTS.SUCCESS.keys.ID]:id , 
+                    [DB_CONSTANTS.SUCCESS.keys.ROW]:row ,
                 }
             }
         }
@@ -29,7 +65,8 @@ class DataBase {
 
         return {
             success:{
-                id , row ,
+                [DB_CONSTANTS.SUCCESS.keys.ID]:id , 
+                [DB_CONSTANTS.SUCCESS.keys.ROW]:row ,
             }
         }
 
@@ -39,7 +76,6 @@ class DataBase {
      * 
      * @param {string} tablename 
      * @param {string} rowId 
-     * @returns {{error?:{message:string;location:string;subject:Object};success?:{row:Object.<string,any>}}}
      */
     readRow (tablename , rowId) {
 
@@ -51,6 +87,8 @@ class DataBase {
             return {
                 error:{
                     message:`no table ${_tableName}` ,
+                    location:'DataBase::readRow' ,
+                    subjects:{_tableName , nameTable} ,
                 } ,
             }
         }
@@ -62,7 +100,7 @@ class DataBase {
                 error:{
                     location:'DataBase::readRow' ,
                     message:`no row by id: ${rowId}` ,
-                    subject:{IDRow} ,
+                    subjects:{IDRow} ,
                 } ,
             }
         }
@@ -78,7 +116,6 @@ class DataBase {
     /**
      * 
      * @param {*} tableName 
-     * @returns 
      */
     readTable (tableName) {
         const _tableName = tableName.toUpperCase();
@@ -119,7 +156,7 @@ class DataBase {
 
 const database = new DataBase ;
 
-module.exports = { database , DataBase } ;
+module.exports = { database , DataBase , DB_CONSTANTS } ;
 
 class Table {
 

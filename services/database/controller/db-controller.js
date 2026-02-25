@@ -88,7 +88,7 @@ class DataBaseController {
     }
 }
 
-module.exports = { DBControllerFactory , validationStrategies /* , Error_ , Success_  */} ;
+module.exports = { DBControllerFactory , validationStrategies , errorFactory /* , Error_ , Success_  */} ;
 
 /**
  * 

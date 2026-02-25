@@ -1,96 +1,90 @@
-const { extname:pathExtname } = require("path");
+const { extname:pathExtname, extname } = require("path");
 const { loggerFactory } = require("../../../../utils/logger");
 const { filemanager } = require("../../../file-manager/file-manager");
-const { database } = require("../../database");
+const { database, DB_CONSTANTS } = require("../../database");
+const { errorFactory } = require("../db-controller");
 const log = loggerFactory('validation strategies' , '-u') ;
 
 const validationStrategies = new Map();
 
-const dbtablename = {
-    FILES:'FILES' ,
-    USERS:'USERS' ,
-}
+// const DB_TABLES_FIELDSNAMES = {
+//     FILE:{
+//         TITLE:'title' ,
+//         DESCRIPTION:'description',
+//         ORIGINAL_FILENAME:'originalFilename',
+//         FILESYSTEM_FILENAME:'fileSystemFilename',
+//         MIME:'mime',
+//         EXTNAME:'extname',
+//         CONTENT_TYPE:'content-type' ,
+//     }
+// }
+
 
 class Strategy {
-    
     /**
+     * 
      * @param {Object.<string,any>} data 
-     * @returns {Promise<{success?:Object.<string,any>;error?:{location:string;message:string;subjects:Object.<string,any>}}>}
+     * @returns {Promise<{error:{location:string;message:string;subjects:Object.<string,any>}}|{success:Object.<string,any>}>}
      */
-    async createRow(data) {
-        console.log(`default method: Strategy::createRow` , {data});
+    async createRow (data) {
         return {
-            success:{}
-        };
+            success:{} ,
+        }
     }
 
     /**
+     * 
      * @param {string} rowId 
-     * @returns {{success?:Object.<string,any>;error?:{location:string;message:string;subjects:Object.<string,any>}}}
+     * @returns {{error:{location:string;message:string;subjects:Object.<string,any>}}|{success:Object.<string,any>}}
      */
-    async readRow(rowId) {
-        console.log(`default method: Strategy::readRow` , {rowId});
+    readRow (rowId) {
         return {
-            success:{}
-        };
+            success:{} ,
+        }
     }
 
     /**
-     * @returns {{success?:Object.<string,any>;error?:{location:string;message:string;subjects:Object.<string,any>}}}
+     * @returns {{error:{location:string;message:string;subjects:Object.<string,any>}}|{success:Object.<string,any>}}
      */
-    async readAllRowsByTableName() {
-        console.log(`default method: Strategy::readAllRowsByTableName`);
+    readAllRowsByTableName () {
         return {
-            success:{}
-        };
+            success:{} ,
+        }
     }
+
 }
 
 class FilesStrategy extends Strategy {
 
     /**
      * 
-     * @param {{
-     *     title?:{value:Buffer<ArrayBuffer>;contentType:string};
-     *     description?:{value:Buffer<ArrayBuffer>;contentType:string};
-     *     file?:{value:Buffer<ArrayBuffer>;contentType:string};
-     *     filename?:{value:Buffer<ArrayBuffer>;contentType:string};
-     * }} data 
-     * @returns {Promise<{
-     *     success?:{
-     *          id: string;
-     *          row: string;
-     *     };
-     *     error?:{location:string;message:string;subject:Object};
-     * }>}
+     * @param {Object.<string,any>} data 
+     * @returns {Promise<{error:{location:string;message:string;subjects:Object.<string,any>}}|{success:Object.<string,any>}>}
      */
     async createRow (data) {
 
-        const { title, description, filename:originalFilename, file } = data ;
+        const { title , description  , file , filename } = data ;
 
-        if(!file?.value?.length) {
-            return {
-                error:{
-                    location:'FilesStrategy::createRow',
-                    message:'incorrect file',
-                    subject:file ,
-                }
-            }
+        if (!file?.value?.length) {
+            return errorFactory({
+                location:'FilesStrategy::createRow' ,
+                message:'incorrect file data' ,
+                subjects:{file}
+            })
         }
 
-        const { value:fileBody , contentType } = file ;
-        
-        if(fileBody instanceof Buffer === false) {
-            return {
-                error:{
-                    location:'FilesStrategy::createRow',
-                    message:'file body is not a Buffer',
-                    subject:{file} ,
-                }
-            }
+        const { value:fileData , contentType } = file ; 
+
+        if(fileData instanceof Buffer === false) {
+            return errorFactory({
+                location:'FilesStrategy::createRow' ,
+                message:'file data is not a Buffer instance' ,
+                subjects:{file}
+            })
         }
 
-        const { success , error } = await filemanager.write(fileBody);
+
+        const { success , error } = await filemanager.write(fileData);
 
         if(error) {
             return {
@@ -99,48 +93,46 @@ class FilesStrategy extends Strategy {
         }
 
         if(!success) {
-            return {
-                error:{
-                    location:'FilesStrategy::createRow',
-                    message:'incorrect a success object',
-                    subject:{success} ,
-                }
-            }
+
+            throw new Error(`incorrect "succes" data`);
+
+            //     return errorFactory({
+            //     location:'FilesStrategy::createRow' ,
+            //     message:'incorrect success' ,
+            //     subjects:{file}
+            // })
         }
 
-        const { filename } = success ;
+        const { filename:fileSystemFilename } = success || {} ;
+        // console.log({filename});
+        const ext = extname(filename.value.toString('utf-8')) ;
 
-        const originalFilenameValueString = originalFilename?.value?.toString('utf-8') ;
+        // const { FILE:_FIELDNAME } = DB_TABLES_FIELDSNAMES ;
+        const { keys: filednames } = DB_CONSTANTS.tables.FILES ;
 
-        const extname = originalFilenameValueString && pathExtname(originalFilenameValueString) ;
-
-        const { success:dbsuccess } = database.createRow(dbtablename.FILES ,{
-            title:title?.value?.toString('utf-8') || null ,
-            description:description?.value?.toString('utf-8') || null ,
-            originalFilename:originalFilename?.value?.toString('utf-8') || null ,
-            filesystemFilename:filename || null ,
-            mime:contentType || null ,
-            extname:extname || null ,
+        const { success:dbSuccess } = database.createRow(DB_CONSTANTS.tables.FILES.tablename , {
+            [filednames.TITLE]:title?.value?.toString('utf-8') || null ,
+            [filednames.DESCRIPTION]:description?.value?.toString('utf-8') || null ,
+            [filednames.ORIGINAL_FILENAME]:filename?.value?.toString('utf-8') || null ,
+            [filednames.FILESYSTEM_FILENAME]:fileSystemFilename || null ,
+            [filednames.CONTENT_TYPE]:contentType || null ,
+            [filednames.EXTNAME]:ext || null ,
         });
 
-        log('r'  , {dbsuccess})
-
         return {
-            success:dbsuccess ,
+            success:dbSuccess ,
         }
+
     }
 
     /**
      * 
      * @param {string} rowId 
-     * @returns {{
-     *     success?:{row:Object.<string,any>};
-     *     error?:{location:string;message:string;subject:Object};
-     * }}
+     * @returns {{error:{location:string;message:string;subjects:Object.<string,any>}}|{success:Object.<string,any>}}
      */
     readRow (rowId) {
 
-        const { error , success } = database.readRow(dbtablename.FILES , rowId);
+        const { success , error } = database.readRow(DB_CONSTANTS.tables.FILES.tablename , rowId);
 
         if(error) {
             return {
@@ -150,18 +142,16 @@ class FilesStrategy extends Strategy {
 
         return {
             success ,
-        };
+        }
     }
 
     /**
-     * 
-     * @returns {{
-     *     success?:{row:Object.<string,any>};
-     *     error?:{location:string;message:string;subject:Object};
-     * }}
+     * @returns {{error:{location:string;message:string;subjects:Object.<string,any>}}|{success:Object.<string,any>}}
      */
     readAllRowsByTableName () {
-        const { error , success } = database.readTable(dbtablename.FILES);
+
+        const { error , success } = database.readTable(DB_CONSTANTS.tables.FILES.tablename);
+
         if(error) {
             return {
                 error ,
@@ -169,9 +159,10 @@ class FilesStrategy extends Strategy {
         }
 
         return {
-            success ,
+            success ,            
         }
     }
+
 
     constructor () {
         super();
@@ -185,7 +176,7 @@ class UsersStrategy extends Strategy {
     }
 }
 
-validationStrategies.set(dbtablename.FILES , new FilesStrategy());
-// validationStrategies.set('users' , new FilesStrategy());
+validationStrategies.set(DB_CONSTANTS.tables.FILES.tablename , new FilesStrategy());
+// validationStrategies.set(dbtablename.FILES , new FilesStrategy());
 
 module.exports = { validationStrategies , Strategy }

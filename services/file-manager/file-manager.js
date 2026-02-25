@@ -7,8 +7,8 @@ const { Readable } = require("node:stream");
 class FileManager {
     /**
      * 
-     * @param {Buffer} data 
-     * @returns {Promise<{status:number;success?:{filename:string};error?:{details:any}}>}
+     * @param {Buffer<ArrayBuffer>} data 
+     * @returns {Promise<{success:{filename:string}}|{error:{location:string;message:string;subjects:Object}}>}
      */
     async write (data) {
 
@@ -32,7 +32,7 @@ class FileManager {
                     error:{
                         location:'FileManager::write' ,
                         message:'fail during writing' ,
-                        subject:{
+                        subjects:{
                             native:e ,
                             location:'FileManager::write' ,
                         }
@@ -50,7 +50,7 @@ class FileManager {
     /**
      * 
      * @param {string} filename 
-     * @returns {Promise<{error?:{location:string;message?:string;subject?:Object};success?:Object}>}
+     * @returns {Promise<{success:{filename:string}}|{error:{location:string;message:string;subjects:Object}}>}
      */
     async read (filename) {
         try {
