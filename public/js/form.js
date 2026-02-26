@@ -1,7 +1,9 @@
 
 // ======================= main ============================
 
-window.addEventListener('DOMContentLoaded' , async () => {
+ window.addEventListener('DOMContentLoaded' , async () => {
+
+    const { constructor:{args:{keys:RM_KEYS}} , methods:RM_METH} = REQUEST_MANAGER_CONSTANTS ;
 
     let tooltips = [] ;
 
@@ -12,25 +14,25 @@ window.addEventListener('DOMContentLoaded' , async () => {
     const formSubmitStatusContainer = document.getElementById("status--form-submit");
     
     // instance RequestRouters
+    
+    const submitRequest = new RequestRouter ({[RM_KEYS.URL]:'/api/handle-form' , [RM_KEYS.METHOD]:'post'}) ;
+    const getAllFilesRequest = new RequestRouter ({[RM_KEYS.URL]:'/api/get-all-files' , [RM_KEYS.METHOD]:'get'}) ;
 
-    const submitRequest = new RequestRouter ({url:'/api/handle-form' , method:'post'}) ;
-    const getAllFilesRequest = new RequestRouter ({url:'/api/get-all-files' , method:'get'}) ;
-
-    submitRequest.addBeforeRequestListeners(async (context) => {
+    submitRequest[RM_METH.ADD_BEFORE_REQUEST_LISTENERES](async (context) => {
         await handleBeforeSubmit({
             modalWindow , 
             formSubmitStatusContainer , context
         });
     });
 
-    submitRequest.addListeners(async (responseRawData  , context) => await submitHandler({
+    submitRequest[RM_METH.ADD_LISTENERS](async (responseRawData  , context) => await submitHandler({
         responseRawData ,
         modalWindow, tooltips ,
         formSubmitStatusContainer, formMain , 
         getAllFilesRequest , context ,
     }));
 
-    getAllFilesRequest.addListeners(async (rawResponse, context) => {
+    getAllFilesRequest[RM_METH.ADD_LISTENERS](async (rawResponse, context) => {
         await getAllFilesHandler({rawResponse , modalWindow, context}) ;
     });
 
@@ -40,7 +42,7 @@ window.addEventListener('DOMContentLoaded' , async () => {
     formMain.addEventListener("submit" , async (e) => {
         e.preventDefault();
         const formdata = new FormData(formMain);
-        await submitRequest.exec(formdata , {});
+        await submitRequest[RM_METH.EXEC]({body:formdata , context:{}});
     });
 
     // ---------------------------
@@ -94,6 +96,8 @@ async function handleBeforeSubmit (context) {
 
 async function submitHandler (payload) {
 
+    console.log({payload});
+
     const { 
         responseRawData , modalWindow , 
         formSubmitStatusContainer, formMain ,
@@ -141,7 +145,7 @@ async function submitHandler (payload) {
         // demo timeout
         setTimeout(
             () => {
-                getAllFilesRequest.exec();
+                getAllFilesRequest.exec({});
             } , 1000 
         );
     }
