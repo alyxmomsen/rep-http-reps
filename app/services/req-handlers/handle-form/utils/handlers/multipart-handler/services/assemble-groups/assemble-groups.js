@@ -1,71 +1,95 @@
 
+const GROUP_ASSEMBLER_CONSTANTS = {
+    args:{
+
+    },
+    pushOneColumn:{
+            
+    },
+    fields:{
+        GROUP_ID:'GROUP_ID',
+        TABLE_NAME:'TABLE_NAME',
+        COLUMN_NAME:'COLUMN_NAME',
+        COLUMN_VALUE:'COLUMN_VALUE',
+        COLUMN_CONTENT_TYPE:'COLUMN_CONTENT_TYPE',
+    } ,
+    
+}
+
 class GroupAssembler {
 
     /**
      * 
      * @param {{
-     *     groupId:string; 
-     *     tableName:string; 
-     *     colName:string; 
-     *     colValue:any;
-     *     colContentType:string; 
+     *  gropId:string;
+     *  tableName:string;
+     *  columnName:string;
+     *  columnValue:Buffer<ArrayBuffer>;
+     *  columnContentType:string;
      * }} data 
      */
-    addOneColumnData (data) {
+    pushOneColumn(data) {
+        const { 
+            GROUP_ID , TABLE_NAME ,COLUMN_NAME, COLUMN_VALUE ,COLUMN_CONTENT_TYPE 
+        } = GROUP_ASSEMBLER_CONSTANTS.fields ;
+        const gropId = data[GROUP_ID];
+        const tableName = data[TABLE_NAME];
+        const columnName = data[COLUMN_NAME];
+        const columnValue = data[COLUMN_VALUE];
+        const columnContentType = data[COLUMN_CONTENT_TYPE];
 
-        const { groupId , tableName , colName  ,colValue , colContentType } = data ;
+        const colData = {
+            value:columnValue ,
+            contentType:columnContentType
+        } ;
 
-        const columnBundle = {
-            value:colValue ,
-            contentType:colContentType || 'text/plain' ,
-        }
-
-        const groupById = this.#groups.get(groupId);
-
+        const groupById = this.#groups.get(gropId);
+        
         if(!groupById) {
-            this.#groups.set(groupId , {
+            this.#groups.set(gropId , {
                 tableName , 
                 columns: new Map([[
-                    colName , columnBundle ,
+                    columnName , colData
                 ]]) ,
             });
             return ;
         }
-
+        
         const { columns } = groupById ;
 
-        columns.set(colName , columnBundle);
-
+        columns.set(columnName  , colData);
     }
 
     /**
-     * @returns {Object.<string,Object.<string,{value:Buffer<ArrayBuffer>,contentType:string}>>}
+     * 
+     * @returns {Object.<string,{COLUMN_VALUE:Buffer<ArrayBuffer>;COLUMN_CONTENT_TYPE:string}}
      */
     getRowsGropedByTableName () {
-
-        
         const groups = {} ;
-        
-        for (const [id,group] of this.#groups.entries()) {
-            const row = {} ;
-            console.log({group});
-            
-            const { tableName , columns } = group ;
-            for (const [colname , columnBundle] of columns.entries()) {
-                row[colname] = columnBundle ;
+
+        for (const [groupId , groupData ] of this.#groups.entries()) {
+
+            const { tableName , columns } = groupData ;
+
+            const tableRow = {} ;
+
+            for (const [ columnName , columnData ] of columns.entries()) {
+                tableRow[columnName] = columnData ;
             }
 
-            const tablenameGroup = groups[tableName];
+            const tablenameGroup = groups[tableName] ;
+
             if(!tablenameGroup) {
-                groups[tableName] = [row];
+                groups[tableName] = [tableRow] ;
                 continue ;
             }
-            tablenameGroup.push(row);
+
+            tablenameGroup.push(tableRow);
         }
 
         return groups ;
     }
-
+    
     #groups;
 
     constructor () {
@@ -73,4 +97,4 @@ class GroupAssembler {
     }
 }
 
-module.exports = GroupAssembler ;
+module.exports = {GroupAssembler , GROUP_ASSEMBLER_CONSTANTS} ;

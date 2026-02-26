@@ -1,7 +1,8 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
 const { loggerFactory } = require("../../../../../../../utils/logger");
-const GroupAssembler = require("./services/assemble-groups/assemble-groups");
+
 const { DBControllerFactory } = require("../../../../../../../services/database/controller/db-controller");
+const { GROUP_ASSEMBLER_CONSTANTS, GroupAssembler } = require("./services/assemble-groups/assemble-groups");
 
 const MULTIPART_HANDLER_CONSTANTS = {
     FILEMAXSIZE: 1024 * 1024 * 100 // 100 Mb
@@ -85,6 +86,9 @@ async function handleMultipartData (req , res , payload) {
         const parts = splitFormDataBuffer(wholeFormDataBuffer , Buffer.from(`--${boundary[1]}`));
 
         const groupAssembler = new GroupAssembler();
+        const { 
+            GROUP_ID , TABLE_NAME , COLUMN_NAME , COLUMN_VALUE , COLUMN_CONTENT_TYPE 
+        } = GROUP_ASSEMBLER_CONSTANTS.fields;
 
         for (const part of parts) {
             try {
@@ -96,17 +100,24 @@ async function handleMultipartData (req , res , payload) {
                 const { name:nameAttr , filename:filenameAttr } = parseContentDisposition(contentDisposition) ;
                 if(!nameAttr) throw new Error (`no "name" attribute`);
                 const  { groupId, tableName, columnName:colName } = parseNameAttr(nameAttr);
-                // !!!!!!
+                // if file
                 if(filenameAttr || contentType) {
-                    groupAssembler.addOneColumnData({
-                        groupId  , tableName , colName:'filename', 
-                        colValue:filenameAttr,
+                    groupAssembler.pushOneColumn({
+                        [GROUP_ID]:groupId  ,
+                        [TABLE_NAME]:tableName , 
+                        [COLUMN_NAME]:'filename' ,
+                        [COLUMN_VALUE]:filenameAttr ,
+                        [COLUMN_CONTENT_TYPE]:'text/plain' ,
                         // content-type will be default as "text/plain"
                     });
                 }
                 // ------
-                groupAssembler.addOneColumnData({
-                    groupId , tableName  ,colName , colValue:bodyPartBuffer , colContentType:contentType,
+                groupAssembler.pushOneColumn({
+                    [GROUP_ID]:groupId , 
+                    [TABLE_NAME]:tableName  ,
+                    [COLUMN_NAME]:colName , 
+                    [COLUMN_VALUE]:bodyPartBuffer , 
+                    [COLUMN_CONTENT_TYPE]:contentType,
                 });
             }
             catch(e) {
