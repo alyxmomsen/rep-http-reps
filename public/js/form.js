@@ -3,6 +3,10 @@
 
  window.addEventListener('DOMContentLoaded' , async () => {
 
+    if(!REQUEST_MANAGER_CONSTANTS) {
+        throw new Error(`no constants`);
+    }
+
     const { constructor:{args:{keys:RM_KEYS}} , methods:RM_METH} = REQUEST_MANAGER_CONSTANTS ;
 
     let tooltips = [] ;
@@ -146,47 +150,12 @@ async function submitHandler (payload) {
         setTimeout(
             () => {
                 getAllFilesRequest.exec({});
-            } , 1000 
+            } , 0 
         );
     }
     catch(e) {
         console.error({e});
     }
-}
-
-function createElement (type , innerText = '' , childs = [] , styles = [] , attr = [] , ...eventListeners) {
-    try {
-        const baseElem = document.createElement(type);
-        baseElem.innerText = innerText ;
-
-        childs.forEach(child => {
-            baseElem.appendChild(child);
-        });
-
-        eventListeners.forEach(listener => {
-            const [evName , handler] = listener ;
-            baseElem.addEventListener(evName , handler);
-        });
-
-        attr.forEach(([key , value]) => {
-            baseElem.setAttribute(key , value);
-        });
-
-        return baseElem ;
-    }
-    catch (e) {
-        console.error({e});
-        return null ;
-    }
-}
-
-/**
- * 
- * @param {string} type 
- */
-function createEl (type , text , eventListeners = [] , ...children) {
-    const baseElement = document.createElement(type);
-    baseElement.innerText
 }
 
 /**
