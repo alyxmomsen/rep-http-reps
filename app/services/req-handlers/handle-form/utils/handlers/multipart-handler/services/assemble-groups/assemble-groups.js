@@ -21,75 +21,76 @@ class GroupAssembler {
     /**
      * 
      * @param {{
-     *  gropId:string;
-     *  tableName:string;
-     *  columnName:string;
-     *  columnValue:Buffer<ArrayBuffer>;
-     *  columnContentType:string;
+     *  GROUP_ID:string;
+     *  TABLE_NAME:string;
+     *  COLUMN_NAME:string;
+     *  COLUMN_VALUE:Buffer<ArrayBuffer>;
+     *  COLUMN_CONTENT_TYPE:string;
      * }} data 
      */
-    pushOneColumn(data) {
+    pushOneColumn (data) {
+
         const { 
-            GROUP_ID , TABLE_NAME ,COLUMN_NAME, COLUMN_VALUE ,COLUMN_CONTENT_TYPE 
+            GROUP_ID , TABLE_NAME , COLUMN_NAME , COLUMN_VALUE , COLUMN_CONTENT_TYPE 
         } = GROUP_ASSEMBLER_CONSTANTS.fields ;
-        const gropId = data[GROUP_ID];
+
+        const groupId = data[GROUP_ID];
         const tableName = data[TABLE_NAME];
         const columnName = data[COLUMN_NAME];
         const columnValue = data[COLUMN_VALUE];
         const columnContentType = data[COLUMN_CONTENT_TYPE];
 
-        const colData = {
+        const columnData = {
             value:columnValue ,
-            contentType:columnContentType
-        } ;
+            contentType:columnContentType ,
+        }
 
-        const groupById = this.#groups.get(gropId);
-        
+        const groupById = this.#groups.get(groupId);
+
         if(!groupById) {
-            this.#groups.set(gropId , {
+            this.#groups.set(groupId , {
                 tableName , 
                 columns: new Map([[
-                    columnName , colData
+                    columnName , columnData
                 ]]) ,
             });
             return ;
         }
-        
+
         const { columns } = groupById ;
 
-        columns.set(columnName  , colData);
+        columns.set(columnName , columnData);
     }
 
     /**
-     * 
-     * @returns {Object.<string,{COLUMN_VALUE:Buffer<ArrayBuffer>;COLUMN_CONTENT_TYPE:string}}
+     * @returns {Object.<string,{columnValue:Buffer<ArrayBuffer>;columnContentType:string}[]}
      */
     getRowsGropedByTableName () {
         const groups = {} ;
 
-        for (const [groupId , groupData ] of this.#groups.entries()) {
+        for (const [ groupId , groupData ] of this.#groups.entries()) {
 
             const { tableName , columns } = groupData ;
 
             const tableRow = {} ;
 
-            for (const [ columnName , columnData ] of columns.entries()) {
+            for (const [ columnName , columnData ] of columns) {
                 tableRow[columnName] = columnData ;
             }
 
-            const tablenameGroup = groups[tableName] ;
+            const tableNameGroup = groups[tableName];
 
-            if(!tablenameGroup) {
-                groups[tableName] = [tableRow] ;
+            if(!tableNameGroup) {
+                groups[tableName] = [tableRow]
                 continue ;
             }
 
-            tablenameGroup.push(tableRow);
+            tableNameGroup.push(tableRow);
         }
 
         return groups ;
     }
-    
+
     #groups;
 
     constructor () {

@@ -9,6 +9,7 @@
     - 19:17 22.02.2026;  
 
 - [x] group assembler: 
+    - 14:22 26.02.2026 added constants; bad moments: value & content-type field names
     - 17:45 24.02.2026 
     - 15:35 22.02.2026; 
     - 15:05 21.02.2026; 
