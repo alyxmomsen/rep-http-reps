@@ -22,18 +22,20 @@ const REQUEST_MANAGER_CONSTANTS = {
     }
 }
 
-class RequestRouter {
+const { methods:RM_METH } = REQUEST_MANAGER_CONSTANTS ;
+
+class RequestRoute {
 
     /**
      * 
      * @param {{body?:Object;context?:Object}} param0 
      * @returns {Promise<any>}
      */
-    async exec ({body = {} , context = {}}) {
+    async [RM_METH.EXEC] ({body = {} , context = {}}) {
 
 
 
-        const { error , success } = await RequestRouter.UseFetch({
+        const { error , success } = await RequestRoute.UseFetch({
             url:this.#url , method:this.#method ,
             body:body ,
         });
@@ -51,7 +53,7 @@ class RequestRouter {
             await handler(context);
         }
 
-        await this.#executeMiddleware(response , context  , this.#globalMiddleware);
+        await this[RM_METH.EXECUTE_MIDDLEWARE](response , context  , this.#globalMiddleware);
         
         for (const handler of this.#handlers) {
             await handler(response , context);
@@ -65,7 +67,7 @@ class RequestRouter {
      * @param {Object} context 
      * @param {((response:Response, context:Object, next:(()=>Promise<void>)) => Promise<void>)[]} middleware 
      */
-    async #executeMiddleware (response ,context , middleware) {
+    async [RM_METH.EXECUTE_MIDDLEWARE] (response ,context , middleware) {
         let index = 0 ;
         const next = async () => {
             const handler = middleware[index++] ;
@@ -78,7 +80,7 @@ class RequestRouter {
      * 
      * @param  {...((context:Object , next:(() => Promise<void>)) => Promise<void>)} midddleware 
      */
-    useMiddleware (...midddleware) {
+    [RM_METH.USE_MIDDLEWARE] (...midddleware) {
         midddleware.forEach(middleware => {
             this.#globalMiddleware
         });
@@ -88,7 +90,7 @@ class RequestRouter {
      * 
      * @param  {...((context:Object, next?:(() => Promise<void>)) => Promise<void>)} handlers 
      */
-    addBeforeRequestListeners (...handlers) {
+    [RM_METH.ADD_BEFORE_REQUEST_LISTENERES] (...handlers) {
         handlers.forEach(handler => {
             this.#beforRequestHandlers.push(handler);
         });
@@ -98,7 +100,7 @@ class RequestRouter {
      * 
      * @param  {...((response:Response, context:Object, next?:(() => Promise<void>)) => Promise<void>)} handlers 
      */
-    addListeners (...handlers) {
+    [RM_METH.ADD_LISTENERS] (...handlers) {
         handlers.forEach(handler => {
             this.#handlers.push(handler);
         });
@@ -112,7 +114,7 @@ class RequestRouter {
      * @param {Object} [param0.body={}] 
      * @returns {Promise<{response:Response}|{error:{location:string;message:string;subjects:Object}}>}
      */
-    static async UseFetch ({
+    static async [RM_METH.USE_FETCH] ({
         url , method = "get" , body = {}
     }) {
 

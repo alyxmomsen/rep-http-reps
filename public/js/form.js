@@ -15,8 +15,8 @@
     
     // instance RequestRouters
     
-    const submitRequest = new RequestRouter ({[RM_KEYS.URL]:'/api/handle-form' , [RM_KEYS.METHOD]:'post'}) ;
-    const getAllFilesRequest = new RequestRouter ({[RM_KEYS.URL]:'/api/get-all-files' , [RM_KEYS.METHOD]:'get'}) ;
+    const submitRequest = new RequestRoute ({[RM_KEYS.URL]:'/api/handle-form' , [RM_KEYS.METHOD]:'post'}) ;
+    const getAllFilesRequest = new RequestRoute ({[RM_KEYS.URL]:'/api/get-all-files' , [RM_KEYS.METHOD]:'get'}) ;
 
     submitRequest[RM_METH.ADD_BEFORE_REQUEST_LISTENERES](async (context) => {
         await handleBeforeSubmit({
