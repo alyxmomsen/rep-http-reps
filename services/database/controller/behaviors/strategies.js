@@ -64,6 +64,7 @@ class FilesStrategy extends Strategy {
     async createRow (data) {
 
         const { title , description  , file , filename } = data ;
+        console.log({title , description  ,file , filename});
 
         if (!file?.value?.length) {
             return errorFactory({

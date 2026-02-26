@@ -59,6 +59,7 @@ class DataBaseController {
         const { error , success } = this.#strategy.readAllRowsByTableName();
 
         if(error) {
+            console.log({error});
             return errorFactory(error) ;
         }
 
@@ -88,7 +89,7 @@ class DataBaseController {
     }
 }
 
-module.exports = { DBControllerFactory , validationStrategies , errorFactory /* , Error_ , Success_  */} ;
+module.exports = { DBControllerFactory , errorFactory /* , Error_ , Success_  */} ;
 
 /**
  * 
