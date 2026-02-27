@@ -95,4 +95,5 @@ video {
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: 9%;
+	transition: all 2s ease-out;
 }
