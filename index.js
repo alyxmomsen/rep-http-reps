@@ -1,16 +1,12 @@
 const http = require('http');
-const { Router } = require('./router/router');
+const { router } = require('./app/services/router/controller/web-controller');
 
-const router = new Router();
-
-const server = http.createServer((req , res) => {
-
-    router.handleRequest(req , res);
-
+const httpserver = http.createServer(async (req , res) => {
+    await router.handleRequest(req , res);
 });
 
-const port = 3333;
-const host = '0.0.0.0';
-server.listen(port, host , () => {
+const port = 3333 ;
+const host = 'localhost';
+httpserver.listen(port , host  , () => {
     console.log({port , host});
 });
