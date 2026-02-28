@@ -34,6 +34,8 @@ class Router {
 
         for (const [ _ , routeBundle ] of methodRoutes.entries()) {
 
+            console.log({routeBundle});
+
             const urlMatch = routeBundle.regex.exec(url);
             if(!urlMatch) continue ;
 
@@ -49,13 +51,14 @@ class Router {
             req.params = params ;
             req.queryParams = queryParams ;
 
+            // --------------
             
+            await this.#executeMiddleware(req , res ,  [...this.#middleware]);
+            await this.#executeMiddleware(req , res ,  [...routeBundle.middleware]);
 
             await routeBundle.handler(req , res);
-            
-            
-            // --------------
 
+            return ;
         }
 
         res.writeHead(404);
@@ -81,7 +84,7 @@ class Router {
      */
     post(template , ...handlers) {
         const { KEYS } = ROUTER_CONTSTANTS.METHODS ;
-        this.#addRoute(template , KEYS.GET , handlers);
+        this.#addRoute(template , KEYS.POST , handlers);
     }
 
 
@@ -192,9 +195,9 @@ class Router {
 
         return {
             keys , 
+            regex:new RegExp(`^${regexTemplate}$`) , 
             handler:handlers[handlers.length - 1] , 
             middleware:handlers.length > 1 ? handlers.slice(0 , -1) : [] , 
-            regexTemplate:new RegExp(`^${regexTemplate}$`) , 
             originalTemplate:template , 
         }
     }
