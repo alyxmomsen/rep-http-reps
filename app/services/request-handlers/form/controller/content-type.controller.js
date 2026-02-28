@@ -5,6 +5,8 @@ const { errorFactory } = require("../../../../utils/error-factory");
 const conentTypeHandlersRouter = new Map() ;
 
 conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
+// conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
+// conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
 
 /**
  * 
@@ -21,7 +23,7 @@ function contentTypeHandlerFactory (contentType) {
     return handler ;
 }
 
-module.exports = { conentTypeHandlersRouter , contentTypeHandlerFactory } 
+module.exports = { contentTypeHandlerFactory } 
 
 // /**
 //  * @param {string} contentType 
