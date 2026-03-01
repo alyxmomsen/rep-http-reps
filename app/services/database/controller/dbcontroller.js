@@ -1,16 +1,18 @@
 const { errorFactory } = require("../../../utils/error-factory");
-const { DBController: DBModel } = require("../model/db-conroller.model");
+const { DBController , CONSTANTS:DB_CONTROLLER_CONSTANTS } = require("../model/db-conroller.model");
 const { filesModel, usersModel } = require("../models/file.model");
+
+const { FILES , USERS } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
 
 const models = new Map();
 
-models.set('files' , filesModel);
-models.set('users' , usersModel);
+models.set(FILES , filesModel);
+models.set(USERS , usersModel);
 
 /**
  * 
  * @param {string} modelName 
- * @returns {DBModel}
+ * @returns {DBController}
  */
 function dbControllerFactory (modelName) {
 

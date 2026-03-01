@@ -1,51 +1,57 @@
-const { DBController } = require("../model/db-conroller.model");
+const { DBController , CONSTANTS:DB_CONTROLLER_CONSTANTS } = require("../model/db-conroller.model");
 
+const { DEFAULT_VALUE , REQUIRED  ,VALUE_TYPE } = DB_CONTROLLER_CONSTANTS.PROPERTY_VALUE_CONFIG_KEYS ;
+
+/* #warning: not using */
 const contentTypes = {
     TEXT_PLAIN:'text/plain' ,
 }
 
-const { TEXT_PLAIN } = contentTypes ;
-
 const fileControllerModels = new Map();
 
+// нужно добавить дополнительные CRUD модели
+// в текущей реализации отсутствуют: 
+// READ_ONE, READ_TABLE, UPDATE_ONE, 
+// DELETE_ONE, DELETE_TABLE
+/* использовать Map для хранения моделей. и фабрики*/
 const filesModel = new DBController({
     title:{
-        type:'string' ,
-        default:'untitled' ,
-        required:false ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'untitled' ,
+        [REQUIRED]:false ,
     } ,
     description:{
-        type:'string' ,
-        default:'no description' ,
-        required:false ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no description' ,
+        [REQUIRED]:false ,
     } ,
     filesistemFilename:{
-        type:'required' ,
-        default:undefined ,
-        required:true ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:undefined ,
+        [REQUIRED]:true ,
     } ,
     originaleFilename:{
-        type:'string' ,
-        default:undefined ,
-        required:false ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:undefined ,
+        [REQUIRED]:false ,
     } ,
     mime:{
-        type:'string' ,
-        default:undefined ,
-        required:false ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:undefined ,
+        [REQUIRED]:false ,
     } ,
 });
 
 const usersModel = new DBController({
     name:{
-        type:'string' ,
-        default:'no name' ,
-        required:true ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no name' ,
+        [REQUIRED]:true ,
     } ,
     lastName:{
-        type:'string' ,
-        default:'no last name' ,
-        required:true ,
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
     } 
 });
 
