@@ -1,26 +1,30 @@
 const { sendFallBack } = require("../../../../utils/error-factory");
 
-const MULTIPART_HANDLER_CONSTANTS = {
-    PAYLOAD_ARGUMENT_DATA_KEYS: {
-        PAYLOAD_DATA_KEY:'contentTypeAttribute' , // #hardcode
-    }
+const CONSTANTS = {
+    /* 
+    тот самый ключ который сопровождает bundle 
+    возвращаемый фабрикой contentTypeHandlerFactory
+    он же используется здесь ниже для взятия значения из объекта payload
+     */
+    PAYLOAD_DATA_KEY:'boundaryRawData' ,
 }
 
 async function multipartHandler(req , res , payload) {
+
+    console.log('multipart handler...' , {payload});
     
-    const { PAYLOAD_DATA_KEY } = MULTIPART_HANDLER_CONSTANTS.PAYLOAD_ARGUMENT_DATA_KEYS ;
+    const { PAYLOAD_DATA_KEY } = CONSTANTS ;
 
-    const contentTypePayload = payload[PAYLOAD_DATA_KEY] || null ;
+    const boundaryRawString = payload[PAYLOAD_DATA_KEY] || null ;
 
-    const boundary = (contentTypePayload?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
+    const boundary = (boundaryRawString?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
 
-    console.log({boundary , contentTypePayload});
+    console.log({boundary , contentTypePayload: boundaryRawString});
 
     if(!boundary) {
-        sendFallBack(res ,400 , 'multipartHandler' , 'no boundary given' , {boundary , payload , contentTypePayload});
+        sendFallBack(res ,400 , 'multipartHandler' , 'no boundary given' , {boundary , payload , contentTypePayload: boundaryRawString});
         return ;
     }
-
 
     const formDataChunks = [] ;
     req.on('data' , (chunk) => {
@@ -39,8 +43,13 @@ async function multipartHandler(req , res , payload) {
 
 }
 
-module.exports = { multipartHandler , MULTIPART_HANDLER_CONSTANTS }
+module.exports = { multipartHandler , CONSTANTS }
 
 function splitFormData () {
+
+    while (false) {
+
+    }
+
     return [] ;
 }

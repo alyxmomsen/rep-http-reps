@@ -1,4 +1,5 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
+const { errorFactory, sendFallBack } = require("../../utils/error-factory");
 
 const ROUTER_CONTSTANTS = {
     METHODS:{
@@ -25,8 +26,12 @@ class Router {
         const methodRoutes = this.#routes.get(method);
 
         if(!methodRoutes) {
-            res.writeHead(400);
-            res.end('incorrect method');
+            sendFallBack(
+                res, 200 , 
+                '::handleRequest' ,
+                'incorrect HTTP method' ,
+                {method , methodRoutes} ,
+            )
             return ;
         }
 
@@ -127,7 +132,8 @@ class Router {
         queryString.split('&').forEach((couple) => {
             const [ key , value ] = couple.split('=');
             if(key && value) {
-                params[key.toLowerCase()] = value ;
+                const normalizedKey = key.toLowerCase() ;
+                params[normalizedKey] = value ;
             }
         });
 
@@ -159,11 +165,15 @@ class Router {
         const methodRoutes = this.#routes.get(normalizedMethod);
 
         if(!methodRoutes) {
-            throw new Error(JSON.stringify({
-                location:'' ,
-                message:"" ,
-                subjects:{} ,
-            }));
+            throw new Error(
+                JSON.stringify(
+                    errorFactory(
+                        'Router::#addRoute',
+                        'incorrect method',
+                        {normalizedMethod , methodRoutes},
+                    )
+                )
+            );
         }
 
         const routeBundle = this.#assembleRouteBundle(template , handlers);

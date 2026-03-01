@@ -3,7 +3,6 @@ const { IncomingMessage, ServerResponse } = require("node:http");
 const { resolve, join } = require("node:path");
 const { sendFallBack } = require("../../../utils/error-factory");
 const { contentTypeHandlerFactory } = require("./controller/content-type.controller");
-const { MULTIPART_HANDLER_CONSTANTS } = require("./model/multipart.handler");
 
 const FORM_HANDLER_CONSTANTS = {
     ASSETS_PATH:'./assets/html/form.html' ,
@@ -20,7 +19,7 @@ class FormHandler {
      * @param {Object} payload
      * @returns {Promise<void>} 
      */
-    async processForm (req ,res , payload) {
+    async processForm (req ,res) {
 
         console.log('form in process...');
 
@@ -38,7 +37,7 @@ class FormHandler {
             return ;
         }
 
-        const [ contentType , contentTypePayload ] = contentTypeHeader.split(/; */) ;
+        const [ contentType , contentTypeHeaderPayload ] = contentTypeHeader.split(/; */) ;
 
         console.log({contentType});
 
@@ -53,9 +52,13 @@ class FormHandler {
         }
 
         try {
-            const { PAYLOAD_DATA_KEY } = MULTIPART_HANDLER_CONSTANTS.PAYLOAD_ARGUMENT_DATA_KEYS
-            const formHandler = contentTypeHandlerFactory(contentType);
-            await formHandler(req , res  , { [PAYLOAD_DATA_KEY]: contentTypePayload }); // #hardcode
+            /* фабрика возвращает bundle , в котором содержится handler и сопроводительные данные
+            а именно ключ для payload объекта. именно этот ключ будет использован
+            в обработчике для получения payload значения
+            соответственно, с каждым обработчиком приходит свой ключ */
+            const { handler , payloadDataKey:PAYLOAD_DATA_KEY } = contentTypeHandlerFactory(contentType);
+            console.log(contentTypeHandlerFactory(contentType));
+            await handler(req , res  , { [PAYLOAD_DATA_KEY]:contentTypeHeaderPayload });
         }
         catch (e) {
             console.log({e});
@@ -63,14 +66,14 @@ class FormHandler {
     }   
 
     /**
-     * 
+     * @description 'render is read and send the concrete html'
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
      * @returns {Promise<void>} 
      */
     async renderer (req , res) {
 
-        console.log('renderer');
+        console.log('renderer...');
 
         try {
 
@@ -86,9 +89,7 @@ class FormHandler {
         }
     }
 
-    constructor () {
-
-    }
+    constructor () {}
 }
 
 const formHandler = new FormHandler ();

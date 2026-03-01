@@ -3,11 +3,15 @@ const { sendFallBack } = require("../../../utils/error-factory");
 const { join, resolve } = require("node:path");
 const { readFile } = require("node:fs/promises");
 
+const PUBLIC_DIR = resolve(join('.' , 'public'));
+
+const insertSrcMapItem =  (map , type , id ) => {}
+
 const PUBLIC_SRC_MAP = {
-    type:{
+    typeRouter:{
         'css':{
             rootPath:resolve(join('.','public','css')),
-            id:{
+            idRouter:{
                 'main':{
                     filename:'main.css' ,
                     mime:'text/css' , 
@@ -16,7 +20,7 @@ const PUBLIC_SRC_MAP = {
         } ,
         'js':{
             rootPath:resolve(join('.','public','js')),
-            id:{
+            idRouter:{
                 'main':{
                     filename:'main.js' ,
                     mime:'text/javascript' , 
@@ -45,9 +49,9 @@ async function handlePublic(req , res) {
         return ;
     }
 
-    const { type:typeRouter } = PUBLIC_SRC_MAP ;
+    const { typeRouter } = PUBLIC_SRC_MAP ;
 
-    const { rootPath , id:idRouter } = typeRouter[type] || {} ;
+    const { rootPath , idRouter } = typeRouter[type] || {} ;
 
     if(!rootPath || !idRouter) {
         sendFallBack(

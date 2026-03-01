@@ -1,11 +1,24 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
-const { multipartHandler } = require("../model/multipart.handler");
+const { multipartHandler, CONSTANTS } = require("../model/multipart.handler");
 const { errorFactory } = require("../../../../utils/error-factory");
+const { textPlainHandler , CONSTANTS:TEXTPLAIN_HANDLER_CONSTANTS } = require("../model/text-plain.handler");
 
 const conentTypeHandlersRouter = new Map() ;
 
-conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
-// conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
+const insertHandlerBundle = (handler  , payloadDataKey ) => {
+
+    return {
+        handler:handler ,
+        payloadDataKey:payloadDataKey ,
+    }
+}
+
+conentTypeHandlersRouter.set('multipart/form-data' , insertHandlerBundle(
+    multipartHandler , CONSTANTS?.PAYLOAD_DATA_KEY || null
+));
+// conentTypeHandlersRouter.set('multipart/form-data' , {
+//     handler:textPlainHandler , payloadDataKey:TEXTPLAIN_HANDLER_CONSTANTS?.PAYLOAD_DATA_KEY || null ,
+// });
 // conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
 
 /**
