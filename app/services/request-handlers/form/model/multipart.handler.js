@@ -1,5 +1,6 @@
 const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
 const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
+const { GroupFormData } = require("../../../group-form-data/group-form-data.service");
 
 const CONSTANTS = {
     /* 
@@ -38,7 +39,7 @@ async function multipartHandler(req , res , payload) {
         
         const wholeFormDataBuffer = Buffer.concat(formDataChunks);
         const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
-        console.log({parts});
+        const groupFormData = new GroupFormData();
         for (const part of parts) {
             try {
                 const { 
@@ -51,13 +52,25 @@ async function multipartHandler(req , res , payload) {
                 const contentDisposition = formDataPartHeaders['content-disposition'] ;
                 const { name: nameAttr , filename } = parseContentDisposition(contentDisposition);
                 const { columnName , groupId , tableName } = parseNameAttr(nameAttr);
-                console.log({contentType , filename , columnName , groupId , tableName});
 
+                groupFormData.pushParsedInputData({
+                    groupId , tableName , columnName , 
+                    columnValue:formDataPartBody , columnContentType:contentType , 
+                });
             }
             catch (e) {
-                console.log({e});
+                // console.log({e});
             }
         }
+
+        const assembledGroupsByTablename = groupFormData.getGroups();
+
+        for (const [tableName , tableRows ] of Object.entries(assembledGroupsByTablename) ) {
+            for (const tableRow of tableRows) {
+                console.log({tableRow});
+            }
+        }
+
 
         res.end('hello world');
     });
