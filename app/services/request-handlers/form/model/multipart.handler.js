@@ -1,5 +1,6 @@
 const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
 const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
+const { dbControllerFactory } = require("../../../database/controller/dbcontroller");
 const { filemanager } = require("../../../filemanager.service.js/filemanager.service");
 const { GroupFormData } = require("../../../group-form-data/group-form-data.service");
 
@@ -69,8 +70,17 @@ async function multipartHandler(req , res , payload) {
         for (const [tableName , tableRows ] of Object.entries(assembledGroupsByTablename) ) {
             for (const tableRow of tableRows) {
                 const { file } = tableRow ;
-                
-                console.log({tableRow});
+                console.log({tableRow}) ;
+
+                try {
+
+                    const dbController = dbControllerFactory(tableName);
+                    dbController.addOne({foo:'bar' , baz:'foo' , title:'foobarbaz'});
+                }
+                catch (e) {
+                    console.log({e});
+                }
+
             }
         }
 
