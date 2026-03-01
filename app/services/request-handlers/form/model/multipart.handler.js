@@ -1,4 +1,5 @@
-const { sendFallBack } = require("../../../../utils/error-factory");
+const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
+const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
 
 const CONSTANTS = {
     /* 
@@ -37,6 +38,26 @@ async function multipartHandler(req , res , payload) {
         
         const wholeFormDataBuffer = Buffer.concat(formDataChunks);
         const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
+        console.log({parts});
+        for (const part of parts) {
+            try {
+                const { 
+                    body:formDataPartBody , headers:formDataPartHeadersRawData 
+                } = splitFormDataPart(part);
+                const formDataPartHeaders = parseFormDataPartHeaders(
+                    formDataPartHeadersRawData.toString('utf-8')
+                );
+                const contentType = formDataPartHeaders['content-type'] || null ;
+                const contentDisposition = formDataPartHeaders['content-disposition'] ;
+                const { name: nameAttr , filename } = parseContentDisposition(contentDisposition);
+                const { columnName , groupId , tableName } = parseNameAttr(nameAttr);
+                console.log({contentType , filename , columnName , groupId , tableName});
+
+            }
+            catch (e) {
+                console.log({e});
+            }
+        }
 
         res.end('hello world');
     });
@@ -45,11 +66,132 @@ async function multipartHandler(req , res , payload) {
 
 module.exports = { multipartHandler , CONSTANTS }
 
-function splitFormData () {
+/**
+ * 
+ * @param {string} nameAttr 
+ */
+function parseNameAttr (nameAttr) {
 
-    while (false) {
+    const [ groupId , tableName , columnName ] = nameAttr.split('.') ;
 
+    if(!groupId || !tableName || !columnName) {
+        throw new Error (JSON.stringify(
+            errorFactory(
+                'parse name attr' ,
+                'incorrect name attr' ,
+                {nameAttr} ,
+            )
+        ));
     }
 
-    return [] ;
+    return {
+        groupId, tableName, columnName
+    }
+}
+
+
+/**
+ * 
+ * @param {string} contentDisposition 
+ * @returns {{name:string|null;filename:string|null}}
+ */
+function parseContentDisposition ( contentDisposition ) {
+
+    const name = contentDisposition.match(/name="([^"]+)"/)?.[1] || null;
+    const filename = contentDisposition.match(/filename="([^"]+)"/)?.[1] || null;
+
+    return {
+        name , 
+        filename ,
+    }
+}
+
+/**
+ * 
+ * @param {string} headersString 
+ */
+function parseFormDataPartHeaders (headersString) {
+
+    const headers = {} ;
+
+    const headersRows = headersString.split('\r\n');
+    headersRows.forEach(headerRow => {
+        const [key , value] = headerRow.split(": ");
+        if(key && value) {
+            const normalizedKey = key.toLocaleLowerCase() ;
+            headers[normalizedKey] = value ;
+        }
+    });
+
+    return headers ;
+
+}
+
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} formDataPart 
+ */
+function splitFormDataPart (formDataPart) {
+
+    const separatorBuffer = Buffer.from('\r\n\r\n');
+
+    const separatorIndex = findSeparatorIndexInBuffer(formDataPart , separatorBuffer);
+
+    if(separatorIndex === -1) {
+        throw new Error (JSON.stringify(
+            errorFactory(
+                'splitFormDataPart' ,
+                'incorrect form data part' ,
+                { formDataPart }
+            )
+        ))
+    }
+
+    /**
+     * extract first part as Headers Part
+     */
+    const headers = formDataPart.subarray(0 , separatorIndex);
+
+    let bodyBuffeEndIndex = formDataPart.length ;
+
+    if(
+        formDataPart[bodyBuffeEndIndex - 2] === 0x0d // "\r" esc
+        && formDataPart[bodyBuffeEndIndex - 1] === 0x0a // "\n" esc
+    ) {
+        bodyBuffeEndIndex -= 2 // shift the index to left
+    }
+
+    const body = formDataPart.subarray(separatorIndex + separatorBuffer.length , bodyBuffeEndIndex);
+
+    return {
+        headers ,
+        body ,
+    }
+}
+
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} formData 
+ * @param {Buffer<ArrayBuffer>} boundary 
+ * @returns {Array<Buffer<ArrayBuffer>>}
+ */
+function splitFormData (formData , boundary) {
+
+    const parts = [] ;
+    let start = 0
+    let index = 0 ;
+
+    while ((index = findSeparatorIndexInBuffer(formData , boundary , start)) !== -1) {
+        const part = formData.subarray(start , index) ;
+        parts.push(part);
+        start = index + boundary.length ;
+        if(
+            formData[start] === 0x0d // \r 
+            && formData[start + 1] === 0x0a // \n
+        ) start += 2 ;
+    }
+
+    parts.push(formData.subarray(start)); // rest part
+
+    return parts ;
 }
