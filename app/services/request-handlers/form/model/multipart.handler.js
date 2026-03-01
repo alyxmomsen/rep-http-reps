@@ -1,5 +1,6 @@
 const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
 const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
+const { filemanager } = require("../../../filemanager.service.js/filemanager.service");
 const { GroupFormData } = require("../../../group-form-data/group-form-data.service");
 
 const CONSTANTS = {
@@ -29,11 +30,11 @@ async function multipartHandler(req , res , payload) {
     }
 
     const formDataChunks = [] ;
-    req.on('data' , (chunk) => {
+    req.on('data' , async (chunk) => {
         formDataChunks.push(chunk);
     }); 
 
-    req.on('end' , () => {
+    req.on('end' , async () => {
 
         console.log('form processing end');
         
@@ -67,10 +68,11 @@ async function multipartHandler(req , res , payload) {
 
         for (const [tableName , tableRows ] of Object.entries(assembledGroupsByTablename) ) {
             for (const tableRow of tableRows) {
+                const { file } = tableRow ;
+                
                 console.log({tableRow});
             }
         }
-
 
         res.end('hello world');
     });
