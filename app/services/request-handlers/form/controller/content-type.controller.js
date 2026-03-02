@@ -27,13 +27,13 @@ conentTypeHandlersRouter.set('multipart/form-data' , insertHandlerBundle(
  * @returns {((req:IncomingMessage , res:ServerResponse , payload:Object) => Promise<any>)} 
  */
 function contentTypeHandlerFactory (contentType) {
-    const handler = conentTypeHandlersRouter.get(contentType);
-    if(!handler) throw new Error(JSON.stringify(errorFactory(
+    const handlerBundle = conentTypeHandlersRouter.get(contentType);
+    if(!handlerBundle) throw new Error(JSON.stringify(errorFactory(
         'contentTypeHandlerFactory', 
         'unknown contenttype' ,
         {contentType} ,
     )))
-    return handler ;
+    return handlerBundle ;
 }
 
 module.exports = { contentTypeHandlerFactory } 

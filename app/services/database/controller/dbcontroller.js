@@ -6,6 +6,7 @@ const { FILES , USERS } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
 
 const models = new Map();
 
+/* регистрация моделей валидации полей для отправки в базу данных */
 models.set(FILES , filesModel);
 models.set(USERS , usersModel);
 

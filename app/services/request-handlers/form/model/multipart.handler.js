@@ -19,7 +19,7 @@ async function multipartHandler(req , res , payload) {
     
     const { PAYLOAD_DATA_KEY } = CONSTANTS ;
 
-    const boundaryRawString = payload[PAYLOAD_DATA_KEY] || null ;
+    const boundaryRawString = payload[PAYLOAD_DATA_KEY] || '' ;
 
     const boundary = (boundaryRawString?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
 
@@ -51,7 +51,10 @@ async function multipartHandler(req , res , payload) {
                     formDataPartHeadersRawData.toString('utf-8')
                 );
                 const contentType = formDataPartHeaders['content-type'] || null ;
-                const contentDisposition = formDataPartHeaders['content-disposition'] ;
+                const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
+                if(!contentDisposition) {
+                    throw new Error(`no content-disposition header`);
+                }
                 const { name: nameAttr , filename } = parseContentDisposition(contentDisposition);
                 const { columnName , groupId , tableName } = parseNameAttr(nameAttr);
 
@@ -59,6 +62,14 @@ async function multipartHandler(req , res , payload) {
                     groupId , tableName , columnName , 
                     columnValue:formDataPartBody , columnContentType:contentType , 
                 });
+
+                /* если это файл */
+                if(filename && contentType) {
+                    groupFormData.pushParsedInputData({
+                        groupId , tableName , columnName:'filename' ,
+                        columnValue:filename , columnContentType:'text/plain' , 
+                    });
+                }
             }
             catch (e) {
                 // console.log({e});
@@ -69,11 +80,41 @@ async function multipartHandler(req , res , payload) {
 
         for (const [tableName , tableRows ] of Object.entries(assembledGroupsByTablename) ) {
             for (const tableRow of tableRows) {
-                const { file } = tableRow ;
+                /* 
+                для извлечения ключей нужна модель, 
+                которая позволит извлекать 
+                значения по корректным ключам, 
+                либо нужно что бы в "tableRow" была строка вида "{Object.<string,string|number>}"
+                потому что "dbController.addOne(tableRow)" ожидает значения именно такого вида
+                for example:
+                const {value , contentType} = tableRow[KEY] ;
+                ключ "KEY" вероятно должен придти из "dbControllerFactory(tableName)"
+                в бандле с "dbController"
+
+                скорее всего нужно что бы "groupFormData.getGroups()" формировал данные
+                следущего вида contentType:string|file
+                и если это файл, то сопровождаемый полем "mime"
+                 
+                и поскольку в базу данных мы не отпавляем файлы, то
+                вероятно нужно сначала программно выяснить что за тип данных получаем из "tableRow"
+                например , если это "video/matroska"|"image/jpeg" , то 
+                сначал нужно сохранить данные в файловой системе, получить имя файла и тд
+                и сформировав корректные поля отправить их базу данных
+
+                т.е должен быть общий обработчик, который этим занимается, -
+                обращается к файловому менеджеру для сохранения файла,
+                формирует корректные поля и вызывает "dbControllerFactory(tableName)" 
+                */
                 console.log({tableRow}) ;
 
                 try {
-
+                    /* 
+                    эта фабрика и метод контроллера должны вызываться внутри обработчика 
+                    так же как и обращение к файловой системе
+                    dbController этим не занимается! разделение ответственности!
+                    т.е если файл, по каким-то причинам не удается сохранить, то
+                    обращение к базе данных не происходит, в базу данных Buffer не отправляется.
+                    */
                     const dbController = dbControllerFactory(tableName);
                     dbController.addOne({foo:'bar' , baz:'foo' , title:'foobarbaz'});
                 }

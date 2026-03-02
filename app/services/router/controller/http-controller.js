@@ -6,7 +6,7 @@ const router = new Router();
 
 router.get('/l/form', async (req ,res) => await formHandler.renderer(req , res) );
 router.post('/api/handle-form', async (req ,res) => await formHandler.processForm(req , res) );
-router.get('/api/handle-form', async (req ,res) => await formHandler.processForm(req , res) );
+// router.get('/api/handle-form', async (req ,res) => await formHandler.processForm(req , res) );
 router.get('/public/:type/:id', async (req ,res) => await handlePublic(req , res) ) ;
 
 // test route

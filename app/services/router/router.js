@@ -27,7 +27,7 @@ class Router {
 
         if(!methodRoutes) {
             sendFallBack(
-                res, 200 , 
+                res, 400 , 
                 '::handleRequest' ,
                 'incorrect HTTP method' ,
                 {method , methodRoutes} ,
