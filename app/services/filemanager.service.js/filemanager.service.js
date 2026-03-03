@@ -3,6 +3,12 @@ const { createWriteStream, createReadStream } = require("node:fs");
 const { resolve, join } = require("node:path");
 const { Readable } = require("node:stream");
 
+const CONSTANTS = {
+    WRITE_SUCCESS_KEYS:{
+        FILENAME:'filename' ,
+    }
+}
+
 class FileManager {
 
     /**
@@ -98,4 +104,4 @@ class FileManager {
 
 const filemanager = new FileManager () ;
 
-module.exports = { filemanager } ;
+module.exports = { filemanager , CONSTANTS } ;

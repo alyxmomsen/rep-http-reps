@@ -1,8 +1,13 @@
 const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
 const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
 const { dbControllerFactory } = require("../../../database/controller/dbcontroller");
-const { filemanager } = require("../../../filemanager.service.js/filemanager.service");
-const { GroupFormData } = require("../../../group-form-data/group-form-data.service");
+const { errorService } = require("../../../error/error.service");
+const { filemanager , CONSTANTS:FILEMANAGER_CONSTANTS } = require("../../../filemanager.service.js/filemanager.service");
+const { GroupFormData, dataTypeValidator } = require("../../../group-form-data/group-form-data.service");
+const { GLOBAL_NAMES } = require("../../../registry/names.map");
+const { registry:namesRegistry } = require("../../../registry/names.registry");
+
+const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
 
 const CONSTANTS = {
     /* 
@@ -11,7 +16,10 @@ const CONSTANTS = {
     он же используется здесь ниже для взятия значения из объекта payload
      */
     PAYLOAD_DATA_KEY:'boundaryRawData' ,
+    CURRENT_SCRIPT_ID:scriptId ,
 }
+
+console.log('function name' , splitFormDataPart.name)
 
 async function multipartHandler(req , res , payload) {
 
@@ -42,6 +50,9 @@ async function multipartHandler(req , res , payload) {
         const wholeFormDataBuffer = Buffer.concat(formDataChunks);
         const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
         const groupFormData = new GroupFormData();
+
+        const invalidGroups = new Map();
+
         for (const part of parts) {
             try {
                 const { 
@@ -50,29 +61,122 @@ async function multipartHandler(req , res , payload) {
                 const formDataPartHeaders = parseFormDataPartHeaders(
                     formDataPartHeadersRawData.toString('utf-8')
                 );
-                const contentType = formDataPartHeaders['content-type'] || null ;
+                const mime = formDataPartHeaders['content-type'] || null ;
                 const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
                 if(!contentDisposition) {
+                    // throwCustomErrorFactory({
+                    //     code:2 ,
+                    //     subject:'multipartHandler' ,
+                    //     message:'no content-disposition header' ,
+                    // })()
                     throw new Error(`no content-disposition header`);
                 }
-                const { name: nameAttr , filename } = parseContentDisposition(contentDisposition);
-                const { columnName , groupId , tableName } = parseNameAttr(nameAttr);
+                const { name: nameAttr , filename: originalFilename } = parseContentDisposition(contentDisposition);
+                const { columnName , groupId , tableName , dataType } = parseNameAttr(nameAttr);
 
-                groupFormData.pushParsedInputData({
-                    groupId , tableName , columnName , 
-                    columnValue:formDataPartBody , columnContentType:contentType , 
-                });
+                // scenario #1: if file
+                if(mime || originalFilename) {
 
-                /* если это файл */
-                if(filename && contentType) {
-                    groupFormData.pushParsedInputData({
-                        groupId , tableName , columnName:'filename' ,
-                        columnValue:filename , columnContentType:'text/plain' , 
-                    });
+                    const { success , error } = await filemanager.write(formDataPartBody);
+
+                    if(error) {
+
+                        // здесь нужно выбросить исключение и обработать его в блоке catch
+                        // вместо того что бы городить все здесь и ниже
+
+                        // UPD: need a constant for the "custom error" prefix
+                        // UPD: custom errors parsed by '; ' delimeter and ": " properties separator
+                        // UPD: need a factory for generating error messages, 
+                        // and a handler to parse these ready messages. 
+                        // Handler must be like a router to handle different cases
+
+                        // после выброса исключения вся группа, вероятно, попадает под инвалидность 
+                        // в соответствии с правилами
+                        // throwCustomErrorFactory({
+                        //     code:5 ,
+                        //     subject:'multipartHandler' ,
+                        //     message:'filemanager error' ,
+                        // })()
+                        throw new Error(`filemanager error`);
+
+                        continue ;
+                    }
+
+                    if(!success) {
+                        // выбрасывается исключение и , вероятно, вся группа попадает под списание
+                        // throwCustomErrorFactory({
+                        //     code:4 ,
+                        //     subject:'multipartHandler' ,
+                        //     message:'no filemanager success response object'
+                        // });
+                        throw new Error(`no filemanager success response object`);
+                        continue ;
+                    }
+
+                    const { FILENAME } = FILEMANAGER_CONSTANTS.WRITE_SUCCESS_KEYS ;
+
+                    const filesystemFilename = success[FILENAME];
+
+                    if(!filesystemFilename) {
+                        // throwCustomErrorFactory({
+                        //     code:3, 
+                        //     subject:'multipartHandler',
+                        //     message:'no filesystemFilename',
+                        // })();
+                        throw new Error(`no filesystemFilename`);
+                        continue ;
+                    }
+
+                    /* 
+                        bottle-throat
+                        "dataTypeValidator" выдаст ошибку если дата-тайп не заригистрирован, 
+                        но одна порция данных уже может быть отправленна
+                        значит нужно сначал подготовить данные для отпавки
+                    */
+
+                    /* подготавливаем данные для отправки */
+                    // но нужно обработать ошибку от "dataTypeValidator" , 
+                    // для того что бы пометить невалидную группу
+                    const fsFilenameBundle = {
+                        groupId, tableName, columnName:'filesystemFilename' , 
+                        columnContentType:dataTypeValidator('string') , // bottle-throat
+                        columnValue:filesystemFilename ,
+                    }
+
+                    const originalFilenameBundle = {
+                        groupId, tableName , columnName:'originalFilename' ,
+                        columnContentType:dataTypeValidator('string') , // bottle-throat
+                        columnValue:originalFilename ,
+                    }
+
+                    groupFormData.pushParsedInputData(fsFilenameBundle);
+                    groupFormData.pushParsedInputData(originalFilenameBundle);
+
+                    // и здесь вроде бы все хорошо, то что данные сначала
+                    // формируются и затем отправляются, но 
+                    // что если слeдующая порция, для одной и той же группы, будет не валидна, 
+                    // тогда, нужно предусмотреть и этот кейс
+                    // upd: выше это рализовано но тот код нужно вынести в отдельную ф-ю или сервис
+                    
+                    continue ;
                 }
+                
+                // scenario #2: if primitive field
+
+                const plainFieldBundle = {
+                    groupId , tableName , columnName ,
+                    columnValue:formDataPartBody.toString('utf-8') , 
+                    columnContentType:dataTypeValidator(dataType) // bottle-throat
+                }
+
+                groupFormData.pushParsedInputData(plainFieldBundle);
             }
             catch (e) {
-                // console.log({e});
+        
+                const errorMessage = e.message ;
+                console.log({errorMessage  ,e , cs:CONSTANTS.CURRENT_SCRIPT_ID});
+                errorService.handleError(CONSTANTS.CURRENT_SCRIPT_ID , 1 , {foo:'bar'});
+
             }
         }
 
@@ -120,6 +224,7 @@ async function multipartHandler(req , res , payload) {
                 }
                 catch (e) {
                     console.log({e});
+                    err
                 }
 
             }
@@ -132,26 +237,36 @@ async function multipartHandler(req , res , payload) {
 
 module.exports = { multipartHandler , CONSTANTS }
 
+function insertIvalidGroupData () {
+    
+}
+
 /**
  * 
  * @param {string} nameAttr 
+ * @returns {{
+ *  groupId:string;
+ *  tableName:string;
+ *  columnName:string;
+ *  dataType:string;
+ * }}
  */
 function parseNameAttr (nameAttr) {
 
-    const [ groupId , tableName , columnName ] = nameAttr.split('.') ;
+    const [ groupId , tableName , columnName , dataType ] = nameAttr.split('.') ;
 
-    if(!groupId || !tableName || !columnName) {
-        throw new Error (JSON.stringify(
-            errorFactory(
-                'parse name attr' ,
-                'incorrect name attr' ,
-                {nameAttr} ,
-            )
-        ));
+    if(!groupId || !tableName || !columnName || !dataType) {
+        // throwCustomErrorFactory({
+        //     code:2 ,
+        //     message:'incorrect name attr',
+        //     subject:'parseNameAttr' ,
+        // })()
+        errorService.handleError(CONSTANTS.CURRENT_SCRIPT_ID);
+        throw new Error(`incorrect name attr`);
     }
 
     return {
-        groupId, tableName, columnName
+        groupId, tableName, columnName , dataType ,
     }
 }
 
@@ -204,13 +319,13 @@ function splitFormDataPart (formDataPart) {
     const separatorIndex = findSeparatorIndexInBuffer(formDataPart , separatorBuffer);
 
     if(separatorIndex === -1) {
-        throw new Error (JSON.stringify(
-            errorFactory(
-                'splitFormDataPart' ,
-                'incorrect form data part' ,
-                { formDataPart }
-            )
-        ))
+        // const errorBody = {
+        //     subject:'multipartHandler' ,
+        //     code:1,
+        //     message:'incorrect form data part',
+        // }
+        // throwCustomErrorFactory(errorBody)()
+        throw new Error(`incorrect form data part`);
     }
 
     /**

@@ -1,11 +1,35 @@
 
 const grouperStrategies = new Map([['tableName' , f=>f]]);
 
+
 const CONSTANTS = {
     COLUMN_DATA_KEYS:{
         VALUE:'value' ,
         CONTENT_TYPE:'contentType'
+    }, 
+    DATA_TYPE_KEYS:{
+        STRING:'string' ,
+        NUMBER:'number' ,
     }
+}
+
+const dataTypeSetMap = new Map();
+
+const { DATA_TYPE_KEYS } = CONSTANTS ;
+
+// data-type registration
+dataTypeSetMap.set(DATA_TYPE_KEYS.STRING , 'string');
+dataTypeSetMap.set(DATA_TYPE_KEYS.NUMBER , 'number');
+
+/**
+ * 
+ * @param {string} dataType 
+ */
+const dataTypeValidator = (dataType) => {
+
+    const dt = dataTypeSetMap.get(dataType);
+    if(!dt) throw new Error (`unregistered data type`) ;
+    return dt ;
 }
 
 class GroupFormData {
@@ -98,7 +122,7 @@ class GroupFormData {
     }
 }
 
-module.exports = { GroupFormData , grouperStrategies } ;
+module.exports = { GroupFormData , grouperStrategies , dataTypeValidator } ;
 
 function factory () {
 

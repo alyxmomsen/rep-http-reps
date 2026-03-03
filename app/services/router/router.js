@@ -21,8 +21,7 @@ class Router {
      */
     async handleRequest (req , res) {
 
-        const { method , url:rawURL } = req ;
-
+        const { method , url: rawURL } = req ;
         const methodRoutes = this.#routes.get(method);
 
         if(!methodRoutes) {
