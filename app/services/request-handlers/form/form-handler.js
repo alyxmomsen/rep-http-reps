@@ -19,7 +19,7 @@ class FormHandler {
      * @param {Object} payload
      * @returns {Promise<void>} 
      */
-    async processForm (req ,res) {
+    static async processForm (req ,res) {
 
         console.log('form in process...');
 
@@ -52,7 +52,10 @@ class FormHandler {
         }
 
         try {
-            /* фабрика возвращает bundle , в котором содержится handler и сопроводительные данные
+            /* фабрика возвращает bundle {handler:function;payloadDataKey:string} , 
+            в котором содержится: 
+            handler (handler:function) 
+            и сопроводительные данные (payloadDataKey:string)
             а именно ключ для payload объекта. именно этот ключ будет использован
             в обработчике для получения payload значения
             соответственно, с каждым обработчиком приходит свой ключ */
@@ -62,6 +65,12 @@ class FormHandler {
         }
         catch (e) {
             console.log({e});
+            sendFallBack(
+                res , 520 ,
+                'FormHandler::processForm' ,
+                'unknown error' ,
+                {e}
+            );
         }  
     }   
 
@@ -71,7 +80,7 @@ class FormHandler {
      * @param {ServerResponse} res 
      * @returns {Promise<void>} 
      */
-    async renderer (req , res) {
+    static async renderer (req , res) {
 
         console.log('renderer...');
 
@@ -92,8 +101,8 @@ class FormHandler {
     constructor () {}
 }
 
-const formHandler = new FormHandler ();
+// const formHandler = new FormHandler ();
 
-module.exports = { formHandler } ;
+module.exports = { FormHandler , /* formHandler */ } ;
 
 

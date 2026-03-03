@@ -40,79 +40,121 @@ class GroupFormData {
      */
     getGroups (strategy) {
 
-        const { CONTENT_TYPE  , VALUE } = CONSTANTS.COLUMN_DATA_KEYS
-
         const groups = {} ;
 
-        for  (const [ _groupId , groupData ] of this.#groups.entries()) {
-            const { tableName , columns } = groupData ;
-            
-            const tableRow = {} ;
+        for (const [ groupId , groupData ] of this.#groups.entries()) {
 
-            for (const [ columnName , columnData ] of columns.entries()) {
-                
-                if(!columnName) {
-                    console.log('no column-name');
-                    continue ;
-                }
+            const tableFiles = [] ;
+            const tableRows = {} ;
 
-                const value = columnData[VALUE] ;
-                const contentType = columnData[CONTENT_TYPE] ;
+            const { tableName , files: groupFiles , tableColumns } = groupData ;
 
-                if(!value && !contentType) {
-                    console.log('no value of content-type');
-                    continue ;
-                }
-
-                tableRow[columnName] = {value , contentType} ;
+            for (const fileData of groupFiles) {
+                tableFiles.push(fileData);
             }
 
-            const tablenameGroup = groups[tableName] ;
+            for (const [ columnName , columnData ] of tableColumns.entries()) {
+                tableRows[columnName] = columnData ;
+            }
 
-            if(!tablenameGroup) {
-                groups[tableName] = [tableRow] ;
+            const groupByTableName = groups[tableName] ;
+
+            if(!groupByTableName) {
+                groups[tableName] = {
+                    files:tableFiles ,
+                    rows:tableRows ,
+                };
                 continue ;
             }
 
-            tablenameGroup.push(tableRow) ;
+            groupByTableName.files = tableFiles ;
+            groupByTableName.rows = tableRows ;
         }
 
         return groups ;
     }
 
     /**
+     * 
      * @param {{
      *  groupId:string;
      *  tableName:string;
      *  columnName:string;
-     *  columnContentType:string;
-     *  columnValue:Buffer<ArrayBuffer>; 
+     *  columnDataType:string;
+     *  columnValue:Buffer<ArrayBuffer>;
      * }} data 
      */
-    pushParsedInputData (data) {
+    pushPlainFileldData (data) {
 
-        const { groupId , tableName , columnName , columnValue , columnContentType } = data ;
+        // console.log({data});
 
-        const columnData = {
-            value:columnValue ,
-            contentType: columnContentType || 'text/plain' ,
-        }
+        const { groupId , tableName ,  data:groupItemData } = data ;
 
-        const groupsById =this.#groups.get(groupId);
+        const { columnName , columnDataType , columnValue } = groupItemData ;
 
-        if(!groupsById) {
+        const groupById = this.#groups.get(groupId);
+
+        if(!groupById) {
             this.#groups.set(groupId , {
                 tableName , 
-                columns: new Map([[
-                    columnName , columnData
-                ]]) ,
+                files:[] ,
+                tableColumns:new Map([[
+                    columnName , {
+                        dataType:columnDataType ,
+                        data:columnValue ,
+                    }
+                ]]),
+            });
+            // console.log(`added column <${columnName}> in the group <${groupId}> for <${tableName}> table`);
+            return ;
+        }
+
+        const { tableColumns } = groupById ;
+
+        tableColumns.set(columnName , {
+            dataType:columnDataType ,
+            data:columnValue ,
+        });
+
+        // console.log(`added column <${columnName}> in the group <${groupId}> for <${tableName}> table`);
+    }
+
+    /**
+     * 
+     * @param {{
+     *  groupId:string;
+     *  tableName:string;
+     *  mime:string;
+     *  filename:string;
+     *  fileData:Buffer<ArrayBuffer>;
+     * }} data 
+     */
+    pushFileData (data) {
+
+        // console.log({data});
+
+        const { groupId , tableName , data:groupData } = data ;
+
+        const { fileBody , mime , filename:fileName } = groupData ;
+
+
+        const groupById = this.#groups.get(groupId);
+
+        if(!groupById) {
+            this.#groups.set(groupId , {
+                tableName , 
+                files:[{
+                    mime , fileName , fileBody ,
+                }] ,
+                tableColumns: new Map() ,
             });
             return ;
         }
 
-        const { columns } = groupsById ;
+        const { files } = groupById ;
 
-        columns.set(columnName , columnData);
+        files.push({mime , fileName , fileBody});
+        // console.log(`added file in the group <${groupId}> for <${tableName}> table`);
     }
 
     #groups;
@@ -124,10 +166,3 @@ class GroupFormData {
 
 module.exports = { GroupFormData , grouperStrategies , dataTypeValidator } ;
 
-function factory () {
-
-}
-
-function strategy () {
-
-}

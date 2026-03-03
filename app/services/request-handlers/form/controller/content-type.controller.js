@@ -13,8 +13,22 @@ const insertHandlerBundle = (handler  , payloadDataKey ) => {
     }
 }
 
-conentTypeHandlersRouter.set('multipart/form-data' , insertHandlerBundle(
-    multipartHandler , CONSTANTS?.PAYLOAD_DATA_KEY || null
+if(!CONSTANTS) {
+    throw new Error(`no required contstatns`);
+}
+
+const { FORM_CONTENT_TYPE , PAYLOAD_DATA_KEY } = CONSTANTS ;
+
+if(!PAYLOAD_DATA_KEY) {
+    throw new Error(`no required PAYLOAD_DATA_KEY constant`);
+}
+
+if(!FORM_CONTENT_TYPE) {
+    throw new Error(`no required FORM_CONTENT_TYPE constant`);
+}
+
+conentTypeHandlersRouter.set(FORM_CONTENT_TYPE , insertHandlerBundle(
+    multipartHandler , PAYLOAD_DATA_KEY
 ));
 // conentTypeHandlersRouter.set('multipart/form-data' , {
 //     handler:textPlainHandler , payloadDataKey:TEXTPLAIN_HANDLER_CONSTANTS?.PAYLOAD_DATA_KEY || null ,
