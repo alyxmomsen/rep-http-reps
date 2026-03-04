@@ -1,8 +1,15 @@
+console.log('form js loaded');
 
 window.addEventListener('DOMContentLoaded' , () => {
 
+    // grab html elements
 
-    alert('request router');``
+    const mainForm = document.getElementById('form--main');
+
+    mainForm.addEventListener("submit" , (e) => {
+        e.preventDefault();
+        console.log(e.currentTarget === mainForm);
+    });
 
 });
 

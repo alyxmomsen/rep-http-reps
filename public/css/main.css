@@ -1,3 +1,39 @@
 body {
     background-color: bisque;
 }
+
+.wrapper--main {
+	width: 999px;
+	background-color: #444464;
+	margin: 0 auto;
+	padding: 9px;
+}
+
+.flex {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.flex--col {
+    flex-direction: column;
+}
+
+.flex--jtf-ctr {
+    justify-content: center;
+}
+
+.flex--align-ctr {
+    align-items: center;
+}
+
+.flex--align-start {
+    align-items: start;
+}
+
+.flex--gap-1 {
+    gap: calc(9px * 1);
+}
+
+.flex--gap-2 {
+    gap: calc(9px * 2);
+}

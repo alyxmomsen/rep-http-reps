@@ -15,6 +15,10 @@ const PUBLIC_SRC_MAP = {
                 'main':{
                     filename:'main.css' ,
                     mime:'text/css' , 
+                } ,
+                'form':{
+                    filename:'form.css' ,
+                    mime:'text/css' , 
                 }
             } ,
         } ,

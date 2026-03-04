@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/public/css/main">
+    <link rel="stylesheet" href="/public/css/form">
     <script src="/public/js/main"></script>
     <script src="/public/js/form"></script>
     <!-- <script src=""></script> -->
@@ -29,36 +30,46 @@
         "<columnName>/MIME" , "<columnName>/original-filename" , "<columnName>/filesystem-filename" 
 
     -->
-    <form action="/api/handle-form" method="post" enctype="multipart/form-data">
-        <div>
-            <input type="text" name="G11.users.name.string" id="">
-            <input type="text" name="G11.users.last-name.string" id="">
-            <input type="file" name="G11.users.avatar.binary" id="" accept=".img, .jpeg, .png">
-            <input type="file" name="G11.users.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
-            <input type="file" name="G11.users.logo.binary" id="" accept=".img, .jpeg, .png">
+    <div class="wrapper--main">
+        <div class="wrapper form--main" id="">
+            <form action="/api/handle-form" method="post" enctype="multipart/form-data" id="form--main">
+                <div class="flex flex--col flex--gap-2">
+                    <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+                        <h3>user</h3>
+                        <input type="text" name="G11.users.name.string" id="">
+                        <input type="text" name="G11.users.last-name.string" id="">
+                        <input type="file" name="G11.users.avatar.binary" id="" accept=".img, .jpeg, .png">
+                        <input type="file" name="G11.users.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
+                        <input type="file" name="G11.users.logo.binary" id="" accept=".img, .jpeg, .png">
+                    </div>
+                    <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+                        <h3>playlist element</h3>
+                        <input type="text" name="G21.playlist-1.title.string" id="">
+                        <input type="text" name="G21.playlist-1.description.string" id="">
+                        <input type="file" name="G21.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
+                        <input type="file" name="G21.playlist-1.video-mid.binary" id="">
+                        <input type="file" name="G21.playlist-1.video-fulhd.binary" id="">
+                    </div>
+                    <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+                        <h3>playlist element</h3>
+                        <input type="text" name="G22.playlist-1.title.string" id="">
+                        <input type="text" name="G22.playlist-1.description.string" id="">
+                        <input type="file" name="G22.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
+                        <input type="file" name="G22.playlist-1.video-mid.binary" id="">
+                        <input type="file" name="G22.playlist-1.video-fulhd.binary" id="">
+                    </div>
+                    <!-- <div>
+                        <input type="text" name="g21.other-video.title.string" id="">
+                        <input type="text" name="g21.other-video.description.string" id="">
+                        <input type="file" name="g21.other-video.main-video.binary" id="">
+                    </div> -->
+                    <div class="flex flex--gap-1">
+                        <input type="submit" value="submit">
+                        <input type="reset" value="reset">
+                    </div>
+                </div>
+            </form>
         </div>
-        <div>
-            <input type="text" name="G21.playlist-1.title.string" id="">
-            <input type="text" name="G21.playlist-1.description.string" id="">
-            <input type="file" name="G21.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
-            <input type="file" name="G21.playlist-1.video-mid.binary" id="">
-            <input type="file" name="G21.playlist-1.video-fulhd.binary" id="">
-        </div>
-        <div>
-            <input type="text" name="G22.playlist-1.title.string" id="">
-            <input type="text" name="G22.playlist-1.description.string" id="">
-            <input type="file" name="G22.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
-            <input type="file" name="G22.playlist-1.video-mid.binary" id="">
-            <input type="file" name="G22.playlist-1.video-fulhd.binary" id="">
-        </div>
-        <!-- <div>
-            <input type="text" name="g21.other-video.title.string" id="">
-            <input type="text" name="g21.other-video.description.string" id="">
-            <input type="file" name="g21.other-video.main-video.binary" id="">
-        </div> -->
-        <div>
-            <input type="submit" value="submit">
-        </div>
-    </form>
+    </div>
 </body>
 </html>
