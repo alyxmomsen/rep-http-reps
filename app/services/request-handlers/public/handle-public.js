@@ -24,11 +24,43 @@ const PUBLIC_SRC_MAP = {
                 'main':{
                     filename:'main.js' ,
                     mime:'text/javascript' , 
+                } ,
+                'form':{
+                    filename:'form.js',
+                    mime:'text/javascript' ,
                 }
             } ,
         } ,
     }
 }
+
+class PublicRouter {
+
+    css (id , filename , mime) {
+
+    }
+
+    js(id , filename , mime) {
+        this.#addRoute('js' , id , filename , mime);
+    }
+    
+    #routes;
+
+    #addRoute (type , id , filename , mime) {
+        this.#routes.set(type , {
+            rootPath:resolve(join('.' , 'public', 'js')) , idRouter:new Map([[id , {filename , mime}]])
+        })
+
+        console.log(`added public`);
+    }
+
+    constructor () {
+        this.#routes = new Map();
+    }
+}
+
+const typeRouter = new PublicRouter();
+typeRouter.js('form' , 'form.js' , 'text/javascript');
 
 /**
  * 
@@ -40,6 +72,8 @@ async function handlePublic(req , res) {
 
     const { params , queryParams } = req ;
     const { type , id } = params || {} ;
+
+    console.log({type , id});
 
     if(!type || !id) {
         sendFallBack(
@@ -60,8 +94,19 @@ async function handlePublic(req , res) {
         );
         return ;
     }
-
+    
     const { filename  , mime } = idRouter[id] || {} ;
+    
+    if(!filename || !mime) {
+
+        // console.log({filename , mime , idRouter , id});
+
+        sendFallBack(
+            res, 400, 'handlePublic', 
+            'incorrect "filename"|"mime" arguments', {type , id , rootPath , idRouter , filename , mime , src:PUBLIC_SRC_MAP[type]}
+        );
+        return ;
+    }
 
     const fullPath = join(rootPath , filename) ;
 
