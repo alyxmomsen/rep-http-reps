@@ -18,7 +18,7 @@ const CONSTANTS = {
      */
     PAYLOAD_DATA_KEY:'boundaryRawData' ,
     // CURRENT_SCRIPT_ID:scriptId ,
-    FORM_CONTENT_TYPE:'multipart/form-data' , // for the form-handler routing
+    HTML_FORM_CONTENT_TYPE:'multipart/form-data' , // for the form-handler routing
 }
 
 if(!CONSTANTS) {
@@ -34,21 +34,21 @@ if(!CONSTANTS) {
  */
 async function multipartHandler(req , res , payload) {
 
-    console.log('multipart handler...' , {payload});
+    // console.log('multipart handler...' , {payload});
     
-    const { PAYLOAD_DATA_KEY } = CONSTANTS ;
+    // const { PAYLOAD_DATA_KEY } = CONSTANTS ;
 
-    if(!PAYLOAD_DATA_KEY) {
-        throw new Error(`no PAYLOAD_DATA_KEY constant as it required`);
+    // if(!PAYLOAD_DATA_KEY) {
+    //     throw new Error(`no PAYLOAD_DATA_KEY constant as it required`);
+    // }
+
+    // const boundaryRawString = payload[PAYLOAD_DATA_KEY] || '' ;
+
+    if(!payload) {
+        throw new Error(`no payload`);
     }
 
-    const boundaryRawString = payload[PAYLOAD_DATA_KEY] || '' ;
-
-    if(!boundaryRawString) {
-        throw new Error(`no boundary row string`);
-    }
-
-    const boundary = (boundaryRawString?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
+    const boundary = (payload?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
 
     if(!boundary) {
         sendFallBack(res ,400 , 'multipartHandler' , 'no boundary given' , {boundary , payload , contentTypePayload: boundaryRawString});

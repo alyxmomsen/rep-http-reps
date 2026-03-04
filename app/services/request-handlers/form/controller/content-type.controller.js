@@ -1,60 +1,10 @@
-const { IncomingMessage, ServerResponse } = require("node:http");
-const { multipartHandler, CONSTANTS } = require("../model/multipart.handler");
-const { errorFactory } = require("../../../../utils/error-factory");
-const { textPlainHandler , CONSTANTS:TEXTPLAIN_HANDLER_CONSTANTS } = require("../model/text-plain.handler");
+const { multipartHandler , CONSTANTS:MULTIPART_HANDLER_CONSTANTS} = require("../model/multipart.handler");
+const { ContentTypeHandlersRouter } = require("./content-type.router.model");
 
-const conentTypeHandlersRouter = new Map() ;
+const contentTypeHandlersRouter = new ContentTypeHandlersRouter ;
 
-const insertHandlerBundle = (handler  , payloadDataKey ) => {
+contentTypeHandlersRouter.registrateContentTypeHandler(
+    MULTIPART_HANDLER_CONSTANTS.HTML_FORM_CONTENT_TYPE, multipartHandler ,
+);
 
-    return {
-        handler:handler ,
-        payloadDataKey:payloadDataKey ,
-    }
-}
-
-if(!CONSTANTS) {
-    throw new Error(`no required contstatns`);
-}
-
-const { FORM_CONTENT_TYPE , PAYLOAD_DATA_KEY } = CONSTANTS ;
-
-if(!PAYLOAD_DATA_KEY) {
-    throw new Error(`no required PAYLOAD_DATA_KEY constant`);
-}
-
-if(!FORM_CONTENT_TYPE) {
-    throw new Error(`no required FORM_CONTENT_TYPE constant`);
-}
-
-conentTypeHandlersRouter.set(FORM_CONTENT_TYPE , insertHandlerBundle(
-    multipartHandler , PAYLOAD_DATA_KEY
-));
-// conentTypeHandlersRouter.set('multipart/form-data' , {
-//     handler:textPlainHandler , payloadDataKey:TEXTPLAIN_HANDLER_CONSTANTS?.PAYLOAD_DATA_KEY || null ,
-// });
-// conentTypeHandlersRouter.set('multipart/form-data' , multipartHandler);
-
-/**
- * 
- * @param {string} contentType
- * @returns {((req:IncomingMessage , res:ServerResponse , payload:Object) => Promise<any>)} 
- */
-function contentTypeHandlerFactory (contentType) {
-    const handlerBundle = conentTypeHandlersRouter.get(contentType);
-    if(!handlerBundle) throw new Error(JSON.stringify(errorFactory(
-        'contentTypeHandlerFactory', 
-        'unknown contenttype' ,
-        {contentType} ,
-    )))
-    return handlerBundle ;
-}
-
-module.exports = { contentTypeHandlerFactory } 
-
-// /**
-//  * @param {string} contentType 
-//  */
-// function addContentType (contentType) {
-//     return conentTypeHandlersRouter.set()
-// }
+module.exports = { contentTypeHandlersRouter } ;

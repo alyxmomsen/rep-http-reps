@@ -2,7 +2,7 @@ const { readFile } = require("node:fs/promises");
 const { IncomingMessage, ServerResponse } = require("node:http");
 const { resolve, join } = require("node:path");
 const { sendFallBack } = require("../../../utils/error-factory");
-const { contentTypeHandlerFactory } = require("./controller/content-type.controller");
+const { contentTypeHandlersRouter } = require("./controller/content-type.controller");
 
 const FORM_HANDLER_CONSTANTS = {
     ASSETS_PATH:'./assets/html/form.html' ,
@@ -59,9 +59,13 @@ class FormHandler {
             а именно ключ для payload объекта. именно этот ключ будет использован
             в обработчике для получения payload значения
             соответственно, с каждым обработчиком приходит свой ключ */
-            const { handler , payloadDataKey:PAYLOAD_DATA_KEY } = contentTypeHandlerFactory(contentType);
-            console.log(contentTypeHandlerFactory(contentType));
-            await handler(req , res  , { [PAYLOAD_DATA_KEY]:contentTypeHeaderPayload });
+            // const { handler , payloadDataKey:PAYLOAD_DATA_KEY } = useContentTypeHandlerRouter(contentType);
+            // console.log(useContentTypeHandlerRouter(contentType));
+            // await handler(req , res  , { [PAYLOAD_DATA_KEY]:contentTypeHeaderPayload });
+
+            const contentTypeHandlerInterface = contentTypeHandlersRouter.getHandlerInterface(contentType);
+            await contentTypeHandlerInterface.handle(req ,res , contentTypeHeaderPayload);
+
         }
         catch (e) {
             console.log({e});
