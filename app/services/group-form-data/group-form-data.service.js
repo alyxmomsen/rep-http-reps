@@ -92,29 +92,35 @@ class GroupFormData {
 
         const { columnName , columnDataType , columnValue } = groupItemData ;
 
-        const groupById = this.#groups.get(groupId);
+        /* represent "database table row" */
+        const groupById = this.#groups.get(groupId); 
 
+        /* represenet "table row column" */
+        const tableColumnBundle = {
+            dataType:columnDataType ,
+            data:columnValue ,
+        }
+
+        /* creating new Group by group-id */
         if(!groupById) {
-            this.#groups.set(groupId , {
-                tableName , 
-                files:[] ,
-                tableColumns:new Map([[
-                    columnName , {
-                        dataType:columnDataType ,
-                        data:columnValue ,
-                    }
-                ]]),
-            });
+            this.#groups.set(groupId , 
+                this.#groupFactory(
+                    tableName , 
+                    undefined , 
+                    this.#FIELDBundleFactory(
+                        columnName , 
+                        columnDataType , 
+                        columnValue
+                    ) ,
+                )
+            );
             // console.log(`added column <${columnName}> in the group <${groupId}> for <${tableName}> table`);
             return ;
         }
 
+        /* if group by the id is exist  */
         const { tableColumns } = groupById ;
-
-        tableColumns.set(columnName , {
-            dataType:columnDataType ,
-            data:columnValue ,
-        });
+        tableColumns.set(...this.#FIELDBundleFactory(columnName , columnDataType , columnValue));
 
         // console.log(`added column <${columnName}> in the group <${groupId}> for <${tableName}> table`);
     }
@@ -131,30 +137,67 @@ class GroupFormData {
      */
     pushFileData (data) {
 
-        // console.log({data});
-
         const { groupId , tableName , data:groupData } = data ;
 
         const { fileBody , mime , filename:fileName } = groupData ;
 
-
         const groupById = this.#groups.get(groupId);
 
         if(!groupById) {
-            this.#groups.set(groupId , {
-                tableName , 
-                files:[{
-                    mime , fileName , fileBody ,
-                }] ,
-                tableColumns: new Map() ,
-            });
+            this.#groups.set(
+                groupId , 
+                this.#groupFactory(
+                    tableName , 
+                    this.#FILEBundleFactory(mime , fileName , fileBody) ,
+                    undefined ,
+                )
+            );
             return ;
         }
 
         const { files } = groupById ;
 
-        files.push({mime , fileName , fileBody});
+        files.push(this.#FILEBundleFactory(mime , fileName , fileBody));
         // console.log(`added file in the group <${groupId}> for <${tableName}> table`);
+    }
+
+    /**
+     * @param {string} columnName 
+     * @param {string} dataType 
+     * @param {string} data 
+     * @returns {{columnName:string;tableColumnBundle:{dataType:string;data:string}}}
+     */
+    #FIELDBundleFactory (columnName ,dataType ,data) {
+
+        const tableColumnBundle = { dataType , data }
+
+        return {
+            columnName , 
+            tableColumnBundle ,
+        }
+    }
+
+
+    #FILEBundleFactory (mime , fileName , fileBody) {
+        return {
+            mime , fileName , fileBody
+        }
+    }
+
+    /**
+     * 
+     * @param {string} tableName 
+     * @param {{mime:string;fileName:string;fileBody:Buffer<ArrayBuffer>}|undefined} [fileData] 
+     * @param {{columnName:string;tableColumnBundle:{dataType:string;data:string}}|undefined} [tableColumnData] 
+     * @returns 
+     */
+    #groupFactory (tableName , fileData , tableColumnData) {
+        const { columnName , tableColumnBundle } = tableColumnData || {} ;
+        return {
+            tableName ,
+            files:fileData ? [fileData] : [] ,
+            tableColumns: tableColumnData ? new Map([[columnName , tableColumnBundle]]) : new Map() ,
+        }
     }
 
     #groups;
