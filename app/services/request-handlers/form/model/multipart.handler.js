@@ -11,11 +11,6 @@ const { GroupFormData, dataTypeValidator } = require("../../../group-form-data/g
 // const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
 
 const CONSTANTS = {
-    /* 
-    тот самый ключ который сопровождает bundle 
-    возвращаемый фабрикой contentTypeHandlerFactory
-    он же используется здесь ниже для взятия значения из объекта payload
-     */
     PAYLOAD_DATA_KEY:'boundaryRawData' ,
     // CURRENT_SCRIPT_ID:scriptId ,
     HTML_FORM_CONTENT_TYPE:'multipart/form-data' , // for the form-handler routing
@@ -33,16 +28,6 @@ if(!CONSTANTS) {
  * @returns 
  */
 async function multipartHandler(req , res , payload) {
-
-    // console.log('multipart handler...' , {payload});
-    
-    // const { PAYLOAD_DATA_KEY } = CONSTANTS ;
-
-    // if(!PAYLOAD_DATA_KEY) {
-    //     throw new Error(`no PAYLOAD_DATA_KEY constant as it required`);
-    // }
-
-    // const boundaryRawString = payload[PAYLOAD_DATA_KEY] || '' ;
 
     if(!payload) {
         throw new Error(`no payload`);
@@ -74,24 +59,12 @@ async function multipartHandler(req , res , payload) {
 
         for (const part of parts) {
             try {
+
                 const { 
-                    body:formDataPartBody , headers:formDataPartHeadersRawData 
-                } = splitFormDataPart(part);
-                const formDataPartHeaders = parseFormDataPartHeaders(
-                    formDataPartHeadersRawData.toString('utf-8')
-                );
-                const mime = formDataPartHeaders['content-type'] || null ;
-                const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
-                if(!contentDisposition) {
-                    // throwCustomErrorFactory({
-                    //     code:2 ,
-                    //     subject:'multipartHandler' ,
-                    //     message:'no content-disposition header' ,
-                    // })()
-                    throw new Error(`no content-disposition header`);
-                }
-                const { name: nameAttr , filename: filename } = parseContentDisposition(contentDisposition);
-                const { columnName , groupId , tableName , dataType } = parseNameAttr(nameAttr);
+                    body:formDataPartBody , fileMIME , fileName , parsedNameAttribute 
+                } = parseFormDataPart(part);
+
+                const { groupId , tableName , columnName , dataType } = parsedNameAttribute ;
 
                 const GROUP_NAMES = {
                     FILE:'file' ,
@@ -99,14 +72,14 @@ async function multipartHandler(req , res , payload) {
                 }
 
                 // scenario #1: if file
-                if(mime || filename) {
+                if(fileMIME || fileName) {
 
                     const fileData = {
                         groupId, tableName,
                         data: {
                             fileBody:formDataPartBody ,
-                            mime ,
-                            filename ,
+                            fileMIME ,
+                            fileName ,
                         }
                     }
 
@@ -116,7 +89,6 @@ async function multipartHandler(req , res , payload) {
                 }
                 
                 // scenario #2: if primitive field
-
                 const plainData = {
                     groupId, tableName,
                     data: {
@@ -133,8 +105,6 @@ async function multipartHandler(req , res , payload) {
         
                 const errorMessage = e.message ;
                 console.log({errorMessage  ,e , cs:CONSTANTS.CURRENT_SCRIPT_ID});
-                // errorService.handleError(CONSTANTS.CURRENT_SCRIPT_ID , 1 , {foo:'bar'});
-                
 
             }
         }
@@ -218,6 +188,49 @@ function insertIvalidGroupData () {
 
 /**
  * 
+ * @param {Buffer<ArrayBuffer>} formDataPart 
+ * @returns {{
+ *  body:Buffer<ArrayBuffer>;
+ *  fileMIME:string|null;
+ *  fileName:string|null;
+ *  parsedNameAttribute:{
+ *   groupId:string;
+ *   tableName:string;
+ *   columnName?:string;
+ *   dataType?:string;
+ *  }
+ * }}
+ */
+function parseFormDataPart (formDataPart) {
+    const { 
+        body , headers:formDataPartHeadersRawData 
+    } = splitFormDataPart(formDataPart);
+    const formDataPartHeaders = parseFormDataPartHeaders(
+        formDataPartHeadersRawData.toString('utf-8')
+    );
+    const mime = formDataPartHeaders['content-type'] || null ;
+    const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
+    if(!contentDisposition) {
+        throw new Error(`no content-disposition header`);
+    }
+    const { name: nameAttr , filename: filename } = parseContentDisposition(contentDisposition);
+    const { columnName , groupId , tableName , dataType } = parseNameAttr(nameAttr);
+
+    return {
+        body ,
+        fileMIME:mime ,
+        fileName:filename ,
+        parsedNameAttribute: {
+            groupId ,
+            tableName ,
+            columnName ,
+            dataType ,
+        }
+    }
+}
+
+/**
+ * 
  * @param {string} nameAttr 
  * @returns {{
  *  groupId:string;
@@ -234,7 +247,6 @@ function parseNameAttr (nameAttr) {
         groupId, tableName, columnName , dataType ,
     }
 }
-
 
 /**
  * 
@@ -284,12 +296,6 @@ function splitFormDataPart (formDataPart) {
     const separatorIndex = findSeparatorIndexInBuffer(formDataPart , separatorBuffer);
 
     if(separatorIndex === -1) {
-        // const errorBody = {
-        //     subject:'multipartHandler' ,
-        //     code:1,
-        //     message:'incorrect form data part',
-        // }
-        // throwCustomErrorFactory(errorBody)()
         throw new Error(`incorrect form data part`);
     }
 
