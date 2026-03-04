@@ -30,7 +30,7 @@ const filesModel = new DBController({
         [DEFAULT_VALUE]:undefined ,
         [REQUIRED]:true ,
     } ,
-    originaleFilename:{
+    originalFilename:{
         [VALUE_TYPE]:'string' ,
         [DEFAULT_VALUE]:undefined ,
         [REQUIRED]:false ,

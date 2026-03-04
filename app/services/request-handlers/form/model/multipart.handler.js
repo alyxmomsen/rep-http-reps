@@ -102,7 +102,7 @@ async function multipartHandler(req , res , payload) {
                 if(mime || filename) {
 
                     const fileData = {
-                        groupId , tableName , dataType: GROUP_NAMES.FILE,
+                        groupId, tableName,
                         data: {
                             fileBody:formDataPartBody ,
                             mime ,
@@ -118,7 +118,7 @@ async function multipartHandler(req , res , payload) {
                 // scenario #2: if primitive field
 
                 const plainData = {
-                    groupId , tableName , dataType: GROUP_NAMES.PLAIN_FIELD,
+                    groupId, tableName,
                     data: {
                         columnName ,
                         columnDataType:dataType ,
@@ -138,74 +138,74 @@ async function multipartHandler(req , res , payload) {
 
             }
         }
+        
+        const addedRowsData = [] ;
+        /* получаем все сформированые группы для сторринга в БД */
+        const assembledGroupsByTablename = groupFormData.getGroups(); // need extractor strategy
+        for (const [ tableName , { files , rows } ] of Object.entries(assembledGroupsByTablename)) {
 
-        const assembledGroupsByTablename = groupFormData.getGroups();
+            console.log('tablename: ' , tableName);
 
-        for (const [ talbeName , { files , rows } ] of Object.entries(assembledGroupsByTablename)) {
+            /* в этот объект падают данные для колонок таблицы БД 
+            "Key" название колонки, "Value" - содержимое 
+            */
+            const normalizedColumns  = {} ;
 
-            console.log('tablename: ' , talbeName);
-
+            /* файлы */
             for (const fileData of files) {
                 console.log({fileData});
+
+                const { mime , fileName  , fileBody } = fileData ;
+                /* пробуем сохранять файл в файловую систему
+                по-умолчанию папка "/uploads" в корне проекта */
+                const { error , success } = await filemanager.write(fileBody);
+
+                /* неудача */
+                if(error) {
+                    throw new Error(`filemanager error` , JSON.stringify(error));
+                }
+                
+                /* техническая ошибка, по-какой-то причине не вернулся объект "success" */
+                if(!success) {
+                    throw new Error(`filemanager error: no success` , JSON.stringify({success , error}));
+                }
+
+                /* получаем filename, - название файла в ФС, в виде хэша */
+                const { filename:fmFilename } = success ;
+
+                // сохраняем колонки
+                normalizedColumns['filesistemFilename'] = fmFilename ;
+                normalizedColumns['mime'] = mime ;
+                normalizedColumns['originalFilename'] = fileName ;
             }
 
-            for (const [ columnName , columnData] of Object.entries(rows) ) {
-                console.log(columnName , columnData);
+            /* сохраняем обычные инпуты */
+            for (const [ columnName , column ] of Object.entries(rows)) {
+                // console.log({columnName  ,column});
+                const { data:columnData } = column ;
+                normalizedColumns[columnName] = columnData.toString('utf-8') ;
             }
+            
+            // получаем контроллер для работы с базой данных, 
+            // передаем имя модели, которое совпадает с ключом Мэпа,
+            //  в котором хранятся модели конроллеров
+            const dbController = dbControllerFactory(tableName);
+            const rowId = dbController.addOne( tableName, normalizedColumns);
+
+            dbController.readOne('123' , '123');
+
+            addedRowsData.push({
+                rowId , row:normalizedColumns ,
+            });
+
+            console.log({addedRowsData});
         }
 
 
-        return ;
-
-        for (const [tableName , tableRows ] of Object.entries(assembledGroupsByTablename) ) {
-            for (const tableRow of tableRows) {
-                /* 
-                для извлечения ключей нужна модель, 
-                которая позволит извлекать 
-                значения по корректным ключам, 
-                либо нужно что бы в "tableRow" была строка вида "{Object.<string,string|number>}"
-                потому что "dbController.addOne(tableRow)" ожидает значения именно такого вида
-                for example:
-                const {value , contentType} = tableRow[KEY] ;
-                ключ "KEY" вероятно должен придти из "dbControllerFactory(tableName)"
-                в бандле с "dbController"
-
-                скорее всего нужно что бы "groupFormData.getGroups()" формировал данные
-                следущего вида contentType:string|file
-                и если это файл, то сопровождаемый полем "mime"
-                 
-                и поскольку в базу данных мы не отпавляем файлы, то
-                вероятно нужно сначала программно выяснить что за тип данных получаем из "tableRow"
-                например , если это "video/matroska"|"image/jpeg" , то 
-                сначал нужно сохранить данные в файловой системе, получить имя файла и тд
-                и сформировав корректные поля отправить их базу данных
-
-                т.е должен быть общий обработчик, который этим занимается, -
-                обращается к файловому менеджеру для сохранения файла,
-                формирует корректные поля и вызывает "dbControllerFactory(tableName)" 
-                */
-                console.log({tableRow}) ;
-
-                try {
-                    /* 
-                    эта фабрика и метод контроллера должны вызываться внутри обработчика 
-                    так же как и обращение к файловой системе
-                    dbController этим не занимается! разделение ответственности!
-                    т.е если файл, по каким-то причинам не удается сохранить, то
-                    обращение к базе данных не происходит, в базу данных Buffer не отправляется.
-                    */
-                    const dbController = dbControllerFactory(tableName);
-                    dbController.addOne({foo:'bar' , baz:'foo' , title:'foobarbaz'});
-                }
-                catch (e) {
-                    console.log({e});
-                    err
-                }
-
-            }
-        }
-
-        res.end('hello world');
+        res.writeHead(200 , 'ok' , {
+            'content-type':'application/json' ,
+        });
+        res.end(JSON.stringify(addedRowsData));
     });
 
 }

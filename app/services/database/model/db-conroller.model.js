@@ -1,3 +1,4 @@
+const { database } = require("../database");
 
 const CONSTANTS = {
     CRUD:{
@@ -14,7 +15,7 @@ const CONSTANTS = {
         REQUIRED:'REQUIRED' ,
     } ,
     DB_TABLES_NAMES:{
-        FILES:'files',
+        VIDEO:'video',
         USERS:'users',
     }
 }
@@ -25,7 +26,9 @@ class DBController {
      * 
      * @param {Object.<string,string|Buffer<ArrayBuffer>>} incomingData 
      */
-    addOne (incomingData) {
+    addOne (tablename , incomingData) {
+
+        // console.log({incomingData});
 
         const allErrors = [] ;
 
@@ -44,7 +47,7 @@ class DBController {
             если значение поля является "falsy" значением, то добавляется запись в массив "propertyErrors"
             */ 
             const valueByPropertyName = incomingData[MODEL_PROPERTY_NAME] ;
-            console.log({MODEL_PROPERTY_NAME , valueByPropertyName});
+            // console.log({MODEL_PROPERTY_NAME , valueByPropertyName});
             if(!valueByPropertyName) {
                 /* применение единой модели фабрики ошибок  */
                 propertyErrors.push(errorFactoryUtil(
@@ -62,7 +65,7 @@ class DBController {
             const defaultValueModel = MODEL_PROPERTY_VALUE_CONFIG[MODEL_KEYS.DEFAULT_VALUE] ;
 
             /* логирование для отладки */
-            console.log({valueTypeModel , requiredFlagModel  ,defaultValueModel , MODEL_PROPERTY_VALUE_CONFIG});
+            // console.log({valueTypeModel , requiredFlagModel  ,defaultValueModel , MODEL_PROPERTY_VALUE_CONFIG});
 
             /* валидация типа входных данных в соответствии с моделью */
             if(typeof valueByPropertyName !== valueTypeModel) {
@@ -89,10 +92,19 @@ class DBController {
         for (const error of allErrors) {
             console.log({error});
         }
-        console.log({validColumns});
+
+        // console.log({validColumns});
+
+        const rowid = database.createOne(tablename ,validColumns);
+
+        return rowid ;
     }
 
-    #validation (data) {}
+    readOne (tableId , rowId) {
+        database.readOne('tableId' , 'rowId');
+    }
+
+    // #validation (data) {}
 
     #model;
 
