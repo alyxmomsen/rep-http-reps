@@ -59,32 +59,23 @@ async function multipartHandler(req , res , payload) {
 
         for (const part of parts) {
             try {
-
                 const { 
                     body:formDataPartBody , fileMIME , fileName , parsedNameAttribute 
                 } = parseFormDataPart(part);
-
                 const { groupId , tableName , columnName , dataType } = parsedNameAttribute ;
-
-                const GROUP_NAMES = {
-                    FILE:'file' ,
-                    PLAIN_FIELD:'field' ,
-                }
 
                 // scenario #1: if file
                 if(fileMIME || fileName) {
-
                     const fileData = {
                         groupId, tableName,
                         data: {
                             fileBody:formDataPartBody ,
                             fileMIME ,
                             fileName ,
+                            columnName ,
                         }
                     }
-
                     groupFormData.pushFileData(fileData);
-
                     continue ;
                 }
                 
@@ -97,78 +88,98 @@ async function multipartHandler(req , res , payload) {
                         columnValue: formDataPartBody
                     }
                 }
-
                 groupFormData.pushPlainFileldData(plainData);
 
             }
             catch (e) {
-        
                 const errorMessage = e.message ;
                 console.log({errorMessage  ,e , cs:CONSTANTS.CURRENT_SCRIPT_ID});
-
             }
         }
         
         const addedRowsData = [] ;
         /* получаем все сформированые группы для сторринга в БД */
         const assembledGroupsByTablename = groupFormData.getGroups(); // need extractor strategy
-        for (const [ tableName , { files , rows } ] of Object.entries(assembledGroupsByTablename)) {
+        for (const [ tableName , groups ] of Object.entries(assembledGroupsByTablename)) {
 
-            console.log('tablename: ' , tableName);
-
-            /* в этот объект падают данные для колонок таблицы БД 
-            "Key" название колонки, "Value" - содержимое 
-            */
-            const normalizedColumns  = {} ;
-
-            /* файлы */
-            for (const fileData of files) {
-                console.log({fileData});
-
-                const { mime , fileName  , fileBody } = fileData ;
-                /* пробуем сохранять файл в файловую систему
-                по-умолчанию папка "/uploads" в корне проекта */
-                const { error , success } = await filemanager.write(fileBody);
-
-                /* неудача */
-                if(error) {
-                    throw new Error(`filemanager error` , JSON.stringify(error));
-                }
+            for (const group of groups) {
+                // console.log({
+                //     tableName ,
+                //     group
+                // });
+                /* в этот объект падают данные для колонок таблицы БД 
+                "Key" название колонки, "Value" - содержимое 
+                */
+                const normalizedColumns  = {} ;
+                const normalizedFilesData = {} ;
                 
-                /* техническая ошибка, по-какой-то причине не вернулся объект "success" */
-                if(!success) {
-                    throw new Error(`filemanager error: no success` , JSON.stringify({success , error}));
+                const { files , rows } = group ;
+
+                /* файлы */
+                for (const fileData of files) {
+                    
+                    const { mime , fileName  , fileBody , columnName } = fileData ;
+                    // console.log({fileData});
+                    /* пробуем сохранять файл в файловую систему
+                    по-умолчанию папка "/uploads" в корне проекта */
+                    const { error , success } = await filemanager.write(fileBody);
+                    // console.log({fileData , success , error});
+
+                    /* неудача */
+                    if(error) {
+                        throw new Error(`filemanager error` , JSON.stringify(error));
+                    }
+                    
+                    /* техническая ошибка, по-какой-то причине не вернулся объект "success" */
+                    if(!success) {
+                        throw new Error(`filemanager error: no success` , JSON.stringify({success , error}));
+                    }
+    
+                    /* получаем filename, - название файла в ФС, в виде хэша */
+                    const { filename:fmFilename } = success ;
+    
+                    // сохраняем колонки
+                    normalizedColumns[`${columnName}/filesistemFilename`] = fmFilename ;
+                    normalizedColumns[`${columnName}/mime`] = mime ;
+                    normalizedColumns[`${columnName}/originalFilename`] = fileName ;
                 }
 
-                /* получаем filename, - название файла в ФС, в виде хэша */
-                const { filename:fmFilename } = success ;
+                // 
+                for (const [ k , v ] of Object.entries(normalizedColumns)) {
+                    console.log({k,v});
+                }
+    
+                /* сохраняем обычные инпуты */
+                for (const [ columnName , column ] of Object.entries(rows)) {
 
-                // сохраняем колонки
-                normalizedColumns['filesistemFilename'] = fmFilename ;
-                normalizedColumns['mime'] = mime ;
-                normalizedColumns['originalFilename'] = fileName ;
-            }
-
-            /* сохраняем обычные инпуты */
-            for (const [ columnName , column ] of Object.entries(rows)) {
-                // console.log({columnName  ,column});
-                const { data:columnData } = column ;
-                normalizedColumns[columnName] = columnData.toString('utf-8') ;
-            }
+                    // console.log({columnName  ,column});
+                    const { data:columnData } = column ;
+                    normalizedColumns[columnName] = columnData.toString('utf-8') ;
+                }
             
-            // получаем контроллер для работы с базой данных, 
-            // передаем имя модели, которое совпадает с ключом Мэпа,
-            //  в котором хранятся модели конроллеров
-            const dbController = dbControllerFactory(tableName);
-            const rowId = dbController.addOne( tableName, normalizedColumns);
+                // получаем контроллер для работы с базой данных, 
+                // передаем имя модели, которое совпадает с ключом Мэпа,
+                //  в котором хранятся модели конроллеров
 
-            dbController.readOne('123' , '123');
+                try {
 
-            addedRowsData.push({
-                rowId , row:normalizedColumns ,
-            });
+                    const dbController = dbControllerFactory(tableName);
+                    const rowId = dbController.addOne( tableName, normalizedColumns);
+        
+                    dbController.readOne('123' , '123'); // DB TEST!!!
+        
+                    addedRowsData.push({
+                        rowId , row:normalizedColumns ,
+                    });
+                }
+                catch (e) {
+                    console.log({e});
+                }
 
-            console.log({addedRowsData});
+    
+                console.log({addedRowsData});
+            }
+
         }
 
 

@@ -12,17 +12,43 @@
 <body>
     <!-- <form action="/api/handle-form" method="post" enctype="text/plain"> -->
     <!-- <form action="/api/handle-form" method="post" enctype="application/x-www-form-urlencoded"> -->
+    
+    <!-- структура!
+
+        структура "name"
+        <group-id> <table-name> <column-name> <data-type (инпуты отдают "стринг", но для БД нужен тип данных)>
+        group-id: группа это одна строка в таблице БД
+        table-name: целевая таблица в БД
+        column-name: одна колонка строки группы
+        
+        отельное внимание на "column-name" для файла:
+
+        колумн-нэйм файла будет использоваться как префих для названия колонки в БД
+        так как для файла требуется по-меньшей мере три колонки, -
+        "MIME" , "original-filename" , "filesystem-filename" , следовательно в БД будет:
+        "<columnName>/MIME" , "<columnName>/original-filename" , "<columnName>/filesystem-filename" 
+
+    -->
     <form action="/api/handle-form" method="post" enctype="multipart/form-data">
         <div>
-            <input type="text" name="g1.video.title.string" id="">
-            <input type="text" name="g1.video.description.string" id="">
-            <input type="file" name="g1.video" id="">
+            <input type="text" name="g11.users.name.string" id="">
+            <input type="text" name="g11.users.last-name.string" id="">
+            <input type="file" name="g11.users.avatar.binary" id="" accept=".img, .jpeg, .png">
+            <input type="file" name="g11.users.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
+            <input type="file" name="g11.users.logo.binary" id="" accept=".img, .jpeg, .png">
         </div>
         <div>
-            <input type="text" name="g2.video.title.string" id="">
-            <input type="text" name="g2.video.description.string" id="">
-            <input type="file" name="g2.video" id="">
+            <input type="text" name="g31.playlist-1.title.string" id="">
+            <input type="text" name="g31.playlist-1.description.string" id="">
+            <input type="file" name="g31.playlist-1.video-min.binary" id="">
+            <input type="file" name="g31.playlist-1.video-mid.binary" id="">
+            <input type="file" name="g31.playlist-1.video-fulhd.binary" id="">
         </div>
+        <!-- <div>
+            <input type="text" name="g21.other-video.title.string" id="">
+            <input type="text" name="g21.other-video.description.string" id="">
+            <input type="file" name="g21.other-video.main-video.binary" id="">
+        </div> -->
         <div>
             <input type="submit" value="submit">
         </div>

@@ -52,17 +52,7 @@ class FormHandler {
         }
 
         try {
-            /* фабрика возвращает bundle {handler:function;payloadDataKey:string} , 
-            в котором содержится: 
-            handler (handler:function) 
-            и сопроводительные данные (payloadDataKey:string)
-            а именно ключ для payload объекта. именно этот ключ будет использован
-            в обработчике для получения payload значения
-            соответственно, с каждым обработчиком приходит свой ключ */
-            // const { handler , payloadDataKey:PAYLOAD_DATA_KEY } = useContentTypeHandlerRouter(contentType);
-            // console.log(useContentTypeHandlerRouter(contentType));
-            // await handler(req , res  , { [PAYLOAD_DATA_KEY]:contentTypeHeaderPayload });
-
+            
             const contentTypeHandlerInterface = contentTypeHandlersRouter.getHandlerInterface(contentType);
             await contentTypeHandlerInterface.handle(req ,res , contentTypeHeaderPayload);
 

@@ -60,15 +60,16 @@ class GroupFormData {
             const groupByTableName = groups[tableName] ;
 
             if(!groupByTableName) {
-                groups[tableName] = {
+                groups[tableName] = [{
                     files:tableFiles ,
                     rows:tableRows ,
-                };
+                }];
                 continue ;
             }
 
-            groupByTableName.files = tableFiles ;
-            groupByTableName.rows = tableRows ;
+            groupByTableName.push({
+                files:tableFiles , rows:tableRows ,
+            });
         }
 
         return groups ;
@@ -120,7 +121,10 @@ class GroupFormData {
 
         /* if group by the id is exist  */
         const { tableColumns } = groupById ;
-        tableColumns.set(...this.#FIELDBundleFactory(columnName , columnDataType , columnValue));
+        const { 
+            columnName:colName , tableColumnBundle:colBundle 
+        } = this.#FIELDBundleFactory(columnName , columnDataType , columnValue) ;
+        tableColumns.set(colName, colBundle);
 
         // console.log(`added column <${columnName}> in the group <${groupId}> for <${tableName}> table`);
     }
@@ -130,25 +134,22 @@ class GroupFormData {
      * @param {{
      *  groupId:string;
      *  tableName:string;
-     *  mime:string;
-     *  filename:string;
-     *  fileData:Buffer<ArrayBuffer>;
+     *  data:{fileBody:Buffer<ArrayBuffer>;fileName:string;fileMIME:string};
      * }} data 
      */
     pushFileData (data) {
 
-        const { groupId , tableName , data:groupData } = data ;
-
-        const { fileBody , mime , filename:fileName } = groupData ;
+        const { groupId , tableName , data:groupData} = data ;
+        const { fileBody , fileMIME:mime , fileName , columnName } = groupData ;
 
         const groupById = this.#groups.get(groupId);
-
+    
         if(!groupById) {
             this.#groups.set(
                 groupId , 
                 this.#groupFactory(
                     tableName , 
-                    this.#FILEBundleFactory(mime , fileName , fileBody) ,
+                    this.#FILEBundleFactory(mime , fileName , fileBody , columnName) ,
                     undefined ,
                 )
             );
@@ -157,8 +158,8 @@ class GroupFormData {
 
         const { files } = groupById ;
 
-        files.push(this.#FILEBundleFactory(mime , fileName , fileBody));
-        // console.log(`added file in the group <${groupId}> for <${tableName}> table`);
+        files.push(this.#FILEBundleFactory(mime , fileName , fileBody , columnName));
+        console.log(`added file in the group <${groupId}> for <${tableName}> table`);
     }
 
     /**
@@ -178,9 +179,9 @@ class GroupFormData {
     }
 
 
-    #FILEBundleFactory (mime , fileName , fileBody) {
+    #FILEBundleFactory (mime , fileName , fileBody , columnName) {
         return {
-            mime , fileName , fileBody
+            mime , fileName , fileBody , columnName
         }
     }
 
