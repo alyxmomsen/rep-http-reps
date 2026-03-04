@@ -1,14 +1,15 @@
 const { errorFactory } = require("../../../utils/error-factory");
 const { DBController , CONSTANTS:DB_CONTROLLER_CONSTANTS } = require("../model/db-conroller.model");
-const { filesModel, usersModel } = require("../models/file.model");
+const { filesModel, usersModel , playlist1 } = require("../models/file.model");
 
-const { VIDEO , USERS } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
+const { VIDEO , USERS , PLAYLIST_1 } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
 
 const models = new Map();
 
 /* регистрация моделей валидации полей для отправки в базу данных */
 models.set(VIDEO , filesModel);
 models.set(USERS , usersModel);
+models.set(PLAYLIST_1 , playlist1);
 
 /**
  * 
@@ -16,6 +17,18 @@ models.set(USERS , usersModel);
  * @returns {DBController}
  */
 function dbControllerFactory (modelName) {
+
+    /* в аргумент прилетает название таблицы которое прописано в HTML форме
+    при этом ключи мэпа( который хранит модели) соответствуют названию таблицы
+    models.set(VIDEO , filesModel); 
+    канонические значения ключей хранятся в константах "DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES"
+    DB_TABLES_NAMES:{
+        VIDEO:'video',
+        USERS:'users',
+        PLAYLIST_1:'playlist-1', и тд
+    }
+    
+    */
 
     const model = models.get(modelName);
     if(!model) {

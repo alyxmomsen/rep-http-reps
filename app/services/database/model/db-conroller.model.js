@@ -1,5 +1,6 @@
 const { database } = require("../database");
 
+
 const CONSTANTS = {
     CRUD:{
         CREATE_ONE_ROW:'CREATE_ONE_ROW',
@@ -14,9 +15,11 @@ const CONSTANTS = {
         DEFAULT_VALUE:'DEFAULT_VALUE' ,
         REQUIRED:'REQUIRED' ,
     } ,
+    /* таблица ключей для таблиц базы данных*/
     DB_TABLES_NAMES:{
         VIDEO:'video',
         USERS:'users',
+        PLAYLIST_1:'playlist-1',
     }
 }
 
@@ -101,6 +104,7 @@ class DBController {
     }
 
     readOne (tableId , rowId) {
+        /* DB_TEST */
         database.readOne('tableId' , 'rowId');
     }
 

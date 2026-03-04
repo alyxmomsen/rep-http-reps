@@ -177,7 +177,7 @@ async function multipartHandler(req , res , payload) {
                 }
 
     
-                console.log({addedRowsData});
+                // console.log({addedRowsData});
             }
 
         }

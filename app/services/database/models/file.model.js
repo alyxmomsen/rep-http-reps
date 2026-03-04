@@ -14,6 +14,7 @@ const fileControllerModels = new Map();
 // READ_ONE, READ_TABLE, UPDATE_ONE, 
 // DELETE_ONE, DELETE_TABLE
 /* использовать Map для хранения моделей. и фабрики*/
+
 const filesModel = new DBController({
     title:{
         [VALUE_TYPE]:'string' ,
@@ -48,12 +49,101 @@ const usersModel = new DBController({
         [DEFAULT_VALUE]:'no name' ,
         [REQUIRED]:true ,
     } ,
-    lastName:{
+    ['last-name']:{
         [VALUE_TYPE]:'string' ,
         [DEFAULT_VALUE]:'no last name' ,
         [REQUIRED]:true ,
-    } 
+    } ,
+    ['avatar/filesistemFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['avatar/mime']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['thumb-nail/originalFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['logo/filesistemFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['logo/mime']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['logo/originalFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
 });
 
+const playlist1 = new DBController({
+    ['title']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no name' ,
+        [REQUIRED]:true ,
+    } ,
+    ['description']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    } ,
+    ['video-min/filesistemFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-min/mime']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-min/originalFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-mid/filesistemFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-mid/mime']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-mid/originalFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-fulhd/filesistemFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-fulhd/mime']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
+    ['video-fulhd/originalFilename']:{
+        [VALUE_TYPE]:'string' ,
+        [DEFAULT_VALUE]:'no last name' ,
+        [REQUIRED]:true ,
+    },
 
-module.exports = { usersModel , filesModel  }
+
+});
+
+module.exports = { usersModel , filesModel , playlist1 }
