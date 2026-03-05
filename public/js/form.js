@@ -1,14 +1,45 @@
 console.log('form js loaded');
 
+const METHODS_KEYS  = {
+    POST:'post',
+    GET:'get',
+}
+
 window.addEventListener('DOMContentLoaded' , () => {
 
     // grab html elements
 
     const mainForm = document.getElementById('form--main');
+    const statusBar = document.getElementById('status--upload');
+    const modalWindow  = new ModalWindow(document.getElementById('modal-window--main'));
 
-    mainForm.addEventListener("submit" , (e) => {
+    mainForm.addEventListener("submit" , async (e) => {
         e.preventDefault();
+
         console.log(e.currentTarget === mainForm);
+
+        // hide modal window
+        
+        // modalWindow.hide();
+
+        statusBar.innerText = 'loading...';
+
+        const formData = new FormData(mainForm);
+
+        const response = await fetch('/api/handle-form' , {
+            body:formData ,
+            method:METHODS_KEYS.POST ,
+        });
+
+        const jsonResponse = await response.json();
+
+        statusBar.innerText = 'loaded';
+
+        console.log({jsonResponse});
+
+        modalWindow.show();
+
+
     });
 
 });
@@ -120,5 +151,53 @@ class RequestRoute {
         this.#responseHandler = handlers.length ? handlers[handlers.length - 1] : f=>f ;
         this.#middleware = [] ;
         this.#beforeRequestHandlers = [] ;
+    }
+}
+
+class ViewElement {
+
+    render () {
+        return this.#baseElement ;
+    }
+
+    #baseElement;
+
+    constructor () {
+        this.#baseElement = document.createElement('div');
+    }
+}
+
+class ModalWindow {
+
+    #timer;
+    #timeout;
+
+
+    hide () {
+        this.#htmlElement.style.display = 'none' ;
+    }
+    
+    show () {
+        this.#htmlElement.style.display = 'flex' ;
+        console.log(this.#htmlElement);
+        if(this.#timeout) {
+            clearTimeout(this.#timeout);
+        }
+        this.#timeout = setTimeout(this.hide.bind(this) , 3000) ;
+    }
+
+    #htmlElement;
+
+    /**
+     * 
+     * @param {HTMLDivElement} html
+     * @param {} t  
+     */
+    constructor (html) {
+        if(!html) {
+            throw new Error(`no html provided`);
+        }
+        this.#htmlElement = html ;
+
     }
 }

@@ -1,22 +1,40 @@
+/* стандартные nodejs модули */
 const { readFile } = require("node:fs/promises");
 const { IncomingMessage, ServerResponse } = require("node:http");
 const { resolve, join } = require("node:path");
+/* кастомная утилита (пока-что просто утилита) для отправки фол-бэков */
 const { sendFallBack } = require("../../../utils/error-factory");
+/* импор content-type из файла где происходит регистрация обработчиков для content-type случаев */
 const { contentTypeHandlersRouter } = require("./controller/content-type.controller");
 
+/**
+ * временное решение для хранения относительного пути 
+ */
 const FORM_HANDLER_CONSTANTS = {
-    ASSETS_PATH:'./assets/html/form.html' ,
+    ASSETS_PATH:resolve('./assets/html/form.html') ,
 }
 
-const fallbacks = new Map();
+console.log(FORM_HANDLER_CONSTANTS);
 
+/*
+ * собирался сделать роутинг для фол-бэков обработчиков
+ * но приостановил, так как были более важные фокусы
+ */
+/**
+ * @type {Map<string,(...args:string)=>void>}
+ */
+const fallbacks = new Map();
+fallbacks.set('error type' , (...args) => {});
+
+/**
+ * 
+ */
 class FormHandler {
 
     /**
-     * 
+     * @description вызывает конкретный контроллер для обработки формы в зависимости от "content-type" хедера 
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
-     * @param {Object} payload
      * @returns {Promise<void>} 
      */
     static async processForm (req ,res) {
@@ -37,10 +55,17 @@ class FormHandler {
             return ;
         }
 
-        const [ contentType , contentTypeHeaderPayload ] = contentTypeHeader.split(/; */) ;
+        /* разбиваем содержимое content-type хедера на две части по regex строке где
+        вероятно содержится значение именно "content-type" и через разделитель ";\s*" 
+        дополнительная информация для content-type строки.
+        в случае с multipart/form-data это "boundary" разделитель данных */
+        const [ contentType , contentTypeHeaderPayload ] = contentTypeHeader.split(/;\s*/) ;
 
         console.log({contentType});
 
+        /* эта конкретная проверка , не имеет смысла, поскольку в "contentTypeHeader" 
+        мы уже обнаружили TRUEFY значение
+        это нужно либо убрать, либо*/
         if(!contentType) {
             sendFallBack(
                 res ,400 ,
@@ -52,8 +77,7 @@ class FormHandler {
         }
 
         try {
-            
-            const contentTypeHandlerInterface = contentTypeHandlersRouter.getHandlerInterface(contentType);
+            const contentTypeHandlerInterface = contentTypeHandlersRouter.getHandlerController(contentType);
             await contentTypeHandlerInterface.handle(req ,res , contentTypeHeaderPayload);
 
         }
@@ -80,7 +104,7 @@ class FormHandler {
 
         try {
 
-            const formHTMLpath = resolve(join(...FORM_HANDLER_CONSTANTS.ASSETS_PATH.split(/[\//]/))) ;
+            const formHTMLpath = FORM_HANDLER_CONSTANTS.ASSETS_PATH ;
             const file = await readFile(formHTMLpath , 'utf-8');
             res.writeHead(200 , 'ok' , {
                 "content-type": 'text/html' ,
@@ -88,15 +112,21 @@ class FormHandler {
             res.end(file);
         }
         catch (e) {
+            // здесь нужно сделать редирект 
             console.log({e});
+            // res.setHeader("");
+            res.writeHead(500 , 'internal error' , {
+                "content-type":'text/plain'
+            });
+            res.end('500. internal error');
         }
     }
 
     constructor () {}
 }
 
-// const formHandler = new FormHandler ();
 
-module.exports = { FormHandler , /* formHandler */ } ;
+/* на данный момент экспортируется именно класс, посколку методы статические */
+module.exports = { FormHandler } ;
 
 

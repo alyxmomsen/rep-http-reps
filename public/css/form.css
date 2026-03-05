@@ -3,3 +3,23 @@
     border:1px solid wheat;
     border-radius: 4px;
 }
+
+#modal-window--main {
+	position: fixed;
+	width: 100vw;
+	height: 100vh;
+	background-color: #273a41c7;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	top: 0;
+	left: 0;
+    display: none;
+}
+
+.tool-tip--in-modal {
+	padding: calc(9px *3);
+	background-color: #f5f5dca6;
+    text-transform: uppercase;
+}
