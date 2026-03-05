@@ -43,49 +43,6 @@ const filesModel = new DBController({
     } ,
 });
 
-const usersModel = new DBController({
-    name:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no name' ,
-        [REQUIRED]:true ,
-    } ,
-    ['last-name']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    } ,
-    ['avatar/filesistemFilename']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    },
-    ['avatar/mime']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    },
-    ['thumb-nail/originalFilename']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    },
-    ['logo/filesistemFilename']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    },
-    ['logo/mime']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    },
-    ['logo/originalFilename']:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no last name' ,
-        [REQUIRED]:true ,
-    },
-});
-
 const playlist1 = new DBController({
     ['title']:{
         [VALUE_TYPE]:'string' ,
@@ -146,4 +103,4 @@ const playlist1 = new DBController({
 
 });
 
-module.exports = { usersModel , filesModel , playlist1 }
+module.exports = { filesModel , playlist1 }

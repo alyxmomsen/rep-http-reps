@@ -1,12 +1,16 @@
 const { errorFactory } = require("../../../utils/error-factory");
 const { DBController , CONSTANTS:DB_CONTROLLER_CONSTANTS } = require("../model/db-conroller.model");
-const { filesModel, usersModel , playlist1 } = require("../models/file.model");
+const { filesModel , playlist1 } = require("../models/file.model");
+const { usersModel } = require("../models/users.controller.model");
 
 const { VIDEO , USERS , PLAYLIST_1 } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
 
+/**
+ * @type {Map<string,DBController}
+ */
 const models = new Map();
 
-/* регистрация моделей валидации полей для отправки в базу данных */
+/* регистрация моделей (стратегий) валидации полей для работы с базой данных */
 models.set(VIDEO , filesModel);
 models.set(USERS , usersModel);
 models.set(PLAYLIST_1 , playlist1);
