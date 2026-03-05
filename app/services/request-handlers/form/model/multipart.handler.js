@@ -217,7 +217,7 @@ async function multipartHandler(req , res , payload) {
         
                     /* тестовая проверка наличия данных в кастомной БД 
                     ключи не важны, на любые аргументы метод возвращает всю БД*/
-                    dbController.readOne('123' , '123'); 
+                    dbController.readAll('foo bar'); 
         
                     /* нужна фабрика для корректного пушинга */
                     addedRowsData.push({

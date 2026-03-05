@@ -1,7 +1,8 @@
 const { errorFactory } = require("../../../utils/error-factory");
 const { DBController , CONSTANTS:DB_CONTROLLER_CONSTANTS } = require("../model/db-conroller.model");
-const { filesModel , playlist1 } = require("../models/file.model");
-const { usersModel } = require("../models/users.controller.model");
+const { filesModel: filesModelController } = require("../models/file.model");
+const { playlist1controller: playlist1ModelController } = require("../models/playlist1.controller.model");
+const { usersModel: usersModelController } = require("../models/users.controller.model");
 
 const { VIDEO , USERS , PLAYLIST_1 } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
 
@@ -10,10 +11,12 @@ const { VIDEO , USERS , PLAYLIST_1 } = DB_CONTROLLER_CONSTANTS.DB_TABLES_NAMES ;
  */
 const models = new Map();
 
-/* регистрация моделей (стратегий) валидации полей для работы с базой данных */
-models.set(VIDEO , filesModel);
-models.set(USERS , usersModel);
-models.set(PLAYLIST_1 , playlist1);
+/* регистрация контроллеров 
+инстанцированых в соответствии с моделями (стратегиями) валидации полей 
+для работы с базой данных */
+models.set(VIDEO , filesModelController);
+models.set(USERS , usersModelController);
+models.set(PLAYLIST_1 , playlist1ModelController);
 
 /**
  * 

@@ -103,9 +103,9 @@ class DBController {
         return rowid ;
     }
 
-    readOne (tableId , rowId) {
+    readAll (tableId , rowId) {
         /* DB_TEST */
-        database.readOne('tableId' , 'rowId');
+        return database.readAll('tableId');
     }
 
     // #validation (data) {}

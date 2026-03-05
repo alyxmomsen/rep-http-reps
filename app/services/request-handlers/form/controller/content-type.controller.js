@@ -2,7 +2,7 @@ const { multipartHandler , CONSTANTS:MULTIPART_HANDLER_CONSTANTS} = require("../
 const { ContentTypeHandlersRouter } = require("./content-type.router.model");
 
 /*
- * данный класс был отнесен к категории контроллеров, 
+ * данный файл был отнесен к категории контроллеров, 
  * но здесь происходит:
  * 
  * 1. инстанцирование класса ContentTypeHandlersRouter
