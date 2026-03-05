@@ -1,7 +1,12 @@
+:root {
+	--scale-value:9px ;
+}
+
 .form-element {
     padding: 9px;
     border:1px solid wheat;
     border-radius: 4px;
+	position: relative;
 }
 
 #modal-window--main {
@@ -19,11 +24,14 @@
 }
 
 .tool-tip--in-modal {
-	padding: calc(9px *3);
+	padding: calc(var(--scale-value) *3);
 	background-color: #f5f5dca6;
     text-transform: uppercase;
 }
 
-.test {
-	color: rgb(141, 168, 46);
+.playlist-element--close-button {
+	position: absolute;
+	top: calc(var(--scale-value) * 0.5);
+	right: calc(var(--scale-value) * 0.5);
+	padding: calc(var(--scale-value) * 0.5);
 }

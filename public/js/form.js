@@ -13,11 +13,12 @@ window.addEventListener('DOMContentLoaded' , () => {
     const statusBar = document.getElementById('status--upload');
     const modalWindow  = new ModalWindow(document.getElementById('modal-window--main'));
     const addElementButton  = document.getElementById('button--add-element');
+    const playlistGroup  = document.getElementById('playlist-items-group');
 
     addElementButton.addEventListener("click" , (e) => {
         e.stopPropagation();
-
-        new PlaylistFormElement('hello world' , 'foo-bar').insertInto(mainForm);
+        (new PlaylistFormElement('new playlist element' , 'playlist-1'))
+            .insertInto(playlistGroup);
 
     });
 
@@ -51,31 +52,6 @@ window.addEventListener('DOMContentLoaded' , () => {
     });
 
 });
-
-class RequestRouter {
-
-    // execute
-
-    addListener (handler) {
-        this.#routes.get();
-    }
-
-    addRoute (url , method , handler) {
-
-        const routeBundle = {
-            method , 
-            handler ,
-        }
-
-        this.#routes.set(url , routeBundle);
-    }
-
-    #routes;
-
-    constructor () {
-        this.#routes = new Map();
-    }
-}
 
 class RequestRoute {
 
@@ -159,19 +135,6 @@ class RequestRoute {
         this.#responseHandler = handlers.length ? handlers[handlers.length - 1] : f=>f ;
         this.#middleware = [] ;
         this.#beforeRequestHandlers = [] ;
-    }
-}
-
-class ViewElement {
-
-    render () {
-        return this.#baseElement ;
-    }
-
-    #baseElement;
-
-    constructor () {
-        this.#baseElement = document.createElement('div');
     }
 }
 
@@ -277,11 +240,19 @@ class PlaylistFormElement {
         const fileInput = document.createElement('input');
         fileInput.type = INPUT_TYPES.FILE ;
         fileInput.name = createNameAttr(GROUP_ID , TABLE_NAME , 'video', BINARY);
+
+        const closebutton = document.createElement('button');
+        closebutton.type = 'button' ;
+        closebutton.innerText = 'X' 
+        closebutton.className = 'playlist-element--close-button';
         
+        // nest
+
         bEl.appendChild(h3);
         bEl.appendChild(titleInput);
         bEl.appendChild(descriptionInput);
         bEl.appendChild(fileInput);
+        bEl.appendChild(closebutton);
     }
 }
 
