@@ -1,7 +1,13 @@
+/* стандартный(-е) модуль(-и) */
 const { IncomingMessage, ServerResponse } = require("node:http");
+/* кастомная утилита для отправки фолл-беков */
 const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
+/* кастомная утилита для поиска индекса расположения байтовой последовательности в целевой байтовой последовательности */
 const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
+/* фабрика генерирует контроллер базы данных с конкретной моделью валидации полей  */
 const { dbControllerFactory } = require("../../../database/controller/dbcontroller");
+/* начинал реализацию централизованой системы обработки ошибок, но отложил разработку
+оставил это здесь что-бы напоминало*/
 // const { errorService } = require("../../../error/error.service");
 const { filemanager , CONSTANTS:FILEMANAGER_CONSTANTS } = require("../../../filemanager.service.js/filemanager.service");
 const { GroupFormData, dataTypeValidator } = require("../../../group-form-data/group-form-data.service");
@@ -12,12 +18,11 @@ const { GroupFormData, dataTypeValidator } = require("../../../group-form-data/g
 
 const CONSTANTS = {
     PAYLOAD_DATA_KEY:'boundaryRawData' ,
+    /* это поле предназначалось для централизованной системы обработки ошибок,
+    в той архитектуре нужно было учитывать идентификатор скрипта
+    сейчас это пока что здесь, дожидается дальнейшей разработки */
     // CURRENT_SCRIPT_ID:scriptId ,
     HTML_FORM_CONTENT_TYPE:'multipart/form-data' , // for the form-handler routing
-}
-
-if(!CONSTANTS) {
-    throw new Error(`no constant "CONSTANTS" provided`);
 }
 
 /**
@@ -33,6 +38,7 @@ async function multipartHandler(req , res , payload) {
         throw new Error(`no payload`);
     }
 
+    /* получаем boundary по простому регулярному выражению */
     const boundary = (payload?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
 
     if(!boundary) {
@@ -41,6 +47,10 @@ async function multipartHandler(req , res , payload) {
     }
 
     const formDataChunks = [] ;
+    /**
+     * переменная для контролля размера полученных данных
+     * @type {number}
+     */
     let formDataSize = 0 ;
     req.on("data" , async (chunk) => {
         formDataSize += chunk.length ;
@@ -50,21 +60,37 @@ async function multipartHandler(req , res , payload) {
     req.on('end' , async () => {
         
         console.log(`form chunks received`);
-        
+        /* объеденяем все полученые Buffer chunks в один монолит */
         const wholeFormDataBuffer = Buffer.concat(formDataChunks);
+        /* разбиваем перманентный буффер на логические куски, где 
+        каждый кусок есть данные одного HTML тега "input" */
         const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
+        /* инстанцируем объект сборщика групп
+        который занимается объединением отдельных данных из HTML инпутов в семантические группы
+        где каждую группу объеденяет предназначение к одной конкретной таблице базы данных*/
         const groupFormData = new GroupFormData();
 
+        /* здесь должны быть группы не прошедшие валидацию по той или иной причине
+        предполагается эти группы обработать и отправить отчет на клиент,
+        например для информирования пользователя для дальнейшей корректировки вводимых данных 
+        пока что это здесь с целью напоминания, дожидается дальнейшей разработки*/
         const invalidGroups = new Map();
 
         for (const part of parts) {
             try {
+                /* полный парсинг данных одного инпута 
+                на выходе получаем 7 семантически различных типов данных
+                body: содержимое инпута введеное пользователем,в т.ч файл, в виде Buffer<ArrayBuffer>
+                parsedNameAttribute это данные аттрибута "name" HTML тега, при этом парсинг реализуется по
+                , пока-что, одной стратегии*/
                 const { 
                     body:formDataPartBody , fileMIME , fileName , parsedNameAttribute 
                 } = parseFormDataPart(part);
                 const { groupId , tableName , columnName , dataType } = parsedNameAttribute ;
 
                 // scenario #1: if file
+                /* наличие данных в переменных fileMIME || fileName указывает на то что эта порция - файл*/
+                /* данные для передачи в сборщик должны быть подготовленны, так что требуется динамическая фабрика */
                 if(fileMIME || fileName) {
                     const fileData = {
                         groupId, tableName,
@@ -75,6 +101,8 @@ async function multipartHandler(req , res , payload) {
                             columnName ,
                         }
                     }
+                    /* для пушинга данных файла используется конкретный метод сервиса 
+                    для простого поля используется другой метод*/
                     groupFormData.pushFileData(fileData);
                     continue ;
                 }
@@ -92,34 +120,42 @@ async function multipartHandler(req , res , payload) {
 
             }
             catch (e) {
+                /* исключения пока никак не обрабатываются */
                 const errorMessage = e.message ;
                 console.log({errorMessage  ,e , cs:CONSTANTS.CURRENT_SCRIPT_ID});
             }
         }
         
+        /**
+         * массив данных для отправки на клиент
+         */
         const addedRowsData = [] ;
-        /* получаем все сформированые группы для сторринга в БД */
+        /* получаем все сформированые группы для сторринга в БД 
+        предполагается что метод groupFormData.getGroups() будет возвращать различные форматы данных
+        в зависимости от выбранной стратегии
+        пока что стратегия одна: возращает объект где каждое поле это один-в-один(! может быть узким местом) название целевой таблицы БД*/
         const assembledGroupsByTablename = groupFormData.getGroups(); // need extractor strategy
         for (const [ tableName , groups ] of Object.entries(assembledGroupsByTablename)) {
 
             for (const group of groups) {
-                // console.log({
-                //     tableName ,
-                //     group
-                // });
-                /* в этот объект падают данные для колонок таблицы БД 
-                "Key" название колонки, "Value" - содержимое 
-                */
+                /**
+                 * @description в этот объект падают данные для колонок таблицы БД, где
+                 * "Key" название колонки, "Value" - содержимое 
+                 * @type {Object.<string,string>}
+                 */
                 const normalizedColumns  = {} ;
                 const normalizedFilesData = {} ;
                 
+                /* предполагается что применяется конкретная стратегия , где 
+                группа содержит по-меньшей мере два поля 
+                [files]:Object[] (данные инпутов файлов) и [rows]:Object.<string,any> (обычные инпуты)
+                */
                 const { files , rows } = group ;
 
-                /* файлы */
                 for (const fileData of files) {
                     
                     const { mime , fileName  , fileBody , columnName } = fileData ;
-                    // console.log({fileData});
+
                     /* пробуем сохранять файл в файловую систему
                     по-умолчанию папка "/uploads" в корне проекта */
                     const { error , success } = await filemanager.write(fileBody);
@@ -138,13 +174,23 @@ async function multipartHandler(req , res , payload) {
                     /* получаем filename, - название файла в ФС, в виде хэша */
                     const { filename:fmFilename } = success ;
     
-                    // сохраняем колонки
+                    /* БД сохраняется не сам файл , а лишь информация о нем 
+                    1. filesistemFilename: имя в файловой системе, 
+                    по которому, в дальнейшем, будет осуществляться его поиск
+                    2. mime файла: для работы с файлом в дальнейшем
+                    3. originalFilename: имя файла на машине пользователя
+
+                    и поскольку для одной строки таблицы может прилететь сразу несколько файлов, то
+                    каждая группа (filesistemFilename ,mime ,originalFilename) колонок строки 
+                    должна иметь уникальный префикс. здесь префиксом выступает  [columnName]
+                    благодаря чему, если потребуется, в одну строку можно записать данные о нескольких файлах
+                    */
                     normalizedColumns[`${columnName}/filesistemFilename`] = fmFilename ;
                     normalizedColumns[`${columnName}/mime`] = mime ;
                     normalizedColumns[`${columnName}/originalFilename`] = fileName ;
                 }
 
-                // 
+                /* логирование для отладки на момент разработки */
                 for (const [ k , v ] of Object.entries(normalizedColumns)) {
                     console.log({k,v});
                 }
@@ -157,31 +203,36 @@ async function multipartHandler(req , res , payload) {
                     normalizedColumns[columnName] = columnData.toString('utf-8') ;
                 }
             
-                // получаем контроллер для работы с базой данных, 
-                // передаем имя модели, которое совпадает с ключом Мэпа,
-                //  в котором хранятся модели конроллеров
-
+                
+                /* получаем контроллер для работы с базой данных, - 
+                в фабрику контроллеров передаем имя модели, 
+                которое посимвольно совпадает с ключом Map,
+                в котором хранятся модели конроллеров представленные функциями */
+                /* в случае неудачи фабрика выбрасывает исключение */
                 try {
 
                     const dbController = dbControllerFactory(tableName);
+                    
                     const rowId = dbController.addOne( tableName, normalizedColumns);
         
-                    dbController.readOne('123' , '123'); // DB TEST!!!
+                    /* тестовая проверка наличия данных в кастомной БД 
+                    ключи не важны, на любые аргументы метод возвращает всю БД*/
+                    dbController.readOne('123' , '123'); 
         
+                    /* нужна фабрика для корректного пушинга */
                     addedRowsData.push({
                         rowId , row:normalizedColumns ,
                     });
                 }
                 catch (e) {
+                    /* отсутствует обработка ошибок */
+                    /* как я уже упоминал, предполается единый сервис для обработки ошибок,
+                    который пока что в разработке , так что пока тупо console.log()*/
                     console.log({e});
                 }
-
-    
-                // console.log({addedRowsData});
             }
 
         }
-
 
         res.writeHead(200 , 'ok' , {
             'content-type':'application/json' ,
