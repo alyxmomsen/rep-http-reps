@@ -36,7 +36,7 @@ class GroupFormData {
 
     /**
      * @param {() => Object} strategy 
-     * @returns {Object.<string,any>}
+     * @returns {Object.<string,{files:Object[];rows:Object.<string,string>}[]>}
      */
     getGroups (strategy) {
 

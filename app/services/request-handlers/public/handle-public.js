@@ -7,6 +7,13 @@ const PUBLIC_DIR = resolve(join('.' , 'public'));
 
 const insertSrcMapItem =  (map , type , id ) => {}
 
+const MIME_VALUES = {
+    TEXT_CSS:'text/css' ,
+    TEXT_JAVASCRIPT:'text/javascript' ,
+}
+
+const { TEXT_CSS , TEXT_JAVASCRIPT } = MIME_VALUES ;
+
 const PUBLIC_SRC_MAP = {
     typeRouter:{
         'css':{
@@ -14,11 +21,11 @@ const PUBLIC_SRC_MAP = {
             idRouter:{
                 'main':{
                     filename:'main.css' ,
-                    mime:'text/css' , 
+                    mime:TEXT_CSS , 
                 } ,
                 'form':{
                     filename:'form.css' ,
-                    mime:'text/css' , 
+                    mime:TEXT_CSS , 
                 }
             } ,
         } ,
@@ -27,11 +34,11 @@ const PUBLIC_SRC_MAP = {
             idRouter:{
                 'main':{
                     filename:'main.js' ,
-                    mime:'text/javascript' , 
+                    mime:TEXT_JAVASCRIPT, 
                 } ,
                 'form':{
                     filename:'form.js',
-                    mime:'text/javascript' ,
+                    mime:TEXT_JAVASCRIPT ,
                 }
             } ,
         } ,
