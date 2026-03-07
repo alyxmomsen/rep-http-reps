@@ -47,8 +47,6 @@ window.addEventListener('DOMContentLoaded' , () => {
         console.log({jsonResponse});
 
         modalWindow.show();
-
-
     });
 
 });
