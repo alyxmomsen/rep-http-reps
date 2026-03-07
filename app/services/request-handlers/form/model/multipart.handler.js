@@ -221,7 +221,7 @@ async function multipartHandler(req , res , payload) {
         
                     /* нужна фабрика для корректного пушинга */
                     addedRowsData.push({
-                        rowId , row:normalizedColumns ,
+                        rowId , row:normalizedColumns , tableName
                     });
                 }
                 catch (e) {
@@ -233,6 +233,8 @@ async function multipartHandler(req , res , payload) {
             }
 
         }
+
+        console.log(addedRowsData);
 
         res.writeHead(200 , 'ok' , {
             'content-type':'application/json' ,
