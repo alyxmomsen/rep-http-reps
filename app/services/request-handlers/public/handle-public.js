@@ -39,7 +39,7 @@ const PUBLIC_SRC_MAP = {
                 'form':{
                     filename:'form.js',
                     mime:TEXT_JAVASCRIPT ,
-                }
+                } , 
             } ,
         } ,
     }
@@ -109,8 +109,6 @@ async function handlePublic(req , res) {
     const { filename  , mime } = idRouter[id] || {} ;
     
     if(!filename || !mime) {
-
-        // console.log({filename , mime , idRouter , id});
 
         sendFallBack(
             res, 400, 'handlePublic', 

@@ -1,8 +1,17 @@
 const { /* formHandler */FormHandler } = require("../../request-handlers/form/form-handler");
 const { handlePublic } = require("../../request-handlers/public/handle-public");
+const { handleReactApp } = require("../../request-handlers/react/react-handler");
+const { handleStatic } = require("../../request-handlers/static/static-handler");
 const Router = require("../router");
 
 const router = new Router();
+
+// this first
+router.get('/static/*', async (req, res) => await handleStatic(req, res));
+
+router.get('/app', async (req, res) => handleReactApp(req , res));
+router.get('/api/videos', async (req, res) => {});
+router.get('/video/:filename' , async (req  ,res) => {});
 
 router.get('/l/form', async (req ,res) => await FormHandler.renderer(req , res) );
 router.post('/api/handle-form', async (req ,res) => await FormHandler.processForm(req , res) );

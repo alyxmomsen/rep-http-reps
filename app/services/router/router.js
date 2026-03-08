@@ -38,11 +38,12 @@ class Router {
 
         for (const [ _ , routeBundle ] of methodRoutes.entries()) {
 
-            console.log({routeBundle});
-
             const urlMatch = routeBundle.regex.exec(url);
-            if(!urlMatch) continue ;
 
+            console.log(`test url: ${url}` , urlMatch, );
+
+            if(!urlMatch) continue ;
+            
             // compile params
             
             const params = {} ;
@@ -196,8 +197,15 @@ class Router {
      * }}
      */
     #assembleRouteBundle (template , handlers) {
-        const keys = [] ;
-        const regexTemplate = template.replace(/:([^\/]+)/g , (_  , key) => {
+        const keys = [];
+        
+        /* #upd 2026.03.07 */
+        
+        let regexTemplate = template.replace(/\*/g, '.*');
+        
+        /* #upd 2026.03.07 end */
+
+        regexTemplate = regexTemplate.replace(/:([^\/]+)/g , (_  , key) => {
             keys.push(key);
             return '([^\/]+)' ;
         });
