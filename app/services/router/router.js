@@ -62,6 +62,7 @@ class Router {
 			this.#executeMiddleware(req, res, routeMiddleware);
 
 			await handler(req, res);
+            return;
 		}
 		
 		const message = `no mater how many times that you told me you wanted to leave`;

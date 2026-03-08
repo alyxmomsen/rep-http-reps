@@ -1,7 +1,11 @@
 const path = require('path');
 const { Router } = require('../router');
+const { formHandler } = require('../../route-end-point-handlers/form-handler/form-handler');
 
 const router = new Router();
+
+router.get('/page/form',  formHandler.renderHTML.bind(formHandler));
+router.post('/api/handle-form' , formHandler.processRequest.bind(formHandler));
 
 /* test route */
 let numerator = 0 ;
