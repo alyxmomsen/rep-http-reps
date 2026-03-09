@@ -1,3 +1,4 @@
+const { IncomingMessage, ServerResponse } = require("node:http");
 
 const CONTENT_TYPES = {
 	MULTIPART_FORMDATA:'multipart/form-data',
@@ -9,17 +10,27 @@ class FormContentTypeRouter {
 	
 	/** 
 	 * @param {string} contentType
+	 * @returns {Promise<{success:Object}|{error:Object}>}
 	*/
-	async handle (req , res, contentType, payload) {
+	async handle (req , res, contentType, payload , targetContentType) {
 		const contentTypeHandler = this.#contentTypeRoutes.get(contentType);
 		if(!contentTypeHandler) {
 			throw new Error(`no handler for this content-type ${contentType}`);
 		}
-		await contentTypeHandler(req , res , payload);
+		const { success, error } = await contentTypeHandler(req , res , payload);
+		if(error) {
+			return {
+				error,
+			}
+		}
+		return {
+			success,
+		}
 	}
 	
 	/** 
 	 * @param {string} contentType
+	 * @param {(req:IncomingMessage, res:ServerResponse, payload?:string)=>Promise<{success:Object;error:Object}>} handler 
 	*/
 	addRoute (contentType , handler) {
 		
@@ -40,6 +51,9 @@ class FormContentTypeRouter {
 		console.log(`added new content-type <${contentType}> route handler`);
 	}
 	
+	/**
+	 * @type {Map<string,(req:IncomingMessage, res:ServerResponse, payload?:string)=>Promise<{success:Object}|{error:Object}>>}
+	 */
 	#contentTypeRoutes;
 	
 	constructor() {

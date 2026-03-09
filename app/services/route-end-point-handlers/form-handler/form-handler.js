@@ -1,7 +1,7 @@
 const { IncomingMessage, ServerResponse } = require('http');
 const path = require('path');
 const { readFile } = require('fs/promises');
-const { contentTypeRouter } = require('./controller/content-type.router.controller');
+const { contentTypeRouter , CONTENT_TYPES } = require('./controller/content-type.router.controller');
 
 const ERROR_PROTOCOL = 'custom_error_protocol';
 console.log({dirname:__dirname});
@@ -11,17 +11,18 @@ const errorManager = new Map();
 
 class FormHandler {
 	
-	
-	
 	/** 
 	 * @param {IncomingMessage} req
 	 * @param {ServerResponse} res
+	 * @param {string} targetContentType 
+	 * @returns {Promise<{success:Object}|{error:Object}>} 
 	*/
-	async processRequest(req, res) {
+	async processRequest(req, res, targetContentType) {
+		
 		const { headers } =  req;
 		
 		const contentTypeHeader = headers['content-type'];
-		
+
 		try {
 			if(!contentTypeHeader) {
 			    throw new Error(`${ERROR_PROTOCOL}; code: 1; message: no content-type header;`);
@@ -29,7 +30,26 @@ class FormHandler {
 			
 			const [ contentType , contentTypePayload ] = contentTypeHeader.split(/;[^\S]*/);
 		
-            await contentTypeRouter.handle(req , res , contentType , contentTypePayload);
+			if(contentType !== targetContentType) {
+				return {
+					error:{
+						message:'target content-type error' ,
+					}
+				}
+			}
+
+        	const { success , error } = await contentTypeRouter.handle(req , res , contentType , contentTypePayload);
+
+			if(error) {
+				return {
+					error,
+				}
+			}
+
+			return {
+				success,
+			}
+
 		}
 		catch(e) {
 			console.log({e});
@@ -58,7 +78,7 @@ class FormHandler {
 
 const formHandler = new FormHandler();
 
-module.exports = { formHandler } ;
+module.exports = { formHandler , CONTENT_TYPES } ;
 
 function handleError(res, errorMessage) {
 	if(!parseErrorMessage.startsWith(ERROR_PROTOCOL_IDENTITY)) {

@@ -7,4 +7,8 @@ const contentTypeRouter = new FormContentTypeRouter();
 
 contentTypeRouter.addRoute(MULTIPART_FORMDATA , multipartHandler);
 
-module.exports = { contentTypeRouter }
+module.exports = { contentTypeRouter , CONTENT_TYPES }
+
+function factory () {
+    
+}
