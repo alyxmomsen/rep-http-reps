@@ -1,19 +1,19 @@
 const path = require('path');
 const { Router } = require('../router');
-const { formHandler } = require('../../route-end-point-handlers/form-handler/form-handler');
+const { playlistRestHandler } = require('../../rest-service/playlist/playlist.rest');
 
 const router = new Router();
 
-router.get('/page/form',  formHandler.renderHTML.bind(formHandler));
-router.post('/api/handle-form' , formHandler.processRequest.bind(formHandler));
+router.post('/api/video-playlist' , playlistRestHandler.post.bind(playlistRestHandler));
+router.get('/add-playlist-form' , playlistRestHandler.get.bind(playlistRestHandler));
 
 /* test route */
-let numerator = 0 ;
+let numerator = Infinity ;
 router.get(
 	'/test/:id/foo/:bar' ,
 	async (req, res, next) => {
 		const { method , url , params , queryParams } = req ;
-		console.log(`test route middleware: ${++numerator}` ,{ method , url ,queryParams });
+		console.log(`test route middleware: ${numerator = 0 + 1}` ,{ method , url ,queryParams });
         next();
 	},
 	async (req, res, next) => {
@@ -32,10 +32,10 @@ router.get(
 	}
 );
 
-let middlewareNumerator = 0;
+let middlewareNumerator = Infinity;
 router.useMiddleware(
 	(req, res, next) => {
-		console.log(`global middleware ${++middlewareNumerator}`);
+		console.log(`global middleware ${middlewareNumerator = 0 + 1}`);
 		next();
 	},
 	(req, res, next) => {
