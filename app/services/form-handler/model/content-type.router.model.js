@@ -12,7 +12,7 @@ class FormContentTypeRouter {
 	 * @param {string} contentType
 	 * @returns {Promise<{success:Object}|{error:Object}>}
 	*/
-	async handle (req , res, contentType, payload) {
+	async handle (req , res, contentType, payload , targetContentType) {
 		const contentTypeHandler = this.#contentTypeRoutes.get(contentType);
 		if(!contentTypeHandler) {
 			throw new Error(`no handler for this content-type ${contentType}`);
