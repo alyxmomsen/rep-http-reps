@@ -1,7 +1,7 @@
 const { readFile } = require("node:fs/promises");
 const { resolve } = require("node:path");
 
-const ASSETS_PATH = resolve('./assets/html/form.html');
+const FORM_TEMPLATE_PATH = resolve('./assets/html/form.html');
 
 async function renderMultipartForm(req, res) {
     
@@ -9,12 +9,17 @@ async function renderMultipartForm(req, res) {
 
     try {
 
-        const formHTMLpath = ASSETS_PATH ;
-        const file = await readFile(formHTMLpath , 'utf-8');
+        const formTemplatePath = FORM_TEMPLATE_PATH ;
+        const template = await readFile(formTemplatePath, 'utf-8');
+        
+        /* 
+        * здесь обработка темплейта
+        */
+
         res.writeHead(200 , 'ok' , {
             "content-type": 'text/html' ,
         });
-        res.end(file);
+        res.end(template);
     }
     catch (e) {
         // здесь нужно сделать редирект 

@@ -9,16 +9,18 @@ class ContentTypeHandlerController {
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
      * @param {string} [payload] 
+     * @returns {Promise<Object.<string,any>>}
      */
-    async handle (req , res , payload) {
-        await this.#strategy(req , res , payload);
+    async handle(req, res, payload) {
+        const result = await this.#strategy(req, res, payload);
+        return result;
     }
 
     #strategy;
 
     /**
      * 
-     * @param {(req:IncomingMessage, res:ServerResponse, handlerPayloadDataKey?:string) => Promise<void>} strategy 
+     * @param {(req:IncomingMessage, res:ServerResponse, handlerPayloadDataKey?:string) => Promise<Object.<string,any>>} strategy 
      */
     constructor (strategy) {
         this.#strategy = strategy ;

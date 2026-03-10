@@ -79,7 +79,7 @@ class FormHandler {
 
         try {
             const contentTypeHandlerInterface = contentTypeHandlersRouter.getHandlerController(contentType);
-            await contentTypeHandlerInterface.handle(req ,res , contentTypeHeaderPayload);
+            const result = await contentTypeHandlerInterface.handle(req ,res , contentTypeHeaderPayload);
 
         }
         catch (e) {

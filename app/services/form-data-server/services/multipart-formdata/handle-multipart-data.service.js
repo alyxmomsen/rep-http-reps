@@ -83,6 +83,8 @@ async function multipartHandler(req , res , payload) {
         пока что это здесь с целью напоминания, дожидается дальнейшей разработки*/
         const invalidGroups = new Map();
 
+        const parsedFormDataParts = [];
+
         for (const part of parts) {
             try {
                 /* полный парсинг данных одного инпута 
@@ -91,9 +93,22 @@ async function multipartHandler(req , res , payload) {
                 parsedNameAttribute это данные аттрибута "name" HTML тега, при этом парсинг реализуется по
                 , пока-что, одной стратегии*/
                 const { 
-                    body:formDataPartBody , fileMIME , fileName , parsedNameAttribute 
+                    body:formDataPartBody , contentType: fileMIME , filename: fileName , name:nameAttr
                 } = parseFormDataPart(part);
-                const { groupId , tableName , columnName , dataType } = parsedNameAttribute ;
+
+
+
+                /**
+                 * 
+                 * @param {string} nameAttr 
+                 * @returns {string}
+                 */
+                const extractProtocolName = (nameAttr) => {
+                    const protocolNameMatch = nameAttr.match(/[^;]+/);
+                    return protocolNameMatch?.[0] || ''; 
+                }
+
+                const { groupId , tableName , columnName , dataType } = parseNameAttr(nameAttr) ;
 
                 // scenario #1: if file
                 /* наличие данных в переменных fileMIME || fileName указывает на то что эта порция - файл*/
@@ -262,14 +277,9 @@ function insertIvalidGroupData () {
  * @param {Buffer<ArrayBuffer>} formDataPart 
  * @returns {{
  *  body:Buffer<ArrayBuffer>;
- *  fileMIME:string|null;
- *  fileName:string|null;
- *  parsedNameAttribute:{
- *   groupId:string;
- *   tableName:string;
- *   columnName?:string;
- *   dataType?:string;
- *  }
+ *  contentType:string|null;
+ *  filename:string|null;
+ *  name:string;
  * }}
  */
 function parseFormDataPart (formDataPart) {
@@ -279,24 +289,18 @@ function parseFormDataPart (formDataPart) {
     const formDataPartHeaders = parseFormDataPartHeaders(
         formDataPartHeadersRawData.toString('utf-8')
     );
-    const mime = formDataPartHeaders['content-type'] || null ;
+    const contentType = formDataPartHeaders['content-type'] || null ;
     const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
     if(!contentDisposition) {
         throw new Error(`no content-disposition header`);
     }
-    const { name: nameAttr , filename: filename } = parseContentDisposition(contentDisposition);
-    const { columnName , groupId , tableName , dataType } = parseNameAttr(nameAttr);
-
+    const { name: name , filename: filename } = parseContentDisposition(contentDisposition);
+    
     return {
         body ,
-        fileMIME:mime ,
-        fileName:filename ,
-        parsedNameAttribute: {
-            groupId ,
-            tableName ,
-            columnName ,
-            dataType ,
-        }
+        contentType ,
+        filename: filename,
+        name: name,
     }
 }
 

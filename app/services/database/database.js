@@ -69,7 +69,30 @@ class DataBase {
 
         console.log('read one' ,{tableId , rowId});
 
-        return {};
+        const tableById = this.#data.get(tableId);
+        if (!tableById) {
+            return {
+                error: {
+                    message: `table by id ${tableById} is not exist`,
+                },
+            }
+        }
+
+        const rowById = tableById.get(rowId);
+
+        if (!rowById) {
+            return {
+                error: {
+                    message:`row by id ${rowId} is not exist`,
+                } ,
+            }
+        }
+
+        return {
+            success: {
+                
+            }
+        };
     }
     
     readAll (tableId) {
