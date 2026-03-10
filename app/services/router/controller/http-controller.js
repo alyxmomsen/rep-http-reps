@@ -1,3 +1,4 @@
+const { renderMultipartForm } = require("../../form-data-server/services/multipart-formdata/render-multipart-form");
 const { /* formHandler */FormHandler } = require("../../request-handlers/form/form-handler");
 const { handlePublic } = require("../../request-handlers/public/handle-public");
 const { handleReactApp } = require("../../request-handlers/react/react-handler");
@@ -9,11 +10,19 @@ const router = new Router();
 // this first
 router.get('/static/*', async (req, res) => await handleStatic(req, res));
 
+router.get('/foo/*/bar', (req, res) => {
+    res.end('test');
+});
+
 router.get('/app', async (req, res) => handleReactApp(req , res));
-router.get('/api/videos', async (req, res) => {});
+router.get('/api/videos', async (req, res) => {
+    
+});
+
 router.get('/video/:filename' , async (req  ,res) => {});
 
-router.get('/l/form', async (req ,res) => await FormHandler.renderer(req , res) );
+router.get('/l/form', renderMultipartForm);
+
 router.post('/api/handle-form', async (req ,res) => await FormHandler.processForm(req , res) );
 // router.get('/api/handle-form', async (req ,res) => await formHandler.processForm(req , res) );
 router.get('/public/:type/:id', async (req ,res) => await handlePublic(req , res) ) ;
