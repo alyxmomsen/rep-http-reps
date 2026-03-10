@@ -63,8 +63,8 @@ class FormHandler {
         const [ contentType , contentTypeHeaderPayload ] = contentTypeHeader.split(/;\s*/) ;
 
         try {
-            const contentTypeHandlerController = contentTypeHandlersRouter.getHandlerController(contentType);
-            const result = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
+            const contentTypeHandlerInterface = contentTypeHandlersRouter.getHandlerController(contentType);
+            const result = await contentTypeHandlerInterface.handle(req ,res , contentTypeHeaderPayload);
         }
         catch (e) {
             console.log({e});

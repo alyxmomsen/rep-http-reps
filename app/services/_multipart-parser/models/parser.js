@@ -1,19 +1,18 @@
 /* стандартный(-е) модуль(-и) */
 const { IncomingMessage, ServerResponse } = require("node:http");
 /* кастомная утилита для отправки фолл-беков */
-const { sendFallBack, errorFactory } = require("../../../../utils/error-factory");
+const { sendFallBack } = require("../../../utils/error-factory");
 /* кастомная утилита для поиска индекса расположения байтовой последовательности в целевой байтовой последовательности */
-const { findSeparatorIndexInBuffer } = require("../../../../utils/find-separator-index-in-buffer.util");
+const { findSeparatorIndexInBuffer } = require("../../../utils/find-separator-index-in-buffer.util");
 /* фабрика генерирует контроллер базы данных с конкретной моделью валидации полей  */
-const { dbControllerFactory } = require("../../../database/controller/dbcontroller");
+const { dbControllerFactory } = require("../../database/controller/dbcontroller");
 /* начинал реализацию централизованой системы обработки ошибок, но отложил разработку
 оставил это здесь что-бы напоминало*/
 // const { errorService } = require("../../../error/error.service");
-const { filemanager , CONSTANTS:FILEMANAGER_CONSTANTS } = require("../../../filemanager.service.js/filemanager.service");
-const { GroupFormData, dataTypeValidator } = require("../../../group-form-data/group-form-data.service");
+const { filemanager } = require("../../filemanager.service.js/filemanager.service");
+const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
 // const { GLOBAL_NAMES } = require("../../../registry/names.map");
 // const { registry:namesRegistry } = require("../../../registry/names.registry");
-
 // const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
 
 const CONSTANTS = {
@@ -75,7 +74,7 @@ async function multipartHandler(req , res , payload) {
         /* инстанцируем объект сборщика групп
         который занимается объединением отдельных данных из HTML инпутов в семантические группы
         где каждую группу объеденяет предназначение к одной конкретной таблице базы данных*/
-        const groupFormData = new GroupFormData();
+        const multiTableGrouppingAgent = new MultiTableGrouppingAgent();
 
         /* здесь должны быть группы не прошедшие валидацию по той или иной причине
         предполагается эти группы обработать и отправить отчет на клиент,
@@ -96,50 +95,44 @@ async function multipartHandler(req , res , payload) {
                     body:formDataPartBody , contentType: fileMIME , filename: fileName , name:nameAttr
                 } = parseFormDataPart(part);
 
-
-
                 /**
                  * 
                  * @param {string} nameAttr 
-                 * @returns {string}
+                 * @returns {{protocolName:string;data:string}}
                  */
                 const extractProtocolName = (nameAttr) => {
-                    const protocolNameMatch = nameAttr.match(/[^;]+/);
-                    return protocolNameMatch?.[0] || ''; 
-                }
-
-                const { groupId , tableName , columnName , dataType } = parseNameAttr(nameAttr) ;
-
-                // scenario #1: if file
-                /* наличие данных в переменных fileMIME || fileName указывает на то что эта порция - файл*/
-                /* данные для передачи в сборщик должны быть подготовленны, так что требуется динамическая фабрика */
-                if(fileMIME || fileName) {
-                    const fileData = {
-                        groupId, tableName,
-                        data: {
-                            fileBody:formDataPartBody ,
-                            fileMIME ,
-                            fileName ,
-                            columnName ,
+                    const [a , b] = nameAttr.split(/:\/\/\s*/);
+                    console.log({nameAttr, a,b});
+                    if(b) {
+                        return {
+                            protocolName:a,
+                            data:b,
                         }
                     }
-                    /* для пушинга данных файла используется конкретный метод сервиса 
-                    для простого поля используется другой метод*/
-                    groupFormData.pushFileData(fileData);
-                    continue ;
-                }
-                
-                // scenario #2: if primitive field
-                const plainData = {
-                    groupId, tableName,
-                    data: {
-                        columnName ,
-                        columnDataType:dataType ,
-                        columnValue: formDataPartBody
+
+                    return {
+                        protocolName:'',
+                        data:a,
                     }
                 }
-                groupFormData.pushPlainFileldData(plainData);
 
+                const { protocolName, data } = extractProtocolName(nameAttr);
+
+                console.log({protocol:protocolName});
+
+                /* controller */
+                const handlerDataMap = new Map();
+                const groupDataHandler = handlerDataMap.get(protocolName);
+                if(!groupDataHandler && false) {
+                    throw new Error(`unknown data handling protocol`);
+                }
+
+                /* routed by protocolname */
+                multiTableGrouppingAgent.handleFormDataPartParsedData({
+                    body:formDataPartBody, contentType:fileMIME, filename:fileName, name:data,
+                });
+
+                continue;
             }
             catch (e) {
                 /* исключения пока никак не обрабатываются */
@@ -156,7 +149,7 @@ async function multipartHandler(req , res , payload) {
         предполагается что метод groupFormData.getGroups() будет возвращать различные форматы данных
         в зависимости от выбранной стратегии
         пока что стратегия одна: возращает объект где каждое поле это один-в-один(! может быть узким местом) название целевой таблицы БД*/
-        const assembledGroupsByTablename = groupFormData.getGroups(); // need extractor strategy
+        const assembledGroupsByTablename = multiTableGrouppingAgent.getGroups(); // need extractor strategy
         for (const [ tableName , groups ] of Object.entries(assembledGroupsByTablename)) {
 
             for (const group of groups) {
@@ -263,6 +256,10 @@ async function multipartHandler(req , res , payload) {
         });
         res.end(JSON.stringify(addedRowsData));
     });
+
+    req.on('error' , (err) => {
+        console.log('errror errror' , {err})
+    })
 
 }
 

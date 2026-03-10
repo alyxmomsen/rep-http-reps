@@ -10,7 +10,7 @@ const { dbControllerFactory } = require("../../../database/controller/dbcontroll
 оставил это здесь что-бы напоминало*/
 // const { errorService } = require("../../../error/error.service");
 const { filemanager , CONSTANTS:FILEMANAGER_CONSTANTS } = require("../../../filemanager.service.js/filemanager.service");
-const { GroupFormData, dataTypeValidator } = require("../../../group-form-data/group-form-data.service");
+const { MultiTableGrouppingAgent } = require("../../../_multipart-parser/services/multi-table-gruping-agent/multi-table-gruping-agent");
 // const { GLOBAL_NAMES } = require("../../../registry/names.map");
 // const { registry:namesRegistry } = require("../../../registry/names.registry");
 
@@ -68,7 +68,7 @@ async function multipartHandler(req , res , payload) {
         /* инстанцируем объект сборщика групп
         который занимается объединением отдельных данных из HTML инпутов в семантические группы
         где каждую группу объеденяет предназначение к одной конкретной таблице базы данных*/
-        const groupFormData = new GroupFormData();
+        const multiTableGroupAgent = new MultiTableGrouppingAgent();
 
         /* здесь должны быть группы не прошедшие валидацию по той или иной причине
         предполагается эти группы обработать и отправить отчет на клиент,
@@ -103,7 +103,7 @@ async function multipartHandler(req , res , payload) {
                     }
                     /* для пушинга данных файла используется конкретный метод сервиса 
                     для простого поля используется другой метод*/
-                    groupFormData.pushFileData(fileData);
+                    multiTableGroupAgent.pushFileData(fileData);
                     continue ;
                 }
                 
@@ -116,7 +116,7 @@ async function multipartHandler(req , res , payload) {
                         columnValue: formDataPartBody
                     }
                 }
-                groupFormData.pushPlainFileldData(plainData);
+                multiTableGroupAgent.pushPlainFileldData(plainData);
 
             }
             catch (e) {
@@ -134,7 +134,7 @@ async function multipartHandler(req , res , payload) {
         предполагается что метод groupFormData.getGroups() будет возвращать различные форматы данных
         в зависимости от выбранной стратегии
         пока что стратегия одна: возращает объект где каждое поле это один-в-один(! может быть узким местом) название целевой таблицы БД*/
-        const assembledGroupsByTablename = groupFormData.getGroups(); // need extractor strategy
+        const assembledGroupsByTablename = multiTableGroupAgent.getGroups(); // need extractor strategy
         for (const [ tableName , groups ] of Object.entries(assembledGroupsByTablename)) {
 
             for (const group of groups) {

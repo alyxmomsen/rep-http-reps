@@ -29,6 +29,9 @@
         "MIME" , "original-filename" , "filesystem-filename" , следовательно в БД будет:
         "<columnName>/MIME" , "<columnName>/original-filename" , "<columnName>/filesystem-filename" 
 
+
+        upd: added protocolId
+        протокол нужен для сервера что бы подобрать нужную стратегию для парсинга поля "name"
     -->
     <div class="wrapper--main">
         <div class="wrapper form--main" id="">
@@ -36,11 +39,11 @@
                 <div class="flex flex--col flex--gap-2">
                     <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
                         <h3>user</h3>
-                        <input type="text" name="G11.users.name.string" id="">
-                        <input type="text" name="G11.users.last-name.string" id="">
-                        <input type="file" name="G11.users.avatar.binary" id="" accept=".img, .jpeg, .png">
-                        <input type="file" name="G11.users.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
-                        <input type="file" name="G11.users.logo.binary" id="" accept=".img, .jpeg, .png">
+                        <input type="text" name="multitable://G11.users.name.string" id="">
+                        <input type="text" name="multitable://G11.users.last-name.string" id="">
+                        <input type="file" name="multitable://G11.users.avatar.binary" id="" accept=".img, .jpeg, .png">
+                        <input type="file" name="multitable://G11.users.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
+                        <input type="file" name="multitable://G11.users.logo.binary" id="" accept=".img, .jpeg, .png">
                     </div>
                     <div>
                         <button type="button" id="button--add-element">ADD ELEMENT</button>
@@ -48,9 +51,9 @@
                     <div id="playlist-items-group" class="flex flex--gap-1">
                         <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
                             <h3>playlist element</h3>
-                            <input type="text" name="G21.playlist-1.title.string" id="">
-                            <input type="text" name="G21.playlist-1.description.string" id="">
-                            <input type="file" name="G21.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
+                            <input type="text" name="multitable://G21.playlist-1.title.string" id="">
+                            <input type="text" name="multitable://G21.playlist-1.description.string" id="">
+                            <input type="file" name="multitable://G21.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
                             <button class="playlist-element--close-button" type="button">X</button>
                         </div>
                     </div>

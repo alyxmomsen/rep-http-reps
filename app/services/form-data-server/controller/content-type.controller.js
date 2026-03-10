@@ -1,6 +1,6 @@
 
+const { multipartHandler , CONSTANTS:MULTIPART_HANDLER_CONSTANTS } = require("../../_multipart-parser/models/parser");
 const { ContentTypeHandlersRouter } = require("../models/content-type.router");
-const { multipartHandler , CONSTANTS:MULTIPART_HANDLER_CONSTANTS } = require("../services/multipart.service");
 
 /*
  * данный файл был отнесен к категории контроллеров, 
