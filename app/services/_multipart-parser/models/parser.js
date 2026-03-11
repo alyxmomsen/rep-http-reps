@@ -95,6 +95,7 @@ async function multipartHandler(req , res , payload) {
                     body:formDataPartBody , contentType: fileMIME , filename: fileName , name:nameAttr
                 } = parseFormDataPart(part);
 
+                /* define protocol extracting model */
                 /**
                  * 
                  * @param {string} nameAttr 
@@ -116,6 +117,7 @@ async function multipartHandler(req , res , payload) {
                     }
                 }
 
+                /* protocol extracting controller */
                 const { protocolName, data } = extractProtocolName(nameAttr);
 
                 console.log({protocol:protocolName});
@@ -205,11 +207,6 @@ async function multipartHandler(req , res , payload) {
                     normalizedColumns[`${columnName}/originalFilename`] = fileName ;
                 }
 
-                /* логирование для отладки на момент разработки */
-                for (const [ k , v ] of Object.entries(normalizedColumns)) {
-                    console.log({k,v});
-                }
-    
                 /* сохраняем обычные инпуты */
                 for (const [ columnName , column ] of Object.entries(rows)) {
 

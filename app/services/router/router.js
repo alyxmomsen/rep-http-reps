@@ -198,13 +198,10 @@ class Router {
      */
     #assembleRouteBundle (template , handlers) {
         const keys = [];
+          
+        // let regexTemplate = template.replace(/\*/g, '.*');
+        let regexTemplate = template.replace(/\*/g, '[^\/]+');
         
-        /* #upd 2026.03.07 */
-        
-        let regexTemplate = template.replace(/\*/g, '.*');
-        
-        /* #upd 2026.03.07 end */
-
         regexTemplate = regexTemplate.replace(/:([^\/]+)/g , (_  , key) => {
             keys.push(key);
             return '([^\/]+)' ;
