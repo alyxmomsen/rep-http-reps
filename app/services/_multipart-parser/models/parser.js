@@ -11,6 +11,7 @@ const { dbControllerFactory } = require("../../database/controller/dbcontroller"
 // const { errorService } = require("../../../error/error.service");
 const { filemanager } = require("../../filemanager.service.js/filemanager.service");
 const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
+const { dbControllersRouter } = require("../../database-adapter/controller/db-adapter.controller");
 // const { GLOBAL_NAMES } = require("../../../registry/names.map");
 // const { registry:namesRegistry } = require("../../../registry/names.registry");
 // const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
@@ -152,9 +153,13 @@ async function multipartHandler(req , res , payload) {
         в зависимости от выбранной стратегии
         пока что стратегия одна: возращает объект где каждое поле это один-в-один(! может быть узким местом) название целевой таблицы БД*/
         const assembledGroupsByTablename = multiTableGrouppingAgent.getGroups(); // need extractor strategy
+        const _groups = multiTableGrouppingAgent._getGroups('schema');
         for (const [ tableName , groups ] of Object.entries(assembledGroupsByTablename)) {
+            continue;
+            console.log(`tablename: \x1b[33m${tableName}\x1b[0m`);
 
             for (const group of groups) {
+
                 /**
                  * @description в этот объект падают данные для колонок таблицы БД, где
                  * "Key" название колонки, "Value" - содержимое 
@@ -169,6 +174,9 @@ async function multipartHandler(req , res , payload) {
                 */
                 const { files , rows } = group ;
 
+                console.log({files, rows});
+
+                
                 for (const fileData of files) {
                     
                     const { mime , fileName  , fileBody , columnName } = fileData ;
@@ -202,6 +210,9 @@ async function multipartHandler(req , res , payload) {
                     должна иметь уникальный префикс. здесь префиксом выступает  [columnName]
                     благодаря чему, если потребуется, в одну строку можно записать данные о нескольких файлах
                     */
+
+
+
                     normalizedColumns[`${columnName}/filesistemFilename`] = fmFilename ;
                     normalizedColumns[`${columnName}/mime`] = mime ;
                     normalizedColumns[`${columnName}/originalFilename`] = fileName ;
@@ -223,18 +234,25 @@ async function multipartHandler(req , res , payload) {
                 /* в случае неудачи фабрика выбрасывает исключение */
                 try {
 
-                    const dbController = dbControllerFactory(tableName);
+                    const dbController = dbControllersRouter.get(tableName);
+                    if(!dbController) {
+                        throw new Error(`incorrect DBAdapter validation schema name. given: ${tableName}`);
+                    }
+
+                    dbController.createOne(normalizedColumns);
+
+                    // const dbController = dbControllerFactory(tableName);
+                    // const rowId = dbController.addOne( tableName, normalizedColumns);
                     
-                    const rowId = dbController.addOne( tableName, normalizedColumns);
         
                     /* тестовая проверка наличия данных в кастомной БД 
                     ключи не важны, на любые аргументы метод возвращает всю БД*/
-                    dbController.readAll('foo bar'); 
+                    // dbController.readAll('foo bar'); 
         
                     /* нужна фабрика для корректного пушинга */
-                    addedRowsData.push({
-                        rowId , row:normalizedColumns , tableName
-                    });
+                    // addedRowsData.push({
+                    //     rowId , row:normalizedColumns , tableName
+                    // });
                 }
                 catch (e) {
                     /* отсутствует обработка ошибок */

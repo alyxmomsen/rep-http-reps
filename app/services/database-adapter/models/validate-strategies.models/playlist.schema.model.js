@@ -1,29 +1,31 @@
 const { DATABASE_TYPES, DATABASE_TABLES, DBAdapter } = require("../db-adapter.model");
 
 const { STRING, BOOLEAN, NUMBER } = DATABASE_TYPES;
-const { FILES } = DATABASE_TABLES;
+const { PLAYLIST } = DATABASE_TABLES;
 
-const filesSchema = {
-    tableName:FILES,
+const playlistValidationSchema = {
+    tableName:PLAYLIST,
     properties:{
         id:{
             required:true,
             type:STRING,
             defaultValue:undefined,
+            primary:true,
+            autoIncrement:true,
         },
-        fileSystemFilename:{
+        title:{
             required:true,
             type:STRING,
             defaultValue:undefined,
         },
-        originalFileName:{
-            required:true,
+        description:{
+            required:false,
             type:STRING,
-            defaultValue:undefined,
+            defaultValue:`no description`,
         },
     }
 }
 
-const filesController = new DBAdapter(filesSchema);
+const playlistController = new DBAdapter(playlistValidationSchema);
 
-module.exports = { filesController }
+module.exports = { playlistController }

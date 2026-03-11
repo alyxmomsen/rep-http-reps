@@ -1,3 +1,5 @@
+const { Extractor } = require("../../../../utils/extractor/models/extractor.model");
+const { FILE_DATA_SCHEMA, MULTITABLE_AGENT_OUT_DATA_SCHEMAS } = require("../../../../utils/extractor/schemas/schemas");
 
 const CONSTANTS = {
     COLUMN_DATA_KEYS:{
@@ -18,7 +20,7 @@ const { DATA_TYPE_KEYS } = CONSTANTS ;
 dataTypeSetMap.set(DATA_TYPE_KEYS.STRING , 'string');
 dataTypeSetMap.set(DATA_TYPE_KEYS.NUMBER , 'number');
 
-/**
+/** #warning: unusable
  * 
  * @param {string} dataType 
  */
@@ -33,27 +35,78 @@ class MultiTableGrouppingAgent {
 
     handleFormDataPartParsedData (data) {
 
+        /* #warning #temp 
+            temp locally solution whilst developing
+            grupId -> tablename
+        */
+        const DB_TABLES_MAP_SCHEMA = {
+            "R":{
+                "25":"users",
+                "af":"video-playlist",
+            },
+            "F":{
+                "8e":"video-files",
+            }
+        }
+
         const {
-            body:formDataPartBody, contentType:fileMIME, filename:fileName, name:nameAttr,
+            body:fileBody, contentType:fileMIME, filename:fileName, name:nameAttr,
         } = data ;
 
-        const { groupId, tableName, columnName, dataType } = this.#parseNameAttribute(nameAttr);
+        const { groupId:groupCode, columnName, dataType } = this.#parseNameAttribute(nameAttr);
 
-        console.log({data});
+        /* tablename decoding
+        * 
+        * 
+        */
+        const groupCodeMatch = groupCode.match(/(\w)=([\w\d]{2})([\w\d]{2})/);
+        console.log({groupCodeMatch, groupCode});
+
+        const groupType = groupCodeMatch[1];
+        const groupId = groupCodeMatch[2];
+        const tableNameCode = groupCodeMatch[3];
+
+        
+        if(!tableNameCode || !groupId || !groupType) {
+            throw new Error(`unknown group code: ${groupCode}`);
+        }
+
+        const tableName = DB_TABLES_MAP_SCHEMA[groupType][tableNameCode];
+
+        const incomingData = {
+            fileBody,
+            fileMIME,
+            nameAttr,
+            groupId,
+            columnName,
+            dataType,
+            tableName,
+            fileName
+        }
 
         // scenario #1: if file
         /* наличие данных в переменных fileMIME || fileName указывает на то что эта порция - файл*/
         /* данные для передачи в сборщик должны быть подготовленны, так что требуется динамическая фабрика */
         if(fileMIME || fileName) {
-            const fileData = {
-                groupId, tableName,
-                data: {
-                    fileBody:formDataPartBody ,
-                    fileMIME ,
-                    fileName ,
-                    columnName ,
-                }
-            }
+
+            const fileData = (new Extractor()).extract(FILE_DATA_SCHEMA.STRUCT, incomingData);
+
+            console.log({fileData});
+
+            // const _fileData = {
+            //     /* #dev
+            //     * можно здесь не укзывать название таблицы 
+            //     * оставить только группу.
+            //     * название таблицы лучше добавить позже, в момент отпрвки в БД
+            //     */
+            //     groupId, tableName,
+            //     data: {
+            //         fileBody:fileBody ,
+            //         fileMIME ,
+            //         fileName ,
+            //         columnName ,
+            //     }
+            // }
             /* для пушинга данных файла используется конкретный метод сервиса 
             для простого поля используется другой метод*/
             this.#pushFileData(fileData);
@@ -66,7 +119,7 @@ class MultiTableGrouppingAgent {
             data: {
                 columnName ,
                 columnDataType:dataType ,
-                columnValue: formDataPartBody
+                columnValue: fileBody
             }
         }
         this.#pushPlainFileldData(plainData);
@@ -74,10 +127,86 @@ class MultiTableGrouppingAgent {
     }
 
     #parseNameAttribute (nameAttr) {
-        const [ groupId, tableName, columnName, dataType ] = nameAttr.split('.') ;
+
+        /* protocol
+            multitable://R=0025.last-name.string
+        */
+
+        const [ groupId, columnName, dataType ] = nameAttr.split('.') ;
 
         return {
-            groupId, tableName, columnName, dataType,
+            groupId, columnName, dataType,
+        }
+    }
+
+    _getGroups(schema) {
+
+        
+
+        const tableNameGroups = {};
+        
+        const colorizedString = (string,r=255,g=255,b=255) => `\x1b[38;2;${r};${g};${b}m${string}\x1b[0m`;
+        
+        /* extractor instance */
+        const extractor = new Extractor();
+
+        for (const [groupKey, groupData] of this.#groups.entries()) {
+            console.log(colorizedString(`group code: ${groupKey}`,255,128,0));
+            const {tableName, files, tableColumns} = groupData;
+            console.log(colorizedString(`tablename: ${tableName}`,0,255,255));
+
+            /* preparing tablename data */
+
+            if(tableNameGroups[tableName] === undefined) {
+                tableNameGroups[tableName] = {
+                    files:[],
+                    columns:{},
+                };
+            }
+            /**
+             * @type {{files:Object[];columns:Object.<string,any>}}
+             */
+            const groupByTableName = tableNameGroups[tableName];
+
+            /* ------------------------ */
+
+            if(tableColumns.size) {
+                console.log(colorizedString(`columns: `,128,64,0));
+                for (const [rawColumnName, columnData] of tableColumns.entries()) {
+                    console.log(colorizedString(`column name: ${rawColumnName}`));
+                    console.log({columnData});
+                    const columnNameLinks = rawColumnName.match(/\[(.+)\]/);
+                    if(columnNameLinks) {}
+
+                    const { columns } = groupByTableName ;
+                    
+                    columns[rawColumnName] = extractor.extract(MULTITABLE_AGENT_OUT_DATA_SCHEMAS.COLUMN, columnData);
+                    // columns[rawColumnName] = extract(SCHEMAS.COLUMN, columnData);
+
+                }
+            }
+
+            if(files.length) {
+                console.log(colorizedString(`files: `,128,255,64));
+                for (const file of files) {
+                    console.log({file});
+                    const { files } = groupByTableName ;
+                    // files.push(extract(SCHEMAS.FILE, file))
+                    files.push(extractor.extract(MULTITABLE_AGENT_OUT_DATA_SCHEMAS.FILE, file))
+                }
+            }
+        }
+
+        
+        for (const [tableName, group] of Object.entries(tableNameGroups)) {
+            console.log(`table name: ${tableName}`);
+            console.log({group});
+        }
+
+        // utils
+
+        function setDataByTableName (tableNameGroups, ) {
+
         }
     }
 
@@ -86,6 +215,12 @@ class MultiTableGrouppingAgent {
      * @returns {Object.<string,{files:Object[];rows:Object.<string,string>}[]>}
      */
     getGroups (strategy) {
+
+        /* #dev #notice
+         * 
+         * можно не сортировать по tablename, так как в коде группы уже закодирован tablename
+         * 
+         */
 
         const groups = {} ;
 

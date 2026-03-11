@@ -38,11 +38,15 @@
                 <div class="flex flex--col flex--gap-2">
                     <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
                         <h3>user</h3>
-                        <input type="text" name="multitable://G11.users.name.string" id="">
-                        <input type="text" name="multitable://G11.users.last-name.string" id="">
-                        <input type="file" name="multitable://G11.users.avatar.binary" id="" accept=".img, .jpeg, .png">
-                        <input type="file" name="multitable://G11.users.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
-                        <input type="file" name="multitable://G11.users.logo.binary" id="" accept=".img, .jpeg, .png">
+                        <!-- users table g00t25 -->
+                        <input type="text" name="multitable://R=0025.name[].string" id="">
+                        <input type="text" name="multitable://R=0025.last-name[].string" id="">
+                        <!-- video-files table g01t8e -->
+                        <input type="file" name="multitable://F=018e.avatar[R=0025].binary" id="" accept=".img, .jpeg, .png">
+                        <!-- video-files table -->
+                        <input type="file" name="multitable://F=028e.thumb-nail[R=0025].binary" id="" accept=".img, .jpeg, .png">
+                        <!-- video-files table -->
+                        <input type="file" name="multitable://F=038e.logo[R=0025].binary" id="" accept=".img, .jpeg, .png">
                     </div>
                     <div>
                         <button type="button" id="button--add-element">ADD ELEMENT</button>
@@ -50,9 +54,11 @@
                     <div id="playlist-items-group" class="flex flex--gap-1">
                         <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
                             <h3>playlist element</h3>
-                            <input type="text" name="multitable://G21.playlist-1.title.string" id="">
-                            <input type="text" name="multitable://G21.playlist-1.description.string" id="">
-                            <input type="file" name="multitable://G21.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
+                            <!-- video-playlist table -->
+                            <input type="text" name="multitable://R=04af.title[].string" id="">
+                            <input type="text" name="multitable://R=04af.description[].string" id="">
+                            <!-- video-files table -->
+                            <input type="file" name="multitable://F=058e.video-min[R=04af,R=0025].binary" id="" accept=".mkv, .mp4">
                             <button class="playlist-element--close-button" type="button">X</button>
                         </div>
                     </div>

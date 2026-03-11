@@ -16,10 +16,14 @@ const CONSTANTS = {
         REQUIRED:'REQUIRED' ,
     } ,
     /* таблица ключей для таблиц базы данных*/
+    /* #warning
+    * this key map must be defined in one globally file
+    * либо они должны как-то синхронизироваться с другими key-map
+    */
     DB_TABLES_NAMES:{
-        VIDEO:'video',
+        VIDEO:'video-files',
         USERS:'users',
-        PLAYLIST_1:'playlist-1',
+        PLAYLIST_1:'video-playlist',
     }
 }
 
@@ -72,7 +76,9 @@ class DBController {
 
             /* валидация типа входных данных в соответствии с моделью */
             if(typeof valueByPropertyName !== valueTypeModel) {
-                /* #warning: отсутвует фабрика */
+                /* #warning
+                * отсутвует фабрика 
+                */
                 propertyErrors.push({
                     key: MODEL_PROPERTY_NAME , 
                     value: valueByPropertyName ,
@@ -81,7 +87,9 @@ class DBController {
             }
 
             /* если есть хотябы одна инвалидность то поле считается не валидным */
-            /* #warning: отсутствует валидация по "required" флагу */
+            /* #warning 
+            * отсутствует валидация по "required" флагу 
+            */
             if(propertyErrors.length) {
                 allErrors.push(propertyErrors);
                 continue;

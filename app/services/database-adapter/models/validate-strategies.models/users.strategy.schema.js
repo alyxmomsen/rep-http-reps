@@ -3,13 +3,15 @@ const { DATABASE_TYPES, DATABASE_TABLES, DBAdapter } = require("../db-adapter.mo
 const { STRING, BOOLEAN, NUMBER } = DATABASE_TYPES;
 const { PLAYLIST } = DATABASE_TABLES;
 
-const playlistValidationSchema = {
+const UsersValidationSchema = {
     tableName:PLAYLIST,
     properties:{
         id:{
             required:true,
             type:STRING,
             defaultValue:undefined,
+            primary:true,
+            autoIncrement:true,
         },
         title:{
             required:true,
@@ -24,6 +26,6 @@ const playlistValidationSchema = {
     }
 }
 
-const playlistController = new DBAdapter(playlistValidationSchema);
+const usersController = new DBAdapter(UsersValidationSchema);
 
-module.exports = { playlistController }
+module.exports = { usersController }

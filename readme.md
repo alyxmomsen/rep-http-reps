@@ -168,3 +168,111 @@ MIT
 Your Name - [telegram/@yourusername](https://t.me/yourusername) - email@example.com
 
 Project Link: [https://github.com/alyxmomsen/rep-http-reps](https://github.com/alyxmomsen/rep-http-reps)
+
+
+# issues
+
+
+## link groups
+
+- [ ] link groups
+
+вариант:
+<currentGoup[targetGroup]>
+
+должно быть линкование, 
+- либо с группой которая отправляется в одном request
+- либо с конкретным id строки в конкретной таблицы
+- либо и так, и так
+
+вариант решения:
+
+- изначально кажды файл отправляется как отдельная группа, но если файл имеет отношение к группе
+    которая отправляется в одном и том же реквесте, то присвоить файлу ту же группу что и та группа
+    к которой он имеет отношение,
+    соответственно <columnName> файла будет присвоен группе, как и ожидается в соответствии с правилами группировки
+
+- вообще файл должен быть всегда к чему-то привязан 
+
+### решение
+
+в квадратных скобах перечисляются локальные (попадающие в один и тот же реквест) идентификаторы,
+
+но, опять же, - на данный момент нет возможности линковать видео с уже существующей записью (производить UPDATE)
+или добавлять в связывающую таблицу
+
+```html
+<input type="text" name="multitable://R=0025[].name.string" id="">
+<input type="file" name="multitable://F=028e.thumb-nail[R=0025].binary" id="" accept=".img, .jpeg, .png">
+
+<!-- что здесь происходит:
+1. создается запись в таблице "VIDEO-FILES" (8e) в соответствии c
+    R=00<25> - "USERS"
+    R=00<af> - "VIDEO-PLAYLIST"
+    F=01<8e> - "VIDEO-FILES"
+2. линкуется с таблицей "USERS" (25)
+    "thumb-nail" теперь является именем колонки в таблице "USERS"
+ -->
+```
+
+```html
+<div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+    <h3>user</h3>
+    <!-- users table g00t25 -->
+    <input type="text" name="multitable://R=0025[].name.string" id="">
+    <input type="text" name="multitable://R=0025[].last-name.string" id="">
+    <!-- video-files table g01t8e -->
+    <input type="file" name="multitable://F=018e.avatar[R=0025].binary" id="" accept=".img, .jpeg, .png">
+    <!-- video-files table -->
+    <input type="file" name="multitable://F=028e.thumb-nail[R=0025].binary" id="" accept=".img, .jpeg, .png">
+    <!-- video-files table -->
+    <input type="file" name="multitable://F=038e.logo[R=0025].binary" id="" accept=".img, .jpeg, .png">
+</div>
+<div>
+    <button type="button" id="button--add-element">ADD ELEMENT</button>
+</div>
+<div id="playlist-items-group" class="flex flex--gap-1">
+    <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+        <h3>playlist element</h3>
+        <!-- video-playlist table -->
+        <input type="text" name="multitable://R=04af[].title.string" id="">
+        <input type="text" name="multitable://R=04af[].description.string" id="">
+        <!-- video-files table -->
+        <input type="file" name="multitable://F=058e.video-min[R=04af,R=0025].binary" id="" accept=".mkv, .mp4">
+        <button class="playlist-element--close-button" type="button">X</button>
+    </div>
+</div>
+
+```
+
+
+
+# dev-flow
+
+## 26.03.11
+
+```html
+<!-- 
+    разберем строку: <input type="text" name="multitable://R=0025.last-name.string" id="">
+    и строку: <input type="file" name="multitable://F=018e.logo.binary" id="" accept=".img, .jpeg, .png">
+    <multitable> - protocol id; 
+    <://> - delimeter; 
+    <R=dddd> - тип группы, где "R"(regular) "F"(fille) "00" - шестнадцатеричный код группы  "25"- код БД таблицы
+        т.е в форме не нужно указывать название таблицы, т.к. это уже заключено в коде,-
+        на сервере для каждого кода ассоциирована конкретная таблица
+        например: 
+        R=00<25> - "USERS"
+        R=00<af> - "VIDEO-PLAYLIST"
+        F=01<8e> - "VIDEO-FILES"
+    <last-name> - имя столбца в строке таблицы
+    <string> - тип данных для базы данных, это тоже лучше выразить в коде
+-->
+<input type="text" name="multitable://R=0025.last-name.string" id="">
+<input type="file" name="multitable://R=0025.avatar.binary" id="" accept=".img, .jpeg, .png">
+<input type="file" name="multitable://R=0025.thumb-nail.binary" id="" accept=".img, .jpeg, .png">
+<input type="file" name="multitable://F=018e.logo.binary" id="" accept=".img, .jpeg, .png">
+
+<input type="text" name="multitable://R=02af.title.string" id="">
+<input type="text" name="multitable://R=02af.description.string" id="">
+<input type="file" name="multitable://F=038e.video-min.binary" id="" accept=".mkv, .mp4">
+```

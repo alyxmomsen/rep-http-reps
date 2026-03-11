@@ -4,9 +4,17 @@ const DATABASE_TYPES = {
     BOOLEAN:'boolean',
 }
 
+/* #warning
+    db tables map defined locally!
+    but it needs define the TablesMap globally
+
+    another one a map like this defined in 
+    app\services\_multipart-parser\services\multi-table-gruping-agent\multi-table-gruping-agent.js
+ */
 const DATABASE_TABLES = {
-    FILES:'files',
+    VIDEO_FILES:'video-files',
     PLAYLIST:'video-playlist',
+    USERS:'users'
 }
 
 class DBAdapter {
@@ -37,7 +45,7 @@ class DBAdapter {
             }
         }
 
-        database.createOne(tableName, validatedData);
+        // database.createOne(tableName, validatedData);
 
     }
 
