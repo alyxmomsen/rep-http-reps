@@ -276,5 +276,3 @@ async function multipartHandler(req , res , payload) {
 
 }
 
-module.exports = { multipartHandler , CONSTANTS }
-

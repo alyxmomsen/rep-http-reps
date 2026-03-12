@@ -141,8 +141,6 @@ class MultiTableGrouppingAgent {
 
     _getGroups(schema) {
 
-        
-
         const tableNameGroups = {};
         
         const colorizedString = (string,r=255,g=255,b=255) => `\x1b[38;2;${r};${g};${b}m${string}\x1b[0m`;
