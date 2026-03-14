@@ -1,3 +1,5 @@
+const { database } = require("../../database/database");
+
 const DATABASE_TYPES = {
     STRING:'string',
     NUMBER:'number',
@@ -45,7 +47,19 @@ class DBAdapter {
             }
         }
 
-        // database.createOne(tableName, validatedData);
+        const { success, error } = database.createOne(tableName,data);
+
+        if(error) {
+            return {
+                error,
+            }
+        }
+
+        console.log({success, error});
+
+        return {
+            success,
+        }
 
     }
 

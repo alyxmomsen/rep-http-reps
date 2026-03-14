@@ -1,29 +1,29 @@
 const SCHEMA = {
-    __tableName__:{ //  < data[__tableName[outerDataKey]] >
-        type:'object',
-        outerDataKey:'tableName',
+    __tableName__:{ // <knot_id>
+        type:'object', // controller: если "object", то..
+        inputDataKey:'tableName', // <key> входящего объекта 
         schema:{
-            __groupId__:{ //  < data[__groupId[outerDataKey]] >
+            __groupId__:{ // <knot_id>
                 type:'object',
-                outerDataKey:'groupId',
+                inputDataKey:'groupId',
                 schema:{
-                    __columnName:{ //  < __columnName[outerDataKey] >
+                    __columnName:{ // <knot_id>
                         type:'object',
-                        outerDataKey:'columnName',
+                        inputDataKey:'columnName',
                         schema:{
-                            fileName:{ //  < __fileName[outerDataKey] >
-                                type:'string',
-                                outerDataKey:'fileName',
+                            fileName:{ // <knot_id>
+                                type:'string', // значение отличное от "object"
+                                inputDataKey:'fileName',
                                 schema:null,
                             },
-                            fileMIME:{ //  < __fileMIME[outerDataKey] >
+                            fileMIME:{ // <knot_id>
                                 type:'string',
-                                outerDataKey:'fileMIME',
+                                inputDataKey:'fileMIME',
                                 schema:null,
                             },
-                            fileBody:{ //  < __fileBody[outerDataKey] >
+                            fileBody:{ // <knot_id>
                                 type:'string',
-                                outerDataKey:'fileBody',
+                                inputDataKey:'fileBody',
                                 schema:null,
                             },
                         },
@@ -34,73 +34,117 @@ const SCHEMA = {
     }, 
 }
 
-/**
- * 
- * @param {Object.<string,Object>} schema 
- * @param {Object.<string,any>} outerData 
- * @returns 
- */
-const constructorReqursive = (schema, outerData, struct) => {
+/* 
 
-    // const struct = {};
+    работает с двумя кейсами
 
-    /* 
-        const demo_struct = {
-            'files':{
-                'aa':{
-                    'title':'title',
-                    'description':'description',
-                    'body':'body',
-                }
+    case #1
+
+    fileBody:{ //  < __fileBody[inputDataKey] >
+        type:'string',
+        inputDataKey:'fileBody',
+        schema:null,
+    },
+
+    case #2
+
+    fileMIME:{ //  < __fileMIME[inputDataKey] >
+        type:'string',
+        inputDataKey:'fileMIME',
+        schema:null,
+    },
+
+*/
+
+/* резуьтат работы
+    
+    const demo_result_struct = {
+        // case #1 : schema[<knot_id>]['type] === 'object'
+        // динамичный <property_key>, 
+        // будет взято из входящего объекта по правилу:
+        // schema[<knot_id>]['inputDataKey']
+        'files':{ 
+            // case #1
+            'aa':{ 
+                // case #2 : schema[<knot_id>]['type] !== 'object'
+                // статичный <property_key>
+                // извлекается из <schema> по правилу:
+                // schema[<knot_id>]['inputDataKey']
+                'title':'title',
+                // case #2
+                'description':'description',
+                // case #2
+                'body':'body',
             }
         }
+    }
+*/
 
-    */
-    
-    for (const [propertykey, propertyvalue] of Object.entries(schema)) {
+/**
+ * @description
+ *  обновляет [mutableUpdateObject] на основании [inputData]
+ *  в соответствии с правилами схемы [schema]
+ * @param {Object.<string,Object>} schema 
+ *  
+ * @param {Object.<string,any>} inputData 
+ * @returns 
+ */
+const constructorReqursive = (schema, inputData, mutableUpdateObject) => {
+
+    for (const [knot_id, propertyvalue] of Object.entries(schema)) {
         
-        const {type:dataType, schema, outerDataKey} = propertyvalue;
+        const {type:dataType, schema, inputDataKey} = propertyvalue;
 
         if(dataType === 'object' && schema !== null) {
 
             if(schema === null) {
-                throw new Error(`incorrect schema value: given ${schema}`);
+                console.log(
+                    `\x1b[38;2;255;128;32m` + 
+                    `incorrect schema, provided not inner-schema for the <knot_Id> ${knot_id}`
+                        .toUpperCase() + '\x1b[0m');
+                throw new Error(`code: incorrect schema, provided not inner-schema for the <knot_Id> ${knot_id}`);
             }
 
-            // const nestedStruct = constructorReqursive(schema, outerData);
+            if(inputData[inputDataKey] === undefined) {
+                console.log(
+                    `\x1b[38;2;255;128;32m` +
+                    `invalid proveded object data property value`
+                        .toUpperCase() +
+                    '\x1b[0m'
+                );
+                throw new Error(`code: 2`);
+            }
 
-            // допустим, outerDataKey = 'tableName', тогда
-            // - по значению outerData[outerDataKey] будет , например, "files" или "users"
+            // допустим, inputDataKey = 'tableName', тогда
+            // - по значению outerData[inputDataKey] будет , например, "files" или "users"
             // - тогда: struct["files"] = < результат рекурсивного парсинга >, т.е , 
             //  например {title:'foo', description:'bar'}
-            if(struct[outerData[outerDataKey]] === undefined) {
-                struct[outerData[outerDataKey]] = constructorReqursive(schema, outerData, {});
+            if(mutableUpdateObject[inputData[inputDataKey]] === undefined) {
+                mutableUpdateObject[inputData[inputDataKey]] = constructorReqursive(schema, inputData, {});
                 continue;
             }
 
-            const nestedStruct = constructorReqursive(schema, outerData, struct[outerData[outerDataKey]]);
+            const nestedStruct = constructorReqursive(schema, inputData, mutableUpdateObject[inputData[inputDataKey]]);
             /* 
-                если в труктуре уже есть данные, то 
-                перебираем ключи новой структуры и добавляем их по одному
+                если в <mutableUpdateObject> уже есть данные, то 
+                перебираем ключи <nestedStruct> структуры добавляя их по-одному
             */
             for (const [nestedStructKey, nestedStructValue] of Object.entries(nestedStruct)) {
                 console.log({nestedStructKey});
-                struct[outerData[outerDataKey]][nestedStructKey] = nestedStructValue;
+                mutableUpdateObject[inputData[inputDataKey]][nestedStructKey] = nestedStructValue;
             }
 
             continue;
         }
 
         /* 
-            в текущую структуру будет добавлен ключ из СХЕМЫ, например "title"  
-            а значение из внешнего источника , например "my title"
+            в текущую структуру будет добавлен ключ из текущей <schema>, например "title"  
+            а значение будет взято из <inputData[inputDataKey]> , например "my title"
         */
-        struct[outerDataKey] = outerData[outerDataKey];
-
-
+        mutableUpdateObject[inputDataKey] = inputData[inputDataKey];
     }
 
-    return struct;
+    return mutableUpdateObject;
 }
 
 module.exports = { constructorReqursive, SCHEMA }

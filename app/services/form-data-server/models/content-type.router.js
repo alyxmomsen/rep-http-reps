@@ -22,8 +22,12 @@ class ContentTypeHandlerController {
      * @returns {Promise<Object.<string,any>>}
      */
     async handle(req, res, payload) {
-        const result = await this.#strategy(req, res, payload);
-        return result;
+        const {success, error} = await this.#strategy(req, res, payload);
+        
+        return {
+            success,
+            error,
+        };
     }
 
     #listeners;

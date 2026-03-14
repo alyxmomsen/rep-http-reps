@@ -46,7 +46,9 @@ window.addEventListener('DOMContentLoaded' , () => {
 
         console.log({jsonResponse});
 
-        modalWindow.show();
+        const addedData = jsonResponse?.success?.addedData
+
+        modalWindow.show(addedData);
     });
 
 });
@@ -146,9 +148,19 @@ class ModalWindow {
         this.#htmlElement.style.display = 'none' ;
     }
     
-    show () {
+
+    show (data) {
+        const datawrapper = document.createElement('div');
+        data.forEach(el => {
+            const d = document.createElement('div');
+            d.innerText = el.id;
+            console.log({el});
+            datawrapper.appendChild(d);
+        });
+
+        this.#htmlElement.appendChild(datawrapper);
+
         this.#htmlElement.style.display = 'flex' ;
-        console.log(this.#htmlElement);
         if(this.#timeout) {
             clearTimeout(this.#timeout);
         }

@@ -57,7 +57,11 @@ class DataBase {
         /* если таблица существует, пушим строку */
         tableByTableId.set(newRowIdHash , row) ;
 
-        return newRowIdHash ;
+        return {
+            success:{
+                newRowIdHash,
+            },
+        } ;
     }
 
     /**

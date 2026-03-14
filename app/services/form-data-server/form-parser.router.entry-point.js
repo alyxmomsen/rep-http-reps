@@ -80,16 +80,27 @@ class FormHandler {
                 return;
             }
 
-            const { parsedData } = success;
+            console.log('content type handler success: ', {success , error});
 
             // for (const [key, value] of Object.entries(parsedData)) {
             //     console.log({key, value});
             // }
 
+
+            /* 
+                it`s need validate the "succes" object,
+                becose response data may be any type
+
+                it`s need a validate scheme,
+                but at now i response object the "succes"
+            
+            */
+
             res.writeHead(200, 'ok' , {
                 'content-type':'application/json',
             });
-            res.end(JSON.stringify({success:'success'}));
+
+            res.end(JSON.stringify({success}));
             return
         }
         catch (e) {

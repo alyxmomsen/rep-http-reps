@@ -5,6 +5,7 @@ const { filemanager } = require("../../filemanager.service.js/filemanager.servic
 const { MultipartFormdataHandler } = require("../models/multi-part-parser.model");
 const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
 const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
+const { onDataEndMiddleware } = require("../models/on-data-end.middleware/on-data-end.mw");
 
 const multipartFormHandler = new MultipartFormdataHandler();
 
@@ -14,7 +15,12 @@ multipartFormHandler.addEventListener('dataPartParsed' , (payload) => {
     console.log(`\x1b[33mon form data part parsed\x1b[0m`, {payload});
 });
 
-multipartFormHandler.onDataEndListeners(async (payload) => {
+// multipartFormHandler.onDataEndListeners(onDataEndMiddleware);
+
+multipartFormHandler.onDataEndListeners(async (payload, next) => {
+
+    const addedData = [];
+
     const compiledGroups = multiTableAgent.__getGroups();
     for (const [tableName, groups] of Object.entries(compiledGroups)) {
         console.log(`\x1b[38;2;255;128;255mtable name: ${tableName}\x1b[0m`, );
@@ -40,24 +46,34 @@ multipartFormHandler.onDataEndListeners(async (payload) => {
 
                         const id = randomBytes(32).toString('hex');
 
-                        const result = dbAdapter.createOne({
+                        const {error:dbAdapterError, success:dbAdapterSuccess} = dbAdapter.createOne({
                             fileSystemFilename:filename,
                             originalFileName:fileName,
                             mime:fileMIME,
                         });
 
-                        console.log({result});
+                        if(dbAdapterError) {
+                            
+                        }
+
+                        addedData.push({
+                            id:dbAdapterSuccess.newRowIdHash,
+                        });
+
+                        console.log('data base adapter result', {dbAdapterSuccess, dbAdapterError});
+
+                        
                     }
                     catch (e) {
                         console.log(`\x1b[38;2;255;64;0m` + 'mwrong table name'.toUpperCase() + `\x1b[0m`);
+                        
                     }
                 }
-
             }
-    
         }
     }
-    return compiledGroups;
+
+    return await next({success:{addedData}})
 });
 
 multipartFormHandler.useMiddleware(async (payload, next) => {
