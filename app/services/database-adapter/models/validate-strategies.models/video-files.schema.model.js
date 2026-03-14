@@ -6,13 +6,13 @@ const { VIDEO_FILES } = DATABASE_TABLES;
 const videoFilesSchema = {
     tableName:VIDEO_FILES, // or maybe to title this field as "schemaName"
     properties:{
-        id:{
-            required:true,
-            type:STRING,
-            defaultValue:undefined,
-            primary:true,
-            autoIncrement:true,
-        },
+        // id:{
+        //     required:true,
+        //     type:STRING,
+        //     defaultValue:undefined,
+        //     primary:true,
+        //     autoIncrement:true,
+        // },
         fileSystemFilename:{
             required:true,
             type:STRING,
@@ -23,6 +23,11 @@ const videoFilesSchema = {
             type:STRING,
             defaultValue:undefined,
         },
+        mime:{
+            required:true,
+            type:STRING,
+            defaultValue:undefined,
+        }
     }
 }
 

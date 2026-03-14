@@ -18,16 +18,16 @@ const fileControllerModels = new Map();
 /* использовать Map для хранения моделей. и фабрики*/
 
 const filesModel = new DBController({
-    title:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'untitled' ,
-        [REQUIRED]:false ,
-    } ,
-    description:{
-        [VALUE_TYPE]:'string' ,
-        [DEFAULT_VALUE]:'no description' ,
-        [REQUIRED]:false ,
-    } ,
+    // title:{
+    //     [VALUE_TYPE]:'string' ,
+    //     [DEFAULT_VALUE]:'untitled' ,
+    //     [REQUIRED]:false ,
+    // } ,
+    // description:{
+    //     [VALUE_TYPE]:'string' ,
+    //     [DEFAULT_VALUE]:'no description' ,
+    //     [REQUIRED]:false ,
+    // } ,
     filesistemFilename:{
         [VALUE_TYPE]:'string' ,
         [DEFAULT_VALUE]:undefined ,

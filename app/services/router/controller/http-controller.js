@@ -1,3 +1,4 @@
+// const { multipartFormHandler } = require("../../_multipart-parser/controller/controller");
 const { renderMultipartForm } = require("../../_multipart-parser/models/render");
 const { FormHandler } = require("../../form-data-server/form-parser.router.entry-point");
 const { handlePublic } = require("../../request-handlers/public/handle-public");
@@ -23,8 +24,24 @@ router.get('/video/:filename' , async (req  ,res) => {});
 /* view */
 router.get('/l/form', renderMultipartForm);
 
-/* обработчик-роутер для всех зарегестрированных form content-type данных   */
+/* 
+    обработчик-роутер для всех зарегестрированных form content-type данных
+    ожидает {req, res, responseSchema}
+    req - http.IncomingMessage
+    res - http.ServerResponse
+    responseSchema - SchemaObject (описан в документации) обрабатывется SchemaObjectParser-ом  
+    
+    работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
+*/
 router.post('/api/handle-form', FormHandler.processForm );
+
+/* 
+    обработчик для multipart/form-data
+    required: req, res, responseSchema 
+
+    работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
+*/
+// router.post('/api/handle-multipart-form-data', multipartFormHandler.handle.bind(multipartFormHandler));
 
 /* test route for URL params */
 router.get('/test/:id/foo/:bar' , async (req  , res) => {

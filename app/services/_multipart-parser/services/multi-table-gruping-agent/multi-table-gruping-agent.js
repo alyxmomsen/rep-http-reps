@@ -1,5 +1,7 @@
+
 const { Extractor } = require("../../../../utils/extractor/models/extractor.model");
 const { FILE_DATA_SCHEMA, MULTITABLE_AGENT_OUT_DATA_SCHEMAS } = require("../../../../utils/extractor/schemas/schemas");
+const { SCHEMA, constructorReqursive } = require("../../../../utils/reqursive-extractor/reqursive-extractor");
 
 const CONSTANTS = {
     COLUMN_DATA_KEYS:{
@@ -66,7 +68,6 @@ class MultiTableGrouppingAgent {
         const groupId = groupCodeMatch[2];
         const tableNameCode = groupCodeMatch[3];
 
-        
         if(!tableNameCode || !groupId || !groupType) {
             throw new Error(`unknown group code: ${groupCode}`);
         }
@@ -74,55 +75,19 @@ class MultiTableGrouppingAgent {
         const tableName = DB_TABLES_MAP_SCHEMA[groupType][tableNameCode];
 
         const incomingData = {
-            fileBody,
+            // nameAttr,
             fileMIME,
-            nameAttr,
-            groupId,
-            columnName,
+            fileName,
+            fileBody,
             dataType,
+            columnName,
+            groupId,
             tableName,
-            fileName
         }
 
-        // scenario #1: if file
-        /* наличие данных в переменных fileMIME || fileName указывает на то что эта порция - файл*/
-        /* данные для передачи в сборщик должны быть подготовленны, так что требуется динамическая фабрика */
-        if(fileMIME || fileName) {
+        console.log({incomingData});
 
-            const fileData = (new Extractor()).extract(FILE_DATA_SCHEMA.STRUCT, incomingData);
-
-            console.log({fileData});
-
-            // const _fileData = {
-            //     /* #dev
-            //     * можно здесь не укзывать название таблицы 
-            //     * оставить только группу.
-            //     * название таблицы лучше добавить позже, в момент отпрвки в БД
-            //     */
-            //     groupId, tableName,
-            //     data: {
-            //         fileBody:fileBody ,
-            //         fileMIME ,
-            //         fileName ,
-            //         columnName ,
-            //     }
-            // }
-            /* для пушинга данных файла используется конкретный метод сервиса 
-            для простого поля используется другой метод*/
-            this.#pushFileData(fileData);
-            return;
-        }
-        
-        // scenario #2: if primitive field
-        const plainData = {
-            groupId, tableName,
-            data: {
-                columnName ,
-                columnDataType:dataType ,
-                columnValue: fileBody
-            }
-        }
-        this.#pushPlainFileldData(plainData);
+        constructorReqursive( SCHEMA, incomingData, this.#groups_ );
 
     }
 
@@ -137,6 +102,10 @@ class MultiTableGrouppingAgent {
         return {
             groupId, columnName, dataType,
         }
+    }
+
+    __getGroups () {
+        return this.#groups_;
     }
 
     _getGroups(schema) {
@@ -195,17 +164,7 @@ class MultiTableGrouppingAgent {
             }
         }
 
-        
-        for (const [tableName, group] of Object.entries(tableNameGroups)) {
-            console.log(`table name: ${tableName}`);
-            console.log({group});
-        }
-
-        // utils
-
-        function setDataByTableName (tableNameGroups, ) {
-
-        }
+        return tableNameGroups ;
     }
 
     /**
@@ -382,9 +341,11 @@ class MultiTableGrouppingAgent {
     }
 
     #groups;
+    #groups_;
 
     constructor () {
         this.#groups = new Map();
+        this.#groups_ = {};
     }
 }
 

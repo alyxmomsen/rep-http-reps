@@ -64,7 +64,33 @@ class FormHandler {
 
         try {
             const contentTypeHandlerController = contentTypeHandlersRouter.getHandlerController(contentType);
-            const result = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
+            const { error, success } = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
+
+            if(error) {
+                console.log({error, success});
+                res.end(JSON.stringify({foo:'bar'}));
+                return;
+            }
+
+            if(!success) {
+                res.writeHead(500, 'internal error', {
+                    "content-type":"application/json",
+                });
+                res.end(JSON.stringify({error:'internal error'}));
+                return;
+            }
+
+            const { parsedData } = success;
+
+            // for (const [key, value] of Object.entries(parsedData)) {
+            //     console.log({key, value});
+            // }
+
+            res.writeHead(200, 'ok' , {
+                'content-type':'application/json',
+            });
+            res.end(JSON.stringify({success:'success'}));
+            return
         }
         catch (e) {
             console.log({e});

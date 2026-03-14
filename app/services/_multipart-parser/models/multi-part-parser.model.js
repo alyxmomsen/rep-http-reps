@@ -10,11 +10,12 @@ const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-ag
 const { dbControllersRouter } = require("../../database-adapter/controller/db-adapter.controller");
 const { splitFormData } = require("../utils/split-form-raw-data");
 const { parseFormDataPart } = require("../utils/parse-form-data-part");
+const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
 // const { GLOBAL_NAMES } = require("../../../registry/names.map");
 // const { registry:namesRegistry } = require("../../../registry/names.registry");
 // const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
 
-const CONSTANTS = {
+const MULTIPART_FORM_HANDLER_CONSTANTS = {
     PAYLOAD_DATA_KEY:'boundaryRawData' ,
     /* это поле предназначалось для централизованной системы обработки ошибок,
     в той архитектуре нужно было учитывать идентификатор скрипта
@@ -23,256 +24,225 @@ const CONSTANTS = {
     HTML_FORM_CONTENT_TYPE:'multipart/form-data' , // for the form-handler routing
 }
 
-/**
- * 
- * @param {IncomingMessage} req 
- * @param {ServerResponse} res 
- * @param {Object.<string,any>} payload 
- * @returns {{error:any;success:any}}
- */
-async function multipartHandler(req , res , payload) {
+class MultipartFormdataHandler {
 
-    if(!payload) {
-        throw new Error(`no payload`);
-    }
-
-    /* получаем boundary по простому регулярному выражению */
-    /**
-     * @type {string}
-     */
-    const boundary = (payload?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
-
-    if(!boundary) {
-        sendFallBack(res ,400 , 'multipartHandler' , 'no boundary given' , {boundary , payload , contentTypePayload: boundaryRawString});
-        return ;
-    }
-
-    /**
-     * @type {Buffer<ArrayBuffer>[]}
-     */
-    const formDataChunks = [];
     
+
     /**
-     * переменная для контролля размера полученных данных
-     * @type {number}
+     * 
+     * @param {IncomingMessage} req 
+     * @param {ServerResponse} res 
+     * @param {Promise<{error:Object.<string,any>}|{success:Object.<string,any>}>} payload 
+     * @returns 
      */
-    let formDataSize = 0 ;
-    req.on("data" , async (chunk) => {
-        formDataSize += chunk.length ;
-        formDataChunks.push(chunk);
-    }); 
+    async handle (req, res, payload) {
 
-    req.on('end' , async () => {
-        
-        console.log(`form chunks received`);
-        /* объеденяем все полученые Buffer chunks в один монолит */
-        const wholeFormDataBuffer = Buffer.concat(formDataChunks);
-        /* разбиваем перманентный буффер на логические куски, где 
-        каждый кусок есть данные одного HTML тега "input" */
-        const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
-        /* инстанцируем объект сборщика групп
-        который занимается объединением отдельных данных из HTML инпутов в семантические группы
-        где каждую группу объеденяет предназначение к одной конкретной таблице базы данных*/
-        const multiTableGrouppingAgent = new MultiTableGrouppingAgent();
-
-        /* здесь должны быть группы не прошедшие валидацию по той или иной причине
-        предполагается эти группы обработать и отправить отчет на клиент,
-        например для информирования пользователя для дальнейшей корректировки вводимых данных 
-        пока что это здесь с целью напоминания, дожидается дальнейшей разработки*/
-        const invalidGroups = new Map();
-
-        const parsedFormDataParts = [];
-
-        for (const part of parts) {
-            try {
-                /* полный парсинг данных одного инпута 
-                на выходе получаем 7 семантически различных типов данных
-                body: содержимое инпута введеное пользователем,в т.ч файл, в виде Buffer<ArrayBuffer>
-                parsedNameAttribute это данные аттрибута "name" HTML тега, при этом парсинг реализуется по
-                , пока-что, одной стратегии*/
-                const { 
-                    body:formDataPartBody , contentType: fileMIME , filename: fileName , name:nameAttr
-                } = parseFormDataPart(part);
-
-                /* define protocol extracting model */
-                /**
-                 * 
-                 * @param {string} nameAttr 
-                 * @returns {{protocolName:string;data:string}}
-                 */
-                const extractProtocolName = (nameAttr) => {
-                    const [a , b] = nameAttr.split(/:\/\/\s*/);
-                    console.log({nameAttr, a,b});
-                    if(b) {
-                        return {
-                            protocolName:a,
-                            data:b,
-                        }
-                    }
-
-                    return {
-                        protocolName:'',
-                        data:a,
-                    }
-                }
-
-                /* protocol extracting controller */
-                const { protocolName, data } = extractProtocolName(nameAttr);
-
-                console.log({protocol:protocolName});
-
-                /* controller */
-                const handlerDataMap = new Map();
-                const groupDataHandler = handlerDataMap.get(protocolName);
-                if(!groupDataHandler && false) {
-                    throw new Error(`unknown data handling protocol`);
-                }
-
-                /* routed by protocolname */
-                multiTableGrouppingAgent.handleFormDataPartParsedData({
-                    body:formDataPartBody, contentType:fileMIME, filename:fileName, name:data,
-                });
-
-                continue;
-            }
-            catch (e) {
-                /* исключения пока никак не обрабатываются */
-                const errorMessage = e.message ;
-                console.log({errorMessage  ,e , cs:CONSTANTS.CURRENT_SCRIPT_ID});
-            }
+        if(!payload) {
+            throw new Error(`no payload provided`);
         }
-        
+
+        /* получаем boundary по простому регулярному выражению */
         /**
-         * массив данных для отправки на клиент
+         * @type {string}
          */
-        const addedRowsData = [] ;
-        /* получаем все сформированые группы для сторринга в БД 
-        предполагается что метод groupFormData.getGroups() будет возвращать различные форматы данных
-        в зависимости от выбранной стратегии
-        пока что стратегия одна: возращает объект где каждое поле это один-в-один(! может быть узким местом) название целевой таблицы БД*/
-        const assembledGroupsByTablename = multiTableGrouppingAgent.getGroups(); // need extractor strategy
-        const _groups = multiTableGrouppingAgent._getGroups('schema');
-        for (const [ tableName , groups ] of Object.entries(assembledGroupsByTablename)) {
-            continue;
-            console.log(`tablename: \x1b[33m${tableName}\x1b[0m`);
+        const boundary = (payload?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
 
-            for (const group of groups) {
-
-                /**
-                 * @description в этот объект падают данные для колонок таблицы БД, где
-                 * "Key" название колонки, "Value" - содержимое 
-                 * @type {Object.<string,string>}
-                 */
-                const normalizedColumns  = {} ;
-                const normalizedFilesData = {} ;
-                
-                /* предполагается что применяется конкретная стратегия , где 
-                группа содержит по-меньшей мере два поля 
-                [files]:Object[] (данные инпутов файлов) и [rows]:Object.<string,any> (обычные инпуты)
-                */
-                const { files , rows } = group ;
-
-                console.log({files, rows});
-
-                
-                for (const fileData of files) {
-                    
-                    const { mime , fileName  , fileBody , columnName } = fileData ;
-
-                    /* пробуем сохранять файл в файловую систему
-                    по-умолчанию папка "/uploads" в корне проекта */
-                    const { error , success } = await filemanager.write(fileBody);
-                    // console.log({fileData , success , error});
-
-                    /* неудача */
-                    if(error) {
-                        throw new Error(`filemanager error` , JSON.stringify(error));
-                    }
-                    
-                    /* техническая ошибка, по-какой-то причине не вернулся объект "success" */
-                    if(!success) {
-                        throw new Error(`filemanager error: no success` , JSON.stringify({success , error}));
-                    }
-    
-                    /* получаем filename, - название файла в ФС, в виде хэша */
-                    const { filename:fmFilename } = success ;
-    
-                    /* БД сохраняется не сам файл , а лишь информация о нем 
-                    1. filesistemFilename: имя в файловой системе, 
-                    по которому, в дальнейшем, будет осуществляться его поиск
-                    2. mime файла: для работы с файлом в дальнейшем
-                    3. originalFilename: имя файла на машине пользователя
-
-                    и поскольку для одной строки таблицы может прилететь сразу несколько файлов, то
-                    каждая группа (filesistemFilename ,mime ,originalFilename) колонок строки 
-                    должна иметь уникальный префикс. здесь префиксом выступает  [columnName]
-                    благодаря чему, если потребуется, в одну строку можно записать данные о нескольких файлах
-                    */
-
-
-
-                    normalizedColumns[`${columnName}/filesistemFilename`] = fmFilename ;
-                    normalizedColumns[`${columnName}/mime`] = mime ;
-                    normalizedColumns[`${columnName}/originalFilename`] = fileName ;
-                }
-
-                /* сохраняем обычные инпуты */
-                for (const [ columnName , column ] of Object.entries(rows)) {
-
-                    // console.log({columnName  ,column});
-                    const { data:columnData } = column ;
-                    normalizedColumns[columnName] = columnData.toString('utf-8') ;
-                }
-            
-                
-                /* получаем контроллер для работы с базой данных, - 
-                в фабрику контроллеров передаем имя модели, 
-                которое посимвольно совпадает с ключом Map,
-                в котором хранятся модели конроллеров представленные функциями */
-                /* в случае неудачи фабрика выбрасывает исключение */
-                try {
-
-                    const dbController = dbControllersRouter.get(tableName);
-                    if(!dbController) {
-                        throw new Error(`incorrect DBAdapter validation schema name. given: ${tableName}`);
-                    }
-
-                    dbController.createOne(normalizedColumns);
-
-                    // const dbController = dbControllerFactory(tableName);
-                    // const rowId = dbController.addOne( tableName, normalizedColumns);
-                    
-        
-                    /* тестовая проверка наличия данных в кастомной БД 
-                    ключи не важны, на любые аргументы метод возвращает всю БД*/
-                    // dbController.readAll('foo bar'); 
-        
-                    /* нужна фабрика для корректного пушинга */
-                    // addedRowsData.push({
-                    //     rowId , row:normalizedColumns , tableName
-                    // });
-                }
-                catch (e) {
-                    /* отсутствует обработка ошибок */
-                    /* как я уже упоминал, предполается единый сервис для обработки ошибок,
-                    который пока что в разработке , так что пока тупо console.log()*/
-                    console.log({e});
-                }
-            }
-
+        if(!boundary) {
+            throw new Error(`no boundary provided`);
         }
 
-        console.log(addedRowsData);
+        return new Promise ((resolve, reject) => {
 
-        res.writeHead(200 , 'ok' , {
-            'content-type':'application/json' ,
+            /**
+             * @type {Buffer<ArrayBuffer>[]}
+             */
+            const formDataChunks = [];
+            
+            /**
+             * переменная для контролля размера полученных данных
+             * @type {number}
+             */
+            let formDataSize = 0 ;
+            req.on("data" , async (chunk) => {
+                formDataSize += chunk.length ;
+                formDataChunks.push(chunk);
+            }); 
+
+            req.on('end' , async () => {
+                
+                console.log(`form chunks received`);
+                /* объеденяем все полученые Buffer chunks в один монолит */
+                const wholeFormDataBuffer = Buffer.concat(formDataChunks);
+                /* разбиваем перманентный буффер на логические куски, где 
+                каждый кусок есть данные одного HTML тега "input" */
+                const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
+                
+                /* здесь должны быть группы не прошедшие валидацию по той или иной причине
+                предполагается эти группы обработать и отправить отчет на клиент,
+                например для информирования пользователя для дальнейшей корректировки вводимых данных 
+                пока что это здесь с целью напоминания, дожидается дальнейшей разработки*/
+                const invalidGroups = new Map();
+
+                const parsedFormDataParts = [];
+
+                for (const part of parts) {
+                    try {
+                        /* полный парсинг данных одного инпута 
+                        на выходе получаем 7 семантически различных типов данных
+                        body: содержимое инпута введеное пользователем,в т.ч файл, в виде Buffer<ArrayBuffer>
+                        parsedNameAttribute это данные аттрибута "name" HTML тега, при этом парсинг реализуется по
+                        , пока-что, одной стратегии*/
+                        const { 
+                            body, contentType, filename, name
+                        } = parseFormDataPart(part);
+                        
+                        /* middleware */
+
+                        const nextData = await this.#executOnPartHandledeMiddleware(
+                            {data:{body, contentType, filename, name}}, 
+                            this.#middleware,
+                        );
+
+                        console.log({nextEndData:nextData});
+
+                        parsedFormDataParts.push(nextData);
+
+                        /* ---------- */
+
+                        continue;
+                    }
+                    catch (e) {
+                        /* исключения пока никак не обрабатываются */
+                        const errorMessage = e.message ;
+                        console.log({errorMessage, e, cs:MULTIPART_FORM_HANDLER_CONSTANTS.CURRENT_SCRIPT_ID});
+                    }
+                }
+
+                const parsed = await this.#executeOnEndMiddleware({parsedFormDataParts}, this.#onDataEndListeners);
+                resolve({success:{
+                    parsedData:parsed,
+                }});
+            });
+
+            req.on('error' , (err) => {
+                reject({
+                    error:err,
+                });
+            })
         });
-        res.end(JSON.stringify(addedRowsData));
-    });
+    }
 
-    req.on('error' , (err) => {
-        console.log('errror errror' , {err})
-    })
+    /**
+     * 
+     * @param  {...((payload:Object.<string,any>, next:((payload)=>Promise<Object.<string,any>>))=>Promise<Object.<string,any>>)} handlers 
+     */
+    onDataEndListeners (...handlers) {
+        handlers.forEach(handler => {
+            this.#onDataEndListeners.push(handler);
+        });
+    }
 
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {(payload:Object.<string,any>) => void} handler 
+     */
+    addEventListener (eventName, handler) {
+        this.#eventListeners.set(eventName, handler);
+    }
+
+    /**
+     * 
+     * @param  {...((payload:Object.<string,any>,next:((nextData:Object.<string,any>)=>Promise<Object.<string,any>>))=>Promise<Object.<string,any>>)} middleware 
+     */
+    useMiddleware (...middleware) {
+        for (const handler of middleware) {
+            this.#middleware.push(handler);
+        }
+    }
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {Object.<string,any>} payload 
+     */
+    #emit (eventName, payload) {
+        this.#handleEvents(eventName, payload);
+    }
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {Object.<string,any>} payload
+     */
+    #handleEvents (eventName, payload) {
+        for (const [listenerEventName, handler] of this.#eventListeners.entries()) {
+            if(eventName !== listenerEventName) continue;
+            handler(payload);
+        }
+    }
+
+    /**
+     * 
+     * @param {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<Object.<string,any>>)=>Promise<Object.<string,any>>)[]} middleware 
+     * @returns {Promise<Object.<string,any>}
+     */
+    async #executeOnEndMiddleware (payload, middleware) {
+        const MAX_REQURSIVE_CALLSTACK = middleware.length + 1;
+        let iterationsCounter = 0;
+        /**
+         * 
+         * @param {Object.<string,any>} nextData 
+         */
+        const next = async (nextData) => {
+            if(iterationsCounter < MAX_REQURSIVE_CALLSTACK) {
+                console.log({nextData});
+                const handler = middleware[iterationsCounter++];
+                if(!handler) return nextData;
+                return await handler(nextData, next);
+            }
+            throw new Error(`too many reqursive callstack. current: ${iterationsCounter}`);
+        }
+        return await next(payload);
+    }
+
+    /**
+     * 
+     * @param {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<Object.<string,any>>)=>Promise<Object.<string,any>>)[]} middleware 
+     * @returns {Promise<Object.<string,any>}
+     */
+    async #executOnPartHandledeMiddleware (payload, middleware) {
+        const MAX_RECURSIVE =  middleware.length + 1;
+        let iterationsCounter = 0;
+        const next = async (nextData) => {
+            if(iterationsCounter < MAX_RECURSIVE) {
+                console.log({nextData});
+                const handler = middleware[iterationsCounter++];
+                if(handler === undefined) return nextData;
+                return await handler(nextData, next);
+            }
+            throw new Error(`too many reqursive stack. current: ${iterationsCounter}`);
+        }
+        return await next(payload);
+    }
+
+    /**
+     * @type {Map.<string,(payload:Object.<string,any>)=>void>}
+     */
+    #eventListeners;
+
+    /**
+     * @type {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<void>)=>Promise<void>)[]}
+     */
+    #middleware;
+
+    #onDataEndListeners;
+
+    constructor () {
+        this.#eventListeners = new Map();
+        this.#middleware = [];
+        this.#onDataEndListeners = [];
+    }
 }
 
+module.exports = { MultipartFormdataHandler, MULTIPART_FORM_HANDLER_CONSTANTS }
