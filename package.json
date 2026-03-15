@@ -1,0 +1,24 @@
+{
+  "name": "knight-bus-app",
+  "version": "1.0.0",
+  "description": "A from-scratch implementation of a web server framework for Node.js, featuring custom routing, multipart form parsing, file upload handling, and data validation.",
+  "homepage": "https://github.com/alyxmomsen/rep-http-reps#readme",
+  "bugs": {
+    "url": "https://github.com/alyxmomsen/rep-http-reps/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alyxmomsen/rep-http-reps.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "pg": "^8.20.0"
+  }
+}
