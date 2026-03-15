@@ -22,7 +22,11 @@ router.get('/api/videos', async (req, res) => {res.end()});
 router.get('/video/:filename' , async (req  ,res) => {});
 
 /* view */
-router.get('/l/form', renderMultipartForm);
+router.get('/l/form', async (req, res, next, payload) => {
+    console.log('handle form middleware');
+    next('test');
+    return;
+}, renderMultipartForm);
 
 /* 
     обработчик-роутер для всех зарегестрированных form content-type данных

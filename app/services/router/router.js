@@ -70,12 +70,10 @@ class Router {
         res.end('not found');
     }
 
-    
-
     /**
      * 
      * @param {string} template 
-     * @param  {...((req:IncomingMessage , res:ServerResponse , next?:(() => Promise<void>)) => Promise<void>)} handlers 
+     * @param  {...((req:IncomingMessage , res:ServerResponse , next?:((payload:any) => Promise<void>), payload?:any) => Promise<void>)} handlers 
      */
     get(template , ...handlers) {
         const { KEYS } = ROUTER_CONTSTANTS.METHODS ;
@@ -85,14 +83,12 @@ class Router {
     /**
      * 
      * @param {string} template 
-     * @param  {...((req:IncomingMessage , res:ServerResponse , next?:(() => Promise<void>)) => Promise<void>)} handlers 
+     * @param  {...((req:IncomingMessage , res:ServerResponse , next?:((payload:any) => Promise<void>)) => Promise<void>), payload?:any} handlers 
      */
     post(template , ...handlers) {
         const { KEYS } = ROUTER_CONTSTANTS.METHODS ;
         this.#addRoute(template , KEYS.POST , handlers);
     }
-
-
 
     /**
      * @param {...((req:IncomingMessage,res:ServerResponse,next?:() => Promise<void>) => Promise<void>)} middleware 
@@ -107,16 +103,22 @@ class Router {
      * 
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
-     * @param {((req:IncomingMessage,res:ServerResponse,next?:() => Promise<void>) => Promise<void>)[]} middleware 
+     * @param {((req:IncomingMessage,res:ServerResponse,next?:(payload:any) => Promise<void>) => Promise<void>)[]} middleware 
      */
-    async #executeMiddleware (req , res , middleware) {
+    async #executeMiddleware(req, res, middleware, payload) {
+        const MAX_CALL_STACK = middleware.length + 1;
         let index = 0 ;
-        const next = async () => {
-            const handler = middleware[index++];
-            if(!handler) return ;
-            const {} = handler(req , res , next) || {} ;
+        const next = async (payload) => {
+            const nextindex = index++;
+            if (index++ >= MAX_CALL_STACK) {
+                return payload;
+            }
+            const handler = middleware[nextindex];
+            if(!handler) return payload ;
+            const handlerResult = handler(req, res, next, payload);
+            return {handlerResult,  payload};
         }
-        await next();
+        return await next(payload);
     }
 
     /**
