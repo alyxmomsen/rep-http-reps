@@ -62,8 +62,39 @@ class PublicRouter {
         console.log(`added public`);
     }
 
+    addLeaf(branchId, leafId, filename) {
+        /**
+         * @type {{rootPath:string;idRouter:Object.<string.<{filename:string;mime:string}>}}
+         */
+        const idBranch = this.#routes.get(branchId);
+        if (!idBranch) {
+            throw new Error(`incorrect branch id. given: ${branchId}`);
+        }
+        idBranch.idRouter[leafId] = bundleLeaf(filename);
+    }
+
+    /**
+     * 
+     * @param {string} type 
+     */
+    addBranch(type) {
+        this.#routes[type] = {
+            rootPath:resolve(join('.','public', type)),
+            idRouter: new Map(),
+        }
+    }
+
     constructor () {
         this.#routes = new Map();
+        const routes = ['css', 'js'];
+        routes.forEach(route => {
+            this.#routes[route] = {
+                rootPath: {
+
+                },
+                idRouter: {},
+            }
+        });
     }
 }
 
