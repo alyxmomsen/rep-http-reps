@@ -82,7 +82,7 @@ class ContentTypeHandlersRouter {
             }
         }
         if(noConteins) {
-            throw new Error(`${c3r.RED}this contentType <${contentType}> is unknown ${c3r.DEFAULT}`);
+            throw new Error(`this contentType <${contentType}> is unknown`);
         }
 
         /* проверяем,- если для <contentType> уже зарегестрирован обработчик 

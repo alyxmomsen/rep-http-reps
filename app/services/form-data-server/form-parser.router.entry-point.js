@@ -33,7 +33,8 @@ fallbacks.set('error type' , (...args) => {});
 class FormHandler {
 
     /**
-     * @description вызывает конкретный контроллер для обработки формы в зависимости от "content-type" хедера 
+     * @description вызывает конкретный контроллер для обработки формы 
+     * в зависимости от "content-type" хедера 
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
      * @returns {Promise<void>} 
@@ -63,7 +64,16 @@ class FormHandler {
         const [ contentType , contentTypeHeaderPayload ] = contentTypeHeader.split(/;\s*/) ;
 
         try {
+            /* 
+                здесь, по-факту, работаем по паттерну Singletone, 
+                по-скольку "contentTypeHandlersRouter" определен единожды в файле 
+                "app\services\form-data-server\controller\content-type.controller.js",
+                там же происходит регистрация content-type роутов, и там же он экспортирован,
+                таким образом Singletone импортируется уже "заряженый" маршрутами
+             */
             const contentTypeHandlerController = contentTypeHandlersRouter.getHandlerController(contentType);
+            /* если исключение не произошло, то вызываем метод "handle" контроллера, 
+            который, в свою очередь, вызывает content-type обработчик */
             const { error, success } = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
 
             if(error) {

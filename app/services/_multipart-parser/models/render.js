@@ -1,6 +1,7 @@
 const { readFile } = require("node:fs/promises");
 const { resolve } = require("node:path");
 
+/* абсолютный путь для чтения файла */
 const FORM_TEMPLATE_PATH = resolve('./assets/html/form.html');
 
 async function renderMultipartForm(req, res) {
@@ -13,7 +14,7 @@ async function renderMultipartForm(req, res) {
         const template = await readFile(formTemplatePath, 'utf-8');
         
         /* 
-        * здесь обработка темплейта
+        * здесь будет обработка темплейта
         */
 
         res.writeHead(200 , 'ok' , {
