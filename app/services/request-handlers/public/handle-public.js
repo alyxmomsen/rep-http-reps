@@ -1,45 +1,42 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
 const { sendFallBack } = require("../../../utils/error-factory");
-const { join, resolve } = require("node:path");
+const { join, resolve, extname } = require("node:path");
 const { readFile } = require("node:fs/promises");
 
-const PUBLIC_DIR = resolve(join('.' , 'public'));
-
-const insertSrcMapItem =  (map , type , id ) => {}
-
-const MIME_VALUES = {
-    TEXT_CSS:'text/css' ,
-    TEXT_JAVASCRIPT:'text/javascript' ,
+const MIMETypeValue = {
+    TextCSS:'text/css' ,
+    TextJavaScript: 'text/javascript',
+    TextPlain:'text/plain',
 }
 
-const { TEXT_CSS , TEXT_JAVASCRIPT } = MIME_VALUES ;
+const MIME_KEY_MAP = {
+    '.css': MIMETypeValue.TextCSS,
+    '.js':MIMETypeValue.TextJavaScript,
+}
+
+function bundleLeaf (filename) {
+    return {
+        filename,
+        mime:MIME_KEY_MAP[extname(filename)] || MIMETypeValue.TextPlain, 
+    }
+}
+
+const { TextCSS , TextJavaScript } = MIMETypeValue ;
 
 const PUBLIC_SRC_MAP = {
     typeRouter:{
         'css':{
             rootPath:resolve(join('.','public','css')),
             idRouter:{
-                'main':{
-                    filename:'main.css' ,
-                    mime:TEXT_CSS , 
-                } ,
-                'form':{
-                    filename:'form.css' ,
-                    mime:TEXT_CSS , 
-                }
+                'main':bundleLeaf('main.css'),
+                'form':bundleLeaf('form.css'),
             } ,
         } ,
         'js':{
             rootPath:resolve(join('.','public','js')),
             idRouter:{
-                'main':{
-                    filename:'main.js' ,
-                    mime:TEXT_JAVASCRIPT, 
-                } ,
-                'form':{
-                    filename:'form.js',
-                    mime:TEXT_JAVASCRIPT ,
-                } , 
+                'main':bundleLeaf('main.js'),
+                'form':bundleLeaf('form.js'),
             } ,
         } ,
     }
@@ -81,7 +78,7 @@ typeRouter.js('form' , 'form.js' , 'text/javascript');
  */
 async function handlePublic(req , res) {
 
-    const { params , queryParams } = req ;
+    const { params } = req ;
     const { type , id } = params || {} ;
 
     console.log({type , id});
