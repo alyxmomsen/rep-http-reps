@@ -19,15 +19,13 @@ multipartFormHandler.addEventListener('dataPartParsed' , (payload) => {
 
 multipartFormHandler.onDataEndListeners(async (payload, next) => {
 
-
-
     const addedData = [];
 
     const compiledGroups = multiTableAgent.__getGroups();
 
-    console.log({compiledGroups});
+    // console.log({compiledGroups});
 
-    return {success:compiledGroups}
+    // return {success:compiledGroups}
 
     for (const [tableName, groups] of Object.entries(compiledGroups)) {
         console.log(`\x1b[38;2;255;128;255mtable name: ${tableName}\x1b[0m`, );
