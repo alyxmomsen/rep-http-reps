@@ -1,6 +1,7 @@
-const { PropType: MapperSchemaPropType, PropType, MY_TEST_SCHEMA, ValueType } = require("./schemas/multitable-data-schema");
+const { PropType: MapperSchemaPropType, PropType, MULTITABLE_DATA_SCHEMA: MY_TEST_SCHEMA, ValueType } = require("./schemas/multitable-data-schema");
 
-
+// testing solution
+//
 // const dataSetGenerator = (postfix, columnName, groupId, tableName, keyMod='hello' ) => {
 
 //     return {
@@ -89,7 +90,8 @@ class Mapper {
     }
 }
 
-
+// testing solution
+//
 // const mapper = new Mapper(MY_TEST_SCHEMA);
 
 // const context = {};

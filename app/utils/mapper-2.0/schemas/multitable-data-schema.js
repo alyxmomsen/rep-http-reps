@@ -9,7 +9,7 @@ const ValueType = {
     Branch: 'branch',
 }
 
-const MY_TEST_SCHEMA = {
+const MULTITABLE_DATA_SCHEMA = {
     tableName:{
         property:{
             type:PropType.Dinamic,
@@ -100,4 +100,4 @@ const MY_TEST_SCHEMA = {
     },
 }
 
-module.exports = { MY_TEST_SCHEMA , PropType , ValueType };
+module.exports = { MULTITABLE_DATA_SCHEMA , PropType , ValueType };
