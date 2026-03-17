@@ -89,9 +89,10 @@ class MultiTableGrouppingAgent {
 
         mapper.process(MY_TEST_SCHEMA, incomingData, this.#groups_);
 
-        console.log({contenxt:this.#groups_});
+        // console.log({context2:this.#groups_});
 
         // constructorReqursive( SCHEMA, incomingData, this.#groups_ );
+
 
     }
 

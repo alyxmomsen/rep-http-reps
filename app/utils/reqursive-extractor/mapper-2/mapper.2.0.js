@@ -1,46 +1,91 @@
-const { PropType: MapperSchemaPropType, PropType } = require("./schemas/test-schema");
+const { PropType: MapperSchemaPropType, PropType, MY_TEST_SCHEMA, ValueType } = require("./schemas/test-schema");
+
+
+const incomingDataGenerator = (index, columnName, groupId, tableName ) => {
+
+    return {
+        fileMIME:`fileMIME data-#${index}`,
+        fileName:`fileName data-#${index}`,
+        fileBody:`fileBody data-#${index}`,
+        dataType:`dataType data-#${index}`,
+        columnName:`${columnName}`,
+        groupId:`${groupId}`,
+        tableName:`${tableName}`,
+    }
+} 
+
+const incomingData = [
+    incomingDataGenerator(8,'description','dd'.toUpperCase(),'files'),
+    incomingDataGenerator(3,'title','bb'.toUpperCase(),'users'),
+    incomingDataGenerator(7,'title','dd'.toUpperCase(),'files'),
+    incomingDataGenerator(6,'description','cc'.toUpperCase(),'files'),
+    incomingDataGenerator(4,'description','bb'.toUpperCase(),'users'),
+    incomingDataGenerator(1,'title','aa'.toUpperCase(),'users'),
+    incomingDataGenerator(5,'title','cc'.toUpperCase(),'files'),
+    incomingDataGenerator(2,'description','aa'.toUpperCase(),'users'),
+];
 
 class Mapper {
 
-    process(schema, data, context) {
+    process(schema, source, context) {
+
+
+        console.log({schema, source, context});
+
+        let iter = 0;
 
         for (const [k, v] of Object.entries(schema)) {
 
-            console.log('check', {k,v});
-            const { keyPath, schema:nestedSchema, propType } = v;
+            iter++;
+            // extract data from {v}
+            const { property, value } = v;
 
-            switch (propType) {
-
-                case PropType.Dinamic:
-                    
-                    const propertyName = data[keyPath];
-
-                    if(propertyName === undefined) {
-                        console.log({propertyName,keyPath});
-                        throw new Error(`invalid incoming data`);
-                    }
-                    
-                    if(context[propertyName] === undefined) {
-
-                        if(nestedSchema) {
-                            context[propertyName] = this.process(nestedSchema, data, {}) ;
-                            continue;
-                        }
-
-                        continue;
-                    }
-                
-                    break;
-                case PropType.Static:
-                    //
-                    break;
-                
+            if(property === undefined || value === undefined) {
+                throw new Error(`incorrect schema`.toUpperCase());
             }
 
-            if(nestedSchema) {
-                for (const [k_, v_] of this.process(nestedSchema, data, context[propertyName])) {
-                    context[propertyName][k_] = v_;
+            // init prop
+
+            let newProp = null;
+            try {
+                newProp = property.type ===  PropType.Dinamic ? source[property.srcPath] : property.staticKey ;
+            }
+            catch (err) {
+                console.log({err});
+                break;
+            }
+
+            // log repoprt
+            console.log({newProp});
+
+            // mutation
+
+            if(context[newProp] === undefined) {
+
+                 // init value
+
+                let newValue = null ;
+                try {
+                    console.log({iter});
+                    newValue = 
+                        value.type === ValueType.Branch 
+                            ? this.process(value.src.schema, source, context[newProp]) 
+                            : source[value.src.path];
                 }
+                catch (err) {
+                    console.log({err})
+                    break;
+                }
+
+                context[newProp] = newValue;
+            }
+            else {
+                console.log(`\x1b[38;2;255;0;64m` + 'check start'.toUpperCase() + `\x1b[0m`);
+                for (const [k_, v_] of Object.entries(newValue)) {
+                    console.log({k_, v_});
+                    context[newProp][k_] = v_
+                }
+                console.log(`\x1b[38;2;255;0;64m` + 'check end'.toUpperCase() + `\x1b[0m`);
             }
         }
 
@@ -53,6 +98,25 @@ class Mapper {
         this.#schema = schema ;
     }
 }
+
+
+const mapper = new Mapper(MY_TEST_SCHEMA);
+
+const context = {};
+
+incomingData.forEach(data => {
+    console.log('data path trouth');
+    mapper.process(MY_TEST_SCHEMA, data, context);
+});
+
+console.log('detail result: ');
+for (const [k, v] of Object.entries(context)) {
+    console.log(k,'\n\n');
+    for (const [k__, v__] of Object.entries(v)) {
+        console.log({k__, v__});
+    }
+}
+
 
 module.exports = { Mapper };
 
