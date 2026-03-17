@@ -96,7 +96,6 @@ class FormHandler {
             //     console.log({key, value});
             // }
 
-
             /* 
                 it`s need validate the "succes" object,
                 becose response data may be any type

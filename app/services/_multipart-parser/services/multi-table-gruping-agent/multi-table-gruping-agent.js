@@ -1,4 +1,6 @@
 
+const { Mapper } = require("../../../../utils/mapper-2.0/mapper.2.0");
+const { MY_TEST_SCHEMA } = require("../../../../utils/mapper-2.0/schemas/multitable-data-schema");
 const { SCHEMA, constructorReqursive } = require("../../../../utils/reqursive-extractor/reqursive-extractor");
 
 const CONSTANTS = {
@@ -109,10 +111,12 @@ class MultiTableGrouppingAgent {
             tableName,
         }
 
-        console.log({incomingData});
+        const mapper = new  Mapper();
 
         // Object-Relational Mapping
-        constructorReqursive( SCHEMA, incomingData, this.#groups_ );
+        mapper.process(MY_TEST_SCHEMA, incomingData, this.#groups_);
+
+        // console.log({context2:this.#groups_});
     }
 
     #parseNameAttribute (nameAttr) {
