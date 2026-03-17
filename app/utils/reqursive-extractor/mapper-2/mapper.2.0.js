@@ -29,14 +29,13 @@ class Mapper {
 
                         continue;
                     }
-                    
+                
                     break;
                 case PropType.Static:
                     //
                     break;
-
+                
             }
-            
 
             if(nestedSchema) {
                 for (const [k_, v_] of this.process(nestedSchema, data, context[propertyName])) {
@@ -44,7 +43,7 @@ class Mapper {
                 }
             }
         }
-        
+
         return context ;
     }
 
