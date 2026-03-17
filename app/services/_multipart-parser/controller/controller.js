@@ -85,7 +85,7 @@ multipartFormHandler.useMiddleware(async (payload, next) => {
     console.log({protocolName, nameAttrValue, name});
 
     if(protocolName !== 'multitable') {
-        return 'hello world';
+        return 'no name-protocol';
     }
 
     return await next({body, contentType, filename, nameAttrValue});

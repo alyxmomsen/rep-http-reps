@@ -2,7 +2,7 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
 /* кастомная утилита для отправки фолл-беков */
 const { sendFallBack } = require("../../../utils/error-factory");
-/* начинал реализацию централизованой системы обработки ошибок, но отложил разработку
+/* #warning начинал реализацию централизованой системы обработки ошибок, но отложил разработку
 оставил это здесь что-бы напоминало*/
 // const { errorService } = require("../../../error/error.service");
 const { filemanager } = require("../../filemanager.service.js/filemanager.service");
@@ -25,8 +25,6 @@ const MULTIPART_FORM_HANDLER_CONSTANTS = {
 }
 
 class MultipartFormdataHandler {
-
-    
 
     /**
      * 

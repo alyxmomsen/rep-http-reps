@@ -34,6 +34,9 @@ const SCHEMA = {
     }, 
 }
 
+
+
+
 /* 
 
     работает с двумя кейсами
@@ -80,6 +83,12 @@ const SCHEMA = {
     }
 */
 
+const NodeTypes = {
+    DINAMIC:'dinamic',
+    STATIC:'static',
+    LEAF:'leaf',
+}
+
 /**
  * @description
  *  обновляет [mutableUpdateObject] на основании [inputData]
@@ -92,6 +101,10 @@ const SCHEMA = {
 const constructorReqursive = (schema, inputData, mutableUpdateObject) => {
 
     for (const [knot_id, propertyvalue] of Object.entries(schema)) {
+
+        // switch () {
+
+        // }
         
         const {type:dataType, schema, inputDataKey} = propertyvalue;
 

@@ -39,6 +39,11 @@ class MultiTableGrouppingAgent {
             temp locally solution whilst developing
             grupId -> tablename
         */
+        /**
+         * schema для определения таблицы
+         * в группу которой будут отправленны 
+         * поступившие данные из аргумента "data"
+         */
         const DB_TABLES_MAP_SCHEMA = {
             "R":{
                 "25":"users",
@@ -49,15 +54,32 @@ class MultiTableGrouppingAgent {
             }
         }
 
+        
         const {
             body:fileBody, contentType:fileMIME, filename:fileName, name:nameAttr,
         } = data ;
 
+        /**
+         * парсим "name" attribute для дальнейшей маршрутизации данных по группам
+         */
         const { groupId:groupCode, columnName, dataType } = this.#parseNameAttribute(nameAttr);
 
         /* tablename decoding
         * 
-        * 
+        * ожидаем строку вида "F=028e.thumb-nail[R=0025].string"
+        * раскладываем на (F)(028e)(thumb-nail[R=0025])(string) 
+        * где 
+        *   - F = тип данных,- 'file'|'field'
+        *   - 028e (02) - код группы, (8e) - код таблицы
+        *   - thumb-nail[R=0025] - необработанное имя property в таблице, где
+        *       - (thumb-nail)- именно имя property (колонка в таблице)
+        *       - (R=0025)- идентификатор целевой таблицы и группы в этом же request
+        *           это нужно для того что бы создавать отношения между данными таблиц
+        *           например, этот код означает что 
+        *           либо строка таблицы которая будет создана из группы (R=0025) будет ссылатся
+        *           на строку таблицы собранную из группы (F=028e), это нужно для случаев
+        *           когда из одной таблицы отправляются данные нескольких файлов для разных групп
+        *   - string - тип данных который будет использован в БД
         */
         const groupCodeMatch = groupCode.match(/(\w)=([\w\d]{2})([\w\d]{2})/);
         console.log({groupCodeMatch, groupCode});
@@ -70,7 +92,11 @@ class MultiTableGrouppingAgent {
             throw new Error(`unknown group code: ${groupCode}`);
         }
 
-        const tableName = DB_TABLES_MAP_SCHEMA[groupType][tableNameCode];
+        const tableName = DB_TABLES_MAP_SCHEMA[groupType]?.[tableNameCode];
+
+        if (tableName === undefined) {
+            throw new Error('incorrect groupType or tableNameCode');
+        }
 
         const incomingData = {
             // nameAttr,
@@ -85,8 +111,8 @@ class MultiTableGrouppingAgent {
 
         console.log({incomingData});
 
+        // Object-Relational Mapping
         constructorReqursive( SCHEMA, incomingData, this.#groups_ );
-
     }
 
     #parseNameAttribute (nameAttr) {
