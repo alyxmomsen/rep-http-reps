@@ -1,6 +1,6 @@
 
-const { Mapper } = require("../../../../utils/reqursive-extractor/mapper-2/mapper.2.0");
-const { MY_TEST_SCHEMA } = require("../../../../utils/reqursive-extractor/mapper-2/schemas/multitable-data-schema");
+const { Mapper } = require("../../../../utils/mapper-2.0/mapper.2.0");
+const { MY_TEST_SCHEMA } = require("../../../../utils/mapper-2.0/schemas/multitable-data-schema");
 const { SCHEMA, constructorReqursive } = require("../../../../utils/reqursive-extractor/reqursive-extractor");
 
 const CONSTANTS = {
