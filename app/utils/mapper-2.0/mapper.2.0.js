@@ -13,7 +13,7 @@ const { PropType: MapperSchemaPropType, PropType, MULTITABLE_DATA_SCHEMA: MY_TES
 //         [`groupId`]:`${groupId}`,
 //         [`tableName`]:`${tableName}`,
 //     }
-// } 
+// }
 
 // const incomingData = [
 //     dataSetGenerator(8,'description','dd'.toUpperCase(),'files'),
@@ -70,7 +70,7 @@ class Mapper {
                     const newValue = this.process(value.src.schema, source, context[newProp]) 
 
                     for (const [k_, v_] of Object.entries(newValue)) {
-                        console.log({k_,v_});
+                        // console.log({k_,v_});
                         context[newProp][k_] = v_
                     }
                 }

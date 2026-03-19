@@ -110,7 +110,7 @@ class MultiTableGrouppingAgent {
             tableName,
         }
 
-        const mapper = new  Mapper();
+        const mapper = new  Mapper(MULTITABLE_DATA_SCHEMA);
 
         // Object-Relational Mapping
         mapper.process(MULTITABLE_DATA_SCHEMA, incomingData, this.#groups_);
