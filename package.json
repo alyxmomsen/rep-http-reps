@@ -15,7 +15,15 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:unit": "jest __tests__/unit",
+    "test:integration": "jest __tests__/integration",
+    "test:all": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:coverage:watch": "jest --coverage --watch",
+    "test:mapper": "jest __tests__/unit/mapper",
+    "test:create:integration": "mkdir __tests__\\integration"
   },
   "dependencies": {
     "dotenv": "^17.3.1",

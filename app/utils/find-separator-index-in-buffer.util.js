@@ -7,7 +7,7 @@
  */
 function findSeparatorIndexInBuffer (dataBuffer , separatorBuffer , startIndex = 0) {
 
-    for (let index = startIndex ; index < dataBuffer.length - separatorBuffer.length ; index++) {
+    for (let index = startIndex ; index <= dataBuffer.length - separatorBuffer.length ; index++) {
         let found = true ;
         for (let j = 0 ; j < separatorBuffer.length ; j++) {
             if(dataBuffer[index + j] !== separatorBuffer[j]) {
