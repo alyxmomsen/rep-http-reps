@@ -15,7 +15,7 @@ describe('🧪 Интеграция: Mapper + MultiTableGrouppingAgent', () => {
             body: Buffer.from('video content'),
             contentType: 'video/mp4',
             filename: 'movie.mp4',
-            name: 'F=8e02.filename.string'
+            name: 'F=028e.filename.string'
         };
 
         // Обрабатываем через агента (он внутри использует mapper)

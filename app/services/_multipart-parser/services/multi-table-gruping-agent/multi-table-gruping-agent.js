@@ -83,8 +83,7 @@ class MultiTableGrouppingAgent {
         *   - string - тип данных который будет использован в БД
         */
         const groupCodeMatch = groupCode.match(/(\w)=([\w\d]{2})([\w\d]{2})/);
-        console.log({groupCodeMatch, groupCode});
-
+        
         const groupType = groupCodeMatch[1];
         const groupId = groupCodeMatch[2];
         const tableNameCode = groupCodeMatch[3];
@@ -93,6 +92,8 @@ class MultiTableGrouppingAgent {
             throw new Error(`unknown group code: ${groupCode}`);
         }
 
+        // F=8e02.filename.string
+        console.log({groupType, tableNameCode});
         const tableName = DB_TABLES_MAP_SCHEMA[groupType]?.[tableNameCode];
 
         if (tableName === undefined) {

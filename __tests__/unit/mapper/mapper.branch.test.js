@@ -47,7 +47,7 @@ describe('🧪 Mapper - обработка Branch', () => {
         };
 
         const result = mapper.process(branchSchema, source, context);
-        
+        console.log({result});
         // Проверяем, что данные смержились, а не перезаписались
         expect(result.existingTable).toBeDefined();
     });
