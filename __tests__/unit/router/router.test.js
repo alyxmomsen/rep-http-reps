@@ -33,7 +33,7 @@ describe('🧪 ROUTER', () => {
             req.method = 'GET';
             req.url = '/test';
             
-            await router.handleRequest(req, res); // 👈 добавили await!
+            await router.handleRequest(req, res); 
             
             expect(handler).toHaveBeenCalled();
         });
@@ -45,7 +45,7 @@ describe('🧪 ROUTER', () => {
             req.method = 'POST';
             req.url = '/test';
             
-            await router.handleRequest(req, res); // 👈 добавили await!
+            await router.handleRequest(req, res); 
             
             expect(handler).toHaveBeenCalled();
         });
@@ -113,7 +113,7 @@ describe('🧪 ROUTER', () => {
         });
     });
 
-    describe('🎯 Wildcard маршруты', () => {
+    describe('🎯 Wildcard routes', () => {
         test('должен обработать * в конце URL', async () => {
             const handler = jest.fn();
             router.get('/files/*', handler);
@@ -129,47 +129,45 @@ describe('🧪 ROUTER', () => {
 
 
     // ===== ДИАГНОСТИЧЕСКИЙ ТЕСТ =====
-test('🔍 ДИАГНОСТИКА: должен выполнить middleware', async () => {
-  const order = [];
+    test('🔍 ДИАГНОСТИКА: должен выполнить middleware', async () => {
+        const order = [];
 
-  const mw1 = async (req, res, next) => {
-    console.log('✅ mw1 start');
-    order.push('mw1 start');
-    await next();
-    order.push('mw1 end');
-    console.log('✅ mw1 end');
-  };
+        const mw1 = async (req, res, next) => {
+            console.log('✅ mw1 start');
+            order.push('mw1 start');
+            await next();
+            order.push('mw1 end');
+            console.log('✅ mw1 end');
+        };
 
-  const mw2 = async (req, res, next) => {
-    console.log('✅ mw2 start');
-    order.push('mw2 start');
-    await next();
-    order.push('mw2 end');
-    console.log('✅ mw2 end');
-  };
+        const mw2 = async (req, res, next) => {
+            console.log('✅ mw2 start');
+            order.push('mw2 start');
+            await next();
+            order.push('mw2 end');
+            console.log('✅ mw2 end');
+        };
 
-  const handler = async (req, res) => {
-    console.log('✅ handler');
-    order.push('handler');
-    res.end();
-  };
+        const handler = async (req, res) => {
+            console.log('✅ handler');
+            order.push('handler');
+            res.end();
+        };
 
-  router.get('/test', mw1, mw2, handler);
+        router.get('/test', mw1, mw2, handler);
 
-  req.method = 'GET';
-  req.url = '/test';
+        req.method = 'GET';
+        req.url = '/test';
 
-  await router.handleRequest(req, res);
+        await router.handleRequest(req, res);
 
-  console.log('📦 order:', order);
-  expect(order).toEqual([
-    'mw1 start',
-    'mw2 start',
-    'handler',
-    'mw2 end',
-    'mw1 end'
-  ]);
-});
-
-
+        console.log('📦 order:', order);
+        expect(order).toEqual([
+            'mw1 start',
+            'mw2 start',
+            'handler',
+            'mw2 end',
+            'mw1 end'
+        ]);
+    });
 });

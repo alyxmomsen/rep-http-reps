@@ -30,8 +30,8 @@ class MultipartFormdataHandler {
      * 
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
-     * @param {Promise<{error:Object.<string,any>}|{success:Object.<string,any>}>} payload 
-     * @returns 
+     * @param {string} payload 
+     * @returns {Promise<{error:Object.<string,any>}|{success:Object.<string,any>}>} 
      */
     async handle (req, res, payload) {
 
