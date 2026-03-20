@@ -5,7 +5,6 @@ const { filemanager } = require("../../filemanager.service.js/filemanager.servic
 const { MultipartFormdataHandler } = require("../models/multi-part-parser.model");
 const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
 const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
-const { onDataEndMiddleware } = require("../models/on-data-end.middleware/on-data-end.mw");
 
 const multipartFormHandler = new MultipartFormdataHandler();
 

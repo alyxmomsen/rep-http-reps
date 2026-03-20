@@ -5,12 +5,8 @@ const { sendFallBack } = require("../../../utils/error-factory");
 /* #warning начинал реализацию централизованой системы обработки ошибок, но отложил разработку
 оставил это здесь что-бы напоминало*/
 // const { errorService } = require("../../../error/error.service");
-const { filemanager } = require("../../filemanager.service.js/filemanager.service");
-const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
-const { dbControllersRouter } = require("../../database-adapter/controller/db-adapter.controller");
 const { splitFormData } = require("../utils/split-form-raw-data");
 const { parseFormDataPart } = require("../utils/parse-form-data-part");
-const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
 // const { GLOBAL_NAMES } = require("../../../registry/names.map");
 // const { registry:namesRegistry } = require("../../../registry/names.registry");
 // const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
@@ -240,7 +236,6 @@ class MultipartFormdataHandler {
      * @type {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<void>)=>Promise<void>)[]}
      */
     #middleware;
-
     #onDataEndListeners;
 
     constructor () {
