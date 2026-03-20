@@ -1,5 +1,6 @@
 // const { multipartFormHandler } = require("../../_multipart-parser/controller/controller");
 const { renderMultipartForm } = require("../../_multipart-parser/models/render");
+const { contentTypeHandlersRouter } = require("../../form-data-server/controller/content-type.controller");
 const { FormHandler } = require("../../form-data-server/form-parser.router.entry-point");
 const { handlePublic } = require("../../request-handlers/public/handle-public");
 const { handleReactApp } = require("../../request-handlers/react/react-handler");
@@ -37,7 +38,10 @@ router.get('/l/form', async (req, res, next, payload) => {
     
     работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
 */
-router.post('/api/handle-form', FormHandler.processForm );
+router.post(
+    '/api/handle-form',
+    (req, res) => FormHandler.processForm(req, res, contentTypeHandlersRouter)
+);
 
 /* 
     обработчик для multipart/form-data

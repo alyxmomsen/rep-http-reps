@@ -128,9 +128,7 @@ class DBController {
 
         this.#model = {} ;
 
-        for(const [ propertyName , validationRules ] of Object.entries(validationModel)) {
-            
-            console.log({key: propertyName , value: validationRules});
+        for(const [ propertyName , validationRules ] of Object.entries(validationModel)) {      
             this.#model[propertyName] = validationRules ;
         }
     }

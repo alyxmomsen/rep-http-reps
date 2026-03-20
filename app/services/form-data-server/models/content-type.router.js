@@ -4,15 +4,6 @@ const { IncomingMessage, ServerResponse } = require("node:http");
 
 class ContentTypeHandlerController {
 
-    on (event , handler) {
-
-    }
-
-    #executeListeners () {
-        for (const [key, value] of this.#listeners.entries()) {
-            console.log();
-        }
-    }
 
     /**
      * 
@@ -30,7 +21,6 @@ class ContentTypeHandlerController {
         };
     }
 
-    #listeners;
     #strategy;
 
     /**
@@ -39,7 +29,6 @@ class ContentTypeHandlerController {
      */
     constructor (strategy) {
         this.#strategy = strategy ;
-        this.#listeners = new Map;
     }
 }
 

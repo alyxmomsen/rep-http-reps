@@ -7,6 +7,8 @@ const { resolve, join } = require("node:path");
 const { sendFallBack } = require("../../utils/error-factory");
 /* импор content-type из файла где происходит регистрация обработчиков для content-type случаев */
 const { contentTypeHandlersRouter } = require("./controller/content-type.controller");
+const { ContentTypeHandlersRouter } = require("./models/content-type.router");
+// const { ContentTypeHandlersRouter } = require("./models/content-type.router");
 
 /**
  * временное решение для хранения относительного пути 
@@ -34,12 +36,14 @@ class FormHandler {
 
     /**
      * @description вызывает конкретный контроллер для обработки формы 
-     * в зависимости от "content-type" хедера 
+     * в зависимости от "content-type" хедера , 
+     * принимает зависимость contentTypeHandlersRouter
      * @param {IncomingMessage} req 
-     * @param {ServerResponse} res 
+     * @param {ServerResponse} res
+     * @param { ContentTypeHandlersRouter } contentTypeHandlersRouter 
      * @returns {Promise<void>} 
      */
-    static async processForm (req ,res) {
+    static async processForm (req ,res, contentTypeHandlersRouter) {
 
         console.log('form in process...');
 
@@ -113,13 +117,15 @@ class FormHandler {
             return
         }
         catch (e) {
-            console.log({e});
-            sendFallBack(
-                res , 520 ,
-                'FormHandler::processForm' ,
-                'unknown error' ,
-                {e}
-            );
+            const response = {
+                message: 'unknown error',
+                error: e,
+            };
+            console.log(response);
+            res.writeHead(520, {
+                'content-type':'application/json',
+            });
+            res.end(JSON.stringify(response));
         }  
     }   
 
@@ -153,7 +159,22 @@ class FormHandler {
         }
     }
 
-    constructor () {}
+    // dependecies
+
+    /**
+     * @type {ContentTypeHandlersRouter}
+     */
+    #contentTypeHandlersRouter;
+
+    constructor({
+        contentTypeHandlersRouter,
+    }) {
+        this.#contentTypeHandlersRouter = contentTypeHandlersRouter;
+        if (contentTypeHandlersRouter === undefined) {
+            const errorDetails = 'contentTypeHandlersRouter was not provided';
+            throw new Error(`dependencies error: ${errorDetails}`);
+        }
+    }
 }
 
 
