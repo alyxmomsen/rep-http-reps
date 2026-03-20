@@ -12,9 +12,14 @@ const { dbControllersRouter: defaultDbRouter } = require("../../database-adapter
 module.exports = function onDataEndMiddleware(deps = {}) {
     const filemanager = deps.filemanager || defaultFilemanager;
     const dbRouter = deps.dbRouter || defaultDbRouter;
+    const multiTableAgent = deps.multiTableAgent;
     
+    if (!multiTableAgent) {
+        throw new Error('onDataEndMiddleware: multiTableAgent is required');
+    }
+
     return async (payload, next) => {
-        const { multiTableAgent } = payload;
+        
         const addedData = [];
         
         const compiledGroups = multiTableAgent.__getGroups();

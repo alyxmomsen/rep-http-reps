@@ -112,7 +112,7 @@ class MultipartFormdataHandler {
                     }
                 }
 
-                const { success, error } = await this.#executeOnEndMiddleware({parsedFormDataParts}, this.#onDataEndListeners);
+                const { success, error } = await this.#executeOnEndMiddleware({parsedFormDataParts, }, this.#onDataEndListeners);
                 
                 if(error) {
                     reject({

@@ -1,20 +1,19 @@
 // _multipart-parser/middleware/group-data.mw.js
 
-const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
+const { MultiTableGrouppingAgent: DefaultAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
 
-/**
- * Middleware для группировки данных через MultiTableGrouppingAgent
- * @param {Object} deps - зависимости
- * @returns {Function} middleware
- */
 module.exports = function groupDataMiddleware(deps = {}) {
-    const AgentClass = deps.MultiTableGrouppingAgent || MultiTableGrouppingAgent;
-    const agent = new AgentClass();
+    const multiTableAgent = deps.multiTableAgent; // 👈 принимаем агента
+    
+    if (!multiTableAgent) {
+        throw new Error('groupDataMiddleware: multiTableAgent is required');
+    }
     
     return async (payload, next) => {
         const { body, contentType, filename, nameAttrValue: name } = payload;
         
-        agent.handleFormDataPartParsedData({ body, contentType, filename, name });
+        // Используем переданного агента
+        multiTableAgent.handleFormDataPartParsedData({ body, contentType, filename, name });
         
         return await next({});
     };
