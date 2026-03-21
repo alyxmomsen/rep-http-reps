@@ -41,7 +41,7 @@ class DBAdapter {
                 validatedData[key] = providedPropValue ;
             }
             catch(err) {
-                console.log({err});
+                console.log('\x1b[31mDBAdapter error: \x1b[0m', {err});
                 const [errorType, details] = err.message?.split(/;\s*/);
                 errors[errorType] = details;
             }
@@ -54,8 +54,6 @@ class DBAdapter {
                 error,
             }
         }
-
-        console.log({success, error});
 
         return {
             success,

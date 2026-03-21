@@ -22,7 +22,7 @@ function parseFormDataPart (formDataPart) {
     const contentType = formDataPartHeaders['content-type'] || null ;
     const contentDisposition = formDataPartHeaders['content-disposition'] || null ;
     if(!contentDisposition) {
-        throw new Error(`no content-disposition header`);
+        throw new Error(`parseFormDataPart: no content-disposition header`);
     }
     const { name: name , filename: filename } = parseContentDisposition(contentDisposition);
     
@@ -84,7 +84,7 @@ function splitFormDataPart (formDataPart) {
     const separatorIndex = findSeparatorIndexInBuffer(formDataPart , separatorBuffer);
 
     if(separatorIndex === -1) {
-        throw new Error(`incorrect form data part`);
+        throw new Error(`splitFormDataPart: incorrect form data part`);
     }
 
     /**

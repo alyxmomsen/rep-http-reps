@@ -5,7 +5,6 @@ const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-ag
 
 // Импортируем middleware
 const extractProtocolMiddleware = require("../middleware/extract-protocol.mw");
-const groupDataMiddleware = require("../middleware/group-data.mw");
 const onDataEndMiddleware = require("../middleware/on-data-end.mw");
 
 // Внешние зависимости
@@ -14,25 +13,27 @@ const { dbControllersRouter } = require("../../database-adapter/controller/db-ad
 const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
 const { Mapper } = require("../../../utils/mapper-2.0/mapper.2.0");
 
-// Создаём экземпляр
-const multipartFormHandler = new MultipartFormdataHandler();
 
-// Создаём ОДНОГО агента
-const multiTableAgent = new MultiTableGrouppingAgent({
-    mapper:new Mapper(),
+const multiTableGrouppingAgentFactory  = () => {
+    return new MultiTableGrouppingAgent({
+        mapper:new Mapper(),
+    });
+}
+
+// Создаём экземпляр
+const multipartFormHandler = new MultipartFormdataHandler({
+    multiTableGrouppingAgentFactory,
 });
 
 // Регистрируем middleware, передавая одного и того же агента
 multipartFormHandler.useMiddleware(
     extractProtocolMiddleware({ extractProtocolName }),
-    groupDataMiddleware({ multiTableAgent })  // 👈 один агент
 );
 
 multipartFormHandler.onDataEndListeners(
     onDataEndMiddleware({ 
         filemanager, 
         dbRouter: dbControllersRouter,
-        multiTableAgent  // 👈 тот же агент
     })
 );
 

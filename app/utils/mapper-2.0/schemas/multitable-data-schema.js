@@ -43,7 +43,21 @@ const MULTITABLE_DATA_SCHEMA = {
                                             src:{
                                                 path:null,
                                                 schema:{
-                                                    contentType:{
+                                                    fileName:{
+                                                        property:{
+                                                            type:PropType.Static,
+                                                            staticKey:'fileName',
+                                                            srcPath:null,
+                                                        },
+                                                        value:{
+                                                            type:ValueType.Leaf,
+                                                            src:{
+                                                                path:'fileName',
+                                                                schema:null,
+                                                            },
+                                                        },
+                                                    },
+                                                    fileMIME:{
                                                         property:{
                                                             type:PropType.Static,
                                                             staticKey:'fileMIME',

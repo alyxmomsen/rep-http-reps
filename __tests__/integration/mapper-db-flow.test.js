@@ -21,7 +21,7 @@ describe('🧪 Интеграция: Mapper + MultiTableGrouppingAgent', () => {
         // Обрабатываем через агента (он внутри использует mapper)
         agent.handleFormDataPartParsedData(data);
         
-        const groups = agent.__getGroups();
+        const groups = agent.getGroups();
         
         // Проверяем, что структура правильная
         expect(groups).toBeDefined();

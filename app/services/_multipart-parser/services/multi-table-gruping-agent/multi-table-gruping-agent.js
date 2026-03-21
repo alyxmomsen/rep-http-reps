@@ -13,6 +13,31 @@ const CONSTANTS = {
     }
 }
 
+const DbTables = {
+    USERS:'users',
+    VIDEO_FILES:'video-files',
+    VIDEO_PLAYLIST:'video-playlist',
+}
+
+/* #warning #temp 
+    temp locally solution whilst developing
+    grupId -> tablename
+*/
+/**
+ * schema для определения таблицы
+ * в группу которой будут отправленны 
+ * поступившие данные из аргумента "data"
+ */
+const DB_TABLES_MAP_SCHEMA = {
+    "R":{
+        "25":DbTables.USERS,
+        "af":DbTables.VIDEO_PLAYLIST,
+    },
+    "F":{
+        "8e":DbTables.VIDEO_FILES,
+    }
+}
+
 const dataTypeSetMap = new Map();
 
 const { DATA_TYPE_KEYS } = CONSTANTS ;
@@ -36,26 +61,8 @@ class MultiTableGrouppingAgent {
 
     handleFormDataPartParsedData (data) {
 
-        /* #warning #temp 
-            temp locally solution whilst developing
-            grupId -> tablename
-        */
-        /**
-         * schema для определения таблицы
-         * в группу которой будут отправленны 
-         * поступившие данные из аргумента "data"
-         */
-        const DB_TABLES_MAP_SCHEMA = {
-            "R":{
-                "25":"users",
-                "af":"video-playlist",
-            },
-            "F":{
-                "8e":"video-files",
-            }
-        }
+        console.log('handleFormDataPartParsedData: ', {data});
 
-        
         const {
             body:fileBody, contentType:fileMIME, filename:fileName, name:nameAttr,
         } = data ;
@@ -84,30 +91,38 @@ class MultiTableGrouppingAgent {
         */
         const groupCodeMatch = groupCode.match(/(\w)=([\w\d]{2})([\w\d]{2})/);
         
+        if (groupCodeMatch === null) {
+            throw new Error(`MultiTableGrouppingAgent: required protocol the Multitable bun given something other`) ;
+        }
+
         const groupType = groupCodeMatch[1];
         const groupId = groupCodeMatch[2];
         const tableNameCode = groupCodeMatch[3];
 
         if(!tableNameCode || !groupId || !groupType) {
-            throw new Error(`unknown group code: ${groupCode}`);
+            throw new Error(`MultiTableGrouppingAgent: unknown group code: ${groupCode}`);
         }
 
+        // #tip
         // F=8e02.filename.string
-        console.log({groupType, tableNameCode});
-        const tableName = DB_TABLES_MAP_SCHEMA[groupType]?.[tableNameCode];
 
-        if (tableName === undefined) {
-            throw new Error('incorrect groupType or tableNameCode');
+        console.log('parsed data:');
+        console.log(`group type: ${groupType}, tablename code: ${tableNameCode}`);
+
+        // resolving tablename by DB_TABLES_MAP_SCHEMA
+        const tableName = tableNameResolver(DB_TABLES_MAP_SCHEMA, groupType, tableNameCode);
+
+        if (tableName === null) {
+            throw new Error('MultiTableGrouppingAgent: incorrect groupType or tableNameCode');
         }
 
         const incomingData = {
-            // nameAttr,
             groupId, tableName, columnName, dataType,   
             fileMIME, fileName, fileBody,
         }
 
         // transform flat data to multilevel object
-        this.#mapper.process(MULTITABLE_DATA_SCHEMA, incomingData, this.#groups_);
+        this.#mapper.process(MULTITABLE_DATA_SCHEMA, incomingData, this.#groups);
     }
 
     #parseNameAttribute (nameAttr) {
@@ -123,13 +138,13 @@ class MultiTableGrouppingAgent {
         }
     }
 
-    __getGroups () {
-        return this.#groups_;
+    getGroups () {
+        return this.#groups;
     }
 
-    #groups_;
+    #groups;
 
-    // dependencies
+    // ========== dependencies ========== 
 
     /**
      * @type {Mapper}
@@ -150,9 +165,35 @@ class MultiTableGrouppingAgent {
             throw new Error(`MultiTableGrouppingAgent: Mapper required, but not provided`);
         }
 
-        this.#groups_ = {};
+        this.#groups = {};
         this.#mapper = mapper;
     }
 }
 
 module.exports = { MultiTableGrouppingAgent , dataTypeValidator };
+
+// utils 
+
+/**
+ * @description принимает схему распознавания имени таблицы
+ *  последовательно сопоставляет значения ключей и значений свойств схемы с 
+ *  groupType и tableNameCode. Возвращает имя таблицы в соответствии со схемой или NULL
+ * @param {Object.<string,string>} schema 
+ * @param {string} groupType 
+ * @param {string} tableNameCode 
+ * @returns {string|null}
+ */
+function tableNameResolver (schema, groupType, tableNameCode ) {
+    for (const [schemaGroupType, schemaTablesMapping ] of Object.entries(schema)) {
+        console.log(`data type: ${schemaGroupType}`);
+        if(schemaGroupType !== groupType) continue;
+        for (const [ tableCode, tableName ] of Object.entries(schemaTablesMapping)) {
+            console.log(`table code: ${tableCode}; table name: ${tableName}`);
+            if(tableNameCode === tableCode) {
+                return tableName;
+            }
+        }
+    }
+
+    return null;
+}

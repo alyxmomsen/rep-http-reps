@@ -51,7 +51,11 @@ class DataBase {
                 console.log({key , value});
             }
             /* микротранзакция выполнена, выходим из метода */
-            return newRowIdHash ;
+            return {
+                success:{
+                    newRowIdHash,
+                },
+            } ;
         }
 
         /* если таблица существует, пушим строку */

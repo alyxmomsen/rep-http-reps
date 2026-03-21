@@ -2,6 +2,11 @@
 
 const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
 
+/**
+ * @deprecated
+ * @param {{multiTableAgent:MultiTableGrouppingAgent}} deps 
+ * @returns 
+ */
 module.exports = function groupDataMiddleware(deps = {}) {
     /**
      * @type {MultiTableGrouppingAgent}
@@ -14,10 +19,9 @@ module.exports = function groupDataMiddleware(deps = {}) {
     
     return async (payload, next) => {
         const { body, contentType, filename, nameAttrValue: name } = payload;
-        
         // Используем переданного агента
         multiTableAgent.handleFormDataPartParsedData({ body, contentType, filename, name });
         
-        return await next({});
+        return await next({payload});
     };
 };

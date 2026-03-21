@@ -90,20 +90,53 @@ class FormHandler {
             const { error, success } = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
 
             if(error) {
-                console.log('form handler: ', {error, success});
-                res.end(JSON.stringify({foo:'bar'}));
-                return;
+                console.log('FormHandler, error: ', {error, success});
+
+                if(!res.headersSent) {
+
+                    res.writeHead(500, {
+                        'content-type':'application/json',
+                    });
+                    res.end(JSON.stringify({
+                        message:'internal server error',
+                        error:error,
+                    }));
+
+                    return;
+                }
+                
+                console.log(
+                    '\x1b[31m' + 
+                    'Data already sent on a client'.toUpperCase() + 
+                    '\x1b[0m');
+                throw new Error (`FormHandler: Data already sent on a client`) ;
             }
 
             if(!success) {
-                res.writeHead(500, 'internal error', {
-                    "content-type":"application/json",
-                });
-                res.end(JSON.stringify({error:'internal error'}));
-                return;
+
+                console.log('FormHandler, no success: ', {error, success});
+
+                if(!res.headersSent) {
+
+                    res.writeHead(500, {
+                        "content-type":"application/json",
+                    });
+                    res.end(JSON.stringify({
+                        message:'internal server error',
+                        error:error,
+                    }));
+                    return;
+                }
+
+                console.log(
+                    '\x1b[31m' + 
+                    'Data already sent on a client'.toUpperCase() + 
+                    '\x1b[0m');
+
+                throw new Error (`FormHandler: Data already sent on a client`) ;
             }
 
-            console.log('form-handler end: ', {success , error});
+            console.log('FormHandler end: ', {success , error});
 
             // for (const [key, value] of Object.entries(parsedData)) {
             //     console.log({key, value});

@@ -7,6 +7,7 @@ const { sendFallBack } = require("../../../utils/error-factory");
 // const { errorService } = require("../../../error/error.service");
 const { splitFormData } = require("../utils/split-form-raw-data");
 const { parseFormDataPart } = require("../utils/parse-form-data-part");
+const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
 // const { GLOBAL_NAMES } = require("../../../registry/names.map");
 // const { registry:namesRegistry } = require("../../../registry/names.registry");
 // const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
@@ -63,6 +64,8 @@ class MultipartFormdataHandler {
             }); 
 
             req.on('end' , async () => {
+
+                const multiTbableGroupAgent = this.#multitableGroupFactory();
                 
                 console.log(`form chunks received`);
                 /* объеденяем все полученые Buffer chunks в один монолит */
@@ -90,29 +93,35 @@ class MultipartFormdataHandler {
                             body, contentType, filename, name
                         } = parseFormDataPart(part);
                         
-                        /* middleware */
+                        /* =========== data-part middleware =========== */
 
-                        const nextData = await this.#executOnPartHandledeMiddleware(
+                        const handledData = await this.#executOnPartHandledeMiddleware(
                             {data:{body, contentType, filename, name}}, 
                             this.#middleware,
                         );
 
-                        console.log({nextEndData:nextData});
+                        /* ============================================ */
+                        // ==== grouping and merging handled data ===== //
 
-                        parsedFormDataParts.push(nextData);
+                        multiTbableGroupAgent.handleFormDataPartParsedData(handledData);
 
-                        /* ---------- */
+                        /* ============================================ */
 
                         continue;
                     }
-                    catch (e) {
-                        /* исключения пока никак не обрабатываются */
-                        const errorMessage = e.message ;
-                        console.log({errorMessage, e, cs:MULTIPART_FORM_HANDLER_CONSTANTS.CURRENT_SCRIPT_ID});
+                    catch (error) {
+                        /* #warning
+                         исключения пока никак не обрабатываются */
+                        console.log('MultipartFormdataHandler error: ', error);
+                        // коллекционируем ошибки для дальнейшей обработки
+                        this.#errors.push(error.message);
                     }
                 }
 
-                const { success, error } = await this.#executeOnEndMiddleware({parsedFormDataParts, }, this.#onDataEndListeners);
+                // ======== получаем смердженные данные ======== //
+                const mergedGroups = multiTbableGroupAgent.getGroups();
+
+                const { success, error } = await this.#executeOnEndMiddleware({ mergedGroups }, this.#onDataEndMiddleware);
                 
                 if(error) {
                     reject({
@@ -139,7 +148,7 @@ class MultipartFormdataHandler {
      */
     onDataEndListeners (...handlers) {
         handlers.forEach(handler => {
-            this.#onDataEndListeners.push(handler);
+            this.#onDataEndMiddleware.push(handler);
         });
     }
 
@@ -215,15 +224,32 @@ class MultipartFormdataHandler {
     async #executOnPartHandledeMiddleware (payload, middleware) {
         let index = 0;
         const next = async (nextData) => {
-            const currentIndex = index++;
-            if(currentIndex < middleware.length) {
+
+            if(index < middleware.length) {
+                const currentIndex = index++;
                 const handler = middleware[currentIndex];
                 if(handler === undefined) return nextData;
                 return await handler(nextData, next);
             }
-            throw new Error(`too many reqursive stack. current: ${index}`);
+            else {
+                return nextData;
+            }
+            if(index - middleware.length) {
+                console.log(
+                    `\x1b[31mMultipartFormdataHandler::executOnPartHandledeMiddleware: over mach reqursive stack\x1b[0m`
+                );
+                throw new Error(
+                    `MultipartFormdataHandler::executOnPartHandledeMiddleware: too mach reqursive stack`
+                )
+            }
         }
-        return await next(payload);
+        
+        if(middleware.length > 0) {
+            return await next(payload);
+        }
+        else {
+            return payload;
+        }
     }
 
     /**
@@ -235,12 +261,42 @@ class MultipartFormdataHandler {
      * @type {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<void>)=>Promise<void>)[]}
      */
     #middleware;
-    #onDataEndListeners;
+    /**
+     * @type {Function[]}
+     */
+    #onDataEndMiddleware;
+    /**
+     * @type {string[]}
+     */
+    #errors;
 
-    constructor () {
+    // dependencis
+
+    /**
+     * @type {() => MultiTableGrouppingAgent}
+     */
+    #multitableGroupFactory;
+
+    /**
+     * 
+     * @param {{multiTableGrouppingAgentFactory:() => MultiTableGrouppingAgent}} deps 
+     */
+    constructor (deps = {}) {
+        // #warning: multiTableGrouppingAgentFactory должен быть инстанцией класса
+        const multiTableGrouppingAgentFactory = deps.multiTableGrouppingAgentFactory;
+
+        if(multiTableGrouppingAgentFactory === undefined) {
+            throw new Error(`MultipartFormdataHandler: required multiTableGrouppingAgentFactory but not provided`);
+        }
+
         this.#eventListeners = new Map();
         this.#middleware = [];
-        this.#onDataEndListeners = [];
+        this.#onDataEndMiddleware = [];
+        this.#errors = [];
+
+        // dependencies
+
+        this.#multitableGroupFactory = multiTableGrouppingAgentFactory;
     }
 }
 

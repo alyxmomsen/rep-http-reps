@@ -46,9 +46,20 @@ window.addEventListener('DOMContentLoaded' , () => {
 
         console.log({jsonResponse});
 
-        const addedData = jsonResponse?.success?.addedData
+        const {success, error} = jsonResponse;
 
-        modalWindow.show(addedData);
+        if(success) {
+            const { addedData } = success;
+            modalWindow.show(addedData);
+            return;
+        }
+
+        if(error) {
+            console.error(error);
+            throw new Error(error);
+        }
+
+        throw new Error('unknown error');
     });
 
 });
