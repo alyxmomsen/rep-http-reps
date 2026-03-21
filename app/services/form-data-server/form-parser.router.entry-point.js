@@ -43,15 +43,24 @@ class FormHandler {
      * @param { ContentTypeHandlersRouter } contentTypeHandlersRouter 
      * @returns {Promise<void>} 
      */
-    static async processForm (req ,res, contentTypeHandlersRouter) {
-
-        console.log('form in process...');
+    static async processForm (req ,res, deps = {}) {
+        console.log('call the process-form...');
 
         const { headers } = req;
         
+        /**
+         * @type {ContentTypeHandlersRouter}
+         */
+        const contentTypeHandlersRouter = deps.contentTypeHandlersRouter;
+
+        if(contentTypeHandlersRouter === undefined) {
+            throw new Error(`processForm: contentTypeHandlersRouter is required`);
+        }
+
         const contentTypeHeader = headers['content-type'];
 
         if(!contentTypeHeader) {
+            console.log(`form handler: content-type header is required, but not provided`);
             sendFallBack(
                 res , 400 ,
                 'FormHandler::processForm' , 
@@ -81,7 +90,7 @@ class FormHandler {
             const { error, success } = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
 
             if(error) {
-                console.log({error, success});
+                console.log('form handler: ', {error, success});
                 res.end(JSON.stringify({foo:'bar'}));
                 return;
             }
@@ -94,7 +103,7 @@ class FormHandler {
                 return;
             }
 
-            console.log('content type handler success: ', {success , error});
+            console.log('form-handler end: ', {success , error});
 
             // for (const [key, value] of Object.entries(parsedData)) {
             //     console.log({key, value});
@@ -109,10 +118,9 @@ class FormHandler {
             
             */
 
-            res.writeHead(200, 'ok' , {
+            res.writeHead(200, {
                 'content-type':'application/json',
             });
-
             res.end(JSON.stringify({success}));
             return
         }
@@ -121,7 +129,7 @@ class FormHandler {
                 message: 'unknown error',
                 error: e,
             };
-            console.log(response);
+            console.log('form-handler: ', { success, error });
             res.writeHead(520, {
                 'content-type':'application/json',
             });

@@ -40,7 +40,7 @@ router.get('/l/form', async (req, res, next, payload) => {
 */
 router.post(
     '/api/handle-form',
-    (req, res) => FormHandler.processForm(req, res, contentTypeHandlersRouter)
+    (req, res) => FormHandler.processForm(req, res, { contentTypeHandlersRouter })
 );
 
 /* 
