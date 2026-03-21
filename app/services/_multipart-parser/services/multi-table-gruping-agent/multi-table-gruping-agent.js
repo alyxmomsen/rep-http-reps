@@ -102,21 +102,12 @@ class MultiTableGrouppingAgent {
 
         const incomingData = {
             // nameAttr,
-            fileMIME,
-            fileName,
-            fileBody,
-            dataType,
-            columnName,
-            groupId,
-            tableName,
+            groupId, tableName, columnName, dataType,   
+            fileMIME, fileName, fileBody,
         }
 
-        const mapper = new  Mapper(MULTITABLE_DATA_SCHEMA);
-
-        // Object-Relational Mapping
-        mapper.process(MULTITABLE_DATA_SCHEMA, incomingData, this.#groups_);
-
-        // console.log({context2:this.#groups_});
+        // transform flat data to multilevel object
+        this.#mapper.process(MULTITABLE_DATA_SCHEMA, incomingData, this.#groups_);
     }
 
     #parseNameAttribute (nameAttr) {
@@ -138,8 +129,29 @@ class MultiTableGrouppingAgent {
 
     #groups_;
 
-    constructor () {
+    // dependencies
+
+    /**
+     * @type {Mapper}
+     */
+    #mapper;
+
+    /**
+     * 
+     * @param {{
+     *  mapper:Mapper;
+     * }} deps 
+     */
+    constructor (deps = {}) {
+
+        const mapper = deps.mapper ;
+
+        if(mapper && mapper instanceof Mapper === false) {
+            throw new Error(`MultiTableGrouppingAgent: Mapper required, but not provided`);
+        }
+
         this.#groups_ = {};
+        this.#mapper = mapper;
     }
 }
 

@@ -213,16 +213,15 @@ class MultipartFormdataHandler {
      * @returns {Promise<Object.<string,any>}
      */
     async #executOnPartHandledeMiddleware (payload, middleware) {
-        const MAX_RECURSIVE =  middleware.length + 1;
-        let iterationsCounter = 0;
+        let index = 0;
         const next = async (nextData) => {
-            if(iterationsCounter < MAX_RECURSIVE) {
-                console.log({nextData});
-                const handler = middleware[iterationsCounter++];
+            const currentIndex = index++;
+            if(currentIndex < middleware.length) {
+                const handler = middleware[currentIndex];
                 if(handler === undefined) return nextData;
                 return await handler(nextData, next);
             }
-            throw new Error(`too many reqursive stack. current: ${iterationsCounter}`);
+            throw new Error(`too many reqursive stack. current: ${index}`);
         }
         return await next(payload);
     }
