@@ -3,6 +3,10 @@ const { randomBytes } = require("crypto");
 const { fileDataSetFactory } = require("../../utils/factrories/file-data-set.factory");
 const { DataTransformer } = require("../data-transformer/data-transfromer");
 const { FILE_DATA_SET_SCHEMA } = require("../data-transformer/schemas/file-data-set.schema");
+const { linkedFieldDataSetFactory: fieldDataSetFactory } = require("../../utils/factrories/linked-field-data-set.factory");
+const { LINKED_FIELD_DATA_SET_SCHEMA } = require("../data-transformer/schemas/linked-field-data-set.schema");
+const { regularFieldDataSetFactory } = require("../../utils/factrories/regular-field-data-set.factory");
+const { REGULAR_FIELD_DATA_SET_SCHEMA } = require("../data-transformer/schemas/regular-field-data-set.schema");
 
 class MultiTableGrouppingAgent {
 
@@ -31,28 +35,42 @@ class MultiTableGrouppingAgent {
             
             const linkId = randomBytes(32).toString('hex');
 
+            // ==============================================
+            
             const fileDataSet = fileDataSetFactory({
                 ...data, 
                 linkId,
                 tableName,
                 groupId,
             });
-
+            
             this.#dataTransformer.process(FILE_DATA_SET_SCHEMA, fileDataSet, this.#mergedGroups.files);
-
-            console.log({data:this.#mergedGroups.files});
-
-            // for (const [k, v] of Object.entries(this.#mergedGroups.files)) {
-            //     console.log({k});
-            //     for (const [kk, vv] of Object.entries(v)) {
-            //         console.log({kk, vv});
-            //     }
-            // }
-
+            
+            // ==============================================
+            
+            const fieldDataSet = fieldDataSetFactory({
+                body:linkId,
+                columnName,
+                dataType:'link',
+                groupId,
+                tableName:'video-playlist',
+            });
+            
+            
+            this.#dataTransformer.process(LINKED_FIELD_DATA_SET_SCHEMA, fieldDataSet, this.#mergedGroups.fields);
+            
             return ;
         } 
         
-
+        const regularFieldDataSet = regularFieldDataSetFactory({
+            body ,
+            columnName, dataType, groupId, 
+            tableName,
+        });
+        
+        this.#dataTransformer.process(REGULAR_FIELD_DATA_SET_SCHEMA, regularFieldDataSet, this.#mergedGroups.fields);
+        
+        
 
     }
 
