@@ -19,6 +19,10 @@ class MultiTableGrouppingAgent {
             throw new Error(`MultiTableGrouppingAgent: incorrect provided data`);
         }
 
+        const { columnName, dataType, groupId, tableId } = multiTableProtocolParser(name);
+        
+        const tableName = tableIdResolver(tableId);
+
         if(filename || contentType) {
 
             if(!filename) {
@@ -28,10 +32,6 @@ class MultiTableGrouppingAgent {
             if(!contentType) {
                 throw new Error(`MultiTableGrouppingAgent: as "filename" received then "contentType" required too`);
             }
-
-            const { columnName, dataType, groupId, tableId } = multiTableProtocolParser(name);
-
-            const tableName = tableIdResolver(tableId);
             
             const linkId = randomBytes(32).toString('hex');
 
@@ -70,8 +70,6 @@ class MultiTableGrouppingAgent {
         
         this.#dataTransformer.process(REGULAR_FIELD_DATA_SET_SCHEMA, regularFieldDataSet, this.#mergedGroups.fields);
         
-        
-
     }
 
     getGroups () {
