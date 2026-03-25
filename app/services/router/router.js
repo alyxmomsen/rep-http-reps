@@ -50,6 +50,8 @@ class Router {
                     params[key] = urlMatch[i + 1];
                 });
 
+                req.params = params;
+
                 const allMiddleware = [...this.#middleware, ...routeBundle.middleware] ;
 
                 await this.#executeMiddleware(req, res, allMiddleware, routeBundle.handler);

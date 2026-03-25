@@ -40,134 +40,76 @@ class FormHandler {
      * принимает зависимость contentTypeHandlersRouter
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res
-     * @param { ContentTypeHandlersRouter } contentTypeHandlersRouter 
+     * @param {{contentTypeHandlersRouter:ContentTypeHandlersRouter}} deps 
      * @returns {Promise<void>} 
      */
     static async processForm (req ,res, deps = {}) {
-        console.log('call the process-form...');
 
-        const { headers } = req;
-        
-        /**
-         * @type {ContentTypeHandlersRouter}
-         */
-        const contentTypeHandlersRouter = deps.contentTypeHandlersRouter;
+        const contentTypeHandlersRouter = deps.contentTypeHandlersRouter ;
 
         if(contentTypeHandlersRouter === undefined) {
-            throw new Error(`processForm: contentTypeHandlersRouter is required`);
+            res.writeHead(500, {
+                "content-type":'application/json',
+            });
+            res.end(JSON.stringify({
+                message:'enternal error: 1',
+            }));
+            console.log(`x1b[31m` + 'contentTypeHandlersRouter is not received' + `x1b[0m`);
+            throw new Error(`contentTypeHandlersRouter is not received`);
         }
 
+        const { headers } = req;
         const contentTypeHeader = headers['content-type'];
 
-        if(!contentTypeHeader) {
-            console.log(`form handler: content-type header is required, but not provided`);
-            sendFallBack(
-                res , 400 ,
-                'FormHandler::processForm' , 
-                'no content-type header' ,
-                {conttentTypeHeader: contentTypeHeader}
-            );
-            return ;
+        if(contentTypeHeader === undefined) {
+            res.writeHead(400, {
+                "content-type":'application/json',
+            });
+            res.end(JSON.stringify({
+                message:'expected content-type header but not provided'
+            }));
+            return;
         }
 
-        /* разбиваем содержимое content-type хедера на две части по regex строке где
-        вероятно содержится значение именно "content-type" и через разделитель ";\s*" 
-        дополнительная информация для content-type строки.
-        в случае с multipart/form-data это "boundary" разделитель данных */
-        const [ contentType , contentTypeHeaderPayload ] = contentTypeHeader.split(/;\s*/) ;
+        const [contentType, contentTypeAttr] = contentTypeHeader.split(/;\s*/);
 
         try {
-            /* 
-                здесь, по-факту, работаем по паттерну Singletone, 
-                по-скольку "contentTypeHandlersRouter" определен единожды в файле 
-                "app\services\form-data-server\controller\content-type.controller.js",
-                там же происходит регистрация content-type роутов, и там же он экспортирован,
-                таким образом Singletone импортируется уже "заряженый" маршрутами
-             */
-            const contentTypeHandlerController = contentTypeHandlersRouter.getHandlerController(contentType);
-            /* если исключение не произошло, то вызываем метод "handle" контроллера, 
-            который, в свою очередь, вызывает content-type обработчик */
-            const { error, success } = await contentTypeHandlerController.handle(req ,res , contentTypeHeaderPayload);
+            const contentTypeController = contentTypeHandlersRouter.getHandlerController(contentType);
+            const {success, error} = await contentTypeController.handle(req, res, contentTypeAttr);
 
             if(error) {
-                console.log('FormHandler, error: ', {error, success});
-
-                if(!res.headersSent) {
-
-                    res.writeHead(500, {
-                        'content-type':'application/json',
-                    });
-                    res.end(JSON.stringify({
-                        message:'internal server error',
-                        error:error,
-                    }));
-
-                    return;
-                }
-                
-                console.log(
-                    '\x1b[31m' + 
-                    'Data already sent on a client'.toUpperCase() + 
-                    '\x1b[0m');
-                throw new Error (`FormHandler: Data already sent on a client`) ;
+                res.writeHead(500, {
+                    "content-type":'application/json',
+                });
+                res.end(JSON.stringify({
+                    message:'2'
+                }));
+                return;
             }
+
 
             if(!success) {
-
-                console.log('FormHandler, no success: ', {error, success});
-
-                if(!res.headersSent) {
-
-                    res.writeHead(500, {
-                        "content-type":"application/json",
-                    });
-                    res.end(JSON.stringify({
-                        message:'internal server error',
-                        error:error,
-                    }));
-                    return;
-                }
-
-                console.log(
-                    '\x1b[31m' + 
-                    'Data already sent on a client'.toUpperCase() + 
-                    '\x1b[0m');
-
-                throw new Error (`FormHandler: Data already sent on a client`) ;
+                res.writeHead(500, {
+                    "content-type":'application/json',
+                });
+                res.end(JSON.stringify({
+                    message:'3'
+                }));
+                return;
             }
 
-            console.log('FormHandler end: ', {success , error});
-
-            // for (const [key, value] of Object.entries(parsedData)) {
-            //     console.log({key, value});
-            // }
-
-            /* 
-                it`s need validate the "succes" object,
-                becose response data may be any type
-
-                it`s need a validate scheme,
-                but at now i response object the "succes"
-            
-            */
-
             res.writeHead(200, {
-                'content-type':'application/json',
+                "content-type":'application/json',
             });
-            res.end(JSON.stringify({success}));
-            return
+            res.end(JSON.stringify({
+                success,
+            }));
+            return;
+            
         }
-        catch (e) {
-            const response = {
-                message: 'unknown error',
-                error: e,
-            };
-            console.log('form-handler: ', { success, error });
-            res.writeHead(520, {
-                'content-type':'application/json',
-            });
-            res.end(JSON.stringify(response));
-        }  
+        catch (err) {
+            console.log({err});
+        }
     }   
 
     /**
