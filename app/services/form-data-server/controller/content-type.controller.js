@@ -1,8 +1,8 @@
 
 // const { multipartFormHandler } = require("../../_multipart-parser/controller/controller");
 // const { multipartHandler , CONSTANTS:MULTIPART_HANDLER_CONSTANTS } = require("../../_multipart-parser/models/parser");
+const { GLOBAL_CONSTANTS } = require("../../../constants/global.constants");
 const { multipartFormHandler } = require("../../_multipart-parser/controller/controller");
-const { MULTIPART_FORM_HANDLER_CONSTANTS } = require("../../_multipart-parser/models/multi-part-parser.model");
 const { ContentTypeHandlersRouter } = require("../models/content-type.router");
 
 /*
@@ -31,7 +31,7 @@ const contentTypeHandlersRouter = new ContentTypeHandlersRouter ;
 
 contentTypeHandlersRouter.registrateContentTypeHandler(
     // MULTIPART_HANDLER_CONSTANTS.HTML_FORM_CONTENT_TYPE, multipartHandler ,
-    MULTIPART_FORM_HANDLER_CONSTANTS.HTML_FORM_CONTENT_TYPE, multipartFormHandler.handle.bind(multipartFormHandler) ,
+    GLOBAL_CONSTANTS.FORM_DATA_CONTENT_TYPES.MULTIPART_FORM_DATA, multipartFormHandler.handle.bind(multipartFormHandler) ,
 );
 
 module.exports = { contentTypeHandlersRouter } ;

@@ -11,12 +11,14 @@ const onDataEndMiddleware = require("../middleware/on-data-end.mw");
 const { filemanager } = require("../../filemanager.service.js/filemanager.service");
 const { dbControllersRouter } = require("../../database-adapter/controller/db-adapter.controller");
 const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
-const { Mapper } = require("../../../utils/mapper-2.0/mapper.2.0");
+// const { Mapper } = require("../../../utils/mapper-2.0/mapper.2.0");
+const { DataTransformer } = require("../services/data-transformer/data-transfromer");
 
 
 const multiTableGrouppingAgentFactory  = () => {
     return new MultiTableGrouppingAgent({
-        mapper:new Mapper(),
+        // mapper:new Mapper(),
+        dataTransformer:new DataTransformer(),
     });
 }
 
@@ -25,7 +27,6 @@ const multipartFormHandler = new MultipartFormdataHandler({
     multiTableGrouppingAgentFactory,
 });
 
-// Регистрируем middleware, передавая одного и того же агента
 multipartFormHandler.useMiddleware(
     extractProtocolMiddleware({ extractProtocolName }),
 );

@@ -1,25 +1,5 @@
-/* стандартный(-е) модуль(-и) */
-const { IncomingMessage, ServerResponse } = require("node:http");
-/* кастомная утилита для отправки фолл-беков */
-const { sendFallBack } = require("../../../utils/error-factory");
-/* #warning начинал реализацию централизованой системы обработки ошибок, но отложил разработку
-оставил это здесь что-бы напоминало*/
-// const { errorService } = require("../../../error/error.service");
-const { splitFormData } = require("../utils/split-form-raw-data");
-const { parseFormDataPart } = require("../utils/parse-form-data-part");
-const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
-// const { GLOBAL_NAMES } = require("../../../registry/names.map");
-// const { registry:namesRegistry } = require("../../../registry/names.registry");
-// const scriptId = namesRegistry.registrate(GLOBAL_NAMES.MULTIPART_HANDLER);
-
-const MULTIPART_FORM_HANDLER_CONSTANTS = {
-    PAYLOAD_DATA_KEY:'boundaryRawData' ,
-    /* это поле предназначалось для централизованной системы обработки ошибок,
-    в той архитектуре нужно было учитывать идентификатор скрипта
-    сейчас это пока что здесь, дожидается дальнейшей разработки */
-    // CURRENT_SCRIPT_ID:scriptId ,
-    HTML_FORM_CONTENT_TYPE:'multipart/form-data' , // for the form-handler routing
-}
+const { IncomingMessage, ServerResponse } = require('http');
+const { MultiTableGrouppingAgent } = require('../services/multi-table-gruping-agent/multi-table-gruping-agent');
 
 class MultipartFormdataHandler {
 
@@ -28,123 +8,105 @@ class MultipartFormdataHandler {
      * @param {IncomingMessage} req 
      * @param {ServerResponse} res 
      * @param {string} payload 
-     * @returns {Promise<{error:Object.<string,any>}|{success:Object.<string,any>}>} 
+     * @returns {Promise<{error?:Object;success?:Object}>}
      */
     async handle (req, res, payload) {
 
         if(!payload) {
-            throw new Error(`no payload provided`);
+            return {
+                error:{
+                    subject:'multipart handler',
+                    message:'payload required but not provided',
+                    code:1,
+                    details:null,
+                }
+            }
         }
-
-        /* получаем boundary по простому регулярному выражению */
-        /**
-         * @type {string}
-         */
-        const boundary = (payload?.match(/boundary=(----[^;\s$]+)/))?.[1] || null;
-
-        if(!boundary) {
-            throw new Error(`no boundary provided`);
+        
+        const boundaryMatch = payload.match(/boundary=(----[^;\s]+)/);
+        
+        if(!boundaryMatch) {
+            return {
+                error:{
+                    subject:'multipart handler',
+                    message:'boundary required but is not correct or not provided',
+                    code:2,
+                    details:{payload},
+                }
+            }
         }
-
+        
         return new Promise ((resolve, reject) => {
 
-            /**
-             * @type {Buffer<ArrayBuffer>[]}
-             */
-            const formDataChunks = [];
-            
-            /**
-             * переменная для контролля размера полученных данных
-             * @type {number}
-             */
-            let formDataSize = 0 ;
-            req.on("data" , async (chunk) => {
-                formDataSize += chunk.length ;
-                formDataChunks.push(chunk);
-            }); 
-
-            req.on('end' , async () => {
-
-                const multiTbableGroupAgent = this.#multitableGroupFactory();
+            const chunks = [];
+            const incomingDataMaxSize = 1024 * 1024 * 1024 * 2; // 2Gb
+            let receivedSize = 0;
+            req.on('data', async (chunk) => {
+                receivedSize += chunk.length;
+                chunks.push(chunk);
+            });
+    
+            req.on('end', async () => {
+    
+                const wholeBuffer = Buffer.concat(chunks);
+                const boundaryBuffer = Buffer.from(`--${boundaryMatch[1]}`);
+                const parts = splitFormData(wholeBuffer, boundaryBuffer);
                 
-                console.log(`form chunks received`);
-                /* объеденяем все полученые Buffer chunks в один монолит */
-                const wholeFormDataBuffer = Buffer.concat(formDataChunks);
-                /* разбиваем перманентный буффер на логические куски, где 
-                каждый кусок есть данные одного HTML тега "input" */
-                const parts = splitFormData(wholeFormDataBuffer , Buffer.from(`--${boundary}`));
-                
-                /* здесь должны быть группы не прошедшие валидацию по той или иной причине
-                предполагается эти группы обработать и отправить отчет на клиент,
-                например для информирования пользователя для дальнейшей корректировки вводимых данных 
-                пока что это здесь с целью напоминания, дожидается дальнейшей разработки*/
-                const invalidGroups = new Map();
-
-                const parsedFormDataParts = [];
+                const multiTableGroupingAgent = this.#multiTableAgentFactory();
 
                 for (const part of parts) {
+
                     try {
-                        /* полный парсинг данных одного инпута 
-                        на выходе получаем 7 семантически различных типов данных
-                        body: содержимое инпута введеное пользователем,в т.ч файл, в виде Buffer<ArrayBuffer>
-                        parsedNameAttribute это данные аттрибута "name" HTML тега, при этом парсинг реализуется по
-                        , пока-что, одной стратегии*/
-                        const { 
-                            body, contentType, filename, name
-                        } = parseFormDataPart(part);
+
+                        // ============== ? вынести в middleware ? ==================
+
+                        const { body, headers:headersPart } = parseFormDataPart(part);
+                        const headers = splitHeaders(headersPart.toString('utf-8'));
+                        const contentDisposition = headers['content-disposition'] || null;
+                        const contentType = headers['content-type'] || null;
+                        if((!contentDisposition)) {
+                            throw new Error (`multipart form data parser: incorrect content-disposition of content-type`) ;
+                        }
+                        const { name, filename } = parseContentDisposition(contentDisposition);
+
+                        // ==========================================================
+
+                        // datapart middleware
+                        const mwResult = await this.#executeMiddleware({name, filename, contentType, body} , this.#onDataPartMiddleware);
                         
-                        /* =========== data-part middleware =========== */
+                        multiTableGroupingAgent.handleFormDataPartParsedData(mwResult);
 
-                        const handledData = await this.#executOnPartHandledeMiddleware(
-                            {data:{body, contentType, filename, name}}, 
-                            this.#middleware,
-                        );
-
-                        /* ============================================ */
-                        // ==== grouping and merging handled data ===== //
-
-                        multiTbableGroupAgent.handleFormDataPartParsedData(handledData);
-
-                        /* ============================================ */
-
-                        continue;
                     }
-                    catch (error) {
-                        /* #warning
-                         исключения пока никак не обрабатываются */
-                        console.log('MultipartFormdataHandler error: ', error);
-                        // коллекционируем ошибки для дальнейшей обработки
-                        this.#errors.push(error.message);
+                    catch (e) {
+                        console.log({e});
                     }
                 }
 
-                // ======== получаем смердженные данные ======== //
-                const mergedGroups = multiTbableGroupAgent.getGroups();
+                const mergedGroups = multiTableGroupingAgent.getGroups();
 
-                const { success, error } = await this.#executeOnEndMiddleware({ mergedGroups }, this.#onDataEndMiddleware);
+                // ondataend middleware
+
+                this.#executeMiddleware({mergedGroups}, this.#onDataEndMiddleware);
                 
-                if(error) {
-                    reject({
-                        error,
-                    })
-                }
-                
-                resolve({
-                    success,
-                });
+                // console.log({mergedGroups});
             });
+        });
 
-            req.on('error' , (error) => {
-                reject({
-                    error,
-                });
-            })
+    }
+
+    /**
+     * 
+     * @param  {...() => Promise<any>} handlers 
+     */
+    useMiddleware (...handlers) {
+        handlers.forEach(handler => {
+            this.#onDataPartMiddleware.push(handler)
         });
     }
 
     /**
      * 
-     * @param  {...((payload:Object.<string,any>, next:((payload)=>Promise<Object.<string,any>>))=>Promise<Object.<string,any>>)} handlers 
+     * @param  {...()=> Promise<any>} handlers 
      */
     onDataEndListeners (...handlers) {
         handlers.forEach(handler => {
@@ -152,152 +114,183 @@ class MultipartFormdataHandler {
         });
     }
 
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {(payload:Object.<string,any>) => void} handler 
-     */
-    addEventListener (eventName, handler) {
-        this.#eventListeners.set(eventName, handler);
+    addEventListener () {
+
     }
 
     /**
      * 
-     * @param  {...((payload:Object.<string,any>,next:((nextData:Object.<string,any>)=>Promise<Object.<string,any>>))=>Promise<Object.<string,any>>)} middleware 
+     * @param {(() => Promise<any>)[]} middleware 
      */
-    useMiddleware (...middleware) {
-        for (const handler of middleware) {
-            this.#middleware.push(handler);
-        }
-    }
+    async #executeMiddleware (payload, middleware) {
 
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {Object.<string,any>} payload 
-     */
-    #emit (eventName, payload) {
-        this.#handleEvents(eventName, payload);
-    }
-
-    /**
-     * 
-     * @param {string} eventName 
-     * @param {Object.<string,any>} payload
-     */
-    #handleEvents (eventName, payload) {
-        for (const [listenerEventName, handler] of this.#eventListeners.entries()) {
-            if(eventName !== listenerEventName) continue;
-            handler(payload);
-        }
-    }
-
-    /**
-     * 
-     * @param {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<Object.<string,any>>)=>Promise<Object.<string,any>>)[]} middleware 
-     * @returns {Promise<Object.<string,any>}
-     */
-    async #executeOnEndMiddleware (payload, middleware) {
-        const MAX_REQURSIVE_CALLSTACK = middleware.length + 1;
-        let iterationsCounter = 0;
-        /**
-         * 
-         * @param {Object.<string,any>} nextData 
-         */
-        const next = async (nextData) => {
-            if(iterationsCounter < MAX_REQURSIVE_CALLSTACK) {
-                console.log({nextData});
-                const handler = middleware[iterationsCounter++];
-                if(!handler) return nextData;
-                return await handler(nextData, next);
-            }
-            throw new Error(`too many reqursive callstack. current: ${iterationsCounter}`);
-        }
-        return await next(payload);
-    }
-
-    /**
-     * 
-     * @param {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<Object.<string,any>>)=>Promise<Object.<string,any>>)[]} middleware 
-     * @returns {Promise<Object.<string,any>}
-     */
-    async #executOnPartHandledeMiddleware (payload, middleware) {
         let index = 0;
-        const next = async (nextData) => {
+
+        const next = async (nextPayload) => {
 
             if(index < middleware.length) {
                 const currentIndex = index++;
                 const handler = middleware[currentIndex];
-                if(handler === undefined) return nextData;
-                return await handler(nextData, next);
+                if(handler) {
+                    try {
+                        return await handler(nextPayload, next);
+                    }
+                    catch (err) {
+                        throw err;
+                    }
+                }
             }
-            else {
-                return nextData;
-            }
-            if(index - middleware.length) {
-                console.log(
-                    `\x1b[31mMultipartFormdataHandler::executOnPartHandledeMiddleware: over mach reqursive stack\x1b[0m`
-                );
-                throw new Error(
-                    `MultipartFormdataHandler::executOnPartHandledeMiddleware: too mach reqursive stack`
-                )
-            }
+
+            return nextPayload;
         }
-        
+
         if(middleware.length > 0) {
+            // обработанные данные
             return await next(payload);
-        }
+        } 
         else {
+            // необработанные данные
             return payload;
         }
     }
 
-    /**
-     * @type {Map.<string,(payload:Object.<string,any>)=>void>}
-     */
-    #eventListeners;
-
-    /**
-     * @type {((payload:Object.<string,any>, next:(nextData:Object.<string,any>)=>Promise<void>)=>Promise<void>)[]}
-     */
-    #middleware;
-    /**
-     * @type {Function[]}
-     */
+    #onDataPartMiddleware;
     #onDataEndMiddleware;
-    /**
-     * @type {string[]}
-     */
-    #errors;
 
-    // dependencis
-
-    /**
-     * @type {() => MultiTableGrouppingAgent}
-     */
-    #multitableGroupFactory;
+    #multiTableAgentFactory;
 
     /**
      * 
      * @param {{multiTableGrouppingAgentFactory:() => MultiTableGrouppingAgent}} deps 
      */
     constructor (deps = {}) {
-        // #warning: multiTableGrouppingAgentFactory должен быть инстанцией класса
-        const multiTableGrouppingAgentFactory = deps.multiTableGrouppingAgentFactory;
 
-        if(multiTableGrouppingAgentFactory === undefined) {
+        const multtitableAgenttFactrory = deps.multiTableGrouppingAgentFactory;
+
+        if(!multtitableAgenttFactrory) {
             throw new Error(`MultipartFormdataHandler: required multiTableGrouppingAgentFactory but not provided`);
         }
 
-        this.#eventListeners = new Map();
-        this.#middleware = [];
+        this.#multiTableAgentFactory = multtitableAgenttFactrory;
+
+        this.#onDataPartMiddleware = [];
         this.#onDataEndMiddleware = [];
-        this.#errors = [];
-
-        // dependencies
-
-        this.#multitableGroupFactory = multiTableGrouppingAgentFactory;
     }
 }
 
-module.exports = { MultipartFormdataHandler, MULTIPART_FORM_HANDLER_CONSTANTS }
+module.exports = { MultipartFormdataHandler }
+
+function parseContentDisposition (contentDispositionHeaderData) {
+
+    const nameMatch = contentDispositionHeaderData.match(/name="([^"]+)"/);
+    const filenameMatch = contentDispositionHeaderData.match(/filename="([^"]+)"/);
+
+    return {
+        name: (nameMatch && nameMatch[1]) || null,
+        filename: (filenameMatch && filenameMatch[1]) || null,
+    }
+}
+
+/**
+ * 
+ * @param {string} headersRaw 
+ */
+function splitHeaders (headersRaw) {
+
+    const headers = {};
+
+    const separator = '\r\n';
+
+    const rows = headersRaw.split(separator);
+    rows.forEach(row => {
+        const [key, value] = row.split(': ');
+        if(key && value) {
+            const normalizedKey = key.toLowerCase();
+            headers[normalizedKey] = value;
+        }
+    });
+
+    return headers;
+}
+
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} part 
+ */
+function parseFormDataPart (part) {
+
+    const separatorBuffer = Buffer.from(`\r\n\r\n`);
+    const separatorIndex = findSeparatorIndex(part, separatorBuffer);
+
+    if(separatorIndex === -1) {
+        throw new Error(`mulitipart form data handler: parse form data part: incorrect part`);
+    }
+
+    const headers = part.subarray(0 , separatorIndex);
+
+    let bodyEndIndex = part.length;
+
+    if(part[bodyEndIndex - 2] === 0x0d && part[bodyEndIndex - 1]) {
+        bodyEndIndex -= 2;
+    }
+
+    const body = part.subarray(separatorIndex + separatorBuffer.length, bodyEndIndex);
+
+    return {
+        headers, 
+        body,
+    }
+
+}
+
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} data 
+ * @param {Buffer<ArrayBuffer>} separator 
+ */
+function splitFormData (data, separator) {
+
+    let start = 0;
+    let index = 0;
+
+    const parts = [];
+
+    while ((index = findSeparatorIndex(data, separator, start)) !== -1) {
+        parts.push(data.subarray(start, index));
+        start = index + separator.length;
+
+        if(data[start] === 0x0d && data[start + 1] === 0x0a) {
+            start += 2;
+        }
+
+    }
+
+    parts.push(data.subarray(start));
+
+    return parts;
+}
+
+/**
+ * 
+ * @param {Buffer<ArrayBuffer>} data 
+ * @param {Buffer<ArrayBuffer>} separator 
+ * @param {number} start 
+ */
+function findSeparatorIndex (data, separator, start = 0) {
+
+    for (let index = start; index <= data.length - separator.length; index++) {
+        let found = true;
+        for (let j = 0; j < separator.length; j++) {
+            
+            if(data[index + j] !== separator[j]) {
+                found = false;
+                break;
+            }
+        }
+        if(found === true) {
+            return index;
+        }
+    }
+
+    return -1;
+}

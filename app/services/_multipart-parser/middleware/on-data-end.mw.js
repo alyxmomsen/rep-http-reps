@@ -21,44 +21,27 @@ module.exports = function onDataEndMiddleware(deps = {}) {
             throw new Error('onDataEndMiddleware: required compiled groups but not given');
         }
 
+
+        // for (const [k, v] of Object.entries(mergedGroups.files)) {
+        //     console.log({k});
+        //     for (const [kk, vv] of Object.entries(v)) {
+        //         console.log({kk, vv});
+        //     }
+        // }
+
+
         const addedData = [];
         
-        for (const [tableName, groups] of Object.entries(mergedGroups)) {
-            // console.log(`\x1b[38;2;255;128;255mtable name: ${tableName}\x1b[0m`);
+        for (const [tableName, groups] of Object.entries(mergedGroups.files)) {
+            console.log(`\x1b[38;2;255;128;255mtable name: ${tableName}\x1b[0m`);
             
             for (const [groupId, columns] of Object.entries(groups)) {
-                // console.log(`\x1b[38;2;128;255;255mgroup id: : ${groupId}\x1b[0m`);
+                console.log(`\x1b[38;2;128;255;255mgroup id: : ${groupId}\x1b[0m`);
                 
                 for (const [columnName, colData] of Object.entries(columns)) {
-                    // console.log(`\x1b[38;2;0;255;128mcolumn name: ${columnName}\x1b[0m`);
+                    console.log(`\x1b[38;2;0;255;128mcolumn name: ${columnName}\x1b[0m`);
                     // console.log('columnData: ', colData);
-                    const { fileName, fileMIME, fileBody } = colData;
-                    const dbAdapter = dbRouter.get(tableName);
                     
-                    if (fileName || fileMIME) {
-              
-                        try {
-                            const { error, success } = await filemanager.write(fileBody);
-                            if (error) {
-                                throw new Error(`fmanager error`);
-                            }
-                            
-                            const { filename } = success;
-
-                            const { error: dbAdapterError, success: dbAdapterSuccess } = dbAdapter.createOne({
-                                fileSystemFilename: filename,
-                                originalFileName: fileName,
-                                mime: fileMIME,
-                            });
-                        
-                            addedData.push({
-                                id: dbAdapterSuccess?.newRowIdHash,
-                            });
-
-                        } catch (e) {
-                            console.log(`\x1b[38;2;255;64;0mwrong table name\x1b[0m`);
-                        }
-                    }
                 }
             }
         }

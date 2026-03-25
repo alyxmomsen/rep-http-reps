@@ -12,11 +12,12 @@ module.exports = function extractProtocolMiddleware(deps = {}) {
     
     return async (payload, next) => {
 
-        const { body, contentType, filename, name } = payload.data || {};
+        const { body, contentType, filename, name } = payload || {};
         
         const { protocolName, data: nameAttrValue } = extractFn(name);
         
         if (protocolName !== 'multitable') {
+            return payload;
             return 'no name-protocol';
         }
 

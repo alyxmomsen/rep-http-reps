@@ -2,6 +2,7 @@
 
 const { findSeparatorIndexInBuffer } = require('../../../app/utils/find-separator-index-in-buffer.util');
 
+
 describe('🧪 findSeparatorIndexInBuffer', () => {
     // ===========================================
     // ТЕСТ 1: Исследуем, как функция работает

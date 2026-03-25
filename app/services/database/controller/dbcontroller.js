@@ -51,4 +51,4 @@ function dbControllerFactory (modelName) {
     return model;
 }
 
-module.exports = { dbControllerFactory } ;
+// module.exports = { dbControllerFactory } ;

@@ -2,6 +2,7 @@
 module.exports = { extractProtocolName }
 
 function extractProtocolName (nameAttr) {
+    console.log({nameAttr});
     const [a , b] = nameAttr.split(/:\/\/\s*/);
     if(b) {
         return {
