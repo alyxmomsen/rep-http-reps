@@ -41,26 +41,20 @@ class Router {
 
             for (const [_, routeBundle] of methodRoutes.entries()) {
 
-                const urlMatch = routeBundle.regex.exec(url);
-
-                console.log('hello world',  {urlMatch});
+                const urlMatch  = routeBundle.regex.exec(url);
 
                 if(!urlMatch) continue;
-
-                const params = {};
-                routeBundle.keys.forEach((key,i) => {
+                
+                const params = {}
+                routeBundle.keys.forEach((key, i) => {
                     params[key] = urlMatch[i + 1];
                 });
 
-                req.params = params;
-                req.queryParams = {};
-
-                const allMiddleware = [...this.#middleware, ...routeBundle.middleware];
+                const allMiddleware = [...this.#middleware, ...routeBundle.middleware] ;
 
                 await this.#executeMiddleware(req, res, allMiddleware, routeBundle.handler);
 
                 return;
-
             }
 
         }
@@ -140,37 +134,31 @@ class Router {
      * @param {((req:IncomingMessage, res:ServerResponse, next?:(payload?:any) => Promise<any>) => Promise<any>)} finalHandler 
      */
     async #executeMiddleware (req, res, middleware, finalHandler, payload) {
-            
-        let index = 0;
         
-        console.log('call handler ...', middleware);
+        let index = 0;
+
         const next = async (nextPayload) => {
-            
-            if(res.headersSent) return {chainBroken:true};
-            
+
+            if(res.headersSent) {
+                return;
+            }
+
             if(index < middleware.length) {
                 const currentIndex = index++;
-                const handler = middleware[currentIndex];
-                if(handler) {
+                const header = middleware[currentIndex];
+                if(header) {
                     try {
-                        await handler(req, res, next, nextPayload);
+                        await header(req, res, next, nextPayload);
                     }
-                    catch (err) {
-                        throw err;
+                    catch (error) {
+                        throw error;
                     }
                 }
-                // else {
-                //     return {chainBroken:true};
-                // }
             }
-            else {
-                if(finalHandler) {
-                    await finalHandler(req, res);
-                }
-                // else {
-                //     return {chainBroken:true};
-                // }
+            else if (finalHandler) {
+                await finalHandler(req, res, nextPayload);
             }
+
         }
 
         if(middleware.length > 0) {
@@ -179,8 +167,8 @@ class Router {
         else if (finalHandler) {
             await finalHandler(req, res);
         }
-
-        return {chainBroken:false};
+        
+        return {chainbroken: false};
     }
 
     #addRoute (template, method, handlers) {
@@ -211,26 +199,24 @@ class Router {
      * }}
      */
     #assembleRouteBundle (template , handlers) {
-
+        
         if(handlers.length < 1) {
-            throw new Error (`http router: handlers.length must be > "0"`);
+            throw new Error(`router: handlers.length must by > 0`);
         }
 
         const keys = [];
-        // wildcard
-        let regexTemplate = template.replace(/\*/g , (match) => {
-            return '.*'
-        }); 
-        regexTemplate = regexTemplate.replace(/:([^\/]+)/g, (_, key) => {
+
+        let regexTemplate = template.replace(/\*/g , () => '.*');
+        regexTemplate = regexTemplate.replace(/:([^\/]+)/g , (_, key) => {
             keys.push(key);
             return '([^\/]+)';
         });
 
         return {
             keys,
-            regex:new RegExp(`^${regexTemplate}$`),
-            handler:handlers[handlers.length - 1],
-            middleware:handlers.length > 1 ? handlers.slice(0, -1) : [],
+            regex: new RegExp(`^${regexTemplate}$`),
+            handler:handlers[handlers.length -  1],
+            middleware: handlers.length > 1 ? handlers.slice(0, -1) : [],
             originalTemplate:template,
         }
     }
