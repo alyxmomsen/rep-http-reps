@@ -48,7 +48,7 @@ class FormHandler {
         const contentTypeHandlersRouter = deps.contentTypeHandlersRouter ;
 
         if(contentTypeHandlersRouter === undefined) {
-            res.writeHead(500, {
+            res.writeHead(400, {
                 "content-type":'application/json',
             });
             res.end(JSON.stringify({
@@ -78,11 +78,11 @@ class FormHandler {
             const {success, error} = await contentTypeController.handle(req, res, contentTypeAttr);
 
             if(error) {
-                res.writeHead(500, {
+                res.writeHead(520, {
                     "content-type":'application/json',
                 });
                 res.end(JSON.stringify({
-                    message:'2'
+                    error,
                 }));
                 return;
             }
@@ -107,7 +107,14 @@ class FormHandler {
             
         }
         catch (err) {
-            console.log({err});
+            res.writeHead(520, {
+                "content-type":'application/json',
+            });
+            res.end(JSON.stringify({
+                error:err,
+                message:'unknown error'
+            }));
+            return;
         }
     }   
 
