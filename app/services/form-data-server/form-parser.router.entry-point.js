@@ -87,7 +87,6 @@ class FormHandler {
                 return;
             }
 
-
             if(!success) {
                 res.writeHead(500, {
                     "content-type":'application/json',

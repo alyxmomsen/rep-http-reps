@@ -3,32 +3,21 @@
 const { IncomingMessage, ServerResponse } = require("node:http");
 
 class ContentTypeHandlerController {
-
-
-    /**
-     * 
-     * @param {IncomingMessage} req 
-     * @param {ServerResponse} res 
-     * @param {string} [payload] 
-     * @returns {Promise<Object.<string,any>>}
-     */
-    async handle(req, res, payload) {
-        const {success, error} = await this.#strategy(req, res, payload);
-        
-        return {
-            success,
-            error,
-        };
+    async handle (req, res, payload) {
+        return this.#strategy(req, res, payload);
     }
 
+    /**
+     * @type {Function}
+     */
     #strategy;
 
     /**
      * 
-     * @param {(req:IncomingMessage, res:ServerResponse, handlerPayloadDataKey?:string) => Promise<Object.<string,any>>} strategy 
+     * @param {Function} strategy 
      */
     constructor (strategy) {
-        this.#strategy = strategy ;
+        this.#strategy = strategy;
     }
 }
 
@@ -36,101 +25,55 @@ class ContentTypeHandlersRouter {
 
     /**
      * 
-     * @description this is a factory that create controller
      * @param {string} contentType 
-     * @returns 
+     * @returns {ContentTypeHandlerController} 
      */
-    getHandlerController (contentType) {
+    getHandlerController(contentType) {
 
-        const handler = this.#contentTypeHandlers.get(contentType);
-        if(!handler) throw new Error(`no handler for <${contentType}> content-type `);
-        return new ContentTypeHandlerController(handler);
+        const strategy = this.#contentTypeHandlers.get(contentType);
+
+        if(strategy === undefined) {
+            throw new Error(`Content-type handlers router: unregistrated content-type`);
+        }
+
+        return new ContentTypeHandlerController(strategy);
     }
 
-    /**
-     * 
-     * @param {string} contentType 
-     * @param {(req:IncomingMessage, res:ServerResponse ,payload?:string) => void} handler 
-     * @returns {void}
-     */
-    registrateContentTypeHandler (contentType , handler ) {
-        const c3r = this.#consoleColors ;
-
-        /*
-            проверяем соотвествует ли content-type строка 
-            одному из зарегестрированных content-type значений
-            и если соотвоетствует <noConteins = false> , то регистрируем
-            новый обработчик для <ContentType> 
-            в противном случае выбрасывается 
-        */
-        let noConteins = true ;
-        for (const [ key , _contentType ] of Object.entries(ContentTypeHandlersRouter.contentTypes)) {
-            if(_contentType === contentType){
-                noConteins = false ;
+    registrateContentTypeHandler (contentType , handler) {
+        
+        let isContentTypeValid = false;
+        for (const [key, registratedContentType] of Object.entries(ContentTypeHandlersRouter.contentTypesMaps)) {
+            if(contentType === registratedContentType) {
+                isContentTypeValid = true;
                 break;
             }
         }
-        if(noConteins) {
-            throw new Error(`this contentType <${contentType}> is unknown`);
-        }
 
-        /* проверяем,- если для <contentType> уже зарегестрирован обработчик 
-        выбрасываем исключение*/
         if(this.#contentTypeHandlers.has(contentType)) {
-            throw new Error(`${c3r.RED}this content-type <${contentType}> is alredy registrated${c3r.DEFAULT}`);
+            throw new Error(`Content type handlers router: this content-type ${contentType} already in use`);
         }
 
-        /* если все проверки пройдены, регистрируем content-type обработчик  */
         this.#contentTypeHandlers.set(contentType, handler);
-
         /* логирование успешной транзакции */
-        console.log(`${c3r.GREEN}content-type <${contentType}> registrated successfull${c3r.DEFAULT}`);
+        console.log(`content-type <${contentType}> registrated successfull`);
+
+    }
+
+    static contentTypesMaps = {
+        'MULTIPART_FORM_DATA':'multipart/form-data',
+        'TEXT_PLAIN':'text/plain',
+        'APPLICATION_X_WWW_FORM_URLENCODED':'application/x-www-form-urlencoded',
     }
 
     /**
-     * @type Map<string,(req:IncomingMessage, res:ServerResponse ,payload?:string) => void>
+     * @type {Map<string,Function>}
      */
-    #contentTypeHandlers ;
-
-    /** 
-     * keeps approved content-types. 
-     * метод "registrateContentTypeHandler" добавляет обработчики только для этих content-types
-     * @type {Object.<string,string>}
-    */
-    static contentTypes = {
-        MULTIPART_FORM_DATA:'multipart/form-data' ,
-        TEXT_PLAIN:'text/plain' ,
-        APPLICATION_X_WWW_FORM_URLENCODED:'application/x-www-form-urlencoded' ,
-    }
-
-    /** 
-     * коды цветов для работы с последовательностью типа "\x1b[0m"
-     * @private
-    */
-    #consoleColors;
+    #contentTypeHandlers;
 
     constructor () {
-
-        this.#consoleColors = new Map();
-
-        /**
-         * 
-         * @param {number|string} code 
-         * @returns 
-         */
-        const generateConsoleColorByCode = (code) => `\x1b[${code}m` ;
-
-        this.#consoleColors = {
-            GRAY:generateConsoleColorByCode(30),
-            RED:generateConsoleColorByCode(31),
-            GREEN:generateConsoleColorByCode(32),
-            YELLOW:generateConsoleColorByCode(33),
-            DEFAULT:generateConsoleColorByCode(0),
-        }
-
-        this.#contentTypeHandlers = new Map ;
-
+        this.#contentTypeHandlers = new Map();
     }
+    
 }
 
 /**
