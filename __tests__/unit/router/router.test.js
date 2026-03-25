@@ -81,12 +81,13 @@ describe('🧪 ROUTER', () => {
             
             // Правильный порядок для Express-style:
             // mw1 start → mw2 start → handler → mw2 end → mw1 end
+            console.log('orderfrrrrr', {order});
             expect(order).toEqual([
                 'mw1 start',
                 'mw2 start',
                 'handler',
                 'mw2 end',
-                'mw1 end'
+                'mw1 end',
             ]);
         });
 

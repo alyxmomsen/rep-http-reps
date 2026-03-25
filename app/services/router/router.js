@@ -53,10 +53,11 @@ class Router {
                 });
 
                 req.params = params;
+                req.queryParams = {};
 
-                routeBundle.handler(req, res);
+                const allMiddleware = [...this.#middleware, ...routeBundle.middleware];
 
-                // await this.#executeMiddleware(req, res, this.#middleware, routeBundle.handler);
+                await this.#executeMiddleware(req, res, allMiddleware, routeBundle.handler);
 
                 return;
 
@@ -138,14 +139,15 @@ class Router {
      * @param {any} payload 
      * @param {((req:IncomingMessage, res:ServerResponse, next?:(payload?:any) => Promise<any>) => Promise<any>)} finalHandler 
      */
-    async #executeMiddleware (req, res, middleware, payload, finalHandler) {
-        
-        if(res.headersSent) return {chainBroken:true};
-        
+    async #executeMiddleware (req, res, middleware, finalHandler, payload) {
+            
         let index = 0;
-
+        
+        console.log('call handler ...', middleware);
         const next = async (nextPayload) => {
-
+            
+            if(res.headersSent) return {chainBroken:true};
+            
             if(index < middleware.length) {
                 const currentIndex = index++;
                 const handler = middleware[currentIndex];
@@ -157,17 +159,17 @@ class Router {
                         throw err;
                     }
                 }
-                else {
-                    return {chainBroken:true};
-                }
+                // else {
+                //     return {chainBroken:true};
+                // }
             }
             else {
                 if(finalHandler) {
                     await finalHandler(req, res);
                 }
-                else {
-                    return {chainBroken:true};
-                }
+                // else {
+                //     return {chainBroken:true};
+                // }
             }
         }
 
@@ -216,8 +218,10 @@ class Router {
 
         const keys = [];
         // wildcard
-        let regexTemplate = template.replace(/\*/g , '.*'); 
-        regexTemplate = template.replace(/:([^\/]+)/g, (_, key) => {
+        let regexTemplate = template.replace(/\*/g , (match) => {
+            return '.*'
+        }); 
+        regexTemplate = regexTemplate.replace(/:([^\/]+)/g, (_, key) => {
             keys.push(key);
             return '([^\/]+)';
         });
