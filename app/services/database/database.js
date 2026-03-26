@@ -20,6 +20,17 @@ const COLORS = {
 
 class DataBase {
 
+
+    /**
+     * 
+     * @param {string} event 
+     * @param {(event:{data:Object}) => void} listener 
+     */
+    addEventListener (event, listener) {
+        // ⚠️ overrides event listener
+        this.#eventListeners.set(event, listener);
+    }
+
     /**
      * data:Object.<columnName,columnValue>
      * returns: new row Id
@@ -60,7 +71,7 @@ class DataBase {
 
         /* если таблица существует, пушим строку */
         tableByTableId.set(newRowIdHash , row) ;
-
+        this.#emit('onOperationEnd');
         return {
             success:{
                 newRowIdHash,
@@ -96,9 +107,10 @@ class DataBase {
             }
         }
 
+        // this.#emit('onOperationEnd');
         return {
             success: {
-                
+                rowById,
             }
         };
     }
@@ -139,13 +151,31 @@ class DataBase {
         return {}
     }
 
+    #emit(eventName) {
+
+        for (const [name, handler] of this.#eventListeners.entries()) {
+            if(name === eventName) {
+                handler({data:this.#data});
+                break;
+            }
+        }
+        return;
+    }
+
     #data;
+
+    // eventListeners
+
+    /**
+     * @type {Map<string,(event:{data:Object}) => void>}
+     */
+    #eventListeners;
 
     constructor () {
         this.#data = new Map;
+
+        this.#eventListeners = new Map();
     }
 }
 
-const database = new DataBase ;
-
-module.exports = { database }
+module.exports = { DataBase }

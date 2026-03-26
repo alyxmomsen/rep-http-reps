@@ -15,9 +15,8 @@ class FileManager {
      * 
      * @param {Buffer<ArrayBuffer>} fileData 
      * @returns {Promise<{
-     *  success:{filename:string}
-     * }|{
-     *  error:{location:string;message:string;subjects:Object}
+     *  success?:{filename:string}
+     *  error?:{location:string;message:string;subjects:Object}
      * }>}
      */
     async write (fileData) {
@@ -102,6 +101,6 @@ class FileManager {
     }
 }
 
-const filemanager = new FileManager () ;
+// const filemanager = new FileManager () ;
 
-module.exports = { filemanager , CONSTANTS } ;
+module.exports = { CONSTANTS , FileManager } ;

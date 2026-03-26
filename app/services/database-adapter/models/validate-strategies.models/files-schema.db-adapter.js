@@ -2,10 +2,10 @@ const { dataBase } = require("../../../database/controller/db.controller");
 const { DATABASE_TYPES, DATABASE_TABLES, DBAdapter } = require("../db-adapter.model");
 
 const { STRING, BOOLEAN, NUMBER } = DATABASE_TYPES;
-const { VIDEO_FILES } = DATABASE_TABLES;
+const { FILES } = DATABASE_TABLES;
 
-const videoFilesSchema = {
-    tableName:VIDEO_FILES, // or maybe to title this field as "schemaName"
+const filesSchema = {
+    tableName:FILES, // or maybe to title this field as "schemaName"
     schema:{
         fileSystemFilename:{
             required:true,
@@ -29,6 +29,6 @@ const videoFilesSchema = {
 /**
  * 
  */
-const videoFilesController = new DBAdapter(videoFilesSchema, { dataBase:dataBase});
+const filesSchemaInjectedController = new DBAdapter(filesSchema, { dataBase:dataBase });
 
-module.exports = { videoFilesController }
+module.exports = { filesSchemaInjectedController }

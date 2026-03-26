@@ -1,4 +1,4 @@
-const { database } = require("../../database/database");
+const { DataBase } = require("../../database/database");
 
 const DATABASE_TYPES = {
     STRING:'string',
@@ -16,7 +16,8 @@ const DATABASE_TYPES = {
 const DATABASE_TABLES = {
     VIDEO_FILES:'video-files',
     PLAYLIST:'video-playlist',
-    USERS:'users'
+    USERS:'users',
+    FILES:'files',
 }
 
 class DBAdapter {
@@ -25,9 +26,9 @@ class DBAdapter {
 
         const errors = {};
         const validatedData = {};
-        const { properties, tableName } = this.#strategy;
+        const { schema, tableName } = this.#strategy;
 
-        for (const [key, strategyPropertyModel] of Object.entries(properties)) {
+        for (const [key, strategyPropertyModel] of Object.entries(this.#strategy.schema)) {
 
             try {
                 const providedPropValue = data[key];
@@ -47,7 +48,7 @@ class DBAdapter {
             }
         }
 
-        const { success, error } = database.createOne(tableName,data);
+        const { success, error } = this.#dataBase.createOne(this.#strategy.tableName,data);
 
         if(error) {
             return {
@@ -61,21 +62,94 @@ class DBAdapter {
 
     }
 
-    readOne() {}
+    readOne(rowId) {
+
+        console.log(`take one`.toUpperCase());
+
+        const {success, error} = this.#dataBase.readOne(this.#strategy.tableName, rowId);
+
+        console.log('db row: ', {success, error});
+
+
+        // ==================================================
+        // =================== validation =================== 
+
+        for (const [k, v] of Object.entries(this.#strategy.schema)) {
+            // console.log({k, v});
+        }
+
+        // =================== validation =================== 
+        // ================================================== 
+
+        return {
+            success , error,
+        }
+
+    }
     readAllRows() {}
 
     /**
-     * @type {{tableName:string;properties:Object.<string,{required:boolean;type:string;defaultValue:string|boolean|number}>}}
+     * @type {{tableName:string;schema:Object}}
      */
     #strategy;
     #errors;
 
+
+    // dependencies
+
     /**
-     * @param {{tableName:string;properties:Object.<string,{required:boolean;type:string;defaultValue:string|boolean|number}>}} strategy
+     * @type {DataBase}
      */
-    constructor (strategy) {
+    #dataBase;
+
+    // strategy
+
+    /**
+     * @type {string}
+     */
+    #tableName;
+    /**
+     * @type {Object}
+     */
+    #schema;
+
+    /**
+     * @param {{tableName:string;schema:Object}} strategy
+     * @param {{
+     *  dataBase:DataBase;
+     * }} [deps={}] 
+     */
+    constructor (strategy,  deps = {}) {
+
+        if(!strategy) {
+            throw new Error(`Db Adapter: schema required but not provided`);
+        }
+
+        const tableName = strategy.tableName;
+        const schema = strategy.schema; 
+
+        if(!tableName || !schema) {
+            throw new Error(`Db Adapter: schema must contained fields tableName & schema, but not provided`);
+        }
+
         this.#strategy = strategy;
+        this.#tableName = strategy.tableName;
+        this.#schema = strategy.schema;
+
+        const dataBase = deps.dataBase || undefined;
+
+        if(!dataBase) {
+            console.log(`\x1b[31m` + `- ❌ DBAdapter:${this.#strategy.tableName}: database is required but not porvided ❌` +`\x1b[0m`);
+            throw new Error(`database is required but not porvided`.toUpperCase());
+        }
+
+        this.#dataBase = dataBase;
+
+        console.log(`\x1b[32m` + `- ✅ DBAdapter:${this.#strategy.tableName}: database is connected ✅` +`\x1b[0m`);
+
         this.#errors = new Map();
+
+
     }
 }
 
