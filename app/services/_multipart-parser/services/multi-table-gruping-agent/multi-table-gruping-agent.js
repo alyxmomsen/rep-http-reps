@@ -23,8 +23,10 @@ class MultiTableGrouppingAgent {
         
         const tableName = tableIdResolver(tableId);
 
+        // если что-то из этого существует, значит это "файл"
         if(filename || contentType) {
 
+            // важные оба,- и filename, и contetn-type
             if(!filename) {
                 throw new Error(`MultiTableGrouppingAgent: as "contentType" received then "filename" required too`);
             }
@@ -32,6 +34,8 @@ class MultiTableGrouppingAgent {
             if(!contentType) {
                 throw new Error(`MultiTableGrouppingAgent: as "filename" received then "contentType" required too`);
             }
+            
+            /* автоматический линк-ид  dev.log.md: # 1*/
             
             const linkId = randomBytes(32).toString('hex');
 

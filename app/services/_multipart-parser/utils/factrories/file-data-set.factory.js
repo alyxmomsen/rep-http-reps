@@ -1,7 +1,12 @@
 
 
 /**
- * 
+ * @description если установить флаг "auto" в значение
+ * "true", то если какие-то required поля будут пропущены,
+ * то они будут заменены на defaul values
+ * @throws 
+ * `file-data factory: incorrect data received` :
+ * если какое-то required поле будет не переданно 
  * @param {{
  *  groupId:string;
  *  tableName:string;
