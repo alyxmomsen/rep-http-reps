@@ -10,16 +10,24 @@
  *  linkId:string;
  *  body:Buffer<ArrayBuffer>;
  * }} data 
+ * @param {{
+ *  auto:boolean;
+ * }} flags
  * @returns 
  */
-function fileDataSetFactory (data = {}) {
+function fileDataSetFactory (data = {} , flags = {}) {
 
-    const groupId = data.groupId;
-    const tableName = data.tableName;
-    const filename = data.filename;
-    const contentType = data.contentType;
-    const linkId = data.linkId;
-    const body = data.body;
+    // если этот флаг установлен, то
+    // no provided required values will be replaced with default 
+    const auto = flags.auto || false;
+
+    // replace with default if the flag "auto" is "true"
+    const groupId = data.groupId || (auto && 'df') || null;
+    const tableName = data.tableName || (auto && 'default-table') || null;
+    const filename = data.filename || (auto && 'unnamed.default');
+    const contentType = data.contentType || (auto && 'unknown/default') || null;
+    const linkId = data.linkId || (auto && 'default123') || null;
+    const body = data.body || (auto && 'default-body') || null;
     
     if(!groupId || !tableName || !filename || !contentType || !linkId || !body) {
         throw new Error(`file-data factory: incorrect data received`);
