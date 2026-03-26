@@ -30,6 +30,16 @@ module.exports = function onDataEndMiddleware(deps = {}) {
      */
     const failedLinksFiles = [];
 
+    // linkId:linkId.data,
+    // tableName,
+    // rowId:newRowIdHash,
+    /**
+     * @type {Array<{
+     *  linkId:string;
+     *  tableName:string;
+     *  rowId:string;
+     * }>}
+     */
     const links = [];
 
 
@@ -70,7 +80,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
                 const { originalFileName, mime, file, linkId } = columns;
 
                 // =================================================
-                // =================== вилидатор ===================
+                // =================== валидатор ===================
                 
                 // validate with link
                 if(!linkId) {
@@ -106,7 +116,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
                     continue
                 }
 
-                // =================== вилидатор ===================
+                // =================== валидатор ===================
                 // =================================================
 
                 // =================================================
@@ -147,9 +157,9 @@ module.exports = function onDataEndMiddleware(deps = {}) {
                 }
 
                 // получаем id только что добавленного поля
-                const { newRowIdHash } = dbSuccess;
+                const { newRowIdHash, row } = dbSuccess;
 
-                if (newRowIdHash === undefined || !newRowIdHash) {
+                if (!newRowIdHash || !row) {
                     // otkat tpaH3aktcb|N
                 }
 
@@ -192,14 +202,28 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
                     // пока что не учитываем тип данных (colData.dataType), всегда записываем строку
                     tableRowDataSet[columnName] = {}
-                    const item = tableRowDataSet[columnName]; 
-                    item['data'] = colData.data ;
-                    item['dataType'] = colData.dataType;
-
+                    const column = tableRowDataSet[columnName]; 
+                    column['dataType'] = colData.dataType;
+                    
                     if(colData.dataType === 'link') {
+                        
+                        /* устанавливаем ссылочные данные на таблицу с файлом */
+                        for (const linkObj of links) {
+
+                            if(linkObj.linkId === colData.data) {
+                                column['data'] = {
+                                    tableName:linkObj.tableName,
+                                    rowId:linkObj.rowId,
+                                } ;
+                                break;
+                            }
+                        }
+
+                        continue;
                         // console.log(`\x1b[38;2;0;255;128mcolumn name: ${/* columnName */ + ''}\x1b[0m`, colData);
                     }
                     // console.log('columnData: ', colData);    
+                    column['data'] = colData.data ;
                 }
 
                 controller.createOne(tableRowDataSet);

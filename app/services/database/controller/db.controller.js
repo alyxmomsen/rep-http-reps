@@ -4,9 +4,11 @@ const dataBase = new DataBase
 
 dataBase.addEventListener('onOperationEnd', (event) => {
 
-    const data = event.data || null;
+    // const data = event.data || null;
 
-    console.log({data});
+    // console.log(`😱 выводим всю базу данных`);
+
+    // console.log(data);
 });
 
 module.exports = { dataBase }

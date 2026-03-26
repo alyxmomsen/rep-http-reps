@@ -7,16 +7,37 @@ const { USERS } = DATABASE_TABLES;
 const UsersValidationSchema = {
     tableName:USERS,
     schema:{
-        title:{
+        name:{
             required:true,
             type:STRING,
             defaultValue:undefined,
             primary:false,
             autoIncrement:false,
         },
-        description:{
+        ['last-name']:{
             required:false,
             type:STRING,
+            defaultValue:`no description`,
+            primary:false,
+            autoIncrement:false,
+        },
+        ['avatar']:{
+            required:false,
+            type:'link',
+            defaultValue:`no description`,
+            primary:false,
+            autoIncrement:false,
+        },
+        ['thumb-nail']:{
+            required:false,
+            type:'link',
+            defaultValue:`no description`,
+            primary:false,
+            autoIncrement:false,
+        },
+        ['logo']:{
+            required:false,
+            type:'link',
             defaultValue:`no description`,
             primary:false,
             autoIncrement:false,

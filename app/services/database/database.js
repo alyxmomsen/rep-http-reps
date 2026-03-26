@@ -24,10 +24,10 @@ class DataBase {
     /**
      * 
      * @param {string} event 
-     * @param {(event:{data:Object}) => void} listener 
+     * @param {(event:{data:Map<string,Object>}) => void} listener 
      */
     addEventListener (event, listener) {
-        // ⚠️ overrides event listener
+        // ⚠️ override event listener
         this.#eventListeners.set(event, listener);
     }
 
@@ -65,12 +65,14 @@ class DataBase {
             return {
                 success:{
                     newRowIdHash,
+                    row,
                 },
             } ;
         }
 
         /* если таблица существует, пушим строку */
         tableByTableId.set(newRowIdHash , row) ;
+        // на момент разработки , выводим всю базу данных
         this.#emit('onOperationEnd');
         return {
             success:{
@@ -162,6 +164,9 @@ class DataBase {
         return;
     }
 
+    /**
+     * @type {Map<string,Object>}
+     */
     #data;
 
     // eventListeners

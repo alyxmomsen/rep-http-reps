@@ -31,6 +31,7 @@ class MultiTableGrouppingAgent {
                 throw new Error(`MultiTableGrouppingAgent: as "contentType" received then "filename" required too`);
             }
 
+            // важные оба,- и filename, и contetn-type
             if(!contentType) {
                 throw new Error(`MultiTableGrouppingAgent: as "filename" received then "contentType" required too`);
             }
@@ -49,8 +50,10 @@ class MultiTableGrouppingAgent {
             const fileDataSet = fileDataSetFactory({
                 ...data, 
                 linkId,
+                // automatic tablename
                 tableName:'files',
                 /* dev.log.md: 1.3  what random-id...*/
+                // "groupId" такой же как и "linkId"
                 groupId:linkId,
             });
             

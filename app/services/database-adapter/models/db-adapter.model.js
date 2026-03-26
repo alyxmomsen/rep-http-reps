@@ -24,6 +24,8 @@ class DBAdapter {
 
     createOne(data) {
 
+        console.log(`выводим данные для транзакции`, {data}, this.#strategy.tableName)
+
         const errors = {};
         const validatedData = {};
         const { schema, tableName } = this.#strategy;
@@ -34,6 +36,7 @@ class DBAdapter {
                 const providedPropValue = data[key];
                 if(!providedPropValue) {
                     if(strategyPropertyModel.required) {
+                        console.log({data, str:this.#strategy.tableName});
                         throw new Error(`required property; ${key} not provided`);
                     }
                     validatedData[key] = strategyPropertyModel.defaultValue;
@@ -48,7 +51,7 @@ class DBAdapter {
             }
         }
 
-        const { success, error } = this.#dataBase.createOne(this.#strategy.tableName,data);
+        const { success, error } = this.#dataBase.createOne(this.#strategy.tableName, validatedData);
 
         if(error) {
             return {

@@ -17,6 +17,12 @@ const playlistValidationSchema = {
             type:STRING,
             defaultValue:`no description`,
         },
+        ['video']:{
+            required:false,
+            type:'link',
+            defaultValue:`no description`,
+        },
+
     }
 }
 
