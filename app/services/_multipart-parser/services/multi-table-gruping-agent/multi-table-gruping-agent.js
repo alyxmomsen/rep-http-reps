@@ -36,29 +36,39 @@ class MultiTableGrouppingAgent {
             }
             
             /* автоматический линк-ид  dev.log.md: # 1*/
-            
             const linkId = randomBytes(32).toString('hex');
 
             // ==============================================
             
             /* dev.log.md : 1.2 */
+            /**
+             * @description groupId рандомный (воизбежание мерджинга, 
+             * так как внутри группы данные рабиты на свойства)
+             * 
+             */
             const fileDataSet = fileDataSetFactory({
                 ...data, 
                 linkId,
-                tableName,
-                groupId,
+                tableName:'files',
+                /* dev.log.md: 1.3  what random-id...*/
+                groupId:linkId,
             });
             
             this.#dataTransformer.process(FILE_DATA_SET_SCHEMA, fileDataSet, this.#mergedGroups.files);
             
             // ==============================================
             
+            // "группа" и "таблица" определяются данными из клиента
+            // (исключением явяется хардкод свойства "dataType")
+            // что бы иметь возможность объеденить текущее поле и колонки (свойства) (прописав в HTML документе) строк таблиц 
+            // (которые уже смерджились data-transformer-ом или придут позже)
             const fieldDataSet = fieldDataSetFactory({
                 body:linkId,
                 columnName,
                 dataType:'link',
+                // -----------
                 groupId,
-                tableName:'video-playlist',
+                tableName,
             });
             
             
