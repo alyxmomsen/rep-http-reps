@@ -86,8 +86,14 @@ class MultipartFormdataHandler {
 
                 // ondataend middleware
 
-                this.#executeMiddleware({mergedGroups}, this.#onDataEndMiddleware);
+                const middlewareresponse = await this.#executeMiddleware({mergedGroups}, this.#onDataEndMiddleware);
                 
+                console.log({middlewareresponse});
+
+                if(middlewareresponse.success) {
+                    resolve({success:middlewareresponse.success});
+                }
+
                 // console.log({mergedGroups});
             });
         });

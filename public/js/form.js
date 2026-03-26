@@ -1,290 +1,126 @@
-console.log('form js loaded');
 
-const METHODS_KEYS  = {
-    POST:'post',
-    GET:'get',
-}
+window.addEventListener('DOMContentLoaded', () => {
 
-window.addEventListener('DOMContentLoaded' , () => {
+    /* modals */
 
-    // grab html elements
+    const formModal = document.getElementById('modal-window--a');
+    const playlistModal = document.getElementById('modal-window--b');
+    const videoModal = document.getElementById('modal-window--video');
 
-    const mainForm = document.getElementById('form--main');
-    const statusBar = document.getElementById('status--upload');
-    const modalWindow  = new ModalWindow(document.getElementById('modal-window--main'));
-    const addElementButton  = document.getElementById('button--add-element');
-    const playlistGroup  = document.getElementById('playlist-items-group');
+    // playlistModal.style.display = 'none'
 
-    addElementButton.addEventListener("click" , (e) => {
-        e.stopPropagation();
-        (new PlaylistFormElement('new playlist element' , 'playlist-1'))
-            .insertInto(playlistGroup);
+    /* form */
 
+    const formHTML = document.getElementById('form--main');
+
+    const request = new RequestManager(
+        '/api/handle-form' , 
+        'post', toJSONMiddleware(), 
+        submitFinalHandlerMiddleware({playlistModalWindow:playlistModal})
+    );
+
+    formHTML.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const formData = new FormData(formHTML);
+        await request.exec(formData);
     });
-
-    mainForm.addEventListener("submit" , async (e) => {
-        e.preventDefault();
-        
-        console.log(e.currentTarget === mainForm);
-
-        // hide modal window
-        
-        // modalWindow.hide();
-
-        statusBar.innerText = 'loading...';
-
-        const formData = new FormData(mainForm);
-
-        const response = await fetch('/api/handle-form' , {
-            body:formData ,
-            method:METHODS_KEYS.POST ,
-        });
-
-        const jsonResponse = await response.json();
-
-        statusBar.innerText = 'loaded';
-
-        console.log({jsonResponse});
-
-        const {success, error} = jsonResponse;
-
-        if(success) {
-            const { addedData } = success;
-            modalWindow.show(addedData);
-            return;
-        }
-
-        if(error) {
-            console.error(error);
-            throw new Error(error);
-        }
-
-        throw new Error('unknown error');
-    });
-
 });
 
-class RequestRoute {
 
-    async execute (body = {}) {
-        const { error , success } = await RequestRoute.UseFetch(this.#url , this.#method , body);
+class RequestManager {
 
-        if(error) {
-            console.log({error});
-            return ;
-        }
 
-        const { response } = success ;
+    /**
+     * 
+     * @param {Object} body 
+     */
+    async exec (body = {}) {
 
-        this.#responseHandler(response , );
+        const response = await fetch(this.#url, {
+            method:this.#method,
+            ...(this.#method === 'get' ? {} : { body })
+        });
 
-        for (const handler of this.#responseHandler) {
-            await handler(response);
-        }
+        this.#executeMiddleware([...this.#middleware], this.#handler, { response } );
+
     }
 
-    static async UseFetch (url , method , body) {
-        try {
-            const response = await fetch(url , {
-                method:method , 
-                ...(method === 'get'? {} : { body }),
-            });
+    async #executeMiddleware (middleware, finalHandler, payload) {
 
-            return {
-                success:{
-                    response ,
-                } ,
+        let index = 0;
+
+        const next = async (nextPayload) => {
+
+            if(index < middleware.length) {
+                const currentIndex = index++;
+
+                const handler = middleware[currentIndex];
+
+                if(handler) {
+                    try {
+                        await handler(nextPayload, next);
+                    }
+                    catch (error) {
+                        throw error;
+                    }
+                }
             }
-        }
-        catch (e) {
-            console.log({e});
-            return {
-                error:{
-                    location:'RequestRoute::execute' ,
-                    message:'' ,
-                    subjects:{naiveError:{e}}
+            else {
+                if(finalHandler) {
+                    await finalHandler(nextPayload);
                 }
             }
         }
-    }
 
-    addBeforeRequestListeners (...handlers) {
-        handlers.forEach(handler => {
-            this.#beforeRequestHandlers.push(handler);
-        });
-    }
-
-    addMiddleware (...handlers) {
-        handlers.forEach(handler => {
-            this.#middleware.push(handler);
-        });
+        if(middleware.length > 0) {
+            await next(payload);
+        }
+        else if (finalHandler) {
+            await finalHandler(payload);
+        }
     }
 
     /**
-     * 
-     * @param {(response:Response , payload) => Promise<void>} handler 
+     * @type {string}
      */
-    addResponseHandler (handler) {
-        this.#responseHandler = async (res) => await handler(res , payload) ;
-    }
-
-    #url ;
-    #method ;
-    #responseHandler ;
-    #middleware ;
-    #beforeRequestHandlers ;
+    #url;
 
     /**
-     * 
-     * @param {string} url 
-     * @param {string} method 
-     * @param  {...((res:Response , payload:Object) => Promise<void>)} handlers 
+     * @type {string}
      */
-    constructor (url , method , ...handlers) {
-        this.#url = url ;
-        this.method = method ;
-        this.#responseHandler = handlers.length ? handlers[handlers.length - 1] : f=>f ;
-        this.#middleware = [] ;
-        this.#beforeRequestHandlers = [] ;
-    }
-}
-
-class ModalWindow {
-
-    #timer;
-    #timeout;
-
-
-    hide () {
-        this.#htmlElement.style.display = 'none' ;
-    }
-    
-
-    show (data) {
-        const datawrapper = document.createElement('div');
-        data.forEach(el => {
-            const d = document.createElement('div');
-            d.innerText = el.id;
-            console.log({el});
-            datawrapper.appendChild(d);
-        });
-
-        this.#htmlElement.appendChild(datawrapper);
-
-        this.#htmlElement.style.display = 'flex' ;
-        if(this.#timeout) {
-            clearTimeout(this.#timeout);
-        }
-        this.#timeout = setTimeout(this.hide.bind(this) , 3000) ;
-    }
-
-    #htmlElement;
+    #method;
 
     /**
-     * 
-     * @param {HTMLDivElement} html
-     * @param {} t  
+     * @type {((payload:Object, next:(payload:Object) => Promise<any>) => Promise<any>)[]}
      */
-    constructor (html) {
-        if(!html) {
-            throw new Error(`no html provided`);
-        }
-        this.#htmlElement = html ;
-
-    }
-}
-
-class PlaylistFormElement {
+    #middleware;
 
     /**
-     * 
-     * @param {HTMLElement} nestElement 
+     * @type {(payload:Object) => Promise<any>}
      */
-    insertInto(nestElement) {
-        nestElement.appendChild(this.#baseElement);
-    }
+    #handler;
 
-    #baseElement;
+    constructor (url, method, ...handlers) {
 
-    constructor (innerText , tablename) {
-
-        this.#baseElement = document.createElement('div');
-
-        const bEl = this.#baseElement ;
-        bEl.className = 'flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element' ;
-
-        // constants:
-
-        const INPUT_TYPES = {
-            TEXT:'text', 
-            FILE:'file', 
+        if(!url) {
+            throw new Error(`url required but not provided`);
         }
-
-        const GROUP_DATA_BASE = {
-            GROUP_ID:generateRandomString(32) ,
-            TABLE_NAME:tablename ,
-        }
-
-        const COLUMN_NAMES_KEYS = {
-            TITLE:'title', 
-            DESCRIPTION:'description', 
-        }
-
-        const COLUMN_DATA_TYPES = {
-            STRING:'string',
-            BINARY:'binary',
-        }
-
-        const { GROUP_ID , TABLE_NAME } = GROUP_DATA_BASE ;
-        const { TITLE , DESCRIPTION } = COLUMN_NAMES_KEYS ;
-        const { STRING , BINARY } = COLUMN_DATA_TYPES ;
-
-        // utils: 
-
-        const createNameAttr = (groupid , tablename ,colname , datatype) => {
-            return `${groupid}.${tablename}.${colname}.${datatype}` ;
-        }
-
-        // inners:
-
-        const h3 = document.createElement('h3');
-        h3.innerText = innerText ;
-
-        const titleInput = document.createElement('input');
-        titleInput.type = INPUT_TYPES.TEXT ;
-        titleInput.name = createNameAttr(GROUP_ID , TABLE_NAME , TITLE , STRING) ;
-
-        const descriptionInput = document.createElement('input');
-        descriptionInput.type = INPUT_TYPES.TEXT ;
-        descriptionInput.name = createNameAttr(GROUP_ID , TABLE_NAME , DESCRIPTION, STRING);
-
-        const fileInput = document.createElement('input');
-        fileInput.type = INPUT_TYPES.FILE ;
-        fileInput.name = createNameAttr(GROUP_ID , TABLE_NAME , 'video', BINARY);
-
-        const closebutton = document.createElement('button');
-        closebutton.type = 'button' ;
-        closebutton.innerText = 'X' 
-        closebutton.className = 'playlist-element--close-button';
         
-        // nest
+        if(!method) {
+            throw new Error(`method required but not provided`);
+        }
+        
+        if (!handlers.length) {
+            throw new Error(`handlers.length must be > "0"`);
+        }
 
-        bEl.appendChild(h3);
-        bEl.appendChild(titleInput);
-        bEl.appendChild(descriptionInput);
-        bEl.appendChild(fileInput);
-        bEl.appendChild(closebutton);
+        this.#method = method;
+        this.#url = url;
+
+        this.#middleware = handlers.length > 0 ? handlers.slice(0, -1) : [];
+        this.#handler = handlers[handlers.length - 1];
     }
 }
-
-/* 
-<div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
-    <h3>playlist element</h3>
-    <input type="text" name="G22.playlist-1.title.string" id="">
-    <input type="text" name="G22.playlist-1.description.string" id="">
-    <input type="file" name="G22.playlist-1.video-min.binary" id="" accept=".mkv, .mp4">
-</div>
-*/
 
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -296,3 +132,83 @@ function generateRandomString(length) {
   return result;
 }
 
+/**
+ * 
+ * @param {{
+ *  playlistModalWindow:HTMLDivElement
+ * }} deps 
+ * @returns 
+ */
+function submitFinalHandlerMiddleware (deps = {}) {
+
+    const playlistModalWindow = deps.playlistModalWindow || null;
+
+    if(!playlistModalWindow) {
+        throw new Error(`modal window required but not provided`);
+    }
+
+    /**
+     * 
+     * @param {{success:{addedData:Array<any>}, error:Object}} payload 
+     * @returns 
+     */
+    const handler =  async (payload) => {
+
+        const {success, error} = payload;
+
+        if(error) {
+            console.error({error});
+            alert('error: check console');
+            return ;
+        }
+
+        if(!success) {
+            alert('error: no success');
+            return;
+        }
+        
+        const { addedData } = success;
+
+        if(!addedData) {
+
+        }
+
+        playlistModalWindow.style.display = 'none';
+
+        console.log({success});
+    }
+
+    return handler;
+}
+
+/**
+ * 
+ * @param {Object} deps 
+ */
+function toJSONMiddleware (deps = {}) {
+
+    /**
+     * 
+     * @param {{Response}} payload 
+     * @param {Object} next 
+     */
+    const handler = async (payload, next) => {
+        const { response } = payload;
+
+        if(response instanceof Response === false) {
+            throw new Error(`response is not Response`);
+        }
+
+        try {
+            const jsonData = await response.json();
+            await next(jsonData);
+        }
+        catch (e) {
+            console.log({
+                error:e,
+            });
+        }
+    }
+
+    return handler;
+}

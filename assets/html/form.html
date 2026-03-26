@@ -33,52 +33,58 @@
         протокол нужен для сервера что бы подобрать нужную стратегию для парсинга поля "name"
     -->
     <div class="wrapper--main">
-        <div class="wrapper form--main" id="">
-            <form action="/api/handle-form" method="post" enctype="multipart/form-data" id="form--main">
-                <div class="flex flex--col flex--gap-2">
-                    <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
-                        <!-- video-playlist table -->
-                        <input type="text" name="multitable://04af.test-title.string" id="">
-                        <input type="text" name="multitable://04af.test-description.string" id="">
-                        <h3>user</h3>
-                        <!-- users table g00t25 -->
-                        <input type="text" name="multitable://0025.name.string" id="">
-                        <input type="text" name="multitable://0025.last-name.string" id="">
-                        <!-- video-files table g01t8e -->
-                        <input type="file" name="multitable://0025.avatar.string" id="" accept=".img, .jpeg, .png">
-                        <!-- video-files table -->
-                        <input type="file" name="multitable://0025.thumb-nail.string" id="" accept=".img, .jpeg, .png">
-                        <!-- video-files table -->
-                        <input type="file" name="multitable://0025.logo.string" id="" accept=".img, .jpeg, .png">
-                    </div>
-                    <div>
-                        <button type="button" id="button--add-element">ADD ELEMENT</button>
-                    </div>
-                    <div id="playlist-items-group" class="flex flex--gap-1">
-                        <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
-                            <h3>playlist element</h3>
-                            <!-- video-playlist table -->
-                            <input type="text" name="multitable://04af.title.string" id="">
-                            <input type="text" name="multitable://04af.description.string" id="">
-                            <!-- video-files table -->
-                            <input type="file" name="multitable://04af.video-min.string" id="" accept=".mkv, .mp4">
-                            <button class="playlist-element--close-button" type="button">X</button>
-                        </div>
-                    </div>
-                    <div class="flex flex--gap-1">
-                        <input type="submit" value="submit">
-                        <input type="reset" value="reset">
-                        <div id="status--upload">
-                            status
-                        </div>
+        <div id="app">
+            <div class="app--frame left" id="modal-window--a">
+                <div class="frame" id="">
+                    <div class="wrapper form--main" id="">
+                        <form action="/api/handle-form" method="post" enctype="multipart/form-data" id="form--main">
+                            <div class="flex flex--col flex--gap-2">
+                                <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+                                    <!-- video-playlist table -->
+                                    <input type="text" name="multitable://04af.test-title.string" id="">
+                                    <input type="text" name="multitable://04af.test-description.string" id="">
+                                    <h3>user</h3>
+                                    <!-- users table g00t25 -->
+                                    <input type="text" name="multitable://0025.name.string" id="">
+                                    <input type="text" name="multitable://0025.last-name.string" id="">
+                                    <!-- video-files table g01t8e -->
+                                    <input type="file" name="multitable://0025.avatar.string" id="" accept=".img, .jpeg, .png">
+                                    <!-- video-files table -->
+                                    <input type="file" name="multitable://0025.thumb-nail.string" id="" accept=".img, .jpeg, .png">
+                                    <!-- video-files table -->
+                                    <input type="file" name="multitable://0025.logo.string" id="" accept=".img, .jpeg, .png">
+                                </div>
+                                <div>
+                                    <button type="button" id="button--add-element">ADD ELEMENT</button>
+                                </div>
+                                <div id="playlist-items-group" class="flex flex--gap-1">
+                                    <div class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element">
+                                        <h3>playlist element</h3>
+                                        <!-- video-playlist table -->
+                                        <input type="text" name="multitable://04af.title.string" id="">
+                                        <input type="text" name="multitable://04af.description.string" id="">
+                                        <!-- video-files table -->
+                                        <input type="file" name="multitable://04af.video-min.string" id="" accept=".mkv, .mp4">
+                                        <button class="playlist-element--close-button" type="button">X</button>
+                                    </div>
+                                </div>
+                                <div class="flex flex--gap-1">
+                                    <input type="submit" value="submit">
+                                    <input type="reset" value="reset">
+                                    <div id="status--upload">
+                                        status
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-            </form>
-        </div>
-        <div id="modal-window--main">
-            <div class="tool-tip--in-modal">
-                <h3>modal window</h3>
-                <div>will closed after 3 sec</div>
+            </div>
+            <div class="app--frame right" id="modal-window--b">
+
+            </div>
+            <div class="app-frame" id="modal-window--video">
+                <video id="video--main" controls></video>
             </div>
         </div>
     </div>
