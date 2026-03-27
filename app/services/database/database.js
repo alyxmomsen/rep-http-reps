@@ -1,4 +1,5 @@
 const { randomBytes } = require("node:crypto");
+const { printDataUtil } = require("./utils/print-data.util");
 
 /**
  * @param {number|string} r
@@ -43,40 +44,45 @@ class DataBase {
         /**
          * @type {Map<string,string>}
          */
-        const row = new Map() ;
+        const newRow = new Map() ;
         for (const [ columnName , columnValue ] of Object.entries(data)) {
-            row.set(columnName , columnValue );
+            newRow.set(columnName , columnValue );
         }
 
         /* новый уникальный идентификатор строки "таблицы" */
         const newRowIdHash = randomBytes(32).toString("hex");
 
         const tableByTableId =  this.#data.get(tableId);
+        /* на всякий случай, проверяем что такого ID не существует */
         if(!tableByTableId) {
             /* если таблицы с таким именем не существует
             заводим новую и сразу же добавляем строку, с уникальным Id */
-            this.#data.set(tableId , new Map([[newRowIdHash , row]]));
-
+            this.#data.set(tableId , new Map([[newRowIdHash , newRow]]));
             /* вывод в консоль для отладки */
-            for (const [ key , value ] of this.#data) {
-                console.log({key , value});
-            }
+            // printDataUtil(this.#data);
             /* микротранзакция выполнена, выходим из метода */
             return {
                 success:{
                     newRowIdHash,
-                    row,
+                    // для вывода используем те же данные что пришли, 
+                    // так как они уже прошли валидацию
+                    row: data,
                 },
             } ;
         }
-
+        
         /* если таблица существует, пушим строку */
-        tableByTableId.set(newRowIdHash , row) ;
+        tableByTableId.set(newRowIdHash , newRow) ;
+        /* вывод в консоль для отладки */
+        // printDataUtil(this.#data);
         // на момент разработки , выводим всю базу данных
         this.#emit('onOperationEnd');
         return {
             success:{
                 newRowIdHash,
+                // для вывода используем те же данные что пришли, 
+                // так как они уже прошли валидацию
+                row: data,
             },
         } ;
     }

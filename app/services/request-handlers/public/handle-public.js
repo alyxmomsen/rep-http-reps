@@ -37,6 +37,7 @@ const PUBLIC_SRC_MAP = {
             idRouter:{
                 'main':bundleLeaf('main.js'),
                 'form':bundleLeaf('form.js'),
+                'req-man':bundleLeaf('request-manager.js'),
             } ,
         } ,
     }

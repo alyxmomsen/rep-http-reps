@@ -42,7 +42,6 @@ module.exports = function onDataEndMiddleware(deps = {}) {
      */
     const links = [];
 
-
     // ==============================================================
 
     return async (payload, next) => {
@@ -52,13 +51,6 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         if(mergedGroups === undefined) {
             throw new Error('onDataEndMiddleware: required compiled groups but not given');
         }
-
-        // for (const [k, v] of Object.entries(mergedGroups.files)) {
-        //     console.log({k});
-        //     for (const [kk, vv] of Object.entries(v)) {
-        //         console.log({kk, vv});
-        //     }
-        // }
 
         const addedData = [];
 
@@ -127,6 +119,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
                 // console.log({originalFileName, mime, file, linkId , filemanager:{success, error}});
 
+                console.log('filemanager check: ', error, success);
                 if(error) {
                     // откат
                 }
@@ -140,6 +133,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
                 // db controller
 
                 const { error:dbError, success:dbSuccess } = dbController.createOne({
+                    // это что, костыль?
                     fileSystemFilename:{
                         data:fileSystemFilename,
                         dataType:'string',
@@ -173,11 +167,16 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
                 const dbReadResponse = dbController.readOne(newRowIdHash);
 
-                for (const [columnName, colData] of Object.entries(columns)) {
-                    // console.log(`\x1b[38;2;0;255;128mcolumn name: ${columnName}\x1b[0m`);
-                    // console.log('columnData: ', colData);
-                    
+                // #test
+                if(dbSuccess) {
+                    addedData.push(dbSuccess);
                 }
+
+                // for (const [columnName, colData] of Object.entries(columns)) {
+                //     console.log(`\x1b[38;2;0;255;128mcolumn name: ${columnName}\x1b[0m`);
+                //     console.log('columnData: ', colData);
+                    
+                // }
             }
         }
 
@@ -226,7 +225,9 @@ module.exports = function onDataEndMiddleware(deps = {}) {
                     column['data'] = colData.data ;
                 }
 
-                controller.createOne(tableRowDataSet);
+                const dbresponse = controller.createOne(tableRowDataSet);
+                if(dbresponse.success)
+                addedData.push(dbresponse.success)
             }
         }
 

@@ -24,7 +24,7 @@ class DBAdapter {
 
     createOne(data) {
 
-        console.log(`выводим данные для транзакции`, {data}, this.#strategy.tableName)
+        // console.log(`выводим данные для транзакции`, {data}, this.#strategy.tableName)
 
         const errors = {};
         const validatedData = {};
@@ -67,11 +67,11 @@ class DBAdapter {
 
     readOne(rowId) {
 
-        console.log(`take one`.toUpperCase());
+        // console.log(`take one`.toUpperCase());
 
         const {success, error} = this.#dataBase.readOne(this.#strategy.tableName, rowId);
 
-        console.log('db row: ', {success, error});
+        // console.log('db row: ', {success, error});
 
 
         // ==================================================

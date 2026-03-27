@@ -21,6 +21,8 @@ class FileManager {
      */
     async write (fileData) {
 
+        console.log('fm check: ', {fileData});
+
         return await new Promise((res , rej) => {
 
             const filename = randomBytes(32).toString("hex") ;
@@ -59,7 +61,9 @@ class FileManager {
                         subjects:{error:e}
                     } ,
                 });
-            })
+            });
+
+            readStream.pipe(writeStream)
         });
     }
 
