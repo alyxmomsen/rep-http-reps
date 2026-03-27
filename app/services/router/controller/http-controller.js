@@ -47,7 +47,7 @@ router.post(
     (req, res) => FormHandler.processForm(req, res, { contentTypeHandlersRouter })
 );
 
-createRoute('/api/img/:id', async (req, res) => {
+createRoute('/api/get-file/:id', async (req, res) => {
     const { params } = req;
 
     const { id } = params;
@@ -82,6 +82,7 @@ createRoute('/api/img/:id', async (req, res) => {
     const { rowById } = success;
     
     const filename = rowById.get('fileSystemFilename');
+    const mime = rowById.get('mime');
     
     try {
 
@@ -100,7 +101,7 @@ createRoute('/api/img/:id', async (req, res) => {
             console.log('succcccc');
             const wholeData = Buffer.concat(chunks);
             res.writeHead(200, {
-                'content-type':'image/jpg',
+                'content-type':mime.data,
             });
             res.end(wholeData);
         })

@@ -18,6 +18,7 @@
 
 #app {
 	position: relative;
+	height: 99vh;
 }
 
 .wrapper.form--main {
@@ -58,8 +59,12 @@ video#video--main {
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: auto;
+	height: 100%;
 	z-index: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #281f30d4;
 }
 
 #modal-window--a .frame {
@@ -70,23 +75,24 @@ video#video--main {
 /* playlist modal-window */
 #modal-window--b {
 	position: absolute;
-	top: 50vh;
+	bottom: 0;
 	right: -200vw;
 	width: 50%;
 	height: auto;
 	z-index: 1;
-	background-color: #5e4563;
+	/* background-color: #5e4563; */
 	border-radius: 4px;
-	padding: 9px;
+	/* padding: 9px; */
 	display: flex;
 	display: none;
 	flex-direction: column;
-	gap: 9px;
+	gap: 18px;
 	align-items: stretch;
+	padding: calc(9px * 3) 0;
 }
 
 #modal-window--b .tool-tip--added-data-response {
-	border: 1px solid saddlebrown;
+	border: 1px solid #857189;
 	border-radius: 4px;
 	background-color: #5e4563;
 	padding: 9px;
@@ -134,3 +140,15 @@ video#video--main {
 
 	}
 } */
+
+/* video-controller */
+
+#controls--video {
+	position: absolute;
+	top: 0;
+	color: wheat;
+	background-color: #66339961;
+	padding: 9px;
+	width: 40%;
+	height: 100%;
+}

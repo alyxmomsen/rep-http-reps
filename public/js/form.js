@@ -9,8 +9,10 @@ window.addEventListener('DOMContentLoaded', () => {
     /* modals */
 
     const formModal = document.getElementById('modal-window--a');
-    const playlistModal = document.getElementById('modal-window--b');
+    const tooltipsFrame = document.getElementById('modal-window--b');
     const videoModal = document.getElementById('modal-window--video');
+
+    const videoMainElement = document.getElementById('video--main');
 
     // playlistModal.style.display = 'none'
     
@@ -22,8 +24,10 @@ window.addEventListener('DOMContentLoaded', () => {
         '/api/handle-form' , 
         'post', toJSONMiddleware(), 
         submitFinalHandlerMiddleware({
-            playlistModalWindow: playlistModal,
+            tooltipsFrame: tooltipsFrame,
             HTMLFactoriesRouter: toolTipCreatorRouter,
+            videoMainElement:videoMainElement,
+            formModalWindow:formModal,
         })
     );
 
@@ -47,17 +51,21 @@ function generateRandomString(length) {
 /**
  * 
  * @param {{
- *  playlistModalWindow:HTMLDivElement
- *  HTMLFactoriesRouter:Map<string,(row:string,context:{modalWindow:HTMLElement}) => Promise<any>>
+ *  tooltipsFrame:HTMLDivElement;
+ *  HTMLFactoriesRouter:Map<string,(row:string,context:{modalWindow:HTMLElement}) => Promise<any>>;
+ *  videoMainElement:HTMLVideoElement;
+ *  formModalWindow:HTMLElement;
  * }} deps 
  * @returns 
  */
 function submitFinalHandlerMiddleware (deps = {}) {
 
-    const playlistModalWindow = deps.playlistModalWindow || null;
+    const tooltipsFrame = deps.tooltipsFrame || null;
     const toolTipCreatorRouter = deps.HTMLFactoriesRouter || null
+    const videoMainElement = deps.videoMainElement || null;
+    const formModalWindow = deps.formModalWindow || null;
 
-    if(!playlistModalWindow) {
+    if(!tooltipsFrame) {
         throw new Error(`modal window required but not provided`);
     }
 
@@ -92,14 +100,19 @@ function submitFinalHandlerMiddleware (deps = {}) {
             return;
         }
 
-        playlistModalWindow.style.right = 0;
-        playlistModalWindow.style.display = 'flex';
+        tooltipsFrame.style.right = 0;
+        tooltipsFrame.style.display = 'flex';
+
+        formModalWindow.style.display = 'none';
 
         dbStoredData.forEach(storedDataItem => {
 
             const toolTipCreator = toolTipCreatorRouter.get(storedDataItem.tableName);
             console.log({toolTipCreator, tablename:storedDataItem.tableName});
-            playlistModalWindow.appendChild(toolTipCreator(storedDataItem.row, {modalWindow:playlistModalWindow}));
+            tooltipsFrame.appendChild(toolTipCreator(storedDataItem.row, {
+                modalWindow:tooltipsFrame,
+                videoMainElement:videoMainElement,
+            }));
         });
         // playlistModalWindow.style.display = 'none';
 
@@ -155,16 +168,40 @@ function newProp (key, value,  onClick=f=>f) {
 
 /**
  * 
+ * @param {string} title 
+ * @param {(innerContext:{baseElement:HTMLElement}) => void} cb 
+ */
+function createPOSTLink (title, cb) {
+    const container  = document.createElement('div');
+    container.innerText = title;
+    container.style.cursor = 'pointer';
+    container.onclick = (e) => {
+        e.stopPropagation();
+        cb({baseElement:container});
+    };
+    return container;
+}
+
+/**
+ * 
  * @param {Object} row 
- * @param {{modalWindow:HTMLElement}} context 
+ * @param {{
+ *  modalWindow:HTMLElement;
+ *  videoMainElement:HTMLVideoElement;
+ * }} context 
  * @returns 
  */
 const videotooltipCreator = (row = {}, context={}) => {
+
+    /* 👇🏽 dependencies 👇🏽 */
 
     /**
      * @type {HTMLElement}
      */
     const modalWindow = context.modalWindow;
+    const videoMainElement = context.videoMainElement;
+
+    /* 👆🏽 dependencies 👆🏽 */
 
     const { title, description, video } = row;
 
@@ -183,9 +220,20 @@ const videotooltipCreator = (row = {}, context={}) => {
     mainContainer.appendChild(titleProp);
     const descrProp = newProp('description: ', description);
     mainContainer.appendChild(descrProp);
-    const link = newProp('link: ', 'LINK', (e) => {
-        e.currentTarget;
-        console.log({e});
+    const link = createPOSTLink('play', (innerContext) => {
+
+        const { baseElement } = innerContext;
+
+        const { rowId } = video;
+
+        videoMainElement.src = `/api/get-file/${rowId}`;
+        videoMainElement.load();
+
+        mainContainer.remove();
+        if(!modalWindow.childElementCount) {
+            modalWindow.style.right = '-200vw';
+            modalWindow.style.display = 'none';
+        }
     });
     mainContainer.appendChild(link);
 
@@ -237,19 +285,19 @@ toolTipCreatorRouter.set('users', (row = {}, context={}) => {
      * @type {HTMLImageElement}
      */
     const avatarImg = image.cloneNode();
-    avatarImg.src = `/api/img/${avatarNailFileData.rowId}`;
+    avatarImg.src = `/api/get-file/${avatarNailFileData.rowId}`;
     avatarImg.alt = '💔';
     /**
      * @type {HTMLImageElement}
      */
     const logoImg = image.cloneNode();
-    logoImg.src = `/api/img/${logoNailFileData.rowId}`;
+    logoImg.src = `/api/get-file/${logoNailFileData.rowId}`;
     logoImg.alt = '💔';
     /**
      * @type {HTMLImageElement}
      */
     const thumbNailImg = image.cloneNode();
-    thumbNailImg.src = `/api/img/${thumbNailFileData.rowId}`;
+    thumbNailImg.src = `/api/get-file/${thumbNailFileData.rowId}`;
     thumbNailImg.alt = '💔';
 
     container.appendChild(caption);
