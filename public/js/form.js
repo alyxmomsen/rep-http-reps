@@ -1,4 +1,9 @@
 
+/**
+ * @type {Map<string,(row:Object, context:{modalWindow:HTMLElement}) => HTMLElement>}
+ */
+const toolTipCreatorRouter = new Map();
+
 window.addEventListener('DOMContentLoaded', () => {
 
     /* modals */
@@ -8,7 +13,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const videoModal = document.getElementById('modal-window--video');
 
     // playlistModal.style.display = 'none'
-
+    
     /* form */
 
     const formHTML = document.getElementById('form--main');
@@ -16,7 +21,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const request = new RequestManager(
         '/api/handle-form' , 
         'post', toJSONMiddleware(), 
-        submitFinalHandlerMiddleware({playlistModalWindow:playlistModal})
+        submitFinalHandlerMiddleware({
+            playlistModalWindow: playlistModal,
+            HTMLFactoriesRouter: toolTipCreatorRouter,
+        })
     );
 
     formHTML.addEventListener("submit", async (ev) => {
@@ -25,8 +33,6 @@ window.addEventListener('DOMContentLoaded', () => {
         await request.exec(formData);
     });
 });
-
-
 
 function generateRandomString(length) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -42,15 +48,21 @@ function generateRandomString(length) {
  * 
  * @param {{
  *  playlistModalWindow:HTMLDivElement
+ *  HTMLFactoriesRouter:Map<string,(row:string,context:{modalWindow:HTMLElement}) => Promise<any>>
  * }} deps 
  * @returns 
  */
 function submitFinalHandlerMiddleware (deps = {}) {
 
     const playlistModalWindow = deps.playlistModalWindow || null;
+    const toolTipCreatorRouter = deps.HTMLFactoriesRouter || null
 
     if(!playlistModalWindow) {
         throw new Error(`modal window required but not provided`);
+    }
+
+    if(!toolTipCreatorRouter) {
+        throw new Error(`tableNameResolver required but not provided`);
     }
 
     /**
@@ -73,19 +85,21 @@ function submitFinalHandlerMiddleware (deps = {}) {
             return;
         }
         
-        const { addedData } = success;
+        const { addedData: dbStoredData } = success;
 
-        if(!addedData) {
-            alert();
+        if(!dbStoredData) {
+            alert('no added data');
             return;
         }
 
-        const dbElem = document.createElement('div');
+        playlistModalWindow.style.right = 0;
+        playlistModalWindow.style.display = 'flex';
 
-        addedData.forEach(fileItem => {
-            const newItem = dbElem.cloneNode()
-            newItem.innerText = JSON.stringify(fileItem.row);
-            playlistModalWindow.appendChild(newItem);
+        dbStoredData.forEach(storedDataItem => {
+
+            const toolTipCreator = toolTipCreatorRouter.get(storedDataItem.tableName);
+            console.log({toolTipCreator, tablename:storedDataItem.tableName});
+            playlistModalWindow.appendChild(toolTipCreator(storedDataItem.row, {modalWindow:playlistModalWindow}));
         });
         // playlistModalWindow.style.display = 'none';
 
@@ -126,3 +140,140 @@ function toJSONMiddleware (deps = {}) {
 
     return handler;
 }
+
+function newProp (key, value,  onClick=f=>f) {
+    const propertyContainer  = document.createElement('div');
+    const propertyKey = document.createElement('span');
+    const propertyValue = document.createElement('span');
+    propertyKey.innerText = key;
+    propertyValue.innerText = value;
+    propertyContainer.appendChild(propertyKey);
+    propertyContainer.appendChild(propertyValue);
+    propertyContainer.onclick = onClick;
+    return propertyContainer;
+}
+
+/**
+ * 
+ * @param {Object} row 
+ * @param {{modalWindow:HTMLElement}} context 
+ * @returns 
+ */
+const videotooltipCreator = (row = {}, context={}) => {
+
+    /**
+     * @type {HTMLElement}
+     */
+    const modalWindow = context.modalWindow;
+
+    const { title, description, video } = row;
+
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'tool-tip--added-data-response';
+
+    const closebutton = document.createElement('div');
+    closebutton.className = 'close-button';
+
+    const caption = document.createElement('h3');
+    caption.innerText = 'added item in video-playlist: '
+    
+    mainContainer.appendChild(caption);
+
+    const titleProp = newProp('title: ', title , () => {});
+    mainContainer.appendChild(titleProp);
+    const descrProp = newProp('description: ', description);
+    mainContainer.appendChild(descrProp);
+    const link = newProp('link: ', 'LINK', (e) => {
+        e.currentTarget;
+        console.log({e});
+    });
+    mainContainer.appendChild(link);
+
+    mainContainer.appendChild(closebutton);
+
+    closebutton.onclick = (e) => {
+        mainContainer.remove();
+        if(!modalWindow.childElementCount) {
+            modalWindow.style.right = '-200vw';
+            modalWindow.style.display = 'none';
+        }
+    }
+
+    // mainContainer.onclick = (e) => onclick(e, { baseElement:mainContainer});
+
+    return mainContainer;
+}
+
+toolTipCreatorRouter.set('video-playlist', videotooltipCreator);
+
+toolTipCreatorRouter.set('users', (row = {}, context={}) => {
+
+    /**
+     * @type {HTMLElement}
+     */
+    const modalWindow = context.modalWindow;
+
+    const name = row['name'];
+    const lastName = row['last-name'];
+    const thumbNailFileData = row['thumb-nail'];
+    const logoNailFileData = row['logo'];
+    const avatarNailFileData = row['avatar'];
+
+    const container = document.createElement('div');
+    container.className = 'tool-tip--added-data-response';
+
+    const closebutton = document.createElement('div');
+    closebutton.className = 'close-button';
+
+    const caption = document.createElement('h3');
+    caption.innerText = "added user: ";
+
+    const nameProp = newProp('name: ', name);
+    const lastNameProp = newProp('last name: ', lastName);
+
+    const image = document.createElement('img');
+
+    /**
+     * @type {HTMLImageElement}
+     */
+    const avatarImg = image.cloneNode();
+    avatarImg.src = `/api/img/${avatarNailFileData.rowId}`;
+    avatarImg.alt = '💔';
+    /**
+     * @type {HTMLImageElement}
+     */
+    const logoImg = image.cloneNode();
+    logoImg.src = `/api/img/${logoNailFileData.rowId}`;
+    logoImg.alt = '💔';
+    /**
+     * @type {HTMLImageElement}
+     */
+    const thumbNailImg = image.cloneNode();
+    thumbNailImg.src = `/api/img/${thumbNailFileData.rowId}`;
+    thumbNailImg.alt = '💔';
+
+    container.appendChild(caption);
+    container.appendChild(nameProp);
+    container.appendChild(lastNameProp);
+
+    const tooltipImageContainer = document.createElement('div');
+    tooltipImageContainer.className = 'tool-tip__image--container'
+    tooltipImageContainer.appendChild(avatarImg);
+    tooltipImageContainer.appendChild(logoImg);
+    tooltipImageContainer.appendChild(thumbNailImg);
+    container.appendChild(tooltipImageContainer);
+
+    container.appendChild(closebutton);
+
+    closebutton.onclick = (e) => {
+        container.remove();
+        if(!modalWindow.childElementCount) {
+            modalWindow.style.right = '-200vw';
+            modalWindow.style.display = 'none';
+        }
+    }
+
+    // const 
+
+    return container;
+});

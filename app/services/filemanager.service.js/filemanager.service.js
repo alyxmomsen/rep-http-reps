@@ -82,8 +82,11 @@ class FileManager {
             
             const readStream = createReadStream(join(this.#rootPath , filname));
 
-            readStream.on("ready" , (e) => {
-                console.log('ready' , {e});
+            readStream.on("ready" , () => {
+                console.log('ready');
+                res({success:{
+                    readStream,
+                }});
             })
 
             readStream.on("error"  , (e) => {
@@ -95,6 +98,12 @@ class FileManager {
                     } ,
                 });
             });
+
+            readStream.on("data", () => {
+
+            });
+
+            
         });
     }
 

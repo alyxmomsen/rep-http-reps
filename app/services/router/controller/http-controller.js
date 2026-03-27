@@ -1,3 +1,5 @@
+require('http');
+const { IncomingMessage, ServerResponse } = require('http');
 // const { multipartFormHandler } = require("../../_multipart-parser/controller/controller");
 const { renderMultipartForm } = require("../../_multipart-parser/models/render");
 const { contentTypeHandlersRouter } = require("../../form-data-server/controller/content-type.controller");
@@ -6,6 +8,8 @@ const { handlePublic } = require("../../request-handlers/public/handle-public");
 const { handleReactApp } = require("../../request-handlers/react/react-handler");
 const { handleStatic } = require("../../request-handlers/static/static-handler");
 const Router = require("../router");
+const { dbControllersRouter } = require('../../database-adapter/controller/db-adapter.controller');
+const { filemanager } = require('../../filemanager.service.js/fmanager.controller');
 
 const router = new Router();
 
@@ -43,6 +47,69 @@ router.post(
     (req, res) => FormHandler.processForm(req, res, { contentTypeHandlersRouter })
 );
 
+createRoute('/api/img/:id', async (req, res) => {
+    const { params } = req;
+
+    const { id } = params;
+
+    const dbAdapter = dbControllersRouter.get('files');
+
+    const { success, error } = dbAdapter.readOne(id);
+
+    if(error) {
+        
+        res.writeHead(400, {
+            'content-type':'application/json',
+        });
+        res.end(JSON.stringify({
+            message:'bad request',
+            error:error,
+        }));
+        return;
+    }
+    
+    if (!success) {
+        
+        res.writeHead(502, {
+            'content-type':'application/json',
+        });
+        res.end(JSON.stringify({
+            message:'internal error',
+        }));
+        return;
+    }
+    
+    const { rowById } = success;
+    
+    const filename = rowById.get('fileSystemFilename');
+    
+    try {
+
+        const { success:fmSucc, error:fmErr } = await filemanager.read(filename.data);
+        
+        console.log({fmSucc, fmErr});
+        
+        const { readStream } = fmSucc ;
+
+        const chunks = [];
+        readStream.on('data', (chunk) => {
+            chunks.push(chunk);
+        });
+    
+        readStream.on('end', () => {
+            console.log('succcccc');
+            const wholeData = Buffer.concat(chunks);
+            res.writeHead(200, {
+                'content-type':'image/jpg',
+            });
+            res.end(wholeData);
+        })
+    }
+    catch (err) {
+        console.log({err});
+    }
+});
+
 /* 
     обработчик для multipart/form-data
     required: req, res, responseSchema 
@@ -66,3 +133,14 @@ router.get('/foo/*/bar', (req, res) => {
 });
 
 module.exports = { router }
+
+
+/**
+ * 
+ * @param {string} url
+ * @param {(req:IncomingMessage, res:ServerResponse) => Promise<any>} handler 
+ * @returns 
+ */
+function createRoute (url, handler) {
+    router.get( url , handler);
+}
