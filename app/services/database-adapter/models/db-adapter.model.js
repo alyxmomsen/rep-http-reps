@@ -89,7 +89,75 @@ class DBAdapter {
         }
 
     }
-    readAllRows() {}
+
+    readAllRows() {
+        const { success, error } = this.#dataBase.readAll(this.#strategy.tableName);
+
+        console.log('db adapter: ', {success, error});
+
+        
+
+        if(error) {
+
+            return {
+                error,
+            }
+        }
+
+        /**
+         * @type {Map<string,Map<string,Object>>}
+         */
+        const tableRows = success.tableRows;
+
+        if(!tableRows) {
+            console.log('db adapter: no tableRows');
+            return {
+                error:{
+                    message:'no tableRows',
+                }
+            }
+        }
+
+        /**
+         * @type {Object.<string,any>}
+         */
+        const validatedData = {};
+
+        // проходим по всем строкам
+        for (const [rowId, rowData] of tableRows.entries()) {
+
+            const validatedRow = {};
+
+            // validate row
+            for (const [propertyKey, propertySchema] of Object.entries(this.#strategy.schema)) {
+                console.log('db adapter response: ', {propertyKey, propertySchema});
+    
+                const dbRowPropValue = rowData.get(propertyKey);
+
+                if(dbRowPropValue === undefined) {
+                    console.log('db adapter validation: internal db adapter errror');
+                    return {
+                        error:{
+                            message:'internal db adapter error'
+                        }
+                    }
+                }
+                
+                console.log('db adapter validation: success. ', {dbRowPropValue});
+
+                validatedRow[propertyKey] = dbRowPropValue;
+            }
+
+            validatedData[rowId] = validatedRow;
+        }
+
+
+        return {
+            success:{
+                validatedData,      
+            },
+        }
+    }
 
     /**
      * @type {{tableName:string;schema:Object}}

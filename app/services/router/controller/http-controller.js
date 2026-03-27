@@ -47,6 +47,69 @@ router.post(
     (req, res) => FormHandler.processForm(req, res, { contentTypeHandlersRouter })
 );
 
+createRoute('/api/get-playlist/:type', (req, res) => {
+
+    const dbAdapter = dbControllersRouter.get('video-playlist');
+
+    try {
+
+        const {error, success} = dbAdapter.readAllRows();
+    
+        if(error) {
+    
+            res.writeHead(400, {
+                'content-type':'application/json',
+            });
+            res.end(JSON.stringify({
+                message:'bad request',
+                error:error,
+            }));
+            return;
+        }
+    
+        const validatedData = success.validatedData;
+        
+
+
+        console.log(`get playlist end-point: `, {error, success});
+        for (const [key, value] of Object.entries(validatedData)) {
+            console.log({key, value});
+        }
+    
+        res.end(JSON.stringify({success:{
+            rows:validatedData,
+        }}));
+    }
+    catch (er) {
+        console.log('get playlist end-point: error: ', {err});
+        res.end(JSON.stringify({holly:'shit'}));
+    }
+
+
+});
+
+createRoute('/api/get-all-files/:type', async (req, res) => {
+
+    const params = req.params;
+    
+    if(!params) {
+        res.writeHead(400, {
+            'content-type':'application/json',
+        });
+        res.end(JSON.stringify({
+            message:'bad request',
+            error:error,
+        }));
+    }
+
+    const dbAdapter = dbControllersRouter.get('files');
+
+    dbAdapter.readAllRows();
+
+    res.end(JSON.stringify({hello:'world'}));
+
+});
+
 createRoute('/api/get-file/:id', async (req, res) => {
     const { params } = req;
 

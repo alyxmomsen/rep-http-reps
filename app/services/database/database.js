@@ -126,22 +126,23 @@ class DataBase {
     readAll (tableId) {
         console.log('read all' ,{tableId});
 
-        /* тестовая реализация: 
-        отправляет в лог все таблицы и все строки*/
+        const tableRows = this.#data.get(tableId);
 
-        for (const [tableId , tableRows] of this.#data.entries()) {
+        console.log({tableRows});
 
-            console.log(`${COLORS.A}table: ${tableId}${COLORS.D}`);
-
-            for (const [ rowId , rowData ] of tableRows.entries()) {
-                console.log(`${COLORS.B}row id: ${rowId}${COLORS.D}`);                
-                for (const [ colName , colData ] of rowData.entries()) {
-                    console.log(`${COLORS.C}column name: ${colName}; column value: ${colData}${COLORS.D}`);
+        if(!tableRows) {
+            return {
+                error:{
+                    message:'readAll: no data by tablename'
                 }
             }
         }
 
-        return {};
+        return { 
+            success:{
+                tableRows,
+            }
+        };
     }
 
     updateOne (tableId , rowId , data) {

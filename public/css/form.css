@@ -143,12 +143,43 @@ video#video--main {
 
 /* video-controller */
 
-#controls--video {
+
+/* video-playlist */
+
+#playlist--video {
 	position: absolute;
 	top: 0;
-	color: wheat;
-	background-color: #66339961;
+	color: #22232b;
+	background-color: #0e1f3267;
 	padding: 9px;
 	width: 40%;
-	height: 100%;
+	height: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 9px;
+	transition: background-color 1s cubic-bezier(0,.39,0,.62);
+}
+
+#playlist--video:hover {
+	background-color: #0a066f;
+	color: #8a8fb3;
+}
+
+#playlist--video > div {
+	display: flex;
+	gap: 9px;
+	padding: 4px;
+	border: 1px solid #322e2e4a;
+	border-radius: 4px;
+	transition: color 1s cubic-bezier(0,.39,0,.62);
+	transition: color .2s ease-out;
+	cursor: pointer;
+}
+
+#playlist--video:hover > div {
+	border: 1px solid #8547a26b;
+}
+
+#playlist--video > div:hover {
+	
 }

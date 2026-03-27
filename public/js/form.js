@@ -11,12 +11,18 @@ window.addEventListener('DOMContentLoaded', () => {
     const formModal = document.getElementById('modal-window--a');
     const tooltipsFrame = document.getElementById('modal-window--b');
     const videoModal = document.getElementById('modal-window--video');
+    const playlist = document.getElementById('playlist--video');
 
     const videoMainElement = document.getElementById('video--main');
 
-    // playlistModal.style.display = 'none'
-    
-    /* form */
+    /* instance middleware */
+
+    const servePlaylistMW = servePlaylistMiddleware({
+        videoPlaylist:playlist,
+        videoMainElement:videoMainElement,
+    });
+
+    /* -------------------- */
 
     const formHTML = document.getElementById('form--main');
 
@@ -28,7 +34,7 @@ window.addEventListener('DOMContentLoaded', () => {
             HTMLFactoriesRouter: toolTipCreatorRouter,
             videoMainElement:videoMainElement,
             formModalWindow:formModal,
-        })
+        }), servePlaylistMW
     );
 
     formHTML.addEventListener("submit", async (ev) => {
@@ -78,7 +84,7 @@ function submitFinalHandlerMiddleware (deps = {}) {
      * @param {{success:{addedData:Array<any>}, error:Object}} payload 
      * @returns 
      */
-    const handler =  async (payload) => {
+    const handler =  async (payload, next) => {
 
         const {success, error} = payload;
 
@@ -117,6 +123,8 @@ function submitFinalHandlerMiddleware (deps = {}) {
         // playlistModalWindow.style.display = 'none';
 
         console.log({success});
+
+        next({hello:'dough'});
     }
 
     return handler;
@@ -152,6 +160,60 @@ function toJSONMiddleware (deps = {}) {
     }
 
     return handler;
+}
+
+/**
+ * 
+ * @param {{
+ *  videoMainElement:HTMLVideoElement;
+ *  videoPlaylist:HTMLElement;
+ * }} deps 
+ * @returns 
+ */
+function servePlaylistMiddleware (deps = {}) {
+
+    const videoMainElement = deps.videoMainElement;
+    const videoPlaylist = deps.videoPlaylist;
+
+    if(!videoMainElement) {
+        throw new Error(`servePlaylistMiddleware: videoMainElement is required but not provided`);
+    }
+
+    if(!videoPlaylist) {
+        throw new Error(`servePlaylistMiddleware: videoPlaylist is required but not provided`);
+    }
+
+    return async (payload, next) => {
+        
+        const response = await fetch(`/api/get-playlist/video`, {
+            method:'get',
+        });
+
+        try {
+            const jsonData = await response.json();
+
+            console.log({jsonData});
+
+            const { success } = jsonData;
+            const { rows } = success;
+
+            for (const [rowId, rowData] of Object.entries(rows)) {
+
+                const { title, description, video } = rowData;
+                const { rowId:videoRowId } = video;
+
+                videoPlaylist.appendChild(newProp(title, description, () => {
+                    videoMainElement.src = `/api/get-file/${videoRowId}`
+                    videoMainElement.load();
+                }));
+            }
+
+        }
+        catch (error) {
+            console.log({e: error});
+        }
+
+    }
 }
 
 function newProp (key, value,  onClick=f=>f) {
