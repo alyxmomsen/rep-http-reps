@@ -13,13 +13,19 @@ const { dbControllersRouter } = require("../../database-adapter/controller/db-ad
 const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
 // const { Mapper } = require("../../../utils/mapper-2.0/mapper.2.0");
 const { DataTransformer } = require("../services/data-transformer/data-transfromer");
-
+const { multiTableProtocolParser } = require("../services/multi-table-gruping-agent/utils/extract-multitable-form-protocol-data");
+const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.util");
 
 const multiTableGrouppingAgentFactory  = () => {
     return new MultiTableGrouppingAgent({
         // mapper:new Mapper(),
-        dataTransformer:new DataTransformer(),
+        dataTransformer: new DataTransformer(),
+        multiTableProtocolParser:multiTableProtocolParser,
     });
+}
+
+const formDataLinksBufferFactory = () => {
+    return new LinksBuffer();
 }
 
 // Создаём экземпляр
@@ -35,6 +41,7 @@ multipartFormHandler.onDataEndListeners(
     onDataEndMiddleware({ 
         filemanager, 
         dbRouter: dbControllersRouter,
+        formDataLinksBufferFactory:formDataLinksBufferFactory,
     })
 );
 
