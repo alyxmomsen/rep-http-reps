@@ -1,3 +1,18 @@
+/* ============ */
+/* globals state */
+
+/**
+ * @type {boolean}
+ */
+let isFormOpen = false;
+/**
+ * @type {Array<Object>}
+ */
+let playlistData = [];
+
+/* globals */
+/* ============ */
+
 
 /**
  * @type {Map<string,(row:Object, context:{modalWindow:HTMLElement}) => HTMLElement>}
@@ -8,7 +23,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     /* modals */
 
-    const formModal = document.getElementById('modal-window--a');
+    const formModalWindow = document.getElementById('modal-window--a');
     const tooltipsFrame = document.getElementById('modal-window--b');
     const videoModal = document.getElementById('modal-window--video');
     const playlist = document.getElementById('playlist--video');
@@ -22,6 +37,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* controlls */
 
     const mainFormCloseButton = document.getElementById('form--main--close-button');
+    const showFormButton = document.getElementById('controls--video__show-form');
 
     /* --------- */
 
@@ -30,22 +46,36 @@ window.addEventListener('DOMContentLoaded', () => {
     const servePlaylistMW = servePlaylistMiddleware({
         videoPlaylist:playlist,
         videoMainElement:videoMainElement,
+        playlistData:playlistData,
     });
 
     /* -------------------- */
 
+
+    /* =============== */
+    /* initial state */
+
+
+
+
+    /* initial state */
+    /* =============== */
 
     /* controlling */
 
     mainFormCloseButton.addEventListener('click', 
         async (ev) => await middlewareExecutor({hello:'world', ev}, [
         onformCloseButtonClicMW({
-            formModalWindow:formModal,
+            formModalWindow:formModalWindow,
         }),
         async (payload, next) => {
            console.log('final mw', {payload});
            return await next(payload);
         },
+    ]));
+
+    showFormButton.addEventListener('click', (ev) => middlewareExecutor({}, [
+        showFormMW1({formModalWindow}),
     ]));
 
     /* ----------- */
@@ -59,7 +89,7 @@ window.addEventListener('DOMContentLoaded', () => {
             tooltipsFrame: tooltipsFrame,
             HTMLFactoriesRouter: toolTipCreatorRouter,
             videoMainElement:videoMainElement,
-            formModalWindow:formModal,
+            formModalWindow:formModalWindow,
         }), servePlaylistMW
     );
 
@@ -82,6 +112,40 @@ function generateRandomString(length) {
 
 /* middleware */
 
+/* ================ */
+/* show form mw     */
+
+/**
+ * 
+ * @param {{
+ *  formModalWindow:HTMLElement;
+ * }} deps 
+ * @returns {(payload:Object, next:(payload:Object) => Promise<any>) => Promise<any>}
+ */
+function showFormMW1(deps={}) {
+    
+    const formModalWindow = deps.formModalWindow;
+
+    if(!formModalWindow) {
+        throw new Error(`showFormMW1: formModalWindow required but not provided`);
+    }
+
+    const mw = async (payload, next) => {
+
+        formModalWindow.style.display = 'flex';
+        
+        return await next({hello:'guys'});
+    }
+
+    return mw;
+}
+
+
+/* show form mw     */
+/* ================ */
+
+/* -------------- */
+/* close form mw */
 
 /**
  * 
@@ -115,7 +179,8 @@ function onformCloseButtonClicMW (deps={}) {
     return mw;
 }
 
-
+/* close form mw */
+/* -------------- */
 
 /* form rquest #middleware */
 
@@ -232,6 +297,7 @@ function toJSONMiddleware (deps = {}) {
  * @param {{
  *  videoMainElement:HTMLVideoElement;
  *  videoPlaylist:HTMLElement;
+ *  playlistData:Array<Object>
  * }} deps 
  * @returns 
  */
@@ -239,6 +305,7 @@ function servePlaylistMiddleware (deps = {}) {
 
     const videoMainElement = deps.videoMainElement;
     const videoPlaylist = deps.videoPlaylist;
+    const playlistData = deps.playlistData;
 
     if(!videoMainElement) {
         throw new Error(`servePlaylistMiddleware: videoMainElement is required but not provided`);
@@ -262,6 +329,15 @@ function servePlaylistMiddleware (deps = {}) {
             const { success } = jsonData;
             const { rows } = success;
 
+            // удаляем старые данные из плейлиста
+            // плейлист должен содержать актуальные данные
+            let plData = undefined;
+            while (plData = playlistData.pop()) {
+                console.log(plData);
+            }
+            console.log(`playlist is clear`);
+
+
             for (const [rowId, rowData] of Object.entries(rows)) {
 
                 const { title, description, video } = rowData;
@@ -272,6 +348,11 @@ function servePlaylistMiddleware (deps = {}) {
                     videoMainElement.load();
                 }));
             }
+
+            /* здесь есть баг,- 
+            если в finalhandler вызвать next, то finalhandler 
+            будет зациклен */
+            // return await next();
 
         }
         catch (error) {
@@ -491,4 +572,26 @@ async function middlewareExecutor (payload, middleware) {
     if(middleware.length > 0) {
         return await next(payload);
     }
+}
+
+/**
+ * 
+ * @param {{
+ *  formModalWindow:HTMLElement
+ * }} deps 
+ */
+function init (deps={}) {
+
+    const formModalWindow = deps.formModalWindow;
+
+    if(!formModalWindow) {
+        throw new Error(`init: formModalWindow required but not provided`);
+    }
+
+    const fn = () => {
+
+    }
+
+    return fn;
+
 }

@@ -35,7 +35,7 @@ class RequestManager {
             }
             else {
                 if(finalHandler) {
-                    await finalHandler(nextPayload);
+                    await finalHandler(nextPayload, next);
                 }
             }
         }
