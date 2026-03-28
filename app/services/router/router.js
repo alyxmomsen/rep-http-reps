@@ -184,7 +184,7 @@ class Router {
 
         methodRoutes.set(routeBundle.originalTemplate, routeBundle);
 
-        console.log(`added new route: ${method} ${routeBundle.originalTemplate}` , {routeBundle});
+        console.log(`\x1b[0mHTTP router: added new route: ${method} ${routeBundle.originalTemplate}\x1b[0m`);
 
     }
 
@@ -232,7 +232,7 @@ class Router {
 
         for (const [k, normalMethodKey] of Object.entries(LOCAL_CONSTANTS.METHODS)) {
             this.#routes.set(normalMethodKey, new Map());
-            console.log(`\x1b[33madded HTTP method ${normalMethodKey}\x1b[0m`);
+            console.log(`\x1b[33mHTTP router:  madded HTTP method ${normalMethodKey}\x1b[0m`);
         }
     }
 }

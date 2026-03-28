@@ -56,11 +56,9 @@ class PublicRouter {
     #routes;
 
     #addRoute (type , id , filename , mime) {
-        this.#routes.set(type , {
-            rootPath:resolve(join('.' , 'public', 'js')) , idRouter:new Map([[id , {filename , mime}]])
-        })
-
-        console.log(`added public`);
+        this.#routes.set(type, {
+            rootPath: resolve(join('.', 'public', 'js')), idRouter: new Map([[id, { filename, mime }]])
+        });
     }
 
     addLeaf(branchId, leafId, filename) {
