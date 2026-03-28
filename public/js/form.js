@@ -14,6 +14,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const playlist = document.getElementById('playlist--video');
 
     const videoMainElement = document.getElementById('video--main');
+    
+    /* key elements */
+
+    const formHTML = document.getElementById('form--main');
+
+    /* controlls */
+
+    const mainFormCloseButton = document.getElementById('form--main--close-button');
+
+    /* --------- */
 
     /* instance middleware */
 
@@ -24,7 +34,23 @@ window.addEventListener('DOMContentLoaded', () => {
 
     /* -------------------- */
 
-    const formHTML = document.getElementById('form--main');
+
+    /* controlling */
+
+    mainFormCloseButton.addEventListener('click', 
+        async (ev) => await middlewareExecutor({hello:'world', ev}, [
+        onformCloseButtonClicMW({
+            formModalWindow:formModal,
+        }),
+        async (payload, next) => {
+           console.log('final mw', {payload});
+           return await next(payload);
+        },
+    ]));
+
+    /* ----------- */
+
+    /* requests */
 
     const request = new RequestManager(
         '/api/handle-form' , 
@@ -53,6 +79,45 @@ function generateRandomString(length) {
   }
   return result;
 }
+
+/* middleware */
+
+
+/**
+ * 
+ * @param {{
+ *  formModalWindow:HTMLElement;
+ * }} deps 
+ * @returns {(payload:Object,next:(payload:Object)=>Promise<any>) => Promise<any>}
+ */
+function onformCloseButtonClicMW (deps={}) {
+
+    const formModalWindow = deps.formModalWindow;
+
+    if(!formModalWindow) {
+        throw new Error(`onformCloseButtonClicMW: formModalWindow required but not provided`);
+    }
+
+    /**
+     * 
+     * @param {Object} payload 
+     * @param {(payload:Object) => Promise<any>} next 
+     * @returns {any}
+     */
+    const mw = async (payload, next) => {
+        
+        formModalWindow.style.display = 'none';
+        console.log('form should be closed');
+        
+        return await next({foo:'bar'});
+    }
+
+    return mw;
+}
+
+
+
+/* form rquest #middleware */
 
 /**
  * 
@@ -215,6 +280,11 @@ function servePlaylistMiddleware (deps = {}) {
 
     }
 }
+
+
+
+
+/* virtual DOM   */
 
 function newProp (key, value,  onClick=f=>f) {
     const propertyContainer  = document.createElement('div');
@@ -387,3 +457,38 @@ toolTipCreatorRouter.set('users', (row = {}, context={}) => {
 
     return container;
 });
+
+/* #utils */
+
+/**
+ * 
+ * @param {Object} payload 
+ * @param {((payload:Object,next:(payload:Object)=>Promise<any>) => Promise<any>)[]} middleware 
+ */
+async function middlewareExecutor (payload, middleware) {
+
+    let index = 0;
+
+    const next = async (nextPayload) => {
+
+        if(index < middleware.length) {
+            const currentIndex = index++;
+            const handler = middleware[currentIndex];
+            if(handler) {
+                try {
+                    await handler(nextPayload, next);
+                }
+                catch (err) {
+                    throw err;
+                }
+            }
+        }
+        else {
+            return nextPayload;
+        }
+    }
+
+    if(middleware.length > 0) {
+        return await next(payload);
+    }
+}

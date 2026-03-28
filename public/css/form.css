@@ -29,6 +29,19 @@
 	border-radius: 4px;
 }
 
+#form--main--controlls-container {
+	padding: 9px;
+	border: 1px solid aliceblue;
+	position: relative;
+}
+
+#form--main--controlls-container #form--main--close-button {
+	position: absolute;
+	top:4px;
+	right: 4px;
+	cursor: pointer;
+}
+
 .wrapper.form--main form {
 	display: flex;
 	flex-direction: column;
