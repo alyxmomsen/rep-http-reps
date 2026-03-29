@@ -53,7 +53,7 @@ class Mapper {
 }
 
 
-module.exports = { Mapper };
+// module.exports = { Mapper };
 
 
 // expected result like

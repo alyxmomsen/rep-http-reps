@@ -1,6 +1,6 @@
 // __tests__/unit/utils/find-separator.test.js
 
-const { findSeparatorIndexInBuffer } = require('../../../app/utils/find-separator-index-in-buffer.util');
+const { findSeparatorIndexInBuffer } = require('../../../../app/utils/find-separator-index-in-buffer.util');
 
 
 describe('🧪 findSeparatorIndexInBuffer', () => {

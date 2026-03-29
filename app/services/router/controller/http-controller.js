@@ -84,30 +84,6 @@ createRoute('/api/get-playlist/:type', (req, res) => {
         console.log('get playlist end-point: error: ', {err});
         res.end(JSON.stringify({holly:'shit'}));
     }
-
-
-});
-
-createRoute('/api/get-files/:type', async (req, res) => {
-
-    const params = req.params;
-    
-    if(!params) {
-        res.writeHead(400, {
-            'content-type':'application/json',
-        });
-        res.end(JSON.stringify({
-            message:'bad request',
-            error:error,
-        }));
-    }
-
-    const dbAdapter = dbControllersRouter.get('files');
-
-    dbAdapter.readAllRows();
-
-    res.end(JSON.stringify({hello:'world'}));
-
 });
 
 createRoute('/api/get-file/:id', async (req, res) => {

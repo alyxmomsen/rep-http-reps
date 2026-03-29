@@ -1,6 +1,12 @@
 /* ============ */
 /* globals state */
 
+
+/**
+ * @typedef foo
+ * @property {string} bar
+ */
+
 /**
  * @type {boolean}
  */
@@ -367,6 +373,13 @@ function servePlaylistMiddleware (deps = {}) {
 
 /* virtual DOM   */
 
+/**
+ * 
+ * @param {*} key 
+ * @param {*} value 
+ * @param {*} onClick 
+ * @returns 
+ */
 function newProp (key, value,  onClick=f=>f) {
     const propertyContainer  = document.createElement('div');
     const propertyKey = document.createElement('span');

@@ -9,6 +9,9 @@ const ValueType = {
     Branch: 'branch',
 }
 
+/**
+ * @type {}
+ */
 const MULTITABLE_DATA_SCHEMA = {
     tableName:{
         property:{
