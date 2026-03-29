@@ -60,6 +60,13 @@
 	/* display: none; */
 }
 
+#controls--video__show-form {
+	padding: 9px;
+	font-weight: bold;
+	margin: 9px;
+	cursor: pointer;
+}
+
 video#video--main {
 	width: 100%;
 	aspect-ratio: 16/9;
