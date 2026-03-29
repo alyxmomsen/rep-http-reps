@@ -88,7 +88,7 @@ createRoute('/api/get-playlist/:type', (req, res) => {
 
 });
 
-createRoute('/api/get-all-files/:type', async (req, res) => {
+createRoute('/api/get-files/:type', async (req, res) => {
 
     const params = req.params;
     
