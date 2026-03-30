@@ -2,6 +2,13 @@
 
 class DataTransformer {
 
+    /**
+     * 
+     * @param {*} schema 
+     * @param {*} dataSet 
+     * @param {*} context 
+     * @returns {Object}
+     */
     process(schema, dataSet, context) {
 
         for (const [schemaKey, schemaModel] of Object.entries(schema)) {
