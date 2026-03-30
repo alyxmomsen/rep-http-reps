@@ -161,20 +161,41 @@
  * initiator is that...
  * @param {Object} data 
  * @param {string[]} initiatorPropStack 
+ * @param {{
+ *  tableName: Function,
+ *  groupId: Function,
+ *  propertyRegular: Function,
+ *  propertyFile: Function,
+ * }} actions 
  * @returns 
  */
-function dataSetMapper(data, initiatorPropStack) {
+function dataSetMapper(data, initiatorPropStack, actions) {
+    // console.log(`dataSetMapper/start:`, actions);
     const collections = [];
     
     const actionresult = [];
-    for (const [prop, [action, actionPayload]] of Object.entries(data)) {
+    for (const [prop, value] of Object.entries(data)) {
+
+        const [actionName, actionPayload] = value;
+
+        // console.log(`dataSetMapper/iteration: `, prop, value);
+
+        /**
+         * @type {Function|undefined}
+         */
+        const action = actions[actionName];
+
+        if (!action) {
+            throw new Error(`dataSetMapper: action ${actionName} is not received`);
+        }
+
         // console.log({prop, action, payload});
-        const res = action({ payload: actionPayload, cb: dataSetMapper, prop, initiatorPropStack: initiatorPropStack });
+        const res = action({ payload: actionPayload, cb: (data, initiatorPropStack) => dataSetMapper(data, initiatorPropStack, actions), prop, initiatorPropStack: initiatorPropStack });
         actionresult.push(res);
     }
     
     collections.push(actionresult);
-    console.log('\x1b[32mexecutor: ',{ actionresult, collections },'\x1b[0m');
+    // console.log('\x1b[32dataSetMapper: ',{ actionresult, collections },'\x1b[0m');
     
     return collections;
 

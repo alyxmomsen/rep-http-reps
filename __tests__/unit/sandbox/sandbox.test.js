@@ -1,10 +1,9 @@
 const { randomBytes } = require("node:crypto");
 const { DataTransformer_2_0 } = require("../../../__dev-artefacts__/sand-box/data-transformer-2-0");
-const { FILE_DATA_SET_SCHEMA_2 } = require("../../../__dev-artefacts__/sand-box/dt.2.0.schema");
+const { FILE_DATA_SET_SCHEMA_2, REGULAR_FIELD_DATA_SET } = require("../../../__dev-artefacts__/sand-box/dt.2.0.schema");
 // const { FILE_DATA_SET_SCHEMA } = require("../../../app/services/_multipart-parser/services/data-transformer/schemas/file-data-set.schema");
 const { dataSetMapperFactory,  Actions } = require("../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller");
 
-FILE_DATA_SET_SCHEMA_2
 // const { dataSetMapper: executor, Actions } = require("../../../app/services/_multipart-parser/utils/mapper/data-set-mapper.model");
 
 describe('sandbox', () => {
@@ -13,203 +12,241 @@ describe('sandbox', () => {
      * @type {Object}
      */
     let data;
-
-    let collections = [];
-
+ 
     beforeEach(() => {
 
-        const generatedData = [];
+        const fileGeneratedData = [];
+        const regularDataSet = [];
 
-        generatedData.push(mapperInputDataSetGenerator({
-            groupId: '01',
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId: '01',
+            tableName: 'files',
+            filename: 'foo.txt',
+            contentType:'mime/foo'
+        }));
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId: '00',
+            tableName: 'files',
+            filename:'bar.txt',
+            contentType:'mime/bar',
+        }));
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId:'00',
+            tableName: 'files',
+            filename:'baz.txt',
+            contentType:'mime/baz',
+        }));
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId:'01',
             tableName:'files',
         }));
-        generatedData.push(mapperInputDataSetGenerator({
+
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'play-list',
             groupId: '00',
-            tableName:'files',
+            columnName: 'title-1',
         }));
-        generatedData.push(mapperInputDataSetGenerator({
-            groupId:'00',
-            tableName:'users',
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'play-list',
+            groupId: '00',
+            columnName: 'description-1',
         }));
-        generatedData.push(mapperInputDataSetGenerator({
-            groupId:'01',
-            tableName:'users',
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'users',
+            groupId: '01',
+            columnName: 'title-2',
         }));
-        
-        let context = {};
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'users',
+            groupId: '02',
+            columnName: 'description-2',
+        }));
+
+        /* -------------------------------------------- */
+
+        let filesContext = {};
+        let regularContext = {};
 
         const dataTransformer = new DataTransformer_2_0();
 
         let i = 0;        
         do {
-            context = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, generatedData[i++], context);
-        } while (i < generatedData.length);
+            filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
+        } while (i < fileGeneratedData.length);
+        
+        let i2 = 0;        
+        do {
+            regularContext = dataTransformer.process(REGULAR_FIELD_DATA_SET, regularDataSet[i2++], regularContext);
+        } while (i2 < regularDataSet.length);
 
-        console.dir(context, {
+        console.dir(filesContext, {
             depth:10,
         });
 
-        data = {
-            files: {
-                files: [
-                    Actions.TableName,
-                    {
-                        '00': [
-                            Actions.GroupIdAction,
-                            {
-                                mime: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'mime-1',
-                                        dataType: 'string',
-                                    },
-                                ],
-                                file: [
-                                    Actions.PropFile,
-                                    Buffer.from('foo bar baz'),
-                                ],
-                                linkId: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'linkid-1',
-                                        dataType: 'string',
-                                    },
-                                ],
-                                originalFileName: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'original-1.file.name.txt',
-                                        dataType: 'string',
-                                    },
-                                ],
-                            },
-                        ],
-                        '01': [
-                            Actions.GroupIdAction,
-                            {
-                                mime: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'mime-2',
-                                        dataType: 'string',
-                                    }
-                                ],
-                                file: [
-                                    Actions.PropFile,
-                                    Buffer.from('foo bar baz'),
-                                ],
-                                linkId: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'linkid-2',
-                                        dataType: 'string',
-                                    }
-                                ],
-                                originalFileName: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'original-2.file.name.txt',
-                                        dataType: 'string',
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-                users: [
-                    Actions.TableName,
-                    {
-                        '00': [
-                            Actions.GroupIdAction,
-                            {
-                                mime: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'mime-1',
-                                        dataType: 'string',
-                                    },
-                                ],
-                                file: [
-                                    Actions.PropFile,
-                                    Buffer.from('foo bar baz'),
-                                ],
-                                linkId: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'linkid-1',
-                                        dataType: 'string',
-                                    },
-                                ],
-                                originalFileName: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'orig-1.file.name.txt',
-                                        dataType: 'string',
-                                    },
-                                ],
-                            },
-                        ],
-                        '01': [
-                            Actions.GroupIdAction,
-                            {
-                                mime: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'mime-2',
-                                        dataType: 'string',
-                                    }
-                                ],
-                                file: [
-                                    Actions.PropFile,
-                                    Buffer.from('foo bar baz'),
-                                ],
-                                linkId: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'linkid-2',
-                                        dataType: 'string',
-                                    }
-                                ],
-                                originalFileName: [
-                                    Actions.PropRegular,
-                                    {
-                                        data: 'orig-2.file.name.txt',
-                                        dataType: 'string',
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-            fields: {
-                users: {
-                    action: () => {
-                        console.log('action f 1');
-                    },
-                    '00': {
-                        action() {
-                            console.log('action f 2');
-                        },
-                        columnName: 'title',
-                        data: Buffer.from('123-title'),
-                        dataType: 'string',
-                    },
-                },
-            },
-        }
+        console.dir(regularContext, {
+            depth:10,
+        });
+
+        data = filesContext;
+
+        // data = {
+        //     files: {
+        //         files: [
+        //             Actions.TableName,
+        //             {
+        //                 '00': [
+        //                     Actions.GroupIdAction,
+        //                     {
+        //                         mime: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'mime-1',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                         file: [
+        //                             Actions.PropFile,
+        //                             Buffer.from('foo bar baz'),
+        //                         ],
+        //                         linkId: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'linkid-1',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                         originalFileName: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'original-1.file.name.txt',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                     },
+        //                 ],
+        //                 '01': [
+        //                     Actions.GroupIdAction,
+        //                     {
+        //                         mime: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'mime-2',
+        //                                 dataType: 'string',
+        //                             }
+        //                         ],
+        //                         file: [
+        //                             Actions.PropFile,
+        //                             Buffer.from('foo bar baz'),
+        //                         ],
+        //                         linkId: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'linkid-2',
+        //                                 dataType: 'string',
+        //                             }
+        //                         ],
+        //                         originalFileName: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'original-2.file.name.txt',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                     },
+        //                 ],
+        //             },
+        //         ],
+        //         users: [
+        //             Actions.TableName,
+        //             {
+        //                 '00': [
+        //                     Actions.GroupIdAction,
+        //                     {
+        //                         mime: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'mime-1',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                         file: [
+        //                             Actions.PropFile,
+        //                             Buffer.from('foo bar baz'),
+        //                         ],
+        //                         linkId: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'linkid-1',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                         originalFileName: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'orig-1.file.name.txt',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                     },
+        //                 ],
+        //                 '01': [
+        //                     Actions.GroupIdAction,
+        //                     {
+        //                         mime: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'mime-2',
+        //                                 dataType: 'string',
+        //                             }
+        //                         ],
+        //                         file: [
+        //                             Actions.PropFile,
+        //                             Buffer.from('foo bar baz'),
+        //                         ],
+        //                         linkId: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'linkid-2',
+        //                                 dataType: 'string',
+        //                             }
+        //                         ],
+        //                         originalFileName: [
+        //                             Actions.PropRegular,
+        //                             {
+        //                                 data: 'orig-2.file.name.txt',
+        //                                 dataType: 'string',
+        //                             },
+        //                         ],
+        //                     },
+        //                 ],
+        //             },
+        //         ],
+        //     },
+        //     fields: {
+        //         users: {
+        //             action: () => {
+        //                 console.log('action f 1');
+        //             },
+        //             '00': {
+        //                 action() {
+        //                     console.log('action f 2');
+        //                 },
+        //                 columnName: 'title',
+        //                 data: Buffer.from('123-title'),
+        //                 dataType: 'string',
+        //             },
+        //         },
+        //     },
+        // }
     });
     
     test('#1', () => {
 
-        
+        const executor = dataSetMapperFactory();
 
-        // const executor = dataSetMapperFactory();
+        const datenow = Date.now();
 
-        // const datenow = Date.now();
-
-        // const execResult = executor(data.files, []);
+        const execResult = executor(data, []);
         // collections.push('context', { execResult });
         
         // for (const item of collections) {
@@ -255,10 +292,13 @@ function mapperInputDataSetGenerator(overrides = {}) {
         groupId: randomBytes(32).toString('hex'),
         tableName: 'files',
         //
-        originalFileName:'filename.txt', 
-        mime:'text/plain', 
+        filename:'filename.txt', 
+        contentType:'text/plain', 
         linkId:'123-123-123-123',
         body: Buffer.from('123-123-123-123'),
+        file: Buffer.from(`hello world i am file data`),
+        columnName: 'title',
+        dataType:'string',
         ...overrides
     }
 
