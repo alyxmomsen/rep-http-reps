@@ -1,4 +1,19 @@
 
+/**
+ * @type {Object}
+ * @example
+ * final sructure example:
+ * {
+ *   files: {
+ *     'abc123...': {
+ *       originalFileName: { data: 'photo.jpg', type: 'string' },
+ *       mime: { data: 'image/jpeg', type: 'string' },
+ *       body: { data: Buffer, type: 'binary' },
+ *       linkId: { data: 'abc123...', type: 'string' }
+ *     }
+ *   }
+ * }
+ */
 const FILE_DATA_SET_SCHEMA = {
 
     __tableName:{

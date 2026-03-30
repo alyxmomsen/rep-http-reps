@@ -11,7 +11,7 @@ const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.ut
  *  dbRouter:Map<string,DBAdapter>;
  *  formDataLinksBufferFactory:() => LinksBuffer
  * }} deps - зависимости
- * @returns {Function} middleware
+ * @returns {(payload:Object,next:(payload:Object) => Promise<any>) => Promise<any>} middleware
  */
 module.exports = function onDataEndMiddleware(deps = {}) {
     const filemanager = deps.filemanager || defaultFilemanager;
@@ -32,7 +32,13 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         throw new Error(`onDataEndMiddleware factory: formDataLinksBufferFactory required`);
     }
 
-    return async (payload, next) => {
+    /**
+     * 
+     * @param {Object} payload 
+     * @param {(payload:Object,next:(payload:Object) => Promise<any>) => Promise<any>} next 
+     * @returns 
+     */
+    const fn = async (payload, next) => {
 
     // ============== define variables to transactions ============== 
 
@@ -62,6 +68,11 @@ module.exports = function onDataEndMiddleware(deps = {}) {
             throw new Error('onDataEndMiddleware: required compiled groups but not given');
         }
 
+        const { files, fields } = mergedDataSet;
+
+        // if(files)
+        
+
         /* сначала файлы, потому что для БД нужны автоматические имена файлов в файловой системе */
         
         /* создаем валидатор файлов */
@@ -89,6 +100,8 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         // возвращаем "успех" и данные для репорта клиенту
         return await next({ success: { addedData: successfullyStoredData } });
     };
+
+    return fn;
 };
 
 /**
@@ -221,20 +234,25 @@ function validateFilesDataSetFactory (deps={}) {
     */
     const fn = async (filesMergedDataSet) => {
        
-       /**
-        * @type {{
-        *  message:string;
-        *  data:Object;
-        * }[]}
-        */
-       const failedLinksFiles = [];
+        // if(filesMergedDataSet)
+
+        /**
+         * @type {{
+         *  message:string;
+         *  data:Object;
+         * }[]}
+         */
+        const failedLinksFiles = [];
        
+        
+
+        
         for (const [tableName, groups] of Object.entries(filesMergedDataSet)) {
             log(`38;2;255;128;255`, `table name: ${tableName}`);
     
             // получаем db-controller
             const dbController = dbRouter.get(tableName);
-            if(dbController === undefined) {
+            if (dbController === undefined) {
                 console.log(`on-data-end middleware: is not resieved db controller by tableName ${tableName}`.toUpperCase());
                 throw new Error(`on-data-end middleware: is not resieved db controller by tableName ${tableName}`.toUpperCase());
             }
@@ -248,34 +266,34 @@ function validateFilesDataSetFactory (deps={}) {
                 // =================== валидатор ===================
                 
                 // validate with link
-                if(!linkId) {
+                if (!linkId) {
                     // скипаем группу, потому-что не имеет смысла сохранять файл без ссылки на него
                     failedLinksFiles.push({
-                        message:'link is not received',
-                        data:{...columns} // просто копирую для разрыва ссылки на объект
+                        message: 'link is not received',
+                        data: { ...columns } // просто копирую для разрыва ссылки на объект
                     });
                     console.log(`\x1b[31b` + `link is not received`.toUpperCase() + `\x1b[0b`);
                     continue;
                 }
     
-                if(!linkId.data) {
+                if (!linkId.data) {
                     throw new Error(`on-data-end middleware: incorrect link id`);
                 }
     
                 // validate with file must be received
-                if(file === undefined) {
+                if (file === undefined) {
                     failedLinksFiles.push({
-                        message:'file is not received',
-                        data:{...columns} // просто копирую для разрыва ссылки на объект
+                        message: 'file is not received',
+                        data: { ...columns } // просто копирую для разрыва ссылки на объект
                     });
                     console.log(`\x1b[31b` + `file is not received`.toUpperCase() + `\x1b[0b`);
                     continue
                 }
     
-                if(file instanceof Buffer === false) {
+                if (file instanceof Buffer === false) {
                     failedLinksFiles.push({
-                        message:'file is not Buffer',
-                        data:{...columns} // просто копирую для разрыва ссылки на объект
+                        message: 'file is not Buffer',
+                        data: { ...columns } // просто копирую для разрыва ссылки на объект
                     });
                     console.log(`\x1b[31b` + `file is not Buffer`.toUpperCase() + `\x1b[0b`);
                     continue
@@ -293,29 +311,29 @@ function validateFilesDataSetFactory (deps={}) {
                 // console.log({originalFileName, mime, file, linkId , filemanager:{success, error}});
     
                 console.log('filemanager check: ', error, success);
-                if(error) {
+                if (error) {
                     // откат
                 }
     
-                if(!success) {
+                if (!success) {
                     // откат
                 }
     
-                const { filename:fileSystemFilename } = success;
+                const { filename: fileSystemFilename } = success;
                 
                 // db controller
     
-                const { error:dbError, success:dbSuccess } = dbController.createOne({
+                const { error: dbError, success: dbSuccess } = dbController.createOne({
                     // это что, костыль?
-                    fileSystemFilename:{
-                        data:fileSystemFilename,
-                        dataType:'string',
+                    fileSystemFilename: {
+                        data: fileSystemFilename,
+                        dataType: 'string',
                     },
                     originalFileName,
                     mime,
                 });
     
-                if(dbError) {
+                if (dbError) {
                     // откат транзакции
                 }
     
@@ -331,9 +349,9 @@ function validateFilesDataSetFactory (deps={}) {
                 }
     
                 linksBuffer.push({
-                    linkId:linkId.data,
-                    tableName:tableName,
-                    rowId:newRowIdHash,
+                    linkId: linkId.data,
+                    tableName: tableName,
+                    rowId: newRowIdHash,
                 });
     
                 // links.push({
@@ -349,7 +367,7 @@ function validateFilesDataSetFactory (deps={}) {
                 // #test
                 // but files stay do not departured
                 /* по-умолчанию, файлы не попадают в выборку на клиент */
-                if(dbSuccess) {
+                if (dbSuccess) {
                     // addedData.push(dbSuccess);
                 }
     
@@ -363,8 +381,8 @@ function validateFilesDataSetFactory (deps={}) {
             }
         }
 
-        return { failedLinksFiles } ;
-    }
+        return { failedLinksFiles };
+    };
 
     return fn;
 
