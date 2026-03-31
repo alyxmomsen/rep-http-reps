@@ -133,61 +133,85 @@
 //     validator(data);
 // }
 
-
-// /**
-//  * @throws
-//  * nothing
-//  * @param {Object} schema
-//  * @param {Object} data
-//  */
-// function mapper (schema, data) {
-
-//     const entries = Object.entries(schema)
-//     for (const [prop, [action,payload]] of entries) {
-//         console.log({ prop, action, payload });
-
-//         action({payload, cb:mapper, data});
-//     }
-    
-
-// }
-
-
 /**
  * 
  * @param {Object} data 
- * @param {any[]} callStack 
+ * @param {any[]} parentCallStack 
  * @param {{
  *  a:Function;
  *  b:Function;
  * }} actions 
+ * @throws {Error} if somthing 
  */
-function dataSetMapper(data, callStack, actions) {
+async function dataSetMapper(data, parentCallStack, actions) {
     
+    // console.dir(data, {depth:10});
+
     console.log(`dataSetMapper: start`);
     // console.dir(data, {
     //     depth:10,
     // });
+
+    const collection = {};
     
     for (const [propKey, config] of Object.entries(data)) {
+
+        const currentIterationCallStack = [];
+
         const [actionName, actionPayload] = config;
-        console.log(`dataSetMapper: `, { propKey, config });
         
+        /**
+         * @description
+         * meta.title для трассировки 
+         * 
+         * @type {string}
+         * 
+         */
+        const metaTitle = actionPayload?.meta?.title;
+
+        /**
+         * проверяем содержатся ли ожидаемые поля
+         */
+        if (!actionPayload || !actionPayload.meta || !actionPayload.value) {
+            throw new Error(`dataSetMapper: actionPayload|actionPayload.meta|actionPayload.value required`);
+        }
+
+        // console.log(`dataSetMapper: `, { propKey, config, metaTitle });
+        
+        currentIterationCallStack.push({
+            propKey: propKey,
+            propDescription:metaTitle
+        });
+        
+        // console.log(`dataSetMapper/show callstack: `, {callStack: parentCallStack});
+
         const action =
-            (actionName === 'tableName' || actionName === 'tablId')
-                ? action.a : action.b;
+            (actionName === 'tableName' || actionName === 'groupId')
+                ? actions.a : actions.b;
         
         
         if (!action) {
             throw new Error(`dataSetMapper: error: action is not received`);
         }
 
-        action({
+        const actionResult = await action({
             reqFn: dataSetMapper,
-            
-        });
+            actionPayload: actionPayload.value,
+            callStack: [...parentCallStack, ...currentIterationCallStack],
+            // callStack: [...parentCallStack, ...currentIterationCallStack],
+            actions,
+        });    
+
+        for (const [k, v] of Object.entries(actionResult)) {
+            collection[k, v]
+        }
+
+        // console.log({ actionResult });
         
+        collection[metaTitle] = actionResult;
     }
+
+    return collection;
 
 }
 
@@ -228,27 +252,6 @@ function mapper_(schema, data) {
     // }
 }
 
-module.exports = { dataSetMapper: dataSetMapper }
 
-function colorizer() {
 
-    /**
-     * 
-     * @param {string} data 
-     * @returns {string}
-     */
-    const toUpperCase = (data) => data.toUpperCase()
-
-    /**
-     * 
-     * @param {string|number} color 
-     * @param {string} valueStr 
-     * @param {boolean} uppercase 
-     * @returns 
-     */
-    const fn = (color, valueStr, uppercase = false) => {
-        
-        return `x1b[${color}m` + uppercase ? toUpperCase(valueStr) : valueStr  + `x1b[0m`;
-    }
-    return fn;
-}
+// module.exports = { dataSetMapper: dataSetMapper, DataSetProcessor }

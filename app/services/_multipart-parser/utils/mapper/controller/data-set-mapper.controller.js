@@ -1,40 +1,57 @@
-const { dbControllersRouter } = require("../../../../database-adapter/controller/db-adapter.controller");
-const { filemanager } = require("../../../../filemanager.service.js/fmanager.controller");
+// const { dbControllersRouter } = require("../../../../database-adapter/controller/db-adapter.controller");
 // const { filemanager } = require("../../../../filemanager.service.js/fmanager.controller");
-const { dataSetMapper } = require("../data-set-mapper.model");
-const { tableNameAction, groupIdAction, propRegularAction, propFileAction } = require("../model/actions/actions");
-const { BAction, AAction } = require("../model/actions/actions.demo");
+// const { filemanager } = require("../../../../filemanager.service.js/fmanager.controller");
+// const { dataSetMapper, DataSetProcessor } = require("../data-set-mapper.model");
+// const { tableNameAction, groupIdAction, propRegularAction, propFileAction } = require("../model/actions/actions");
+// const { BTypeActionFactory: BTypeActionFactory, ATypeActionFactory: ATypeActionFactory } = require("../model/actions/actions.demo");
+const { branchAction } = require("../model/actions/branch-action/controller/branch.action.controller");
+const { BTypeActionFactory } = require("../model/actions/leaf-action/model/leaf-action.mode");
+const { DataSetProcessor } = require("../model/data-set-processor.model");
 
-/**
- * @type {Object.<string,Function>}
- */
-const Actions = {
-    tableName: tableNameAction,
-    groupId: groupIdAction,
-    propertyRegular: propRegularAction,
-    propertyFile: propFileAction,
-};
+// /**
+//  * @type {Object.<string,Function>}
+//  */
+// const Actions = {
+//     tableName: tableNameAction,
+//     groupId: groupIdAction,
+//     propertyRegular: propRegularAction,
+//     propertyFile: propFileAction,
+// };
 
-const testActions = {
-    a: AAction,
-    b: BAction,
-};
+// const testActions = {
+//     a: ATypeActionFactory(),
+//     b: BTypeActionFactory(),
+// };
+
+// /**
+//  *
+//  * @param {Object} deps
+//  * @returns {(data:Object, propsCallStack:string[]) => }
+//  */
+// function dataSetMapperFactory(deps = {}) {
+    
+//     /**
+//      *
+//      * @param {Object} data
+//      * @param {string[]} propsCallStack
+//      * @returns
+//      */
+//     const fn = async (data, propsCallStack) => await dataSetMapper(data, propsCallStack, testActions);
+
+//     return fn;
+// }
+
 /**
  * 
- * @param {Object} deps 
- * @returns {(data:Object, propsCallStack:string[]) => }
+ * @returns {DataSetProcessor}
  */
-function dataSetMapperFactory(deps = {}) {
-    
-    /**
-     * 
-     * @param {Object} data 
-     * @param {string[]} propsCallStack 
-     * @returns 
-     */
-    const fn = (data, propsCallStack) => dataSetMapper(data, propsCallStack, testActions);
+function dataSetProcessorFactory() {
 
-    return fn;
+    const dataSetProcessor = new DataSetProcessor();
+    dataSetProcessor.addAction('handleBranch', branchAction);
+    dataSetProcessor.addAction('handleLeaf', BTypeActionFactory());
+
+    return dataSetProcessor;
 }
 
-module.exports = { dataSetMapperFactory , Actions }
+module.exports = { dataSetProcessorFactory: dataSetProcessorFactory /* , Actions */ }

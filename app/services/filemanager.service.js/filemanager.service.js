@@ -21,7 +21,7 @@ class FileManager {
      */
     async write (fileData) {
 
-        console.log('fm check: ', {fileData});
+        console.log('FileManager/write/argements: ', {fileData});
 
         return await new Promise((res , rej) => {
 
