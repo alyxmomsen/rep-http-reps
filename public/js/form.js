@@ -25,7 +25,7 @@ let playlistData = [];
  */
 const toolTipCreatorRouter = new Map();
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
 
     /* modals */
 
@@ -104,6 +104,10 @@ window.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(formHTML);
         await request.exec(formData);
     });
+
+
+    await middlewareExecutor({}, [servePlaylistMW]);
+
 });
 
 function generateRandomString(length) {
@@ -321,8 +325,12 @@ function servePlaylistMiddleware (deps = {}) {
         throw new Error(`servePlaylistMiddleware: videoPlaylist is required but not provided`);
     }
 
+    console.log(`servePlaylistMiddleware: given middleware`);
+
     return async (payload, next) => {
         
+        console.log('playlist');
+
         const response = await fetch(`/api/get-playlist/video`, {
             method:'get',
         });
@@ -561,6 +569,8 @@ toolTipCreatorRouter.set('users', (row = {}, context={}) => {
  */
 async function middlewareExecutor (payload, middleware) {
 
+    console.log(`middleware executor`);
+
     let index = 0;
 
     const next = async (nextPayload) => {
@@ -582,7 +592,8 @@ async function middlewareExecutor (payload, middleware) {
         }
     }
 
-    if(middleware.length > 0) {
+    if (middleware.length > 0) {
+        console.log('middleware executor: go middleware');
         return await next(payload);
     }
 }
