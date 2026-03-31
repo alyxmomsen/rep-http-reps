@@ -203,8 +203,17 @@ class MultiTableGrouppingAgent {
              * 
              * @see dev.log.md#1.2 for grouping strategy
              */
-            const fileDataSet = fileDataSetFactory({
-                ...data, 
+            const fileDataSet = this.#fileDataSetAdapter?.({
+                linkId: LINK_ID,
+                tableName: process.env.FILES_DATA_TABLE || 'files',
+                groupId: randomBytes(32).toString("hex"),
+                columnName,
+                dataType,
+                contentType,
+                filename,
+                body,
+            }) || fileDataSetFactory({
+                ...data,
                 linkId: LINK_ID,
                 tableName: process.env.FILES_DATA_TABLE || 'files',
                 groupId: LINK_ID,
@@ -226,7 +235,10 @@ class MultiTableGrouppingAgent {
              *   }
              * }
              */
-            this.#dataTransformer.process(FILE_DATA_SET_SCHEMA, fileDataSet, this.#mergedGroups.files);
+            this.#mergedGroups.files = this.#dataTransformer.process(
+                this.#fileDataSetSchema || FILE_DATA_SET_SCHEMA,
+                fileDataSet,
+                this.#mergedGroups.files);
             
             /**
              * Step 4c: Create linked field dataset
@@ -237,15 +249,27 @@ class MultiTableGrouppingAgent {
              * 
              * Example: users table gets an 'avatar' column containing the file ID
              */
-            const fieldDataSet = fieldDataSetFactory({
-                body: LINK_ID,
+            const fieldDataSet = this.#fileDataSetAdapter?.({
+                // linkId: LINK_ID,
+                tableName,
+                groupId,
+                columnName,
+                dataType:'link',
+                contentType,
+                filename,
+                body:LINK_ID,
+            }) || fieldDataSetFactory({
+                tableName,
+                groupId,
                 columnName,
                 dataType: 'link',
-                groupId,
-                tableName,
+                body: LINK_ID,
             });
             
-            this.#dataTransformer.process(LINKED_FIELD_DATA_SET_SCHEMA, fieldDataSet, this.#mergedGroups.fields);
+            this.#mergedGroups.fields = this.#dataTransformer.process(
+                this.#linkedFieldDataSetSchema || LINKED_FIELD_DATA_SET_SCHEMA,
+                fieldDataSet,
+                this.#mergedGroups.fields);
             
             return ;
         } 
@@ -265,12 +289,19 @@ class MultiTableGrouppingAgent {
          * - Second call: groupId='0025', columnName='email', body='john@mail.com'
          * - Result: One row with both name and email
          */
-        const regularFieldDataSet = regularFieldDataSetFactory({
+        const regularFieldDataSet = this.#regularFieldDataSetAdapter?.({
             body, columnName, dataType,
             groupId, tableName,
-        });
+        }) || regularFieldDataSetFactory({
+            body, columnName, dataType,
+            groupId, tableName,
+        }) ;
         
-        this.#dataTransformer.process(REGULAR_FIELD_DATA_SET_SCHEMA, regularFieldDataSet, this.#mergedGroups.fields);
+        this.#mergedGroups.fields = this.#dataTransformer.process(
+            this.#regularFieldDataSetSchema || REGULAR_FIELD_DATA_SET_SCHEMA,
+            regularFieldDataSet,
+            this.#mergedGroups.fields
+        );
         
     }
 
@@ -385,6 +416,14 @@ class MultiTableGrouppingAgent {
      * @private
      */
     #multitableProtocolParser;
+
+    #fileDataSetSchema;
+    #regularFieldDataSetSchema;
+    #linkedFieldDataSetSchema;
+
+    #fileDataSetAdapter;
+    #regularFieldDataSetAdapter;
+    #linkedFieldDataSetAdapter;
     
     /**
      * Creates a new MultiTableGrouppingAgent instance.
@@ -392,6 +431,14 @@ class MultiTableGrouppingAgent {
      * @param {Object} deps - Dependency injection container
      * @param {DataTransformer} deps.dataTransformer - Transformer for building hierarchical data
      * @param {(data:string) => MultiTableProtocolResult} deps.multiTableProtocolParser - Parser for multitable protocol
+     * @param {Object} deps.fileDataSetSchema
+     * @param {Object} deps.regularFieldDataSetSchema
+     * @param {Object} deps.linkedFieldDataSetSchema
+     * 
+     * @param {Function} deps.fileDataSetAdapter
+     * @param {Function} deps.regularFieldDataSetAdapter
+     * @param {Function} deps.linkedFieldDataSetAdapter
+     * 
      * @throws {Error} If required dependencies are missing
      * 
      * @example
@@ -409,10 +456,38 @@ class MultiTableGrouppingAgent {
 
         const dataTransformer = deps.dataTransformer || null;
         const multiTableProtocolParser = deps.multiTableProtocolParser || null;
+        
+        /* SCHEMAS */
+
+        const fileDataSetSchema = deps.fileDataSetSchema || null;
+        const regularFieldDataSetSchema = deps.regularFieldDataSetSchema || null;
+        const linkedFieldDataSetSchema = deps.linkedFieldDataSetSchema || null;
+
+        /* DATA-SET FACTORIES */
+
+        const fileDataSetFactory = deps.fileDataSetAdapter || null;
+        const regularFieldDataSetFactory = deps.regularFieldDataSetAdapter || null;
+        const linkedFieldDataSetFactory = deps.linkedFieldDataSetAdapter || null;
+
+        /* DEPS VALIDATIONS */
 
         if (!dataTransformer) {
             throw new Error(`DataTransformer required but not provided`);
         }
+
+        /* ======================= */
+
+        this.#fileDataSetSchema = fileDataSetSchema;
+        this.#regularFieldDataSetSchema = regularFieldDataSetSchema;
+        this.#linkedFieldDataSetSchema = linkedFieldDataSetSchema
+
+        /* ----------------------- */
+
+        this.#fileDataSetAdapter = fileDataSetFactory;
+        this.#regularFieldDataSetAdapter = regularFieldDataSetFactory;
+        this.#linkedFieldDataSetAdapter = linkedFieldDataSetFactory;
+
+        /* ======================== */
 
         console.log(`\x1b[32mMultiTableGrouppingAgent: ✔ dataTransformer plugged`);
         

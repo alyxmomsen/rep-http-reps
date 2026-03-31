@@ -1,12 +1,19 @@
 const { randomBytes } = require("node:crypto");
 const { DataTransformer_2_0 } = require("../../../__dev-artefacts__/sand-box/data-transformer-2-0");
-const { FILE_DATA_SET_SCHEMA_2, REGULAR_FIELD_DATA_SET } = require("../../../__dev-artefacts__/sand-box/dt.2.0.schema");
+const { FILE_DATA_SET_SCHEMA, REGULAR_FIELD_DATA_SET, LINKED_FIELD_DATA_SET_SCHEMA } = require("../../../__dev-artefacts__/sand-box/dt.2.0.schema");
 // const { FILE_DATA_SET_SCHEMA } = require("../../../app/services/_multipart-parser/services/data-transformer/schemas/file-data-set.schema");
 const { dataSetProcessorFactory: dataSetMapperFactory,  Actions } = require("../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller");
+const { MultiTableGrouppingAgent } = require("../../../app/services/_multipart-parser/services/multi-table-gruping-agent/multi-table-gruping-agent");
+const { multiTableProtocolParser } = require("../../../app/services/_multipart-parser/services/multi-table-gruping-agent/utils/extract-multitable-form-protocol-data");
 
 // const { dataSetMapper: executor, Actions } = require("../../../app/services/_multipart-parser/utils/mapper/data-set-mapper.model");
 
 describe('sandbox', () => {
+
+    /**
+     * @type {MultiTableGrouppingAgent}
+     */
+    let multitableGruppingAgent;
 
     /**
      * @type {Object}
@@ -38,16 +45,26 @@ describe('sandbox', () => {
     let dataTransformer;
     
     beforeEach(() => {
-        
+
         fileGeneratedData = [];
         regularDataSet = [];
 
         /* -------------------------------------------- */
 
-        filesContext = {};  
+        filesContext = {};
         regularContext = {};
 
         dataTransformer = new DataTransformer_2_0();
+
+        multitableGruppingAgent = new MultiTableGrouppingAgent({
+            dataTransformer,
+            multiTableProtocolParser: multiTableProtocolParser,
+            fileDataSetSchema: FILE_DATA_SET_SCHEMA,
+            regularFieldDataSetSchema: REGULAR_FIELD_DATA_SET,
+            linkedFieldDataSetSchema: LINKED_FIELD_DATA_SET_SCHEMA,
+        });
+
+        
 
         // data = {
         //     files: {
@@ -202,80 +219,96 @@ describe('sandbox', () => {
     
     test('Itegration: ', async () => {
 
-        fileGeneratedData.push(mapperInputDataSetGenerator({
-            // groupId: '01',
-            tableName: 'files',
-            filename: 'foo.txt',
-            contentType:'mime/foo'
-        }));
-        fileGeneratedData.push(mapperInputDataSetGenerator({
-            // groupId: '00',
-            tableName: 'files',
-            filename:'bar.txt',
-            contentType:'mime/bar',
-        }));
-        fileGeneratedData.push(mapperInputDataSetGenerator({
-            // groupId:'00',
-            tableName: 'files',
-            filename:'baz.txt',
-            contentType:'mime/baz',
-        }));
-        fileGeneratedData.push(mapperInputDataSetGenerator({
-            // groupId:'01',
-            tableName:'files',
-        }));
+        // return;
 
-        regularDataSet.push(mapperInputDataSetGenerator({
-            tableName: 'play-list',
-            groupId: '00',
-            columnName: 'title-1',
-        }));
-        regularDataSet.push(mapperInputDataSetGenerator({
-            tableName: 'play-list',
-            groupId: '00',
-            columnName: 'description-1',
-        }));
-        regularDataSet.push(mapperInputDataSetGenerator({
-            tableName: 'users',
-            groupId: '01',
-            columnName: 'title-2',
-        }));
-        regularDataSet.push(mapperInputDataSetGenerator({
-            tableName: 'users',
-            groupId: '02',
-            columnName: 'description-2',
-        }));
+        // fileGeneratedData.push(mapperInputDataSetGenerator({
+        //     // groupId: '01',
+        //     tableName: 'files',
+        //     filename: 'foo.txt',
+        //     contentType: 'mime/foo'
+        // }));
+        // fileGeneratedData.push(mapperInputDataSetGenerator({
+        //     // groupId: '00',
+        //     tableName: 'files',
+        //     filename: 'bar.txt',
+        //     contentType: 'mime/bar',
+        // }));
+        // fileGeneratedData.push(mapperInputDataSetGenerator({
+        //     // groupId:'00',
+        //     tableName: 'files',
+        //     filename: 'baz.txt',
+        //     contentType: 'mime/baz',
+        // }));
+        // fileGeneratedData.push(mapperInputDataSetGenerator({
+        //     // groupId:'01',
+        //     tableName: 'files',
+        // }));
 
-        let i = 0;        
-        do {
-            filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
-        } while (i < fileGeneratedData.length);
+        // regularDataSet.push(mapperInputDataSetGenerator({
+        //     tableName: 'play-list',
+        //     groupId: '00',
+        //     columnName: 'title-1',
+        // }));
+        // regularDataSet.push(mapperInputDataSetGenerator({
+        //     tableName: 'play-list',
+        //     groupId: '00',
+        //     columnName: 'description-1',
+        // }));
+        // regularDataSet.push(mapperInputDataSetGenerator({
+        //     tableName: 'users',
+        //     groupId: '01',
+        //     columnName: 'title-2',
+        // }));
+        // regularDataSet.push(mapperInputDataSetGenerator({
+        //     tableName: 'users',
+        //     groupId: '02',
+        //     columnName: 'description-2',
+        // }));
+
+        // let i = 0;
+        // do {
+        //     filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA, fileGeneratedData[i++], filesContext);
+        // } while (i < fileGeneratedData.length);
         
-        let i2 = 0;
-        do {
-            regularContext = dataTransformer.process(REGULAR_FIELD_DATA_SET, regularDataSet[i2++], regularContext);
-        } while (i2 < regularDataSet.length);
+        // let i2 = 0;
+        // do {
+        //     regularContext = dataTransformer.process(REGULAR_FIELD_DATA_SET, regularDataSet[i2++], regularContext);
+        // } while (i2 < regularDataSet.length);
 
-        data = filesContext;
+        multitableGruppingAgent.handleFormDataPartParsedData({
+            name: '2025.title.string',
+            body: Buffer.from('1234-1234-1234-1234'),
+            contentType: 'text/plain',
+            filename: 'foo.txt',
+        });
+
+        
+        multitableGruppingAgent.handleFormDataPartParsedData({
+            name: '2025.description.string',
+            body: Buffer.from('1234-1234-1234-1234'),
+            contentType: null,
+            filename: null,
+        });
+            
+        multitableGruppingAgent.handleFormDataPartParsedData({
+            name: '2025.title.string',
+            body: Buffer.from('1234-1234-1234-1234'),
+            contentType: null,
+            filename: null,
+        });
+                
+        const multitableAgentResult = multitableGruppingAgent.getGroups();
+
+        console.dir({ result: multitableAgentResult }, {
+            depth:20,
+        });
 
         const dataSetProcessor = dataSetMapperFactory();
     
         const datenow = Date.now();
 
-        const execResult = await dataSetProcessor.process(data, []);
-        // collections.push('context', { execResult });
-        
-        // for (const item of collections) {
-        //     const { execResult } = item;
-            
-        //     execResult.forEach(item => {
-        //         console.log('collections item: ' + datenow ,item);
-        //     });
-
-        // }
-
-        // console.log(`run-time/result: `, execResult);
-        
+        const execResult = await dataSetProcessor.process(multitableAgentResult.files, []);
+                
     });
 
     test(`data must be merged`, () => {
@@ -284,23 +317,23 @@ describe('sandbox', () => {
             // groupId: '01',
             tableName: 'files',
             filename: 'foo.txt',
-            contentType:'mime/foo'
+            contentType: 'mime/foo'
         }));
         fileGeneratedData.push(mapperInputDataSetGenerator({
             // groupId: '00',
             tableName: 'files',
-            filename:'bar.txt',
-            contentType:'mime/bar',
+            filename: 'bar.txt',
+            contentType: 'mime/bar',
         }));
         fileGeneratedData.push(mapperInputDataSetGenerator({
             // groupId:'00',
             tableName: 'files',
-            filename:'baz.txt',
-            contentType:'mime/baz',
+            filename: 'baz.txt',
+            contentType: 'mime/baz',
         }));
         fileGeneratedData.push(mapperInputDataSetGenerator({
             // groupId:'01',
-            tableName:'files',
+            tableName: 'files',
         }));
 
         // regularDataSet.push(mapperInputDataSetGenerator({
