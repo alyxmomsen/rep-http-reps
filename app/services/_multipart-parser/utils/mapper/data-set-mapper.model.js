@@ -12,7 +12,7 @@
 //         if (testValue instanceof Buffer === false) {
 //             throw new Error(`required Buffer`);
 //         }
-//     }, 
+//     },
 //     String: (testValue) => {
 //         if (typeof testValue !== "string") {
 //             throw new Error(`required string`);
@@ -94,26 +94,26 @@
 // };
 
 // /**
-//  * 
-//  * @param {{payload:Object,cb:Function}} payload 
+//  *
+//  * @param {{payload:Object,cb:Function}} payload
 //  */
 // function childsAction(payload) {
 //     const { payload: childs, cb: parseChilds, data, prop } = payload;
 //     /**
-//      * 
+//      *
 //      * data example:
-//      * 
+//      *
 //      * {
 //      *     'tableName':{
 //      *         '00':{
-//      *             
-//      *         }     
+//      *
+//      *         }
 //      *     }
-//      * 
+//      *
 //      * }
-//      * 
-//      * 
-//      * 
+//      *
+//      *
+//      *
 //      * '__' означает любая строка
 //      */
 //     if (prop.startsWith('__')) {
@@ -121,24 +121,24 @@
 //     }
 
 //     parseChilds(childs);
-// } 
+// }
 
 // /**
-//  * 
-//  * @param {Object} payload 
+//  *
+//  * @param {Object} payload
 //  */
 // function finalAction(payload) {
 //     const { payload: pl, cb:_, data} = payload;
 //     const { validator } = pl;
 //     validator(data);
-// } 
+// }
 
 
 // /**
-//  * @throws 
+//  * @throws
 //  * nothing
-//  * @param {Object} schema 
-//  * @param {Object} data 
+//  * @param {Object} schema
+//  * @param {Object} data
 //  */
 // function mapper (schema, data) {
 
@@ -153,57 +153,41 @@
 // }
 
 
-
-
 /**
  * 
- * @description
- * initiator is that...
  * @param {Object} data 
- * @param {string[]} initiatorPropStack 
+ * @param {any[]} callStack 
  * @param {{
- *  tableName: Function,
- *  groupId: Function,
- *  propertyRegular: Function,
- *  propertyFile: Function,
+ *  a:Function;
+ *  b:Function;
  * }} actions 
- * @returns 
  */
-function dataSetMapper(data, initiatorPropStack, actions) {
-    // console.log(`dataSetMapper/start:`, actions);
-    const collections = [];
-    const actionresult = [];
-    for (const [prop, value] of Object.entries(data)) {
-
-        console.log(`dataSetMapper: ${prop}` , initiatorPropStack);
-
-        const [actionName, actionPayload] = value;
-
-        // console.log(`dataSetMapper/iteration: `, prop, value);
-
-        /**
-         * @type {Function|undefined}
-         */
-        const action = actions[actionName];
-
+function dataSetMapper(data, callStack, actions) {
+    
+    console.log(`dataSetMapper: start`);
+    // console.dir(data, {
+    //     depth:10,
+    // });
+    
+    for (const [propKey, config] of Object.entries(data)) {
+        const [actionName, actionPayload] = config;
+        console.log(`dataSetMapper: `, { propKey, config });
+        
+        const action =
+            (actionName === 'tableName' || actionName === 'tablId')
+                ? action.a : action.b;
+        
+        
         if (!action) {
-            throw new Error(`dataSetMapper: action ${actionName} is not received`);
+            throw new Error(`dataSetMapper: error: action is not received`);
         }
 
-        // console.log({prop, action, payload});
-        const res = action({
-            payload: actionPayload,
-            cb: (data, initiatorPropStack) => dataSetMapper(data, initiatorPropStack, actions),
-            prop,
-            initiatorPropStack: initiatorPropStack
+        action({
+            reqFn: dataSetMapper,
+            
         });
-        actionresult.push(res);
+        
     }
-    
-    collections.push(actionresult);
-    // console.log('\x1b[32dataSetMapper: ',{ actionresult, collections },'\x1b[0m');
-    
-    return collections;
 
 }
 

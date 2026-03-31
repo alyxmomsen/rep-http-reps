@@ -3,6 +3,7 @@ const { filemanager } = require("../../../../filemanager.service.js/fmanager.con
 // const { filemanager } = require("../../../../filemanager.service.js/fmanager.controller");
 const { dataSetMapper } = require("../data-set-mapper.model");
 const { tableNameAction, groupIdAction, propRegularAction, propFileAction } = require("../model/actions/actions");
+const { BAction, AAction } = require("../model/actions/actions.demo");
 
 /**
  * @type {Object.<string,Function>}
@@ -14,6 +15,10 @@ const Actions = {
     propertyFile: propFileAction,
 };
 
+const testActions = {
+    a: AAction,
+    b: BAction,
+};
 /**
  * 
  * @param {Object} deps 
@@ -27,7 +32,7 @@ function dataSetMapperFactory(deps = {}) {
      * @param {string[]} propsCallStack 
      * @returns 
      */
-    const fn = (data, propsCallStack) => dataSetMapper(data, propsCallStack, Actions);
+    const fn = (data, propsCallStack) => dataSetMapper(data, propsCallStack, testActions);
 
     return fn;
 }

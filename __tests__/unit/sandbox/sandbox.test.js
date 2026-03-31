@@ -256,13 +256,13 @@ describe('sandbox', () => {
             regularContext = dataTransformer.process(REGULAR_FIELD_DATA_SET, regularDataSet[i2++], regularContext);
         } while (i2 < regularDataSet.length);
 
-        data = filesContext;
+        // data = filesContext;
 
-        const executor = dataSetMapperFactory();
+        // const executor = dataSetMapperFactory();
 
-        const datenow = Date.now();
+        // const datenow = Date.now();
 
-        const execResult = executor(data, []);
+        // const execResult = executor(data, []);
         // collections.push('context', { execResult });
         
         // for (const item of collections) {
@@ -324,25 +324,25 @@ describe('sandbox', () => {
         //     columnName: 'description-2',
         // }));
 
-        // let i = 0;        
-        // do {
-        //     filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
-        // } while (i < fileGeneratedData.length);
+        let i = 0;        
+        do {
+            filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
+        } while (i < fileGeneratedData.length);
         
         // let i2 = 0;
         // do {
         //     regularContext = dataTransformer.process(REGULAR_FIELD_DATA_SET, regularDataSet[i2++], regularContext);
         // } while (i2 < regularDataSet.length);
 
-        // console.dir(filesContext, {
-        //     depth:10,
-        // });
+        console.dir(filesContext, {
+            depth:10,
+        });
 
         // console.dir(regularContext, {
         //     depth:10,
         // });
         
-        expect(filesContext)./* tot. */toEqual({});
+        // expect(filesContext)./* tot. */toEqual({});
 
     });
 });
