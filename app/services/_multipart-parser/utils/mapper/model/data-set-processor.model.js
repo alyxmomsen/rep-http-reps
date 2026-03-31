@@ -39,7 +39,7 @@ class DataSetProcessor {
                 propDescription:metaTitle
             });
             
-            if (actionName === 'tableName' || actionName === 'groupId') {
+            if (/* actionName === 'tableName' || actionName === 'groupId' */actionName === "branch") {
                 
                 const actionResult = await this.#executeAction("handleBranch", {
                     reqFn: this.process.bind(this),
