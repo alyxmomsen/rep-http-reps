@@ -355,7 +355,7 @@ class MultiTableGrouppingAgent {
      * 
      * @private
      */
-    #validateData (data) {
+    #validateData (data)     {
         const validateSchema = {
             contentType: { required: true },
             name: { required: true },
