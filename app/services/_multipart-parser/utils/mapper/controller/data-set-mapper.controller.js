@@ -4,6 +4,9 @@ const { filemanager } = require("../../../../filemanager.service.js/fmanager.con
 const { dataSetMapper } = require("../data-set-mapper.model");
 const { tableNameAction, groupIdAction, propRegularAction, propFileAction } = require("../model/actions/actions");
 
+/**
+ * @type {Object.<string,Function>}
+ */
 const Actions = {
     tableName: tableNameAction,
     groupId: groupIdAction,

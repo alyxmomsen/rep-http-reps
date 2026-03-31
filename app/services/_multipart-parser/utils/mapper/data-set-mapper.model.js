@@ -172,9 +172,10 @@
 function dataSetMapper(data, initiatorPropStack, actions) {
     // console.log(`dataSetMapper/start:`, actions);
     const collections = [];
-    
     const actionresult = [];
     for (const [prop, value] of Object.entries(data)) {
+
+        console.log(`dataSetMapper: ${prop}` , initiatorPropStack);
 
         const [actionName, actionPayload] = value;
 
@@ -190,7 +191,12 @@ function dataSetMapper(data, initiatorPropStack, actions) {
         }
 
         // console.log({prop, action, payload});
-        const res = action({ payload: actionPayload, cb: (data, initiatorPropStack) => dataSetMapper(data, initiatorPropStack, actions), prop, initiatorPropStack: initiatorPropStack });
+        const res = action({
+            payload: actionPayload,
+            cb: (data, initiatorPropStack) => dataSetMapper(data, initiatorPropStack, actions),
+            prop,
+            initiatorPropStack: initiatorPropStack
+        });
         actionresult.push(res);
     }
     

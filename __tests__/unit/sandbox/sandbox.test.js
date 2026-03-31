@@ -202,6 +202,60 @@ describe('sandbox', () => {
     
     test('Itegration: ', () => {
 
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId: '01',
+            tableName: 'files',
+            filename: 'foo.txt',
+            contentType:'mime/foo'
+        }));
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId: '00',
+            tableName: 'files',
+            filename:'bar.txt',
+            contentType:'mime/bar',
+        }));
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId:'00',
+            tableName: 'files',
+            filename:'baz.txt',
+            contentType:'mime/baz',
+        }));
+        fileGeneratedData.push(mapperInputDataSetGenerator({
+            // groupId:'01',
+            tableName:'files',
+        }));
+
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'play-list',
+            groupId: '00',
+            columnName: 'title-1',
+        }));
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'play-list',
+            groupId: '00',
+            columnName: 'description-1',
+        }));
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'users',
+            groupId: '01',
+            columnName: 'title-2',
+        }));
+        regularDataSet.push(mapperInputDataSetGenerator({
+            tableName: 'users',
+            groupId: '02',
+            columnName: 'description-2',
+        }));
+
+        let i = 0;        
+        do {
+            filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
+        } while (i < fileGeneratedData.length);
+        
+        let i2 = 0;
+        do {
+            regularContext = dataTransformer.process(REGULAR_FIELD_DATA_SET, regularDataSet[i2++], regularContext);
+        } while (i2 < regularDataSet.length);
+
         data = filesContext;
 
         const executor = dataSetMapperFactory();
@@ -270,10 +324,10 @@ describe('sandbox', () => {
         //     columnName: 'description-2',
         // }));
 
-        let i = 0;        
-        do {
-            filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
-        } while (i < fileGeneratedData.length);
+        // let i = 0;        
+        // do {
+        //     filesContext = dataTransformer.process(FILE_DATA_SET_SCHEMA_2, fileGeneratedData[i++], filesContext);
+        // } while (i < fileGeneratedData.length);
         
         // let i2 = 0;
         // do {
@@ -288,7 +342,7 @@ describe('sandbox', () => {
         //     depth:10,
         // });
         
-        expect(filesContext).toEqu;
+        expect(filesContext)./* tot. */toEqual({});
 
     });
 });
@@ -346,3 +400,4 @@ function mapperInputDataSetGenerator(overrides = {}) {
     }
 
 */
+
