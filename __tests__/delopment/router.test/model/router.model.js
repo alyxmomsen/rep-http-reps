@@ -35,30 +35,67 @@ class Router_Dev {
 
         const methodRoutes = this.#routes.get(method);
 
-        if(!methodRoutes) {
-            throw new Error(`Router: incorrect method`);
+        try {
+
+            if(!methodRoutes) {
+                res.writeHead(500, {
+                    "content-type":"application/json",
+                });
+                res.end(JSON.stringify({message:'internal server error'}));
+                throw new Error(`Router: incorrect method`);
+            }
+
+            const { url, queryString } = this.#splitURL(rawURL);
+
+            for (const [_, routeBundle] of methodRoutes.entries()) {
+
+                const urlMatch = routeBundle.regex.exec(url)
+
+                if(!urlMatch) continue;
+
+                // bundle params
+
+                const params = {};
+                routeBundle.keys.forEach((key, i) => {
+                    params[key] = urlMatch[i + 1];
+                });
+                
+                let queryParams = {};
+                try {
+
+                    queryParams = this.#extractQueryParams(queryString);
+                }
+                catch (err) {
+                    
+                    this.#errors.push(err.message);
+                    throw err;
+                }
+                
+                req.queryParams = queryParams ;
+                req.params = params;
+
+                // -------------
+
+                await this.#executeMiddleware(req, res, [...this.#middleware, ...routeBundle.middleware]);
+                
+                await routeBundle.handler(req, res);
+
+                break;
+            }
+
+            if(!res.headersSent) {
+                res.writeHead(404, {
+                    "content-type":"application/json",
+                });
+                res.end(JSON.stringify({message:'not found'}));
+            }
         }
-
-        const { url, queryString } = this.#splitURL(rawURL);
-
-        for (const [_, routeBundle] of methodRoutes.entries()) {
-
-            const urlMatch = routeBundle.regex.exec(url)
-            console.log(`Router/handle request/iteration: `, {routeBundle, url, queryString});
-            if(!urlMatch) continue;
-
-            await routeBundle.handler(req, res);
-
-            return;
+        catch (err) {
+            
+            console.log(`\x1b[31m`,{err}, `\x1b[0m`);
+            
         }
-
-        if(!res.headersSent) {
-            res.writeHead(404, {
-                "content-type":"application/json",
-            });
-            res.end(JSON.stringify({message:'not found'}));
-        }
-
+    
     }
 
     /**
@@ -77,6 +114,84 @@ class Router_Dev {
     }
 
     /**
+     * @param {IncomingMessage} req
+     * @param {ServerResponse} res  
+     * @param {HTTPRouterMiddleware[]} middleware 
+     * @returns {Promise<any>}
+     * @throws {Error} - Router.executeMiddleware: no handler received
+     * @throws {Error} - Router.executeMiddleware: middleware.lenght must be > 0
+     */
+    async #executeMiddleware (req, res, middleware) {
+        let index = 0;
+        /**
+         * @type {MiddlewareNext}
+         */
+        const next = async () => {
+
+            if(index < middleware.length) {
+                const currentIndex = index++;
+
+                const handler = middleware[currentIndex];
+
+                if(handler) {
+                    try {
+                        await handler(req, res, next);
+                        return;
+                    }
+                    catch (err) {
+                        /**
+                         * pass throw this error toward the error handler
+                         */
+                        throw err;
+                    }
+                }
+
+                throw new Error(`Router.executeMiddleware: no handler received`);
+            }
+
+            return; 
+
+        }
+
+        if(middleware.length > 0) {
+            return await next();
+        }
+
+        return
+        throw new Error(`router.executemiddleware: middleware.lenght must be > 0`);
+    }
+
+    /**
+     * 
+     * @param {string|null} queryString 
+     * @throws {Error} - Router/#extractQueryParams: incorrect the arg value type
+     * 
+     */
+    #extractQueryParams (queryString) {
+        const params = {};
+
+        if((typeof queryString === "string" || queryString === null) === false) {
+            throw new Error(`Router/#extractQueryParams: incorrect the arg value type`);
+        }
+
+        if(queryString === null) {
+            return params ;
+        }
+
+        queryString.split('&').forEach(part => {
+            const [key, value] = part.split('=');
+            if(key && value) {
+
+                const normalizedKey = key.toLowerCase();
+                params[normalizedKey] = value;
+            }
+        });
+
+        return params;
+
+    }
+
+    /**
      * 
      * @param {string} rawURL 
      * @returns {{url:string; queryString:string|null}}
@@ -85,7 +200,7 @@ class Router_Dev {
         const [url, queryString] = rawURL.split('?');
         return {
             url:/.+\/+$/.test(url) ? url.replace(/\/+$/, '') : url,
-            queryString,
+            queryString: queryString || null,
         }
     }
 
@@ -100,8 +215,6 @@ class Router_Dev {
         if(Object.keys(LocalConstants.MethodsKeys).includes(method) === false) {
             throw new Error(`Router: internal error`);
         }
-
-        console.log(`Router: incoming method: `, method);
 
         const methodRoutes = this.#routes.get(method);
 
@@ -153,6 +266,12 @@ class Router_Dev {
         }
     }
 
+    #handleErrors () {
+        this.#errors.forEach(err => {
+            console.log('Router.handleErrors: ', {err});
+        });
+    }
+
     /**
      * @type {Map<string,Map<string,RouteBundle>>}
      */
@@ -163,6 +282,11 @@ class Router_Dev {
      */
     #middleware;
 
+    /**
+     * @type {Array}
+     */
+    #errors;
+
     constructor (deps= {}) {
 
         this.#routes = new Map();
@@ -170,6 +294,9 @@ class Router_Dev {
         for (const [_, METHOD] of Object.entries(LocalConstants.MethodsKeys)) {
             this.#routes.set(METHOD, new Map());
         }
+
+        this.#middleware = [];
+        this.#errors = [];
     }
 }
 

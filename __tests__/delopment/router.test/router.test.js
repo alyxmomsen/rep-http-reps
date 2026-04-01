@@ -65,7 +65,7 @@ describe ('router-dev', () => {
     //     expect(res.end).toHaveBeenCalledWith(JSON.stringify({message:'hello world'}));
     // });
 
-    test('router must replace final slash if it before "?" or at end of the string' , async () => {
+    test('router must replace final slashes if it before "?" or at end of the string' , async () => {
 
         router.get('/bar',  (req, res) => {
             res.writeHead(200);
@@ -97,8 +97,88 @@ describe ('router-dev', () => {
         expect(res.end).toHaveBeenCalledWith('ok');
     });
 
-    test ('2' , () => {
-        expect(1).toEqual(1)
+    test ('router must be provide params to handler' , async () => {
+        
+        const mockHandler = jest.fn();
+
+        router.get('/foo/:id', mockHandler);
+
+        req.method = 'GET';
+        req.url = '/foo/bar?hello=world';
+
+        await router.handleRequest(req, res);
+
+        expect(mockHandler).toHaveBeenCalled();
+        expect(req.params).toEqual({id:'bar'});
+        expect(req.queryParams).toEqual({hello:'world'});
+
+
     });
 
+    test (`middleware chain must be broken if function the "next" was not called`, async () => {
+
+        const mw1 = jest.fn(async (req, res, next) => {
+            await next();
+        });
+        const mw2 = jest.fn();
+        const mw3 = jest.fn();
+        const mw4 = jest.fn();
+        const finalHandler = jest.fn(async (req, res) => {});
+
+        router.get('/foo', mw1, mw2, mw3, mw4, finalHandler);
+
+        req.method = "GET";
+        req.url = '/foo/'
+
+        await router.handleRequest(req, res);
+
+        expect(mw1)/* .not */.toHaveBeenCalled();
+        expect(mw2)/* .not */.toHaveBeenCalled();
+        expect(mw3).not.toHaveBeenCalled();
+        expect(finalHandler).toHaveBeenCalled();
+
+    }) ;
+
+    test (`the middleware chain must be called with the defined sequence`, async () => {
+
+        const sequence = [];
+        const mw1 = jest.fn(async (req, res, next) => {
+            sequence.push('mw1a');
+            await next();
+            sequence.push('mw1b');
+        });
+        const mw2 = jest.fn(async (req, res, next) => {
+            sequence.push('mw2a');
+            await next();
+            sequence.push('mw2b');
+        });
+        const mw3 = jest.fn(async (req, res, next) => {
+            sequence.push('mw3a');
+            await next();
+            sequence.push('mw3b');
+        });
+        const mw4 = jest.fn(async (req, res, next) => {
+            // sequence.push();
+            await next();
+            // sequence.push();
+        });
+        const finalHandler = jest.fn(async (req, res) => {});
+
+        router.get('/foo', mw1, mw2, mw3, mw4, finalHandler);
+
+        req.method = "GET";
+        req.url = '/foo/'
+
+        await router.handleRequest(req, res);
+
+        const sequenceStr = sequence.join(',');
+        console.log({sequenceStr: sequenceStr});
+
+        expect(mw1)/* .not */.toHaveBeenCalled();
+        expect(mw2)/* .not */.toHaveBeenCalled();
+        expect(mw3)/* .not */.toHaveBeenCalled();
+        expect(mw4)/* .not */.toHaveBeenCalled();
+        expect(sequenceStr).toEqual('mw1a,mw2a,mw3a,mw3b,mw2b,mw1b');
+
+    }) ;
 });
