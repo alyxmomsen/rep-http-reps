@@ -40,6 +40,11 @@ class DataBase {
      * @returns {string}
      */
     createOne (tableId , data) {
+
+        if(typeof data !== "object") {
+            throw new Error(`DataBase.createOne: required an Object but provided not`);
+        }
+
         console.log('create one' ,{tableId , data});
         /**
          * @type {Map<string,string>}
@@ -124,16 +129,14 @@ class DataBase {
     }
     
     readAll (tableId) {
-        console.log('read all' ,{tableId});
+        console.log('DataBase.readAll' ,{tableId});
 
         const tableRows = this.#data.get(tableId);
-
-        console.log({tableRows});
 
         if(!tableRows) {
             return {
                 error:{
-                    message:'readAll: no data by tablename'
+                    message:`DataBase.readAll: no table by id ${tableId}`
                 }
             }
         }

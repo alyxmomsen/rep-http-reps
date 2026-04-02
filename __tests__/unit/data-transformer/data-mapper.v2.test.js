@@ -5,7 +5,10 @@ const { FILE_DATA_SET_SCHEMA, LINKED_FIELD_DATA_SET_SCHEMA, REGULAR_FIELD_DATA_S
 const { dataSetProcessorFactory } = require("../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller");
 const { DataSetProcessor } = require("../../../app/services/_multipart-parser/utils/mapper/model/data-set-processor.model");
 const { dataBase } = require("../../../app/services/database/controller/db.controller");
-
+const { HTTPRouter } = require("../../../app/services/router/v2/model/router.model");
+const { IncomingMessage, ServerResponse } = require("http");
+// const { router } = require("../../../app/services/router/controller/http-controller");
+require('http')
 
 describe('data mapper v2' , () => {
 
@@ -56,6 +59,7 @@ describe('data mapper v2' , () => {
             }
         }];
 
+        let context = {};
 
         /**
          * 
@@ -63,7 +67,6 @@ describe('data mapper v2' , () => {
          */
         const fn = (overrides={}) => {
 
-            let context = {};
     
             const linkId = 'link-id-' + Date.now();
     
@@ -115,6 +118,7 @@ describe('data mapper v2' , () => {
             }), context);
         }
 
+        fn();
 
         console.dir({context}, {
             depth:20,
@@ -129,6 +133,23 @@ describe('data mapper v2' , () => {
             videoPlaylistData,
             filessdbdata,
         }, {depth:20});
+
+        const router = new HTTPRouter({});
+
+        router.get('/test', async (req, res) => {
+            console.log(`handled`);
+            
+            res.end('sent');
+        });
+
+        const req = new IncomingMessage(null);
+        const res = new ServerResponse(req);
+
+        req.method = 'GET';
+        req.url = '/test';
+        // res.writeH
+
+        await router.handleRequest(req, res);
 
     }) ;
 });

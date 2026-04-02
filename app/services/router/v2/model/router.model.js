@@ -79,10 +79,11 @@ class HTTPRouter {
                 await this.#executeMiddleware(req, res, [...this.#middleware, ...routeBundle.middleware]);
                 
                 await routeBundle.handler(req, res);
-
-                break;
+                // return;
+                break; // 👈🏽⚠️
             }
 
+            // ⚠️👇🏽 сразу отправляет 404 😱
             if(!res.headersSent) {
                 console.log(`router.handlerequest/send_404`);
                 res.writeHead(404, {
