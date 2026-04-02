@@ -7,11 +7,13 @@ const { FormHandler } = require("../../form-data-server/form-parser.router.entry
 const { handlePublic } = require("../../request-handlers/public/handle-public");
 const { handleReactApp } = require("../../request-handlers/react/react-handler");
 const { handleStatic } = require("../../request-handlers/static/static-handler");
-const Router = require("../router");
+// const Router = require("../router");
+
 const { dbControllersRouter } = require('../../database-adapter/controller/db-adapter.controller');
 const { filemanager } = require('../../filemanager.service.js/fmanager.controller');
+const { HTTPRouter } = require('../v2/model/router.model');
 
-const router = new Router();
+const router = new HTTPRouter;
 
 /* get static files */
 router.get('/static/*', async (req, res) => await handleStatic(req, res));
@@ -93,61 +95,71 @@ createRoute('/api/get-file/:id', async (req, res) => {
 
     const dbAdapter = dbControllersRouter.get('files');
 
-    const { success, error } = dbAdapter.readOne(id);
+    await new Promise(async (resolve, reject) => {
 
-    if(error) {
-        
-        res.writeHead(400, {
-            'content-type':'application/json',
-        });
-        res.end(JSON.stringify({
-            message:'bad request',
-            error:error,
-        }));
-        return;
-    }
+        const { success, error } = dbAdapter.readOne(id);
     
-    if (!success) {
-        
-        res.writeHead(502, {
-            'content-type':'application/json',
-        });
-        res.end(JSON.stringify({
-            message:'internal error',
-        }));
-        return;
-    }
-    
-    const { rowById } = success;
-    
-    const filename = rowById.get('fileSystemFilename');
-    const mime = rowById.get('mime');
-    
-    try {
-
-        const { success:fmSucc, error:fmErr } = await filemanager.read(filename.data);
-        
-        console.log({fmSucc, fmErr});
-        
-        const { readStream } = fmSucc ;
-
-        const chunks = [];
-        readStream.on('data', (chunk) => {
-            chunks.push(chunk);
-        });
-    
-        readStream.on('end', () => {
-            console.log('succcccc');
-            const wholeData = Buffer.concat(chunks);
-            res.writeHead(200, {
-                'content-type':mime.data,
+        if(error) {
+            
+            res.writeHead(400, {
+                'content-type':'application/json',
             });
-            res.end(wholeData);
-        })
-    }
-    catch (err) {
-        console.log({err});
-    }
+            res.end(JSON.stringify({
+                message:'bad request',
+                error:error,
+            }));
+
+            reject();
+            return;
+        }
+        
+        if (!success) {
+            
+            res.writeHead(502, {
+                'content-type':'application/json',
+            });
+            res.end(JSON.stringify({
+                message:'internal error',
+            }));
+            reject();
+            return;
+        }
+        
+        const { rowById } = success;
+        
+        const filename = rowById.get('fileSystemFilename');
+        const mime = rowById.get('mime');
+        
+        try {
+    
+            const { success:fmSucc, error:fmErr } = await filemanager.read(filename.data);
+            
+            console.log({fmSucc, fmErr});
+            
+            const { readStream } = fmSucc ;
+    
+            const chunks = [];
+            readStream.on('data', (chunk) => {
+                chunks.push(chunk);
+            });
+        
+            readStream.on('end', () => {
+                console.log('succcccc');
+                const wholeData = Buffer.concat(chunks);
+                res.writeHead(200, {
+                    'content-type':mime.data,
+                });
+                res.end(wholeData);
+                resolve();
+                return;
+            })
+        }
+        catch (err) {
+            console.log('get-file-mw/catch', {err});
+            reject();
+        }
+    });
+
 });
 
 /* 

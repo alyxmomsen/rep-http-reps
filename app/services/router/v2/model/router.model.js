@@ -23,7 +23,7 @@ const LocalConstants = {
  */
 
 
-class Router_Dev {
+class HTTPRouter {
 
     /**
      * @param {IncomingMessage} req 
@@ -84,6 +84,7 @@ class Router_Dev {
             }
 
             if(!res.headersSent) {
+                console.log(`router.handlerequest/send_404`);
                 res.writeHead(404, {
                     "content-type":"application/json",
                 });
@@ -300,4 +301,4 @@ class Router_Dev {
     }
 }
 
-module.exports = { Router_Dev }
+module.exports = { HTTPRouter }

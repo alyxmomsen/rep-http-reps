@@ -1,10 +1,12 @@
-const { IncomingMessage, ServerResponse } = require('http');
-const { Router_Dev } = require("./model/router.model");
+const { IncomingMessage, ServerResponse } = require("http");
+const { HTTPRouter } = require("../../../app/services/router/v2/model/router.model");
+require('http');
+
 
 describe ('router-dev', () => {
 
     /**
-     * @type {Router_Dev}
+     * @type {HTTPRouter}
      */
     let router;
 
@@ -29,7 +31,7 @@ describe ('router-dev', () => {
         req.method = 'GET';
         req.headers.params = 'id'
 
-        router = new Router_Dev();
+        router = new HTTPRouter();
 
         mockWriteHead = jest.fn();
     });
