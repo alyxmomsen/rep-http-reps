@@ -36,7 +36,7 @@ class LinksBuffer {
     push(data = {}) {
 
         if(!data || typeof data !== "object") {
-            log(`38;2;255;0;101`, `LinkBuffer: incorrect data`);
+            console.log(`LinkBuffer: incorrect data`);
             throw new Error(`LinkBuffer: incorrect data`);
         }
 
@@ -50,12 +50,12 @@ class LinksBuffer {
 
         for (const [key, type] of Object.entries(schema)) {
             if(!data[key]) {
-                log(`38;2;255;0;101`, `LinkBuffer: property ${key} required`);
+                console.log(`LinkBuffer: property ${key} required`);
                 throw new Error(`LinkBuffer: property ${key} required, but not provided`);
             }
             
             if(typeof data[key] !== type) {
-                log(`38;2;255;0;101`, `LinkBuffer: property [${key}] must be <${type}>  type`);
+                console.log(`LinkBuffer: property [${key}] must be <${type}>  type`);
                 throw new Error(`LinkBuffer: property ${key} must be ${type} type`);
             }
 

@@ -17,6 +17,7 @@
   "scripts": {
     "test": "jest",
     "test:unit": "jest __tests__/unit",
+    "test:unit.current":"jest __tests__/unit/data-set-processor",
     "test:integration": "jest __tests__/integration",
     "test:all": "jest",
     "test:coverage": "jest --coverage",

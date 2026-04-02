@@ -4,51 +4,35 @@
 // const { dataSetMapper, DataSetProcessor } = require("../data-set-mapper.model");
 // const { tableNameAction, groupIdAction, propRegularAction, propFileAction } = require("../model/actions/actions");
 // const { BTypeActionFactory: BTypeActionFactory, ATypeActionFactory: ATypeActionFactory } = require("../model/actions/actions.demo");
-const { branchAction } = require("../model/actions/branch-action/controller/branch.action.controller");
+const { ResolveSuccessError } = require("../../../../../utils/success-error-resolver/model/suc-err-res");
+const { dbControllersRouter } = require("../../../../database-adapter/controller/db-adapter.controller");
+const { filemanager } = require("../../../../filemanager.service.js/fmanager.controller");
+const { LinksBuffer } = require("../../data-links-buffer/data-links-buffer.util");
+// const { branchAction } = require("../model/actions/branch-action/controller/branch.action.controller");
+const { BranchActionFactory } = require("../model/actions/branch-action/model/branch-action.model");
 const { BTypeActionFactory } = require("../model/actions/leaf-action/model/leaf-action.mode");
 const { DataSetProcessor } = require("../model/data-set-processor.model");
 
-// /**
-//  * @type {Object.<string,Function>}
-//  */
-// const Actions = {
-//     tableName: tableNameAction,
-//     groupId: groupIdAction,
-//     propertyRegular: propRegularAction,
-//     propertyFile: propFileAction,
-// };
-
-// const testActions = {
-//     a: ATypeActionFactory(),
-//     b: BTypeActionFactory(),
-// };
-
-// /**
-//  *
-//  * @param {Object} deps
-//  * @returns {(data:Object, propsCallStack:string[]) => }
-//  */
-// function dataSetMapperFactory(deps = {}) {
-    
-//     /**
-//      *
-//      * @param {Object} data
-//      * @param {string[]} propsCallStack
-//      * @returns
-//      */
-//     const fn = async (data, propsCallStack) => await dataSetMapper(data, propsCallStack, testActions);
-
-//     return fn;
-// }
-
 /**
- * 
+ * @param {Object} [deps={}]
+ * @param {LinksBuffer} deps.linksBuffer 
  * @returns {DataSetProcessor}
  */
-function dataSetProcessorFactory() {
+function dataSetProcessorFactory(deps={}) {
 
-    const dataSetProcessor = new DataSetProcessor();
-    dataSetProcessor.addAction('handleBranch', branchAction);
+    const linksBuffer = new LinksBuffer;
+
+    const dataSetProcessor = new DataSetProcessor({
+        linkBuffer:linksBuffer,
+    });
+
+    dataSetProcessor.addAction('handleBranch', /* branchAction */BranchActionFactory({
+        dbControllersRouter:dbControllersRouter,
+        filemanager:filemanager,
+        resolveSuccesError:new ResolveSuccessError(),
+        linksBufferInstance:linksBuffer,
+    }));
+
     dataSetProcessor.addAction('handleLeaf', BTypeActionFactory());
 
     return dataSetProcessor;

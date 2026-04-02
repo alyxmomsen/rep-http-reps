@@ -1,13 +1,50 @@
+const { LinksBuffer } = require("../../data-links-buffer/data-links-buffer.util");
+
 class DataSetProcessor {
 
-    async process(data, parentCallStack, actions) {
-        // console.dir(data, {depth:10});
+    /**
+     * 
+     * @param {Object} data 
+     * @param {Array<string>} parentCallStack 
+     * @returns 
+     */
+    async process(data, parentCallStack) {
+        /**
+         * 
+         * incoming data example:
+         * 
+         * {
+         *     files: [
+         *         'branch',{
+         *             meta: { title: 'tableName' },
+         *             value:{
+         *                 originalFileName: [
+         *                     'leaf', {
+         *                         meta: { title: 'originalFileName' },
+         *                         value: { data: 'some.name.txt', dataType: 'string' }
+         *                     },
+         *                 ],
+         *             },
+         *         },
+         *     ],
+         * }
+         * 
+         * where: 
+         * 
+         * #branch
+         * 
+         * 
+         * string: [
+         *  actionName:'branch'|'leaf', actionPayload:{ meta:{ title:string, value: Knot }}
+         * ]
+         * 
+         * 
+         *
+         */
 
-        console.log(`dataSetMapper: start`);
-        // console.dir(data, {
-        //     depth:10,
-        // });
-
+        /**
+         * 
+         */
         const collection = {};
         
         for (const [propKey, config] of Object.entries(data)) {
@@ -24,6 +61,7 @@ class DataSetProcessor {
              * 
              */
             const metaTitle = actionPayload?.meta?.title;
+            // const metaTitle = propKey;
 
             /**
              * проверяем содержатся ли ожидаемые поля
@@ -39,14 +77,12 @@ class DataSetProcessor {
                 propDescription:metaTitle
             });
             
-            if (/* actionName === 'tableName' || actionName === 'groupId' */actionName === "branch") {
+            if (actionName === "branch") {
                 
                 const actionResult = await this.#executeAction("handleBranch", {
                     reqFn: this.process.bind(this),
                     actionPayload: actionPayload.value,
                     callStack: [...parentCallStack, ...currentIterationCallStack],
-                    // callStack: [...parentCallStack, ...currentIterationCallStack],
-                    actions,
                 });
 
                 for (const [k, v] of Object.entries(actionResult)) {
@@ -61,6 +97,7 @@ class DataSetProcessor {
                  * 
                  */
                 collection[metaTitle] = actionResult;
+                // collection[propKey] = actionResult;
             }
             else {
 
@@ -68,8 +105,6 @@ class DataSetProcessor {
                     reqFn: this.process.bind(this),
                     actionPayload: actionPayload.value,
                     callStack: [...parentCallStack, ...currentIterationCallStack],
-                    // callStack: [...parentCallStack, ...currentIterationCallStack],
-                    actions,
                 });
 
                 /**
@@ -79,7 +114,8 @@ class DataSetProcessor {
                  * @type {Object}
                  * 
                  */
-                collection[metaTitle] = actionResult;
+                collection[propKey] = actionResult;
+                // collection[metaTitle] = actionResult;
             }
 
         }
@@ -101,7 +137,6 @@ class DataSetProcessor {
      * @param {Object} payload 
      */
     async #executeAction(actionName, payload) {
-        console.log({ actionName, payload });
         
         const action = this.#actions.get(actionName);
 
@@ -120,12 +155,23 @@ class DataSetProcessor {
     #actions;
 
     /**
+     * @type {LinksBuffer} 
+     */
+    #linksBuffer;
+
+    /**
      * 
-     * @param {{
-     * }} deps 
+     * @param {Object} deps
+     * @param {LinksBuffer} deps.linkBuffer 
      */
     constructor(deps={}) {
-        const { smth } = deps;
+        const linkBuffer = deps.linkBuffer;
+
+        if(linkBuffer === undefined) {
+            throw new Error(`DataSetProcessor: LinksBuffer required`);
+        }
+
+        this.#linksBuffer = linkBuffer;
 
         this.#actions = new Map();
     }

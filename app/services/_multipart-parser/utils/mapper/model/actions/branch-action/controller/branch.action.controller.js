@@ -1,7 +1,7 @@
 const { ResolveSuccessError } = require("../../../../../../../../utils/success-error-resolver/model/suc-err-res");
 const { dbControllersRouter } = require("../../../../../../../database-adapter/controller/db-adapter.controller");
 const { filemanager } = require("../../../../../../../filemanager.service.js/fmanager.controller");
-const { ATypeActionFactory } = require("../model/branch-action.model");
+const { BranchActionFactory: ATypeActionFactory } = require("../model/branch-action.model");
 
 const resolveSuccesError = new ResolveSuccessError();
 
@@ -23,9 +23,19 @@ resolveSuccesError.addSuccessResolver(async (payload, next) => {
 });
 
 const branchAction = ATypeActionFactory({
-    resolveSuccesError,
+    // resolveSuccesError,
     filemanager,
     dbControllersRouter,
+    // linksBufferInstance
 });
+
+// /**
+//  * 
+//  * @param {Object} deps
+//  * @param {} deps 
+//  */
+// const branchActionFactory = (deps = {}) => {
+
+// }
 
 module.exports = { branchAction }

@@ -1,29 +1,38 @@
 const { ResolveSuccessError } = require("../../../../../../../../utils/success-error-resolver/model/suc-err-res");
 const { DBAdapter } = require("../../../../../../../database-adapter/models/db-adapter.model");
 const { FileManager } = require("../../../../../../../filemanager.service.js/filemanager.service");
+const { LinksBuffer } = require("../../../../../data-links-buffer/data-links-buffer.util");
 
 /**
  * 
  * @param {{
  *  resolveSuccesError:ResolveSuccessError;
  *  filemanager:FileManager;
- *  dbControllersRouter:Map<string,DBAdapter>
+ *  dbControllersRouter:Map<string,DBAdapter>;
+ *  linksBufferInstance:LinksBuffer;
  * }} deps 
  * @returns 
 */
-function ATypeActionFactory(deps = {}) {
+function BranchActionFactory(deps = {}) {
     
-    const resolveSuccessError = deps.resolveSuccesError;
-    const filemanager = deps.filemanager;
-    const dbControllersRouter = deps.dbControllersRouter;
+    const resolveSuccessError = deps.resolveSuccesError || null;
+    const filemanager = deps.filemanager || null;
+    const dbControllersRouter = deps.dbControllersRouter || null;
+    const linksBufferInstance = deps.linksBufferInstance || null;
 
-    if (!resolveSuccessError || !filemanager) {
-        throw new Error(`ResolveSuccessError & filemanager are required`);
+    if(!dbControllersRouter) {
+
     }
 
-    
+    if(!linksBufferInstance) {
+        throw new Error(`BranchActionFactory: LinksBuffer instance required`);
+    }
+
+    if (!resolveSuccessError || !filemanager) {
+        throw new Error(`BranchActionFactory: ResolveSuccessError & filemanager are required`);
+    }
+
     resolveSuccessError.addSuccessResolver(async (success, next) => {
-        console.log('ResolveSuccessError/onSuccess/mw1', { success, next });
         
         const { filename } = success;
     
@@ -32,29 +41,17 @@ function ATypeActionFactory(deps = {}) {
     });
     
     resolveSuccessError.addSuccessResolver(async (payload, next) => {
-        console.log('ResolveSuccessError/onSuccess/mw2', { payload, next });
         
         // return await next(success);
         return payload;
     
     });
 
-
     /**
-     * 
-     * "parentCallStack" structure:
-     * [
-     *     {
-     *         
-     *     
-     *     }
-     * 
-     * ]
-     * 
-     * 
      * 
      * @description
      * regFn: this action`s caller (Mapper)
+     * callstack - содержит трассировку вызова рекурсивного коллера
      * 
      * @param {{
      *  reqFn:(data:Object, parentCallStack:Object[], actions:Object) => Promise<any>;
@@ -63,16 +60,29 @@ function ATypeActionFactory(deps = {}) {
      *  actions:Object.<string,Function>;
      * }} payload 
      * @returns 
+     * @throws {Error} - branch action: incorrect payload data
      */
     const fn = async (payload = {}) => {
 
         // console.log(`\x1b[33maction/AAction: `, { payload }, `\x1b[0m`);
         
-        const { reqFn, actionPayload, callStack, actions } = payload;
+        const { reqFn, actionPayload, callStack } = payload;
         
-        // console.log(`\x1b[33maction/AAction: `, {callStack:callStack.join('/')} , `\x1b[0m`);
+        if(!reqFn || !actionPayload || !callStack) {
+            console.log(`\x1b[33m`, payload , `\x1b[0m`);
+            throw new Error(`branch action: incorrect payload data`);
+        }
+        
+        // рекурсивно заходим дальше по ветке в сторону листьев
+        // собираем данные 
+        /**
+         * @type {Object}
+         */
+        const branchResult = await reqFn(actionPayload, callStack);
     
-        const branchResult = await reqFn(actionPayload, callStack, actions);
+        if(!branchResult) {
+            throw new Error(`branch action: reqursive function returned falsy value`);
+        }
 
         /**
          * @type {string[]}
@@ -82,7 +92,6 @@ function ATypeActionFactory(deps = {}) {
          * @type {string[]}
          */
         const propKeyPath = [];
-
         callStack.forEach(elem => {
             const { propDescription, propKey } = elem;
             propDescriptionPath.push(propDescription);
@@ -95,67 +104,86 @@ function ATypeActionFactory(deps = {}) {
          */
         if (propDescriptionPath.join('/') === 'tableName/groupId') {
             
-            console.log(`\x1b[33maction/BAction: `, { result: branchResult }, `\x1b[0m`);
-            
-            /**
-             * @description 
-             * обрабатываем полученные данные
-             * 
-             * originalFileName: { data: 'foo.txt', dataType: 'string' },
-             * mime: { data: 'mime/foo', dataType: 'string' },
-             * file: {
-             *     data: <Buffer 31 32 33 2d 31 32 33 2d 31 32 33 2d 31 32 33>,
-             *     dataType: 'buffer'
-             * },
-             * linkId: { data: '123-123-123-123', dataType: 'string' }
-             * 
-             * 
-            */
-            
-            const { mime, linkId, file, originalFileName } = branchResult;
-           
-            if (!originalFileName || !mime || !file || !linkId) {
-                throw new Error(`ATypeAction: required consistent data but not received`);
+            // console.log(`tablename/groupid:` , propKeyPath, branchResult);
+
+            const tableName = propKeyPath[0];
+
+            switch (tableName) {
+                case 'files':
+                    // console.log('\x1b[31m',`tableName: files`, branchResult, '\x1b[0m');
+
+                    const originalFileName = branchResult.originalFileName;
+                    const mime = branchResult.mime;
+                    const file = branchResult.file;
+                    const linkId = branchResult.linkId;
+
+                    if(!originalFileName || !mime || !file || !linkId) {
+
+                        throw new Error(`Branch action: reqursive caller must be return consistent data`);
+                    }
+
+                    const dbAdapter = dbControllersRouter.get(tableName);
+
+                    const fmResult = await filemanager.write(file.data);
+
+                    // console.log({fmResult});
+
+                    const { filename } = fmResult.success;
+
+                    const dbresponse = dbAdapter.createOne({
+                        originalFileName, fileSystemFilename:filename, mime
+                    });
+
+                    /**
+                     * success: {
+                     *  newRowIdHash: '3cec970c907076f02e428d5f75ec66c12804fc484a16698c7edc4137d37e7f0d',
+                     *  row: [Object]
+                     * },
+                     * error: {
+                     *  // what
+                     * }
+                     * 
+                     */
+                    // console.log({dbresponse});
+
+                    linksBufferInstance.push({
+                        linkId:linkId.data,
+                        rowId:dbresponse.success.newRowIdHash,
+                        tableName:tableName,
+                    });
+
+                    break;
+                case 'video-playlist':
+
+                    const dbDataSet = {} ;
+
+                    for (const [propKey, propValue] of Object.entries(branchResult)) {
+
+                        if(propValue.dataType === 'link') {
+
+                            const result = linksBufferInstance.getLinkDataById(propValue.data);
+
+                            dbDataSet[propKey] = {
+                                rowId:result.rowId,
+                                tableName:result.tableName,
+                            }
+
+                            continue;
+                        }
+
+                        dbDataSet[propKey] = propValue.data instanceof Buffer ? propValue.data.toString('utf-8') : propValue.data;
+                    }
+
+                    console.log({dbDataSet});
+
+                    const usersDBAdapter = dbControllersRouter.get('video-playlist');
+
+                    usersDBAdapter.createOne(dbDataSet);
+
+                    console.log('\x1b[31m',`tableName: users`, branchResult,'\x1b[0m');
+                    break;
+
             }
-            
-            const filemanagerResult = await filemanager.write(file.data);
-
-            const resolved = await resolveSuccessError.handle(filemanagerResult);
-
-            console.log('\x1b[33m', { propKeyPath }, '\x1b[0m');
-            
-            /**
-             * 
-             * `the path structure`
-             * 
-             * - propkeyPath[0] - tableName
-             * - propkeyPath[1] - groupId
-             * 
-             * @type {string}
-             * 
-             */
-            const tableName = propKeyPath[0] // hardcode detected!! isn`t
-
-            if (!tableName) {
-                throw new Error(`ATypeAction: table name fetching error`);
-            }
-            
-            /**
-             * @type {DBAdapter}
-            */
-            const dbAdapter = dbControllersRouter.get(tableName);
-           
-            if (!dbAdapter) {
-                throw new Error(`ATypeAction: dbAdapter fetching error`);
-            }
-
-            const dBDataSet = {
-
-            }
-
-            // 
-            
-            // console.log('ATypeAction/afterFileManager', { resolved }, { payload });
 
         }
     
@@ -166,4 +194,4 @@ function ATypeActionFactory(deps = {}) {
 
 }
 
-module.exports = { ATypeActionFactory  }
+module.exports = { BranchActionFactory: BranchActionFactory  }
