@@ -203,21 +203,7 @@ class MultiTableGrouppingAgent {
              * 
              * @see dev.log.md#1.2 for grouping strategy
              */
-            // const fileDataSet = this.#fileDataSetAdapter?.({
-            //     linkId: LINK_ID,
-            //     tableName: process.env.FILES_DATA_TABLE || 'files',
-            //     groupId: randomBytes(32).toString("hex"),
-            //     columnName,
-            //     dataType,
-            //     contentType,
-            //     filename,
-            //     body,
-            // })/*  || fileDataSetFactory({
-            //     ...data,
-            //     linkId: LINK_ID,
-            //     tableName: process.env.FILES_DATA_TABLE || 'files',
-            //     groupId: LINK_ID,
-            // }) */;
+            
 
             const fileDataSet = {
                 linkId:LINK_ID,
@@ -247,7 +233,7 @@ class MultiTableGrouppingAgent {
              * }
              */
             this.#mergedGroups.files = this.#dataTransformer.process(
-                this.#fileDataSetSchema/*  || FILE_DATA_SET_SCHEMA */,
+                this.#fileDataSetSchema,
                 fileDataSet,
                 this.#mergedGroups.files);
             
@@ -260,24 +246,9 @@ class MultiTableGrouppingAgent {
              * 
              * Example: users table gets an 'avatar' column containing the file ID
              */
-            // const fieldDataSet = this.#fileDataSetAdapter?.({
-            //     // linkId: LINK_ID,
-            //     tableName,
-            //     groupId,
-            //     columnName,
-            //     dataType:'link',
-            //     contentType,
-            //     filename,
-            //     body:LINK_ID,
-            // })/*  || fieldDataSetFactory({
-            //     tableName,
-            //     groupId,
-            //     columnName,
-            //     dataType: 'link',
-            //     body: LINK_ID,
-            // }) */;
 
-            const fieldDataSet = {
+
+            const linkedFieldDataSet = {
                 tableId,
                 tableName,
                 groupId,
@@ -290,7 +261,7 @@ class MultiTableGrouppingAgent {
             
             this.#mergedGroups.fields = this.#dataTransformer.process(
                 this.#linkedFieldDataSetSchema/*  || LINKED_FIELD_DATA_SET_SCHEMA */,
-                fieldDataSet,
+                linkedFieldDataSet,
                 this.#mergedGroups.fields);
             
             return ;

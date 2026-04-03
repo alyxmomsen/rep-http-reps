@@ -66,6 +66,9 @@ function BranchActionFactory(deps = {}) {
 
         // console.log(`\x1b[33maction/AAction: `, { payload }, `\x1b[0m`);
         
+        /**
+         * консистентный ответ
+         */
         const { reqFn, actionPayload, callStack } = payload;
         
         if(!reqFn || !actionPayload || !callStack) {
@@ -80,18 +83,55 @@ function BranchActionFactory(deps = {}) {
          */
         const branchResult = await reqFn(actionPayload, callStack);
         
+
+        /**
+         * каждый Action (Branch action и Leaf action)
+         * содержат объект
+         * 
+         * {
+         *  tree:BranchResul.tree,
+         *  supply:Object
+         * }
+         * 
+         * supply и tree - это "рабочие" названия свойств (на скорую руку, - что бы не отвлекаться от разработки)
+         * 
+         */
         const currentContextBranch = {
             tree:branchResult.tree,
             supply:{...(branchResult.supply || {})}
         };
 
 
-
+        /**
+         * аварийный выброс ошибки, на момент разработки
+         */
         if(!branchResult) {
             throw new Error(`branch action: reqursive function returned falsy value`);
         }
 
         /**
+         * @description 
+         * 
+         * содержит описательные сегменты:
+         * 
+         * например , если структура объекта возвращенная первым Mapper
+         * такая: 
+         * 
+         * 'video-playlist': [
+         *      'branch',
+         *      {
+         *      meta: { title: 'tableName' },
+         *      value: {
+         *          '04': [ 'branch', { meta: [Object], value: [Object] } ],
+         *          '05': [ 'branch', { meta: [Object], value: [Object] } ]
+         *      }
+         *      }
+         *  ],
+         * 
+         * то propDescriptionPath будет примерно такой: ['tableName', 'groupId']
+         * 
+         * соответственно, propKeyPath ожидается такой: ['video-playlist','04']
+         * 
          * @type {string[]}
          */
         const propDescriptionPath = [];
@@ -108,35 +148,70 @@ function BranchActionFactory(deps = {}) {
         /**
          * handle route "tableName/groupId"
          * 
+         * здесь роутинг по результирующим путям, что и так очевидно.
+         * скоро это будет полноценный роутер
+         * 
+         * 
          */
         if (propDescriptionPath.join('/') === 'tableName/groupId') {
             
-            // console.log(`tablename/groupid:` , propKeyPath, branchResult);
-
+            /**
+             * это опять хардкод, что бы набросать структуру
+             * 
+             * преполагается то что в корне пути всегда tableName, далее groupId, columnName и тд
+             * 
+             */
             const tableName = propKeyPath[0];
+
+
+
+            /**
+             * 
+             * когда мы находимся на 'tableName/groupId'
+             * предполагается то что рекурсивная функция reqFn(...) 
+             * уже выполнила обход "листьев" и мы располагаем данными
+             * 
+             * получив tableName `const tableName = propKeyPath[0]`
+             * мы можем роутиться
+             * 
+             * 
+             */
 
             switch (tableName) {
                 case 'files':
-                    // console.log('\x1b[31m',`tableName: files`, branchResult, '\x1b[0m');
-
+                    
+                    /**
+                     * предполагается что данные о файле являются консистентными
+                     * так же как и branchResult.tree и branchResult.supply
+                     * , то я просто беру их зная что где должно быть
+                     */
+                    /** */
                     const originalFileName = branchResult.tree.originalFileName;
                     const mime = branchResult.tree.mime;
                     const file = branchResult.tree.file;
                     const linkId = branchResult.tree.linkId;
 
+                    /**
+                     * проверка на момент тестирования, но возможно останется
+                     */
                     if(!originalFileName || !mime || !file || !linkId) {
 
                         throw new Error(`Branch action: reqursive caller must be return consistent data`);
                     }
 
-                    const dbAdapter = dbControllersRouter.get(tableName);
-                    console.log({file});
+                    /**
+                     * 
+                     * сначала пробуем сохранять файл, и если успешно
+                     * пробуем сохранять в БД имея в наличии 
+                     * сгенерированное имя файла в файловой системе
+                     * 
+                     */
+
                     const fmResult = await filemanager.write(file.data);
-
-                    // console.log({fmResult});
-
+                    
                     const { filename } = fmResult.success;
-
+                    
+                    const dbAdapter = dbControllersRouter.get(tableName);
                     const dbresponse = dbAdapter.createOne({
                         originalFileName, fileSystemFilename:filename, mime
                     });
@@ -154,19 +229,30 @@ function BranchActionFactory(deps = {}) {
                     // console.log({dbresponse});
 
                     linksBufferInstance.push({
-                        linkId:linkId/* .tree */.data,
+                        linkId:linkId.data,
                         rowId:dbresponse.success.newRowIdHash,
                         tableName:tableName,
                     });
 
+                    /**
+                     * пока что, "на коленке", 
+                     * я здесь просто сохраняю результат в массив
+                     * что бы было что выводить данные на клиенте
+                     * но, на самом деле нужно данные сначала линковать
+                     * запись о файле с записью о элементе плейлиста
+                     * 
+                     * что касается нижеследующего кода
+                     * `currentContextBranch.supply?.addedData`
+                     * вообще я хотел сделать так что бы "supply" содержал разного рода информацию результатов 
+                     * проделанной работы рекурсивного обхода, но быстро это сделать не получилось и я захардкодил
+                     * так как получился слишком большой контекст для одновременной разработки.
+                     */
                     if(!currentContextBranch.supply?.addedData) {
-                        currentContextBranch.supply.addedData = ['foo'];
+                        currentContextBranch.supply.addedData = [{id:dbresponse.success.newRowIdHash, tableName:'files', rowData:dbresponse.success.row}];
                     }
                     else {
-                        currentContextBranch.supply.addedData.push({row:dbresponse.success.newRowIdHash});
+                        currentContextBranch.supply.addedData.push({id:dbresponse.success.newRowIdHash, tableName:'files', rowData:dbresponse.success.row});
                     }
- 
-                    // console.log({currentContextBranch});
 
                     break;
                 case 'video-playlist': {
@@ -175,28 +261,67 @@ function BranchActionFactory(deps = {}) {
     
                     for (const [propKey, propValue] of Object.entries(branchResult.tree)) {
     
-                        if(propValue/* .tree */.dataType === 'link') {
+                        /**
+                         * случай, если свойство будет содержать ссылку на другую запись в таблице.
+                         */
+                        if(propValue.dataType === 'link') {
     
-                            const result = linksBufferInstance.getLinkDataById(propValue/* .tree */.data);
+                            /**
+                             * ищем в буффере данные для ссылки
+                             */
+                            /** */
+                            const result = linksBufferInstance.getLinkDataById(propValue.data);
     
+                            /** 
+                             * пока отлаживаю, выбрасываю исключение, если данные не нашлись
+                             * это может быть потому что данные обычных полей обрабатываются раньше чем
+                             * данные файла.
+                             * 
+                             * нужно обработать этот кейс! например создать observer. 
+                             * если файл будет обработан позже , то он должен будет инициировать довыполнение
+                             * "замороженого" процесса 
+                             */
                             if(!result) {
-                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue/* .tree */.data}\x1b[0m`);
-                                throw new Error(`links buffer: no data by id ${propValue/* .tree */.data}`);
+                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue.data}\x1b[0m`);
+                                throw new Error(`links buffer: no data by id ${propValue.data}`);
                             }
     
+                            /**
+                             * заполняем datset для базы данных
+                             * 
+                             * в базе данных (я пока что не думал как сделать лучше) 
+                             * ссылки на другие данные выглядят именно так , как выражено 
+                             * в нижеследующей процедуре
+                             */
+
                             dbDataSet[propKey] = {
                                 rowId:result.rowId,
                                 tableName:result.tableName,
                             }
-    
+                            
+                            /**
+                             * переходим к следующему property 
+                             */
+
                             continue;
                         }
-    
-                        dbDataSet[propKey] = propValue/* .tree */.data instanceof Buffer ? propValue/* .tree */.data.toString('utf-8') : propValue/* .tree */.data;
+
+                        /**
+                         * 
+                         * кейс , если проперти не ссылка.
+                         * 
+                         * что касается проверки "propValue.data instanceof Buffer"
+                         * в базе данных я не планирую сохранять Buffer 
+                         * (я просто не размышлял над этим) 
+                         * скорее всего все значения я буду сохранять ввиде строк, но в метаданных указывать тип данных
+                         * 
+                         * но, я не планирую разрабатывать базы даннх , и перейду на postgres или mongo, так что то как это выглядит сейчас
+                         * это временно
+                         */
+                        
+                        dbDataSet[propKey] = propValue.data instanceof Buffer ? propValue.data.toString('utf-8') : propValue.data;
                     }
-    
-                    console.log({dbDataSet});
-    
+       
                     const usersDBAdapter = dbControllersRouter.get('video-playlist');
     
                     usersDBAdapter.createOne(dbDataSet);
@@ -211,13 +336,13 @@ function BranchActionFactory(deps = {}) {
 
                     for (const [propKey, propValue] of Object.entries(branchResult.tree)) {
 
-                        if(propValue/* .tree */.dataType === 'link') {
+                        if(propValue.dataType === 'link') {
 
-                            const result = linksBufferInstance.getLinkDataById(propValue/* .tree */.data);
+                            const result = linksBufferInstance.getLinkDataById(propValue.data);
 
                             if(!result) {
-                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue/* .tree */.data}\x1b[0m`);
-                                throw new Error(`links buffer: no data by id ${propValue/* .tree */.data}`);
+                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue.data}\x1b[0m`);
+                                throw new Error(`links buffer: no data by id ${propValue.data}`);
                             }
 
                             dbDataSet[propKey] = {
@@ -228,7 +353,7 @@ function BranchActionFactory(deps = {}) {
                             continue;
                         }
 
-                        dbDataSet[propKey] = propValue/* .tree */.data instanceof Buffer ? propValue/* .tree */.data.toString('utf-8') : propValue/* .tree */.data;
+                        dbDataSet[propKey] = propValue.data instanceof Buffer ? propValue.data.toString('utf-8') : propValue.data;
                     }
 
                     console.log({dbDataSet});

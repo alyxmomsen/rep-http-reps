@@ -89,15 +89,11 @@ class DataSetProcessor {
                     callStack: [...parentCallStack, ...currentIterationCallStack],
                 });
 
-                for (const [k, v] of Object.entries(actionResult.tree)) {
-                    collection.tree[k, v]
-                }
-                
                 /**
                  * 
                  * collect child parsed data
+                 * только зачем это было нужно..
                  * 
-                 * @type {Object}
                  * 
                  */
                 // collection[metaTitle] = actionResult;
@@ -124,11 +120,8 @@ class DataSetProcessor {
                  * @type {Object}
                  * 
                  */
-                collection.tree[propKey] = actionResult.tree;
-                collection.supply.addedData = [...(collection.supply?.addedData || []), ...(actionResult.supply?.addedData || [])]
-                // collection['branch'][propKey] = leaf;
-                // if(collection['branch'])
-                // collection[metaTitle] = actionResult;
+                collection.tree[propKey] = tree;
+                collection.supply.addedData = [...(supply.addedData || []), ...(supply.addedData || [])]
             }
 
         }

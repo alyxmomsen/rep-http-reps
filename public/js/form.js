@@ -246,6 +246,8 @@ function submitFinalHandlerMiddleware (deps = {}) {
             return;
         }
 
+        console.log({dbStoredData});
+
         tooltipsFrame.style.right = 0;
         tooltipsFrame.style.display = 'flex';
 
