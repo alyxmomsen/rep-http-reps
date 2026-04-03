@@ -97,6 +97,7 @@ describe('data mapper v2' , () => {
              * merge first time
              */
             context  = dataMapper.process(Schema.File, fileDataSet, context);
+
             /**
              * merge second time
              */
@@ -110,6 +111,7 @@ describe('data mapper v2' , () => {
                 tableName:'video-playlist',
                 body:Buffer.from(`my description`),
             }), context);
+            
             /**
              * merge third time (regular data)
              */
