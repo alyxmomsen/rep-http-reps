@@ -45,12 +45,14 @@ describe('in-memory database', () => {
 
         const arr = ['foo', {bar:'baz'}, 13, true, {}, []] ;
 
-        expect(() => responses.push(db.createOne(tableId, arr[0]))).toThrow();
-        expect(() => responses.push(db.createOne(tableId, arr[1]))).not.toThrow();
-        expect(() => responses.push(db.createOne(tableId, arr[2]))).toThrow();
-        expect(() => responses.push(db.createOne(tableId, arr[3]))).toThrow();
-        expect(() => responses.push(db.createOne(tableId, arr[4]))).not.toThrow();
-        expect(() => responses.push(db.createOne(tableId, arr[5]))).not.toThrow();
+        const message = `DataBase.createOne: required an Object but provided not`;
+
+        expect(() => responses.push(db.createOne(tableId, arr[0]))).toThrow(message); // 🛑 : 'foo'
+        expect(() => responses.push(db.createOne(tableId, arr[2]))).toThrow(message); // 🛑 : 13
+        expect(() => responses.push(db.createOne(tableId, arr[3]))).toThrow(message); // 🛑 : true
+        expect(() => responses.push(db.createOne(tableId, arr[1]))).not.toThrow(message); // ✅ {bar:'baz'}
+        expect(() => responses.push(db.createOne(tableId, arr[4]))).not.toThrow(message); // ✅ {}
+        expect(() => responses.push(db.createOne(tableId, arr[5]))).not.toThrow(message); // ✅ []
         
         const data =  db.readAll(tableId);
         

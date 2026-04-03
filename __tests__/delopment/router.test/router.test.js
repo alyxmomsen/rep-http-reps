@@ -183,4 +183,89 @@ describe ('router-dev', () => {
         expect(sequenceStr).toEqual('mw1a,mw2a,mw3a,mw3b,mw2b,mw1b');
 
     }) ;
+
+    test (`route must be wait if it is long polling request`,  async () => {
+
+        jest.useFakeTimers();
+
+        req.method = 'GET';
+        req.url = '/test';
+
+        const mockResponseEnd = jest.fn();
+
+        res.end = mockResponseEnd;
+
+        const  handler = jest.fn(async (req, res) => {
+            // res.end('foo bar baz done!');
+            setTimeout(() => res.end('timeouted'),1000);
+        });
+
+        router.get('/test',  handler);
+
+        await router.handleRequest(req, res);
+
+        // вызывает ли сразу
+        
+        expect(handler).toHaveBeenCalled();
+        expect(mockResponseEnd).not.toHaveBeenCalled();
+        
+        // вызывает ли через 5 секунд
+
+        jest.advanceTimersByTime(5000)
+        
+        expect(handler).toHaveBeenCalled();
+        expect(mockResponseEnd).toHaveBeenCalled();
+        
+    }) ;
+
+
+    test ('shuld get parsed params and query-params', async () => {
+
+        req.method = 'GET';
+        req.url = '/test/13/?foo=bar&bar=baz&broken=key=value'
+
+        const handler = jest.fn(async (req, res) => {
+
+            const params = req.params;
+            const queryParams = req.queryParams;
+
+            if(!params) {
+                
+                res.writeHead(400);
+                res.end('no params');
+                return;
+            }
+            
+            if(!queryParams) {
+                
+                res.writeHead(400);
+                res.end('no query params');
+                return;
+            }
+
+            // throw new Error('some error');
+            res.writeHead(200);
+            res.end('ok');
+        });
+
+        res.end = jest.fn();
+        // res.writeHead = jest.fn();
+
+        res.writeHead = jest.fn()/* .mockReturnThis() */;
+
+        router.get('/test/:id', handler);
+
+        const result = await router.handleRequest(req, res)
+
+        expect(res.writeHead).toHaveBeenCalledWith(200)
+        expect(req.params).toBeDefined();
+        expect(req.params).toHaveProperty('id', '13');
+        
+        expect(req.queryParams).toBeDefined();
+        expect(req.queryParams).toHaveProperty('foo', 'bar');
+        expect(req.queryParams).toHaveProperty('bar', 'baz');
+        expect(req.queryParams).toHaveProperty('broken', 'key');
+
+    });
+    
 });

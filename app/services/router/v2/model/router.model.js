@@ -79,11 +79,10 @@ class HTTPRouter {
                 await this.#executeMiddleware(req, res, [...this.#middleware, ...routeBundle.middleware]);
                 
                 await routeBundle.handler(req, res);
-                // return;
-                break; // 👈🏽⚠️
+
+                return;
             }
 
-            // ⚠️👇🏽 сразу отправляет 404 😱
             if(!res.headersSent) {
                 console.log(`router.handlerequest/send_404`);
                 res.writeHead(404, {
@@ -95,6 +94,11 @@ class HTTPRouter {
         catch (err) {
             
             console.log(`\x1b[31m`,{err}, `\x1b[0m`);
+
+            res.writeHead(500, {
+                "content-type":'application/json',
+            });
+            res.end(JSON.stringify({message:'internal routing error'}))
             
         }
     
