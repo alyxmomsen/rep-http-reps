@@ -153,7 +153,43 @@ function BranchActionFactory(deps = {}) {
                     });
 
                     break;
-                case 'video-playlist':
+                case 'video-playlist': {
+
+                    const dbDataSet = {} ;
+    
+                    for (const [propKey, propValue] of Object.entries(branchResult)) {
+    
+                        if(propValue.dataType === 'link') {
+    
+                            const result = linksBufferInstance.getLinkDataById(propValue.data);
+    
+                            if(!result) {
+                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue.data}\x1b[0m`);
+                                throw new Error(`links buffer: no data by id ${propValue.data}`);
+                            }
+    
+                            dbDataSet[propKey] = {
+                                rowId:result.rowId,
+                                tableName:result.tableName,
+                            }
+    
+                            continue;
+                        }
+    
+                        dbDataSet[propKey] = propValue.data instanceof Buffer ? propValue.data.toString('utf-8') : propValue.data;
+                    }
+    
+                    console.log({dbDataSet});
+    
+                    const usersDBAdapter = dbControllersRouter.get('video-playlist');
+    
+                    usersDBAdapter.createOne(dbDataSet);
+    
+                    console.log('\x1b[31m',`tableName: users`, branchResult,'\x1b[0m');
+                    break;
+                }
+
+                case 'users':
 
                     const dbDataSet = {} ;
 
@@ -162,6 +198,11 @@ function BranchActionFactory(deps = {}) {
                         if(propValue.dataType === 'link') {
 
                             const result = linksBufferInstance.getLinkDataById(propValue.data);
+
+                            if(!result) {
+                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue.data}\x1b[0m`);
+                                throw new Error(`links buffer: no data by id ${propValue.data}`);
+                            }
 
                             dbDataSet[propKey] = {
                                 rowId:result.rowId,

@@ -47,7 +47,8 @@ class DataSetProcessor {
          */
         const collection = {};
 
-        console.log('DataSetProcessor.process', {data});
+        console.log('DataSetProcessor.process');
+        console.dir(data, {depth:5});
         
         for (const [propKey, config] of Object.entries(data)) {
 

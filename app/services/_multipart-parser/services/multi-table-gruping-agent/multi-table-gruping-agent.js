@@ -324,9 +324,9 @@ class MultiTableGrouppingAgent {
         }
         
         this.#mergedGroups.fields = this.#dataTransformer.process(
-            this.#regularFieldDataSetSchema || REGULAR_FIELD_DATA_SET_SCHEMA,
+            this.#regularFieldDataSetSchema,
             regularFieldDataSet,
-            this.#mergedGroups.fields
+            this.#mergedGroups.fields,
         );
         
     }

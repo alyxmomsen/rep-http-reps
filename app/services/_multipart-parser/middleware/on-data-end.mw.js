@@ -3,6 +3,7 @@ const { FileManager } = require("../../filemanager.service.js/filemanager.servic
 const { dbControllersRouter: defaultDbRouter, dbControllersRouter } = require("../../database-adapter/controller/db-adapter.controller");
 const { DBAdapter } = require("../../database-adapter/models/db-adapter.model");
 const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.util");
+const { dataSetProcessorFactory } = require("../utils/mapper/controller/data-set-mapper.controller");
 
 /**
  * Middleware для финальной обработки: сохранение файлов и запись в БД
@@ -40,65 +41,19 @@ module.exports = function onDataEndMiddleware(deps = {}) {
      */
     const fn = async (payload, next) => {
 
-    // ============== define variables to transactions ============== 
+        console.log('on-data-end middleware: payload data' , {payload});
 
-    // /**
-    //  * @type {Map<string,any>}
-    //  */
-    // const transactions = new Map();
-    // /**
-    //  * @type {Array<Object>}
-    //  */
-    // const failedLinksFiles = [];
+        // console.dir(payload, {depth:20});
 
-    // ==============================================================
 
-        /* 
-            создаем каждый раз новый экземпляр что бы исключить издержки на
-            контроль состояния. просто, - каждый раз новый инстанс
-        */ 
-        const linksBuffer = formDataLinksBufferFactory();
-        
-        /**
-         * @type {Object}
-         */
-        const mergedDataSet = payload.mergedGroups;
-        
-        if(mergedDataSet === undefined) {
-            throw new Error('onDataEndMiddleware: required compiled groups but not given');
-        }
-
-        const { files, fields } = mergedDataSet;
-
-        // if(files)
-        
-
-        /* сначала файлы, потому что для БД нужны автоматические имена файлов в файловой системе */
-        
-        /* создаем валидатор файлов */
-        const fileDataSetValidator = validateFilesDataSetFactory({
-            dbRouter,
-            linksBuffer, // 👈 links buffer 
-            filemanager,
+        const datasetProcessor = dataSetProcessorFactory({
+            linksBuffer:new LinksBuffer(),
         });
 
-        const { failedLinksFiles } = await fileDataSetValidator(mergedDataSet.files);
-         
-        // теперь итерируемся по обычным полям:
-        const { successfullyStoredData:successfullyData } = await validateRegularFieldsDataSet(mergedDataSet.fields , {
-            dbRouter,
-            linksBuffer,// 👈 links buffer 
-        });
-        
-        const successfullyStoredData = [...successfullyData];
-
-
-        log('38;2;84;153;179', `all linked files: ` , {links:linksBuffer.getAllLinks()});
-
-        
+        await datasetProcessor.process(payload, []);
 
         // возвращаем "успех" и данные для репорта клиенту
-        return await next({ success: { addedData: successfullyStoredData } });
+        return await next({ success: { addedData:[] } });
     };
 
     return fn;
