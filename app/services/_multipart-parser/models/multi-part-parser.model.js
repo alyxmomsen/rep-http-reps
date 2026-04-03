@@ -254,7 +254,7 @@ function parseFormDataPart(part) {
     const separatorIndex = findSeparatorIndex(part, separatorBuffer);
 
     if (separatorIndex === -1) {
-        throw new Error(`mulitipart form data handler: parse form data part: incorrect part`);
+        throw new Error(`MultipartFormdataHandler/fn.parseFormDataPart: incorrect part`);
     }
 
     const headers = part.subarray(0, separatorIndex);
