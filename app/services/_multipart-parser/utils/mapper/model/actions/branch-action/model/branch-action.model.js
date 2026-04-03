@@ -79,7 +79,14 @@ function BranchActionFactory(deps = {}) {
          * @type {Object}
          */
         const branchResult = await reqFn(actionPayload, callStack);
-    
+        
+        const currentContextBranch = {
+            tree:branchResult.tree,
+            supply:{...(branchResult.supply || {})}
+        };
+
+
+
         if(!branchResult) {
             throw new Error(`branch action: reqursive function returned falsy value`);
         }
@@ -112,10 +119,10 @@ function BranchActionFactory(deps = {}) {
                 case 'files':
                     // console.log('\x1b[31m',`tableName: files`, branchResult, '\x1b[0m');
 
-                    const originalFileName = branchResult.originalFileName;
-                    const mime = branchResult.mime;
-                    const file = branchResult.file;
-                    const linkId = branchResult.linkId;
+                    const originalFileName = branchResult.tree.originalFileName;
+                    const mime = branchResult.tree.mime;
+                    const file = branchResult.tree.file;
+                    const linkId = branchResult.tree.linkId;
 
                     if(!originalFileName || !mime || !file || !linkId) {
 
@@ -123,7 +130,7 @@ function BranchActionFactory(deps = {}) {
                     }
 
                     const dbAdapter = dbControllersRouter.get(tableName);
-
+                    console.log({file});
                     const fmResult = await filemanager.write(file.data);
 
                     // console.log({fmResult});
@@ -147,25 +154,34 @@ function BranchActionFactory(deps = {}) {
                     // console.log({dbresponse});
 
                     linksBufferInstance.push({
-                        linkId:linkId.data,
+                        linkId:linkId/* .tree */.data,
                         rowId:dbresponse.success.newRowIdHash,
                         tableName:tableName,
                     });
+
+                    if(!currentContextBranch.supply?.addedData) {
+                        currentContextBranch.supply.addedData = ['foo'];
+                    }
+                    else {
+                        currentContextBranch.supply.addedData.push({row:dbresponse.success.newRowIdHash});
+                    }
+ 
+                    // console.log({currentContextBranch});
 
                     break;
                 case 'video-playlist': {
 
                     const dbDataSet = {} ;
     
-                    for (const [propKey, propValue] of Object.entries(branchResult)) {
+                    for (const [propKey, propValue] of Object.entries(branchResult.tree)) {
     
-                        if(propValue.dataType === 'link') {
+                        if(propValue/* .tree */.dataType === 'link') {
     
-                            const result = linksBufferInstance.getLinkDataById(propValue.data);
+                            const result = linksBufferInstance.getLinkDataById(propValue/* .tree */.data);
     
                             if(!result) {
-                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue.data}\x1b[0m`);
-                                throw new Error(`links buffer: no data by id ${propValue.data}`);
+                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue/* .tree */.data}\x1b[0m`);
+                                throw new Error(`links buffer: no data by id ${propValue/* .tree */.data}`);
                             }
     
                             dbDataSet[propKey] = {
@@ -176,7 +192,7 @@ function BranchActionFactory(deps = {}) {
                             continue;
                         }
     
-                        dbDataSet[propKey] = propValue.data instanceof Buffer ? propValue.data.toString('utf-8') : propValue.data;
+                        dbDataSet[propKey] = propValue/* .tree */.data instanceof Buffer ? propValue/* .tree */.data.toString('utf-8') : propValue/* .tree */.data;
                     }
     
                     console.log({dbDataSet});
@@ -189,19 +205,19 @@ function BranchActionFactory(deps = {}) {
                     break;
                 }
 
-                case 'users':
+                case 'users':{
 
                     const dbDataSet = {} ;
 
-                    for (const [propKey, propValue] of Object.entries(branchResult)) {
+                    for (const [propKey, propValue] of Object.entries(branchResult.tree)) {
 
-                        if(propValue.dataType === 'link') {
+                        if(propValue/* .tree */.dataType === 'link') {
 
-                            const result = linksBufferInstance.getLinkDataById(propValue.data);
+                            const result = linksBufferInstance.getLinkDataById(propValue/* .tree */.data);
 
                             if(!result) {
-                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue.data}\x1b[0m`);
-                                throw new Error(`links buffer: no data by id ${propValue.data}`);
+                                console.log(`\x1b[31mlinks buffer: no data by id ${propValue/* .tree */.data}\x1b[0m`);
+                                throw new Error(`links buffer: no data by id ${propValue/* .tree */.data}`);
                             }
 
                             dbDataSet[propKey] = {
@@ -212,23 +228,26 @@ function BranchActionFactory(deps = {}) {
                             continue;
                         }
 
-                        dbDataSet[propKey] = propValue.data instanceof Buffer ? propValue.data.toString('utf-8') : propValue.data;
+                        dbDataSet[propKey] = propValue/* .tree */.data instanceof Buffer ? propValue/* .tree */.data.toString('utf-8') : propValue/* .tree */.data;
                     }
 
                     console.log({dbDataSet});
 
-                    const usersDBAdapter = dbControllersRouter.get('video-playlist');
+                    const usersDBAdapter = dbControllersRouter.get('users');
 
                     usersDBAdapter.createOne(dbDataSet);
 
                     console.log('\x1b[31m',`tableName: users`, branchResult,'\x1b[0m');
                     break;
+                }
 
             }
 
         }
     
-        return branchResult;
+        console.log({currentContextBranch});
+        // return branchResult;
+        return currentContextBranch
     };
 
     return fn;

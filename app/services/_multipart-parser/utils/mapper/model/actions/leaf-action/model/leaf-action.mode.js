@@ -2,7 +2,8 @@ function BTypeActionFactory(deps={}) {
     
     /**
      * 
-     * @param {Object} payload 
+     * @param {Object} payload
+     * @returns {leaf:{data:any;dataType:string}, supply:Object} 
      */
     const fn = async (payload = {}) => {
 
@@ -18,7 +19,7 @@ function BTypeActionFactory(deps={}) {
     
         const { data, dataType } = actionPayload;
     
-        return { data, dataType };
+        return {tree:{data, dataType}, supply:{}};
     }
 
     return fn;

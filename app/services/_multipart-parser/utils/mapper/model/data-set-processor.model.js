@@ -45,7 +45,8 @@ class DataSetProcessor {
         /**
          * 
          */
-        const collection = {};
+        // const collection = {};
+        const collection = {tree:{}, supply:{}}
 
         console.log('DataSetProcessor.process');
         console.dir(data, {depth:5});
@@ -88,8 +89,8 @@ class DataSetProcessor {
                     callStack: [...parentCallStack, ...currentIterationCallStack],
                 });
 
-                for (const [k, v] of Object.entries(actionResult)) {
-                    collection[k, v]
+                for (const [k, v] of Object.entries(actionResult.tree)) {
+                    collection.tree[k, v]
                 }
                 
                 /**
@@ -99,8 +100,9 @@ class DataSetProcessor {
                  * @type {Object}
                  * 
                  */
-                collection[metaTitle] = actionResult;
-                // collection[propKey] = actionResult;
+                // collection[metaTitle] = actionResult;
+                collection.tree[propKey] = actionResult.tree;
+                collection.supply.addedData = [...(collection.supply?.addedData || []), ...(actionResult.supply?.addedData || [])]
             }
             else {
 
@@ -111,13 +113,21 @@ class DataSetProcessor {
                 });
 
                 /**
+                 * at now these are magical variables
+                 */
+                const { tree, supply } = actionResult;
+
+                /**
                  * 
                  * collect child parsed data
                  * 
                  * @type {Object}
                  * 
                  */
-                collection[propKey] = actionResult;
+                collection.tree[propKey] = actionResult.tree;
+                collection.supply.addedData = [...(collection.supply?.addedData || []), ...(actionResult.supply?.addedData || [])]
+                // collection['branch'][propKey] = leaf;
+                // if(collection['branch'])
                 // collection[metaTitle] = actionResult;
             }
 

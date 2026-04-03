@@ -111,8 +111,8 @@ class MultipartFormdataHandler {
                     
                 */
                 const middlewareresponse = await this.#executeMiddleware({
-                    ...mergedGroups.fields, 
                     ...mergedGroups.files,
+                    ...mergedGroups.fields, 
                 }, this.#onDataEndMiddleware);
 
                 // console.log();

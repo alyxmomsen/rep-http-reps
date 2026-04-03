@@ -111,7 +111,7 @@ describe('data mapper v2' , () => {
                 tableName:'video-playlist',
                 body:Buffer.from(`my description`),
             }), context);
-            
+
             /**
              * merge third time (regular data)
              */
@@ -125,12 +125,13 @@ describe('data mapper v2' , () => {
                 depth:20,
             });
 
-            await dataSetProcessorFactory().process(context, []);
+            const dataSetProcessorResult = await dataSetProcessorFactory().process(context, []);
             
             const videoPlaylistData = dataBase.readAll('video-playlist');
             const filessdbdata = dataBase.readAll('files');
 
             console.dir({
+                dataSetProcessorResult,
                 videoPlaylistData,
                 filessdbdata,
             }, {depth:20});
