@@ -33,6 +33,12 @@ describe('data mapper v2' , () => {
      */
     let dataSetMaker;
 
+    let context;
+
+    let arr;
+
+    let fn;
+
     beforeEach(() => {
 
         dataMapper = dataMapperFactory();
@@ -48,25 +54,21 @@ describe('data mapper v2' , () => {
             filename:'some.name.png',
             linkId:'123-123-123-123'
         });
-        
-    });
 
-    test('should smth' , async () => {
-
-        const arr = [{
+        arr = [{
             file:{
                 
             }
         }];
 
-        let context = {};
-
+        context = {};
+        
         /**
          * 
          * @param {Object} overrides 
          */
-        const fn = (overrides={}) => {
-
+        fn = async (config={}) => {
+    
     
             const linkId = 'link-id-' + Date.now();
     
@@ -116,40 +118,47 @@ describe('data mapper v2' , () => {
                 tableName:'video-playlist',
                 body:Buffer.from(`my title`),
             }), context);
-        }
 
-        fn();
+            console.dir({context}, {
+                depth:20,
+            });
 
-        console.dir({context}, {
-            depth:20,
-        });
-
-        await dataSetProcessorFactory().process(context, []);
-        
-        const videoPlaylistData = dataBase.readAll('video-playlist');
-        const filessdbdata = dataBase.readAll('files');
-
-        console.dir({
-            videoPlaylistData,
-            filessdbdata,
-        }, {depth:20});
-
-        const router = new HTTPRouter({});
-
-        router.get('/test', async (req, res) => {
-            console.log(`handled`);
+            await dataSetProcessorFactory().process(context, []);
             
-            res.end('sent');
-        });
+            const videoPlaylistData = dataBase.readAll('video-playlist');
+            const filessdbdata = dataBase.readAll('files');
 
-        const req = new IncomingMessage(null);
-        const res = new ServerResponse(req);
+            console.dir({
+                videoPlaylistData,
+                filessdbdata,
+            }, {depth:20});
 
-        req.method = 'GET';
-        req.url = '/test';
-        // res.writeH
+            const router = new HTTPRouter({});
 
-        await router.handleRequest(req, res);
+            router.get('/test', async (req, res) => {
+                console.log(`handled`);
+                
+                res.end('sent');
+            });
+
+            const req = new IncomingMessage(null);
+            const res = new ServerResponse(req);
+
+            req.method = 'GET';
+            req.url = '/test';
+            // res.writeH
+
+            await router.handleRequest(req, res);
+
+
+        }
+    });
+
+    test('should smth' , async () => {
+
+        await fn();
+
+        
 
     }) ;
 });

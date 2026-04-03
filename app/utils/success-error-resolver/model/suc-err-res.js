@@ -5,19 +5,24 @@ class ResolveSuccessError {
      * @param {{success?:Object;error?:Object}} res 
      */
     async handle(res={}) {
-        const { success, error } = res;
+        const successCase = res.success;
+        const errorCase = res.error;
 
-        if (error) {
-            console.log(`\x1b[31mResolveSuccessError/onError\x1b[0m`);
+        if (errorCase) {
+
+            const result = await this.#executeMiddleware(errorCase, this.#errorHandlers)
+            
             return;
         }
         
-        if (!success) {
-            console.log(`\x1b[31mResolveSuccessError/onNoSuccess\x1b[0m`);
+        if (!successCase) {
+            
+            const result = await this.#executeMiddleware(errorCase, this.#errorHandlers)
+
             return;
         }
         
-        const result = await this.#executeMiddleware(success, this.#successHandlers);
+        const result = await this.#executeMiddleware(successCase, this.#successHandlers);
 
         return result;
     }
@@ -76,7 +81,7 @@ class ResolveSuccessError {
      * 
      * @param {...(Function)} resolvers
     */
-   addNoSuccessResolver(...resolvers) {
+    onBadResponse(...resolvers) {
        resolvers.forEach(handler => {
            this.#noSuccessHandlers.push(handler);
        });
@@ -86,7 +91,7 @@ class ResolveSuccessError {
      * 
      * @param {...(Function)} resolvers
     */
-   addErrorResolver(...resolvers) {
+    addErrorResolver(...resolvers) {
         resolvers.forEach(handler => {
             this.#errorHandlers.push(handler);
         });
