@@ -48,9 +48,6 @@ class DataSetProcessor {
         // const collection = {};
         const collection = {tree:{}, supply:{}}
 
-        console.log('DataSetProcessor.process');
-        console.dir(data, {depth:5});
-        
         for (const [propKey, config] of Object.entries(data)) {
 
             const currentIterationCallStack = [];
@@ -74,8 +71,6 @@ class DataSetProcessor {
                 throw new Error(`dataSetMapper: actionPayload|actionPayload.meta|actionPayload.value required`);
             }
 
-            // console.log(`dataSetMapper: `, { propKey, config, metaTitle });
-            
             currentIterationCallStack.push({
                 propKey: propKey,
                 propDescription:metaTitle
