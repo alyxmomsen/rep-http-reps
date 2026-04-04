@@ -29,13 +29,7 @@
  */
 
 const { randomBytes } = require("crypto");
-const { fileDataSetFactory } = require("../../utils/factrories/file-data-set.factory");
-const { DataTransformer } = require("../data-transformer/data-transfromer");
-const { FILE_DATA_SET_SCHEMA } = require("../data-transformer/schemas/file-data-set.schema");
-const { linkedFieldDataSetFactory: fieldDataSetFactory } = require("../../utils/factrories/linked-field-data-set.factory");
-const { LINKED_FIELD_DATA_SET_SCHEMA } = require("../data-transformer/schemas/linked-field-data-set.schema");
-const { regularFieldDataSetFactory } = require("../../utils/factrories/regular-field-data-set.factory");
-const { REGULAR_FIELD_DATA_SET_SCHEMA } = require("../data-transformer/schemas/regular-field-data-set.schema");
+const { DataMapper } = require("../data-mapper/v2/model/data-mapper.v2.model");
 
 /**
  * @typedef {Object} ParsedFormDataPart
@@ -400,7 +394,7 @@ class MultiTableGrouppingAgent {
      * DataTransformer instance for recursive structure building.
      * Transforms flat datasets into nested hierarchies based on schemas.
      * 
-     * @type {DataTransformer}
+     * @type {DataMapper}
      * @private
      */
     #dataTransformer;
@@ -426,7 +420,7 @@ class MultiTableGrouppingAgent {
      * Creates a new MultiTableGrouppingAgent instance.
      * 
      * @param {Object} deps - Dependency injection container
-     * @param {DataTransformer} deps.dataTransformer - Transformer for building hierarchical data
+     * @param {DataMapper} deps.dataTransformer - Transformer for building hierarchical data
      * @param {(data:string) => MultiTableProtocolResult} deps.multiTableProtocolParser - Parser for multitable protocol
      * @param {Object} deps.fileDataSetSchema
      * @param {Object} deps.regularFieldDataSetSchema

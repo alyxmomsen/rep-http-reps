@@ -6,3 +6,4 @@
 /dev
 /__dev-artefacts__
 /coverage/
+.prettierrc.js

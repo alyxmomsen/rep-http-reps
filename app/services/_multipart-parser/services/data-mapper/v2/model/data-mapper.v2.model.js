@@ -48,26 +48,71 @@ const Actions = {
             dataType: dataType.startsWith('__') ? dataSet[dataType.replace('__', '')] : dataType,
         };
     }, 
-    // 'propertyFile': (payload) => {
-        
-    //     const { actionPayload, reqursiveCallFn, dataSet } = payload;
-    //     // const result = reqursiveCallFn(actionPayload, dataSet, {});
-    //     console.log('DataTransformer_2_0/Action/propertyFile:', actionPayload, dataSet);
-    //     const { data, dataType } = actionPayload;
-        
-    //     if (!data || !dataType) {
-    //         throw new Error(`DataTransformer_2_0/Action/propertyRegular:both of dataType & data are required`);
-    //     }
 
-    //     return {
-    //         data: data.startsWith('__') ? dataSet[data.replace('__', '')] : data,
-    //         dataType: dataType.startsWith('__') ? dataSet[dataType.replace('__', '')] : dataType,
-    //     };
-    // }, 
 }
+
+
 
 class DataMapper {
 
+    /**
+     * 
+     * @example
+     * 
+     * // data-set example:
+     * 
+     * ```json
+     * 
+     * {
+     *  tableName:'files',
+     *  groupId:'00',
+     *  // ----------------
+     *  columnName:'avatar',
+     *  // ----------------
+     *  contentType:'image/png',
+     *  fileName:'avatar.png',
+     *  // ----------------
+     *  dataType:'string', // also maybe: 'link'
+     * }
+     * 
+     * // schema-example:
+     * 
+     * __tableName: [
+     * 'branch', {
+     *  __groupId: [
+     *  'branch', {
+     *    originalFileName: [
+     *     'leaf', {
+     *      data: '__filename',
+     *       dataType:'string',
+     *      }       
+     *     mime: [
+     *     'leaf', {
+     *      data: '__contentType',
+     *       dataType:'string',
+     *      }, 
+     *     ],
+     *     file: [
+     *      'leaf', {
+     *       data: '__body',
+     *       dataType:'buffer',
+     *      }, 
+     *     ],
+     *     linkId: [
+     *      'leaf', {
+     *       data: '__linkId',
+     *       dataType:'string',
+     *      }, 
+     *     ],
+     *    }
+     *   ]
+     *  }
+     * ]
+     * 
+     * ```
+     * 
+     * 
+     */
     /**
      * 
      * @param {Object} schema 
@@ -77,30 +122,42 @@ class DataMapper {
      */
     process(schema, dataSet, context) {
 
-        console.log(`DataTransformer_2_0/start: `, context, dataSet);
-
-        const currentContext = context;
+        /**
+         * 
+         */
+        /**
+         * @type {{
+         *  actionName:string;
+         *  meta:Object;
+         *  value:any;
+         * }}
+         */
+        const currentContext = {...context};
 
         for (const [schemaPropKey, schemaModel] of Object.entries(schema)) {
 
             const [actionName, actionPayload] = schemaModel;
 
-            console.log('DataTransformer_2_0/iteration: ', {schema, dataSet, context});
-
+            /**
+             * @type {string}
+             */
             const parsedPropKey =
                 schemaPropKey.startsWith('__')
                     ? this.#extractDataByKey(schemaPropKey.replace('__', ''),  dataSet)
                     : schemaPropKey;
 
-            console.log('DataTransformer_2_0/parsed-key: ', parsedPropKey);
-            
-
             if (!Actions[actionName]) {
                 throw new Error(`DataTransformer_2_0/action-extracting: no action`)
             }
 
+            /**
+             * @type {(payload:Object) => Object }
+             */
             const action = Actions[actionName];
 
+            /**
+             * @type {Object}
+             */
             const actionResult = action({
                 actionPayload,
                 reqursiveCallFn: this.process.bind(this),
@@ -117,7 +174,6 @@ class DataMapper {
             const [innerAction, innerPayload] = child
 
             if (innerAction && innerPayload) {
-                console.log('DataTransformer_2_0/trace-prop: (if)', parsedPropKey);
                 // console.log(`\x1b[31mDataTransformer_2_0/dbug:\x1b[0m`, {actionName, actionResult, x:currentContext});
                 for (const [k, v] of Object.entries(actionResult)) {
                     innerPayload.value[k] = v;
@@ -125,22 +181,18 @@ class DataMapper {
                 // currentContext[parsedPropKey] = innerPayload;
             }
             else {
-                console.log('DataTransformer_2_0/trace-prop (else): ', parsedPropKey);
 
-                // console.log(`\x1b[31mDataTransformer_2_0/dbug:\x1b[0m`, {actionName, actionResult, x:currentContext});
-
-                currentContext[parsedPropKey] = [actionName, {
-                    meta: {
-                        title: schemaPropKey.startsWith('__') ? schemaPropKey.replace('__', '') : schemaPropKey,
-                    }, value: actionResult
-                }];
+                currentContext[parsedPropKey] = [
+                    actionName, 
+                    {
+                        meta: {
+                            title: schemaPropKey.startsWith('__') ? schemaPropKey.replace('__', '') : schemaPropKey,
+                        }, 
+                        value: actionResult
+                    }
+                ];
             }
-
-            console.log('DataTransformer_2_0/action-result: ', {actionResult});
-            
         }
-
-        console.log(`DataTransformer_2_0/process-result: `, {currentContext});
 
         return currentContext;
     }
