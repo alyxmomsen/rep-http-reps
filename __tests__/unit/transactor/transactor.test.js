@@ -85,11 +85,11 @@ describe('transaction', () => {
 
         filemanager.write = mockFManagerReadOne;
 
-        expect(async () => {
-            await transaction.processFile({
+        await expect(
+            async () => transaction.processFile({
                 fileData: Buffer.from(`hello world`),
-            });
-        }).rejects.toThrow(`Transaction: filemanager failed`);
+            })
+        ).rejects.toThrow(`Transaction: filemanager failed`);
 
         expect(mockFManagerReadOne).toBeCalled();
         expect(mockFManagerReadOne).toBeCalledWith(Buffer.from(`hello world`));
@@ -98,15 +98,15 @@ describe('transaction', () => {
 
         expect(transaction === newTrans).toBe(true);
 
-        expect(async () => {
-            await newTrans.processFile({
-                fileData: Buffer.from(`hello world`),
-            });
-        }).rejects.toThrow(`Transaction: this transaction is already failed`);
+        // filemanager.write = jest.fn().mockReturnValue({ success: { filename: 'test.txt' } });
+
+        await expect(async () => newTrans.processFile({
+            fileData: Buffer.from(`hello world`),
+        })).rejects.toThrow(`Transaction: this transaction is already failed`);
     });
 
     test(`3`, async () => {
-        return;
+        
         const transaction = transactor.useTransaction('123-123-123-123');
         expect(transaction).toBeDefined();
 

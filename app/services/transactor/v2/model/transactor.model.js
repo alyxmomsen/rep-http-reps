@@ -60,6 +60,10 @@ class Transaction {
             originalFileName, mime, fileSystemFilename:fmResponse.success.filename,
         });
 
+        if (dbresult.error) {
+            
+        }
+
         
         
         this.#fileResult = fmResponse.success;
