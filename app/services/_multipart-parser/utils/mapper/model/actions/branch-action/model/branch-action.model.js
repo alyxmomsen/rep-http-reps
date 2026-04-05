@@ -100,6 +100,8 @@ function BranchActionFactory(deps = {}) {
 
                     console.log({childContext});
 
+                    transactions.getTransaction();
+
                     // throw new Error(`test 1`);
                     
                     break;

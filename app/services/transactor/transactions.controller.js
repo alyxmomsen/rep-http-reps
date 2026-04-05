@@ -1,15 +1,11 @@
-const { Transaction } = require("./transactions.model");
-
+const { Transaction } = require('./transactions.model');
 
 class TransactionFactory {
-
-    instance () {
+    instance() {
         return new Transaction();
     }
 
-    constructor () {
-
-    }
+    constructor() {}
 }
 
-module.exports = { TransactionFactory }
+module.exports = { TransactionFactory };

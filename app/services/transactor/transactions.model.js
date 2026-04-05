@@ -1,9 +1,12 @@
-const { dbControllersRouter } = require("../database-adapter/controller/db-adapter.controller");
-const { DBAdapter } = require("../database-adapter/models/db-adapter.model");
-const { FileManager } = require("../filemanager.service.js/filemanager.service");
+const {
+    dbControllersRouter,
+} = require('../database-adapter/controller/db-adapter.controller');
+const { DBAdapter } = require('../database-adapter/models/db-adapter.model');
+const {
+    FileManager,
+} = require('../filemanager.service.js/filemanager.service');
 
 class Transaction {
-
     /**
      * @type {Object|null}
      */
@@ -14,26 +17,32 @@ class Transaction {
     #fieldPending;
 
     /**
-     * 
-     * @param {Object} data 
-     * @param {string} data.originalFileName 
+     *
+     * @param {Object} data
+     * @param {string} data.originalFileName
      * @param {string} data.mime
-     * @param {Buffer<ArrayBuffer>} data.file 
+     * @param {Buffer<ArrayBuffer>} data.file
      */
     async processFile(data) {
+        const fileExecResult = await this.#handleFileData(data);
 
-        const fileExecResult = await this.#handleFileData (data);
-
-        if(this.#fieldPending) {
-            
+        if (this.#fieldPending) {
             this.#fieldPending(fileExecResult);
-            console.log(`\x1b[32m`, 'set file exec result', this.#fileExecResult, `\x1b[0m`);
-        }
-        else {
+            console.log(
+                `\x1b[32m`,
+                'set file exec result',
+                this.#fileExecResult,
+                `\x1b[0m`
+            );
+        } else {
             this.#fileExecResult = fileExecResult;
-            console.log(`\x1b[32m`, 'set file exec result', this.#fileExecResult, `\x1b[0m`);
+            console.log(
+                `\x1b[32m`,
+                'set file exec result',
+                this.#fileExecResult,
+                `\x1b[0m`
+            );
         }
-
     }
 
     /**
@@ -41,89 +50,78 @@ class Transaction {
      */
     #resolved;
 
-    processField (data) {
-
-        if(this.#fileExecResult) {
- 
+    processField(data) {
+        if (this.#fileExecResult) {
             this.#resolved.set(data.columnName, this.#fileExecResult);
-            
+
             console.dir(this.#resolved);
             // this.#handleFieldData(dataSet);
-            
-        }
-        else {
-
+        } else {
             this.#fieldPending = (fileExecResult) => {
                 this.#fileExecResult = fileExecResult;
 
                 this.processField(data);
-
-            }
+            };
         }
     }
 
-    showResolved () {
-        console.dir(this.#resolved, {depth:20});
+    showResolved() {
+        console.dir(this.#resolved, { depth: 20 });
     }
 
     /**
-     * 
-     * @param {Object} data 
-     * @param {string} data.originalFileName 
+     *
+     * @param {Object} data
+     * @param {string} data.originalFileName
      * @param {string} data.mime
-     * @param {Buffer<ArrayBuffer>} data.file 
+     * @param {Buffer<ArrayBuffer>} data.file
      */
-    async #handleFileData (data) {
-
-        if(!data || !data.originalFileName || !data.mime || !data.file ) {
+    async #handleFileData(data) {
+        if (!data || !data.originalFileName || !data.mime || !data.file) {
             throw new Error(`incorrect data-set`);
         }
 
-        if(data.file.data instanceof Buffer === false) {
+        if (data.file.data instanceof Buffer === false) {
             throw new Error(`file must be Buffer`);
         }
 
         const fmresult = await this.#filemanager.write(data.file.data);
 
-        if((fmresult).error) {
+        if (fmresult.error) {
             throw new Error(`file writing fail`);
         }
 
-        const fileName = (fmresult).success.filename
+        const fileName = fmresult.success.filename;
 
         const controller = this.#dataBaseControllersRouter.get('files');
 
-        if(!controller) {
+        if (!controller) {
             throw new Error(`Transaction: incorrect db tablename`);
         }
 
         const dbresult = controller.createOne({
-            originalFileName:data.originalFileName.data,
-            mime:data.mime.data,
-            fileSystemFilename:fileName,
+            originalFileName: data.originalFileName.data,
+            mime: data.mime.data,
+            fileSystemFilename: fileName,
         });
 
-        console.log('transaction: dbresult', {dbresult});
+        console.log('transaction: dbresult', { dbresult });
 
-        if(dbresult.success) {
-
+        if (dbresult.success) {
             return {
-                rowId:dbresult.success.newRowIdHash,
-                data:dbresult.success.row,
-            }
-        }
-        else {
-            if(dbresult.error || !dbresult.success) {
+                rowId: dbresult.success.newRowIdHash,
+                data: dbresult.success.row,
+            };
+        } else {
+            if (dbresult.error || !dbresult.success) {
                 throw new Error(`Transaction: data base error`);
             }
         }
     }
 
-    #handleFieldData () {
-
+    #handleFieldData() {
         const controler = dbControllersRouter.get('video-playlist');
         controler.createOne();
-
     }
 
     /**
@@ -136,15 +134,14 @@ class Transaction {
     #dataBaseControllersRouter;
 
     /**
-     * 
+     *
      * @param {Object} deps - dependencies container
      * @param {FileManager} deps.fileManager - fileManager
      * @param {Map<string|DBAdapter>} deps.dataBaseControllersRouter - dataBaseControllersRouter
-     * 
+     *
      */
-    constructor (deps) {
-        
-        if(!deps || !deps.fileManager || !deps.dataBaseControllersRouter) {
+    constructor(deps) {
+        if (!deps || !deps.fileManager || !deps.dataBaseControllersRouter) {
             throw new Error(`Transaction: dependencies required`);
         }
 
@@ -159,7 +156,6 @@ class Transaction {
 }
 
 class Transactions {
-
     showResolved() {
         for (const [_, tr] of this.#transactions.entries()) {
             tr.showResolved();
@@ -167,16 +163,19 @@ class Transactions {
     }
 
     /**
-     * 
+     *
      * @param {string} linkId - linkid
      * @returns {Transaction}
      */
-    getTransaction (linkId) {
-        if(!this.#transactions.has(linkId)) {
-            this.#transactions.set(linkId, new Transaction({
-                dataBaseControllersRouter:this.#dataBaseControllersRouter,
-                fileManager:this.#filemanager,
-            }));
+    getTransaction(linkId) {
+        if (!this.#transactions.has(linkId)) {
+            this.#transactions.set(
+                linkId,
+                new Transaction({
+                    dataBaseControllersRouter: this.#dataBaseControllersRouter,
+                    fileManager: this.#filemanager,
+                })
+            );
         }
         return this.#transactions.get(linkId);
     }
@@ -192,13 +191,13 @@ class Transactions {
     #filemanager;
 
     /**
-     * 
-     * @param {Object} deps 
-     * @param {Map<string,DBAdapter>} deps.dataBaseControllersRouter 
-     * @param {FileManager} deps.fileManager  
+     *
+     * @param {Object} deps
+     * @param {Map<string,DBAdapter>} deps.dataBaseControllersRouter
+     * @param {FileManager} deps.fileManager
      */
-    constructor (deps) {
-        if(!deps || !deps.dataBaseControllersRouter || !deps.fileManager) {
+    constructor(deps) {
+        if (!deps || !deps.dataBaseControllersRouter || !deps.fileManager) {
             throw new Error(`incorrect dependencies`);
         }
 
@@ -206,10 +205,7 @@ class Transactions {
         this.#dataBaseControllersRouter = deps.dataBaseControllersRouter;
 
         this.#transactions = new Map();
-
     }
 }
 
-
-
-module.exports = { Transactions, Transaction }
+module.exports = { Transactions, Transaction };
