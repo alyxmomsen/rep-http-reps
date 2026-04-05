@@ -7,3 +7,4 @@
 /__dev-artefacts__
 /coverage/
 .prettierrc.js
+.prettierrc
