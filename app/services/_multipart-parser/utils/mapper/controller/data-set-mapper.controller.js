@@ -1,5 +1,5 @@
 
-const { Transactions } = require("../../../../../../__dev-artefacts__/transactor/transactions.model");
+const { Transactions } = require("../../../../transactor/transactions.model");
 const { ResolveSuccessError } = require("../../../../../utils/success-error-resolver/model/suc-err-res");
 const { dbControllersRouter } = require("../../../../database-adapter/controller/db-adapter.controller");
 const { filemanager } = require("../../../../filemanager.service.js/fmanager.controller");

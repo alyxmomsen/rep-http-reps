@@ -13,7 +13,7 @@ const {
 const {
     dataSetProcessorFactory,
 } = require('../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller');
-const { Transactions } = require('../../../__dev-artefacts__/transactor/transactions.model');
+const { Transactions } = require('../../../app/services/transactor/transactions.model');
 const { DataSetProcessor } = require('../../../app/services/_multipart-parser/utils/mapper/model/data-set-processor.model');
 const { dbControllersRouter } = require('../../../app/services/database-adapter/controller/db-adapter.controller');
 const { filemanager } = require('../../../app/services/filemanager.service.js/fmanager.controller');

@@ -1,10 +1,10 @@
 const { randomBytes } = require('pg/lib/crypto/utils-legacy');
 const {
     TransactionFactory,
-} = require('../../../../../../../../../__dev-artefacts__/transactor/transactions.controller');
+} = require('../../../../../../../transactor/transactions.controller');
 const {
     Transactions,
-} = require('../../../../../../../../../__dev-artefacts__/transactor/transactions.model');
+} = require('../../../../../../../transactor/transactions.model');
 const {
     ResolveSuccessError,
 } = require('../../../../../../../../utils/success-error-resolver/model/suc-err-res');
