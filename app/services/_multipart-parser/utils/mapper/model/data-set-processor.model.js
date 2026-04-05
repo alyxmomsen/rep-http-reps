@@ -1,144 +1,72 @@
-const { LinksBuffer } = require("../../data-links-buffer/data-links-buffer.util");
+const {
+    LinksBuffer,
+} = require('../../data-links-buffer/data-links-buffer.util');
 
 class DataSetProcessor {
-
     /**
-     * 
-     * @param {Object} data 
-     * @param {string[]} [parentCallStack=[]] 
-     * @returns 
+     *
+     * @param {Object} currentBranch
+     * @param {string[]} [parentTrace=[]]
+     * @returns
      */
-    async process(data, parentCallStack = []) {
-        /**
-         * 
-         * incoming data example:
-         * 
-         * {
-         *     files: [
-         *         'branch',{
-         *             meta: { title: 'tableName' },
-         *             value:{
-         *                 originalFileName: [
-         *                     'leaf', {
-         *                         meta: { title: 'originalFileName' },
-         *                         value: { data: 'some.name.txt', dataType: 'string' }
-         *                     },
-         *                 ],
-         *             },
-         *         },
-         *     ],
-         * }
-         * 
-         * where: 
-         * 
-         * #branch
-         * 
-         * 
-         * string: [
-         *  actionName:'branch'|'leaf', actionPayload:{ meta:{ title:string, value: Knot }}
-         * ]
-         * 
-         * 
-         *
-         */
+    async process(currentBranch, parentTrace = []) {
 
-        /**
-         * 
-         */
-        // const collection = {};
-        const collection = {tree:{}, supply:{}}
+        console.log('actions: ', this.#actions);
+        if(!this.#actions) throw new Error(`no actions`);
 
-        for (const [propKey, config] of Object.entries(data)) {
+        const currentContext = {};
 
-            const currentIterationCallStack = [];
+        try {
+            // console.log('Datasetprocessor: ', { data: currentBranch, parentTrace });
 
-            const [actionName, actionPayload] = config;
             
-            /**
-             * @description
-             * meta.title для трассировки 
-             * 
-             * @type {string}
-             * 
-             */
-            const metaTitle = actionPayload?.meta?.title;
-            // const metaTitle = propKey;
 
-            /**
-             * проверяем содержатся ли ожидаемые поля
-             */
-            if (!actionPayload || !actionPayload.meta || !actionPayload.value) {
-                throw new Error(`dataSetMapper: actionPayload|actionPayload.meta|actionPayload.value required`);
-            }
+            for (const [prop, currentBranchConfig] of Object.entries(currentBranch)) {
+                const [actionName, { meta, value:childBranch }] = currentBranchConfig;
 
-            currentIterationCallStack.push({
-                propKey: propKey,
-                propDescription:metaTitle
-            });
-            
-            if (actionName === "branch") {
-                
-                const actionResult = await this.#executeAction("handleBranch", {
-                    reqFn: this.process.bind(this),
-                    actionPayload: actionPayload.value,
-                    callStack: [...parentCallStack, ...currentIterationCallStack],
+                const Action = this.#actions.get(actionName);
+
+                // const currentIterationTrace = [...parentTrace, prop];
+                const currentIterationTrace = [...parentTrace, {knotProp:prop, knotPropSemantic:meta.title}];
+
+                const actionResult = await Action({
+                    actionCaller: this.process.bind(this),
+                    payloadToCaller: childBranch,
+                    trace: currentIterationTrace,
                 });
 
-                /**
-                 * 
-                 * collect child parsed data
-                 * только зачем это было нужно..
-                 * 
-                 * 
-                 */
-                // collection[metaTitle] = actionResult;
-                collection.tree[propKey] = actionResult.tree;
-                collection.supply.addedData = [...(collection.supply?.addedData || []), ...(actionResult.supply?.addedData || [])]
-            }
-            else {
+                const { result } = actionResult;
 
-                const actionResult = await this.#executeAction("handleLeaf", {
-                    reqFn: this.process.bind(this),
-                    actionPayload: actionPayload.value,
-                    callStack: [...parentCallStack, ...currentIterationCallStack],
-                });
+                currentContext[prop] = result;
 
-                /**
-                 * at now these are magical variables
-                 */
-                const { tree, supply } = actionResult;
-
-                /**
-                 * 
-                 * collect child parsed data
-                 * 
-                 * @type {Object}
-                 * 
-                 */
-                collection.tree[propKey] = tree;
-                collection.supply.addedData = [...(supply.addedData || []), ...(supply.addedData || [])]
+                // console.log('DataSetProcessor:', { prop, config: currentBranchConfig, actionResult });
             }
 
+            console.log({currentContext});
+
+            return { context:currentContext }
+
+        } catch (error) {
+            console.log('DataSetProcessor err: ', error, { data: currentBranch });
+            throw error;
         }
-
-        return collection;
     }
 
     /**
-     * 
-     * @param {"handleBranch"|"handleLeaf"} actionName 
-     * @param {Function} handler 
+     *
+     * @param {"handleBranch"|"handleLeaf"} actionName
+     * @param {Function} handler
      */
     addAction(actionName, handler) {
+        console.log('action added');
         this.#actions.set(actionName, handler);
     }
 
     /**
-     * @param {"handleBranch"|"handleLeaf"} actionName 
-     * @param {Object} payload 
+     * @param {"handleBranch"|"handleLeaf"} actionName
+     * @param {Object} payload
      */
     async #executeAction(actionName, payload) {
-        
         const action = this.#actions.get(actionName);
 
         if (!action) {
@@ -156,19 +84,19 @@ class DataSetProcessor {
     #actions;
 
     /**
-     * @type {LinksBuffer} 
+     * @type {LinksBuffer}
      */
     #linksBuffer;
 
     /**
-     * 
+     *
      * @param {Object} deps
-     * @param {LinksBuffer} deps.linkBuffer 
+     * @param {LinksBuffer} deps.linkBuffer
      */
-    constructor(deps={}) {
+    constructor(deps = {}) {
         const linkBuffer = deps.linkBuffer;
 
-        if(linkBuffer === undefined) {
+        if (linkBuffer === undefined) {
             throw new Error(`DataSetProcessor: LinksBuffer required`);
         }
 
@@ -178,4 +106,4 @@ class DataSetProcessor {
     }
 }
 
-module.exports = { DataSetProcessor }
+module.exports = { DataSetProcessor };

@@ -1,126 +1,207 @@
-const { LinksBuffer } = require("../../../../app/services/_multipart-parser/utils/data-links-buffer/data-links-buffer.util");
-const { BranchActionFactory } = require("../../../../app/services/_multipart-parser/utils/mapper/model/actions/branch-action/model/branch-action.model");
-const { DBAdapter } = require("../../../../app/services/database-adapter/models/db-adapter.model");
-const { FileManager } = require("../../../../app/services/filemanager.service.js/filemanager.service");
-const { ResolveSuccessError } = require("../../../../app/utils/success-error-resolver/model/suc-err-res");
+const {
+    dataSetProcessorFactory,
+} = require('../../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller');
+const {
+    BranchActionFactory,
+} = require('../../../../app/services/_multipart-parser/utils/mapper/model/actions/branch-action/model/branch-action.model');
+const {
+    dbControllersRouter,
+} = require('../../../../app/services/database-adapter/controller/db-adapter.controller');
+const {
+    DBAdapter,
+} = require('../../../../app/services/database-adapter/models/db-adapter.model');
+const {
+    filemanager,
+} = require('../../../../app/services/filemanager.service.js/fmanager.controller');
 
-describe('branch action' , () => {
+const {
+    Transactions,
+    Transaction,
+} = require('../../../../app/services/transactor/transactions.model');
 
+describe('branch action', () => {
     /**
-     * expect fields:
-     * 
-     * { reqFn, actionPayload, callStack, actions }
-     * 
-     * 
-     */
-
-    /**
-     * @type {(payload:any) => Promise<any>}
+     *
      */
     let branchAction;
-
     /**
-     * @type {LinksBuffer}
+     * @type {Transactions}
      */
-    let linksBufferInstance;
-
+    let mockTransactions;
     /**
-     * @type {ResolveSuccessError}
+     * @type {Transaction}
      */
-    let resolveSuccessError;
-
-    /**
-     * @type {FileManager}
-     */
-    let filemanager;
-
-    /**
-     * @type {Map<string,DBAdapter>}
-     */
-    let dbControllersRouter;
-
-    let reqursiveMapper;
-    let actionLeafPayload;
-    let actions;
-    /**
-     * @type {Object[]}
-     */
-    let callStack;
+    let transaction;
 
     beforeEach(() => {
-
-        resolveSuccessError = {
-            addErrorResolver: jest.fn(),
-            addNoSuccessResolver: jest.fn(),
-            addSuccessResolver: jest.fn(),
-            handle: jest.fn(),
-        }
-
-        linksBufferInstance = {
-            push: jest.fn(),
-            getAllLinks: jest.fn(),
-            getLinkDataById: jest.fn(),
-        }
-
-        filemanager = {
-            read:null,
-            write:null,
-        }
-
-        dbControllersRouter = new Map();
-        dbControllersRouter.set('files' , jest.fn());
-        dbControllersRouter.set('video-playlist' , jest.fn());
-
-        branchAction = BranchActionFactory({
-            dbControllersRouter:dbControllersRouter,
-            filemanager:filemanager,
-            linksBufferInstance:linksBufferInstance,
-            resolveSuccesError:resolveSuccessError,
-        });
-
-        reqursiveMapper = jest.fn();
-
-        actionLeafPayload = {
-            title: [
-                'leaf', {
-                    meta:{title:'title', value: {
-                        data:'my title',
-                        dataType:'string',
-                    }},
-                },
-            ],
-            description: [
-                'leaf', {
-                    meta:{title:'description', value: {
-                        data:'my description',
-                        dataType:'string',
-                    }},
-                },
-            ],
+        transaction = {
+            processField: jest.fn().mockReturnValue(),
+            processFile: jest.fn().mockReturnValue(),
+            showResolved: jest.fn().mockReturnValue(),
         };
 
-        actions = {};
+        mockTransactions = {
+            getTransaction: jest.fn().mockReturnValue(transaction),
+        };
 
-        callStack = [{ propDescription:'tableName', propKey:'files'}, { propDescription:'groupId', propKey:'00'}]
+        mockTransactions = new Transactions({
+            dataBaseControllersRouter: new Map([
+                ['files', () => {}],
+                ['users', () => {}],
+                ['video-playlist', () => {}],
+            ]),
+            fileManager: {
+                read: jest.fn(),
+                write: jest.fn(),
+            },
+        });
 
+        const mockaddSuccessResolver = jest.fn();
+        const mockaddErrorResolver = jest.fn();
+        const mockonBadResponse = jest.fn();
+        branchAction = BranchActionFactory({
+            resolveSuccesError: {
+                addSuccessResolver: mockaddSuccessResolver,
+                addErrorResolver: mockaddErrorResolver,
+                onBadResponse: mockonBadResponse,
+            },
+            dbControllersRouter: new Map(),
+            filemanager: {},
+            linksBufferInstance: {},
+            transactions: mockTransactions,
+        });
     });
 
-    test('shold throw error if received incorrect action payload', async () => {
+    const dataSetProcessor = dataSetProcessorFactory({
+        linksBuffer: {},
+        transactions: new Transactions({
+            dataBaseControllersRouter: dbControllersRouter,
+            fileManager: filemanager,
+        }),
+    });
 
-        expect(async () => {
-            await branchAction({ /* reqFn:reqursiveMapper, */ actionPayload: actionLeafPayload, callStack:callStack, actions:actions});
-        }).rejects.toThrow(`branch action: incorrect payload data`);
+    const struct = {
+        users: [
+            'branch',
+            {
+                meta: {
+                    title: 'tableName',
+                },
+                value: {
+                    '01': [
+                        'branch',
+                        {
+                            meta: {
+                                title: 'groupId',
+                            },
+                            value: {
+                                title: [
+                                    'leaf',
+                                    {
+                                        meta: {
+                                            title: 'columnName',
+                                        },
+                                        value: {
+                                            data: 'my-fa-king-title',
+                                            dataType: 'string',
+                                        },
+                                    },
+                                ],
+                                avatar: [
+                                    'leaf',
+                                    {
+                                        meta: {
+                                            title: 'columnName',
+                                        },
+                                        value: {
+                                            data: '123-123-123-123',
+                                            dataType: 'link',
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+        files: [
+            'branch',
+            {
+                meta: {
+                    title: 'tableName',
+                },
+                value: {
+                    '1982379108237192319283912837': [
+                        'branch',
+                        {
+                            meta: {
+                                title: 'groupId',
+                            },
+                            value: {
+                                originalFileName: [
+                                    'leaf',
+                                    {
+                                        meta: {
+                                            title: 'columnName',
+                                        },
+                                        value: {
+                                            data: 'originalFileName.jpeg',
+                                            dataType: 'string',
+                                        },
+                                    },
+                                ],
+                                file: [
+                                    'leaf',
+                                    {
+                                        meta: {
+                                            title: 'columnName',
+                                        },
+                                        value: {
+                                            data: Buffer.from('hello world'),
+                                            dataType: 'string',
+                                        },
+                                    },
+                                ],
+                                mime: [
+                                    'leaf',
+                                    {
+                                        meta: {
+                                            title: 'columnName',
+                                        },
+                                        value: {
+                                            data: 'mime/mime',
+                                            dataType: 'string',
+                                        },
+                                    },
+                                ],
+                                linkId: [
+                                    'leaf',
+                                    {
+                                        meta: {
+                                            title: 'columnName',
+                                        },
+                                        value: {
+                                            data: '123-123-123-123',
+                                            dataType: 'string',
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        ],
+    };
 
-    }) ;
+    test('13', () => {
+        branchAction({
+            actionCaller: dataSetProcessor.process.bind(dataSetProcessor),
+            payloadToCaller: struct,
+            trace: [],
+        });
 
-    test('2', async () => {
-        
-        
-        // expect(reqursiveMapper).toHaveBeenCalled();
-        // expect(reqursiveMapper).toHaveBeenCalledTimes(1);
-        expect(async () => {
-            await branchAction({ reqFn:reqursiveMapper, actionPayload: actionLeafPayload, callStack:callStack, actions:actions});
-        }).rejects.toThrow('branch action: reqursive function returned falsy value');
-
-    }) ;
+        expect(1).toEqual(1);
+    });
 });

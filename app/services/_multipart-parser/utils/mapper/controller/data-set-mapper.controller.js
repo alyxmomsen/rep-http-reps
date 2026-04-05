@@ -29,7 +29,7 @@ function dataSetProcessorFactory(deps) {
         linkBuffer:linksBuffer,
     });
 
-    dataSetProcessor.addAction('handleBranch', /* branchAction */BranchActionFactory({
+    dataSetProcessor.addAction('branch', /* branchAction */BranchActionFactory({
         dbControllersRouter:dbControllersRouter,
         filemanager:filemanager,
         resolveSuccesError:new ResolveSuccessError(),
@@ -37,7 +37,7 @@ function dataSetProcessorFactory(deps) {
         transactions:transactions,
     }));
 
-    dataSetProcessor.addAction('handleLeaf', BTypeActionFactory());
+    dataSetProcessor.addAction('leaf', BTypeActionFactory());
 
     return dataSetProcessor;
 }

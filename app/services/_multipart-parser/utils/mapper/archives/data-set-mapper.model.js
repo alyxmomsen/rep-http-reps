@@ -195,7 +195,7 @@ async function dataSetMapper(data, parentCallStack, actions) {
         }
 
         const actionResult = await action({
-            reqFn: dataSetMapper,
+            actionCaller: dataSetMapper,
             actionPayload: actionPayload.value,
             callStack: [...parentCallStack, ...currentIterationCallStack],
             // callStack: [...parentCallStack, ...currentIterationCallStack],

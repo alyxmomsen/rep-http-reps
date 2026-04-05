@@ -7,11 +7,11 @@ function BTypeActionFactory(deps={}) {
      */
     const fn = async (payload = {}) => {
    
-        const { reqFn, actionPayload, callStack, actions } = payload;
+        const { actionCaller, payloadToCaller:payloadToCaller, trace:parentTrace } = payload;
       
-        const { data, dataType } = actionPayload;
+        const { data, dataType } = payloadToCaller;
     
-        return {tree:{data, dataType}, supply:{}};
+        return { result: {data, dataType} }
     }
 
     return fn;

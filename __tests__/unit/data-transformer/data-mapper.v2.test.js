@@ -324,10 +324,10 @@ describe('data mapper v2', () => {
             transactions:transactions,
         });
 
-        // const datasetprocessorresult = await datasetprocessor.process(
-        //     context,
-        //     // []
-        // );
+        const datasetprocessorresult = await datasetprocessor.process(
+            context,
+            // []
+        );
 
         // transactions.showResolved();
 
