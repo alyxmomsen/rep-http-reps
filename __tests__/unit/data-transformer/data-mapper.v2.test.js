@@ -1,29 +1,22 @@
-const { randomBytes } = require('pg/lib/crypto/utils-legacy')
+const { randomBytes } = require('pg/lib/crypto/utils-legacy');
 const {
     dataMapperFactory,
-} = require('../../../app/services/_multipart-parser/services/data-mapper/v2/controller/data-mapper.controller')
+} = require('../../../app/services/_multipart-parser/services/data-mapper/v2/controller/data-mapper.controller');
 const {
     DataMapper,
-} = require('../../../app/services/_multipart-parser/services/data-mapper/v2/model/data-mapper.v2.model')
+} = require('../../../app/services/_multipart-parser/services/data-mapper/v2/model/data-mapper.v2.model');
 const {
     FILE_DATA_SET_SCHEMA,
     LINKED_FIELD_DATA_SET_SCHEMA,
     REGULAR_FIELD_DATA_SET,
-} = require('../../../app/services/_multipart-parser/services/data-mapper/v2/model/schemas/dm.schema')
+} = require('../../../app/services/_multipart-parser/services/data-mapper/v2/model/schemas/dm.schema');
 const {
     dataSetProcessorFactory,
-} = require('../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller')
-const {
-    DataSetProcessor,
-} = require('../../../app/services/_multipart-parser/utils/mapper/model/data-set-processor.model')
-const {
-    dataBase,
-} = require('../../../app/services/database/controller/db.controller')
-const {
-    HTTPRouter,
-} = require('../../../app/services/router/v2/model/router.model')
-const { IncomingMessage, ServerResponse } = require('http')
-// const { router } = require("../../../app/services/router/controller/http-controller");
+} = require('../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller');
+const { Transactions } = require('../../../__dev-artefacts__/transactor/transactions.model');
+const { DataSetProcessor } = require('../../../app/services/_multipart-parser/utils/mapper/model/data-set-processor.model');
+const { dbControllersRouter } = require('../../../app/services/database-adapter/controller/db-adapter.controller');
+const { filemanager } = require('../../../app/services/filemanager.service.js/fmanager.controller');
 
 /**
  * @typedef {{
@@ -43,39 +36,61 @@ describe('data mapper v2', () => {
     /**
      * @type {DataMapper}
      */
-    let dataMapper
-
-    /**
-     * @type {DataSetProcessor}
-     */
-    let dataSetProccessor
+    let dataMapper;
 
     const Schema = {
         File: FILE_DATA_SET_SCHEMA,
         LinkedField: LINKED_FIELD_DATA_SET_SCHEMA,
         RegularField: REGULAR_FIELD_DATA_SET,
-    }
+    };
 
     /**
      * @type {Function}
      */
-    let dataSetMaker
+    let dataSetMaker;
 
-    let context
+    let context;
 
-    let arr
+    let arr;
 
-    let fn
+    let fn;
 
     beforeEach(() => {
-        dataMapper = dataMapperFactory()
-        dataSetProccessor = dataSetProcessorFactory()
-
-        context = {}
-    })
+        dataMapper = new DataMapper();
+    });
 
     test('should smth', async () => {
-        let context = {}
+        let context = {};
+
+        // regular fields
+
+        const usersDataSetProducer = dataSetDecorator({
+            body: Buffer.from('buffer data'),
+            columnName: 'name',
+            dataType: 'string',
+            groupId: '00',
+            tableName: 'users',
+            contentType: 'image/jpeg', // будет проигнорировано для Schema.RegularField
+            filename: 'avatar.jpeg', // будет проигнорировано для Schema.RegularField
+            linkId: 'link-id-123-123-123-123', // будет проигнорировано для Schema.RegularField
+        });
+
+        context = dataMapper.process(
+            Schema.RegularField,
+            usersDataSetProducer(),
+            context
+        );
+
+        context = dataMapper.process(
+            Schema.LinkedField,
+            usersDataSetProducer({
+                body: 'link-id-123-123-123-123',
+                columnName: 'avatar',
+                contentType: 'image/jpeg', // будет проигнорировано для Schema.LinkedField
+                filename: 'avatar.jpeg', // будет проигнорировано для Schema.LinkedField
+            }),
+            context
+        );
 
         /**
          * @description
@@ -91,7 +106,7 @@ describe('data mapper v2', () => {
         const FILE_RANDOM_UNIQUE_GROUPS = [
             randomBytes(32).toString('hex'),
             randomBytes(32).toString('hex'),
-        ]
+        ];
 
         const fileDataSetProducer = dataSetDecorator({
             body: Buffer.from('buffer data'), // данные файла
@@ -102,13 +117,13 @@ describe('data mapper v2', () => {
             linkId: 'link-id-123-123-123-123', // идентификатор для
             columnName: 'image', // будет проигнорировано для файла
             dataType: 'string', // будет проигнорировано для файла
-        })
+        });
 
         context = dataMapper.process(
             Schema.File,
             fileDataSetProducer(),
             context
-        )
+        );
         context = dataMapper.process(
             Schema.File,
             fileDataSetProducer({
@@ -116,44 +131,25 @@ describe('data mapper v2', () => {
                 linkId: 'link-id-123-123-123-123',
             }),
             context
-        )
+        );
 
-        // context = dataMapper.process(Schema.RegularField, dataSetDecorator({
-        //     body:Buffer.from('blarg-blarg-blarg'),
-        //     columnName:'secret-column',
-        //     dataType:'string',
-        //     groupId:FILE_RANDOM_UNIQUE_GROUPS[0],
-        //     tableName:'files',
-        // })(), context);
-
-        const usersDataSetProducer = dataSetDecorator({
-            body: Buffer.from('buffer data'),
-            columnName: 'name',
-            dataType: 'string',
-            groupId: '00',
-            tableName: 'users',
-            contentType: 'image/jpeg', // будет проигнорировано
-            filename: 'avatar.jpeg', // будет проигнорировано
-            linkId: 'link-id-123-123-123-123', // будет проигнорировано
-        })
+        /**
+         * extend standart file data-set
+         */
 
         context = dataMapper.process(
             Schema.RegularField,
-            usersDataSetProducer(),
+            dataSetDecorator({
+                body: Buffer.from('blarg-blarg-blarg'),
+                columnName: 'secret-column',
+                dataType: 'string',
+                groupId: FILE_RANDOM_UNIQUE_GROUPS[0],
+                tableName: 'files',
+            })(),
             context
-        )
-        context = dataMapper.process(
-            Schema.LinkedField,
-            usersDataSetProducer({
-                body: 'link-id-123-123-123-123',
-                columnName: 'avatar',
-                contentType: 'image/jpeg', // будет проигнорировано
-                filename: 'avatar.jpeg', // будет проигнорировано
-            }),
-            context
-        )
+        );
 
-        console.dir(context, { depth: 10 })
+        console.dir(context, { depth: 10 });
 
         const result = {
             files: [
@@ -169,7 +165,7 @@ describe('data mapper v2', () => {
                                     originalFileName: [
                                         'leaf',
                                         {
-                                            meta: { title: 'originalFileName' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: 'avatar.jpeg',
                                                 dataType: 'string',
@@ -179,7 +175,7 @@ describe('data mapper v2', () => {
                                     mime: [
                                         'leaf',
                                         {
-                                            meta: { title: 'mime' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: 'image/jpeg',
                                                 dataType: 'string',
@@ -189,7 +185,7 @@ describe('data mapper v2', () => {
                                     file: [
                                         'leaf',
                                         {
-                                            meta: { title: 'file' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: Buffer.from(
                                                     'buffer data'
@@ -201,20 +197,25 @@ describe('data mapper v2', () => {
                                     linkId: [
                                         'leaf',
                                         {
-                                            meta: { title: 'linkId' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: 'link-id-123-123-123-123',
                                                 dataType: 'string',
                                             },
                                         },
                                     ],
-                                    // ['secret-column']: [
-                                    //     'leaf',
-                                    //     {
-                                    //         meta: { title: 'columnName' },
-                                    //         value: { data: Buffer.from('blarg-blarg-blarg'), dataType: 'string' }
-                                    //     },
-                                    // ],
+                                    ['secret-column']: [
+                                        'leaf',
+                                        {
+                                            meta: { title: 'columnName' },
+                                            value: {
+                                                data: Buffer.from(
+                                                    'blarg-blarg-blarg'
+                                                ),
+                                                dataType: 'string',
+                                            },
+                                        },
+                                    ],
                                 },
                             },
                         ],
@@ -226,7 +227,7 @@ describe('data mapper v2', () => {
                                     originalFileName: [
                                         'leaf',
                                         {
-                                            meta: { title: 'originalFileName' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: 'avatar.jpeg',
                                                 dataType: 'string',
@@ -236,7 +237,7 @@ describe('data mapper v2', () => {
                                     mime: [
                                         'leaf',
                                         {
-                                            meta: { title: 'mime' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: 'image/jpeg',
                                                 dataType: 'string',
@@ -246,7 +247,7 @@ describe('data mapper v2', () => {
                                     file: [
                                         'leaf',
                                         {
-                                            meta: { title: 'file' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: Buffer.from(
                                                     'buffer data'
@@ -258,7 +259,7 @@ describe('data mapper v2', () => {
                                     linkId: [
                                         'leaf',
                                         {
-                                            meta: { title: 'linkId' },
+                                            meta: { title: 'columnName' },
                                             value: {
                                                 data: 'link-id-123-123-123-123',
                                                 dataType: 'string',
@@ -309,11 +310,30 @@ describe('data mapper v2', () => {
                     },
                 },
             ],
-        }
+        };
 
-        expect(context).toEqual(result)
-    })
-})
+        expect(context).toEqual(result);
+
+        const transactions = new Transactions({
+            dataBaseControllersRouter:dbControllersRouter,
+            fileManager:filemanager,
+        });
+
+        const datasetprocessor = dataSetProcessorFactory({
+            // transactions:new ResolveSuccessError(),
+            transactions:transactions,
+        });
+
+        // const datasetprocessorresult = await datasetprocessor.process(
+        //     context,
+        //     // []
+        // );
+
+        // transactions.showResolved();
+
+        // console.dir(datasetprocessorresult, { depth: 10 });
+    });
+});
 
 /**
  *
@@ -331,7 +351,7 @@ function dataSetProducer(overrides = {}) {
         groupId: '00',
         linkId: 'link-id-123-123-123-123',
         ...overrides,
-    }
+    };
 }
 
 /**
@@ -346,7 +366,7 @@ function dataSetDecorator(defaultDataSetMod = {}) {
      * @returns {DataSet}
      */
     const fn = (overrides = {}) =>
-        dataSetProducer({ ...defaultDataSetMod, ...overrides })
+        dataSetProducer({ ...defaultDataSetMod, ...overrides });
 
-    return fn
+    return fn;
 }

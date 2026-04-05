@@ -5,10 +5,10 @@ class DataSetProcessor {
     /**
      * 
      * @param {Object} data 
-     * @param {Array<string>} parentCallStack 
+     * @param {string[]} [parentCallStack=[]] 
      * @returns 
      */
-    async process(data, parentCallStack) {
+    async process(data, parentCallStack = []) {
         /**
          * 
          * incoming data example:
