@@ -60,7 +60,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         console.dir({dspr:supply}, {depth:10});
 
         // возвращаем "успех" и данные для репорта клиенту
-        return await next({ success: { addedData:[...supply.addedData] } });
+        return await next({ success: { addedData:[] } });
     };
 
     return fn;

@@ -57,7 +57,7 @@ class DBAdapter {
             }
         }
 
-        if (Object.entries().length) {
+        if (Object.entries(errors).length) {
             return {
                 error: {
                     type: 'required link',
@@ -110,10 +110,6 @@ class DBAdapter {
     readAllRows() {
         const { success, error } = this.#dataBase.readAll(this.#strategy.tableName);
 
-        console.log('db adapter: ', {success, error});
-
-        
-
         if(error) {
 
             return {
@@ -147,8 +143,7 @@ class DBAdapter {
 
             // validate row
             for (const [propertyKey, propertySchema] of Object.entries(this.#strategy.schema)) {
-                console.log('db adapter response: ', {propertyKey, propertySchema});
-    
+            
                 const dbRowPropValue = rowData.get(propertyKey);
 
                 if(dbRowPropValue === undefined) {
@@ -160,8 +155,6 @@ class DBAdapter {
                     }
                 }
                 
-                console.log('db adapter validation: success. ', {dbRowPropValue});
-
                 validatedRow[propertyKey] = dbRowPropValue;
             }
 

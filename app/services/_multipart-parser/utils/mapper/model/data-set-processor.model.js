@@ -24,6 +24,7 @@ class DataSetProcessor {
             for (const [prop, currentBranchConfig] of Object.entries(currentBranch)) {
                 const [actionName, { meta, value:childBranch }] = currentBranchConfig;
 
+                console.log(`get action:`, {actionName, meta, childBranch});
                 const Action = this.#actions.get(actionName);
 
                 // const currentIterationTrace = [...parentTrace, prop];

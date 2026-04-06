@@ -93,54 +93,28 @@ function BranchActionFactory(deps = {}) {
 
         const {semantic:semanticTrace , prop:propTrace } = getTrace(parentTrace);
 
-        if (semanticTrace[0] === 'tableName' || semanticTrace[1] === 'groupId') {
+        if (semanticTrace[0] === 'tableName' && semanticTrace[1] === 'groupId') {
 
+            console.log('Branch-Action: caller result', {
+                childContext
+            });
 
-
-
-            
-            /**
-             * 
-             * 
-             */
-
-            // /**
-            //  * @type {DBAdapter|undefined}
-            //  */
             const dbAdapter = dbControllersRouter.get(propTrace[0]);
 
-            // dbAdapter.createOne()
-            
-            switch(propTrace[0]) {
-
-                case 'files': {
-
-                    console.log({childContext});
-
-                    transactor.useTransaction('files');
-
-                    // throw new Error(`test 1`);
-                    
-                    break;
-                }
-                case 'users': {
-                    
-                    console.log({childContext});
-                    
-                    break;
-                }
-                case 'video-playlist': {
-                    
-                    // throw new Error(`test 3`);
-                    break;
-                }
-                default: {
-
-                }
+            if (dbAdapter === undefined) {
+                throw new Error(`db adapter is undefined`);
             }
-        }
 
-        console.log('branch read reasult:', {childContext}, {parentTrace});
+            const result = dbAdapter.createOne(childContext);
+
+            if (result.error) {
+                
+                transactor.useTransaction();
+            }
+
+            transactor.useTransaction();
+            
+        }
 
         return {result:childContext};
 

@@ -65,12 +65,18 @@ const FILE_DATA_SET_SCHEMA = {
                             dataType:'string',
                         }, 
                     ],
-                    file: [
+                    fileSystemFileName: [
                         'leaf', {
-                            data: '__body',
-                            dataType:'buffer',
-                        }, 
-                    ],
+                            data: '__fileSystemFileName',
+                            dataType: 'string',
+                        }
+                    ]
+                    // file: [
+                    //     'leaf', {
+                    //         data: '__body',
+                    //         dataType:'buffer',
+                    //     }, 
+                    // ],
                     // linkId: [
                     //     'leaf', {
                     //         data: '__linkId',

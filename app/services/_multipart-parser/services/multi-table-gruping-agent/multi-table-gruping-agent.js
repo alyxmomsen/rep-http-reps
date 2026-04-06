@@ -30,6 +30,7 @@
 
 const { randomBytes } = require("crypto");
 const { DataMapper } = require("../data-mapper/v2/model/data-mapper.v2.model");
+const { filemanager } = require("../../../filemanager.service.js/fmanager.controller");
 
 /**
  * @typedef {Object} ParsedFormDataPart
@@ -130,7 +131,7 @@ class MultiTableGrouppingAgent {
      *   filename: 'avatar.jpg'
      * });
      */
-    handleFormDataPartParsedData (data) {
+    async handleFormDataPartParsedData (data) {
 
         const { contentType, name, body, filename } = data;
 
@@ -204,13 +205,16 @@ class MultiTableGrouppingAgent {
              * группа = LINK_ID,
              * для того что бы поле могло ссылаться на эту группу
              */
-            const fileDataSetGroupId = LINK_ID;
+            const FILE_DATASET_GROUP_ID = LINK_ID;
             const fileDataSet = {
-                // linkId:LINK_ID,
+                linkId:LINK_ID,
                 tableName: process.env.FILES_DATA_TABLE || 'files',
-                groupId: /* randomBytes(32).toString("hex") */fileDataSetGroupId,
+                groupId: /* randomBytes(32).toString("hex") */FILE_DATASET_GROUP_ID,
                 columnName,
-                dataType,
+                fileSystemFileName: {
+                    action: 'file',
+                    payload:body,
+                },
                 contentType,
                 filename,
                 body,
@@ -249,13 +253,13 @@ class MultiTableGrouppingAgent {
 
 
             const linkedFieldDataSet = {
-                tableId,
-                tableName,
                 groupId,
+                tableName,
+                // tableId,
                 columnName,
                 dataType:'link',
-                contentType,
-                filename,
+                // contentType,
+                // filename,
                 /**
                  * @description
                  * тот же самый `LINK_ID`, что
@@ -264,6 +268,7 @@ class MultiTableGrouppingAgent {
                  * , а файл имеет уникальный `GroupID`
                  */
                 body:LINK_ID,
+                
             }
             
             this.#mergedGroups.fields = this.#dataTransformer.process(
@@ -428,6 +433,9 @@ class MultiTableGrouppingAgent {
     #fileDataSetAdapter;
     #regularFieldDataSetAdapter;
     #linkedFieldDataSetAdapter;
+
+    #files;
+    #links;
     
     /**
      * Creates a new MultiTableGrouppingAgent instance.
@@ -456,7 +464,10 @@ class MultiTableGrouppingAgent {
      *   })
      * });
      */
-    constructor (deps = {}) {
+    constructor(deps = {}) {
+        
+        const files = [];
+        const links = [];
 
         const dataTransformer = deps.dataTransformer || null;
         const multiTableProtocolParser = deps.multiTableProtocolParser || null;

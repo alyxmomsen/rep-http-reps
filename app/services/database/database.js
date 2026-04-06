@@ -128,9 +128,8 @@ class DataBase {
         };
     }
     
-    readAll (tableId) {
-        console.log('DataBase.readAll' ,{tableId});
-
+    readAll(tableId) {
+        
         const tableRows = this.#data.get(tableId);
 
         if(!tableRows) {

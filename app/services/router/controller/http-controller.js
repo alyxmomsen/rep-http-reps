@@ -71,12 +71,9 @@ createRoute('/api/get-playlist/:type', (req, res) => {
     
         const validatedData = success.validatedData;
         
-
-
-        console.log(`get playlist end-point: `, {error, success});
-        for (const [key, value] of Object.entries(validatedData)) {
-            console.log({key, value});
-        }
+        // for (const [key, value] of Object.entries(validatedData)) {
+        //     console.log({key, value});
+        // }
     
         res.end(JSON.stringify({success:{
             rows:validatedData,
