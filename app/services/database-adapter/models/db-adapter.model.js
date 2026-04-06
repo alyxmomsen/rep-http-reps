@@ -3,7 +3,8 @@ const { DataBase } = require("../../database/database");
 const DATABASE_TYPES = {
     STRING:'string',
     NUMBER:'number',
-    BOOLEAN:'boolean',
+    BOOLEAN: 'boolean',
+    LINK:'link',
 }
 
 /* #warning
@@ -30,6 +31,11 @@ class DBAdapter {
         const validatedData = {};
         const { schema, tableName } = this.#strategy;
 
+
+
+        /** 
+         * validation process
+         */
         for (const [key, strategyPropertyModel] of Object.entries(this.#strategy.schema)) {
 
             try {
@@ -37,7 +43,7 @@ class DBAdapter {
                 if(!providedPropValue) {
                     if(strategyPropertyModel.required) {
                         console.log({data, str:this.#strategy.tableName});
-                        throw new Error(`required property; ${key} not provided`);
+                        throw new Error(`DBAdapter: required link: ${key}`);
                     }
                     validatedData[key] = strategyPropertyModel.defaultValue;
                     continue;
@@ -46,8 +52,19 @@ class DBAdapter {
             }
             catch(err) {
                 console.log('\x1b[31mDBAdapter error: \x1b[0m', {err});
-                const [errorType, details] = err.message?.split(/;\s*/);
-                errors[errorType] = details;
+                const [_, errorType, subject] = err.message.split(/;\s*/);
+                errors[errorType] = subject;
+            }
+        }
+
+        if (Object.entries().length) {
+            return {
+                error: {
+                    type: 'required link',
+                    payload: {
+                        // propertyName:
+                    }
+                }
             }
         }
 

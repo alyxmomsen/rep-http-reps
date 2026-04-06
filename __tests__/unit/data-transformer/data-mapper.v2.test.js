@@ -60,6 +60,23 @@ describe('data mapper v2', () => {
     });
 
     test('should smth', async () => {
+
+        /**
+         * @description
+         * для каждого <file-data-set> нужны уникальные группы
+         * по причине того что "группа"="набор столбцов для одной строки в таблице",
+         * а в <file-data-set> уже содержатся все нужные столбцы
+         *
+         * но если будет нужно расширить набор колонок в строке таблицы, то
+         * тогда нужно будет дублировать [groupId] в дополяющем data-set
+         * @type {Array<string>}
+         *
+         */
+        const FILE_RANDOM_UNIQUE_GROUPS = [
+            randomBytes(32).toString('hex'),
+            randomBytes(32).toString('hex'),
+        ];
+
         let context = {};
 
         // regular fields
@@ -84,7 +101,7 @@ describe('data mapper v2', () => {
         context = dataMapper.process(
             Schema.LinkedField,
             usersDataSetProducer({
-                body: 'link-id-123-123-123-123',
+                body: FILE_RANDOM_UNIQUE_GROUPS[0],
                 columnName: 'avatar',
                 contentType: 'image/jpeg', // будет проигнорировано для Schema.LinkedField
                 filename: 'avatar.jpeg', // будет проигнорировано для Schema.LinkedField
@@ -92,21 +109,7 @@ describe('data mapper v2', () => {
             context
         );
 
-        /**
-         * @description
-         * для каждого <file-data-set> нужны уникальные группы
-         * по причине того что "группа"="набор столбцов для одной строки в таблице",
-         * а в <file-data-set> уже содержатся все нужные столбцы
-         *
-         * но если будет нужно расширить набор колонок в строке таблицы, то
-         * тогда нужно будет дублировать [groupId] в дополяющем data-set
-         * @type {Array<string>}
-         *
-         */
-        const FILE_RANDOM_UNIQUE_GROUPS = [
-            randomBytes(32).toString('hex'),
-            randomBytes(32).toString('hex'),
-        ];
+        
 
         const fileDataSetProducer = dataSetDecorator({
             body: Buffer.from('buffer data'), // данные файла
@@ -194,16 +197,16 @@ describe('data mapper v2', () => {
                                             },
                                         },
                                     ],
-                                    linkId: [
-                                        'leaf',
-                                        {
-                                            meta: { title: 'columnName' },
-                                            value: {
-                                                data: 'link-id-123-123-123-123',
-                                                dataType: 'string',
-                                            },
-                                        },
-                                    ],
+                                    // linkId: [
+                                    //     'leaf',
+                                    //     {
+                                    //         meta: { title: 'columnName' },
+                                    //         value: {
+                                    //             data: 'link-id-123-123-123-123',
+                                    //             dataType: 'string',
+                                    //         },
+                                    //     },
+                                    // ],
                                     ['secret-column']: [
                                         'leaf',
                                         {
@@ -256,16 +259,16 @@ describe('data mapper v2', () => {
                                             },
                                         },
                                     ],
-                                    linkId: [
-                                        'leaf',
-                                        {
-                                            meta: { title: 'columnName' },
-                                            value: {
-                                                data: 'link-id-123-123-123-123',
-                                                dataType: 'string',
-                                            },
-                                        },
-                                    ],
+                                    // linkId: [
+                                    //     'leaf',
+                                    //     {
+                                    //         meta: { title: 'columnName' },
+                                    //         value: {
+                                    //             data: 'link-id-123-123-123-123',
+                                    //             dataType: 'string',
+                                    //         },
+                                    //     },
+                                    // ],
                                 },
                             },
                         ],
@@ -299,7 +302,7 @@ describe('data mapper v2', () => {
                                         {
                                             meta: { title: 'columnName' },
                                             value: {
-                                                data: 'link-id-123-123-123-123',
+                                                data: FILE_RANDOM_UNIQUE_GROUPS[0],
                                                 dataType: 'link',
                                             },
                                         },
@@ -331,7 +334,7 @@ describe('data mapper v2', () => {
 
         // transactions.showResolved();
 
-        // console.dir(datasetprocessorresult, { depth: 10 });
+        console.dir(datasetprocessorresult, { depth: 10 });
     });
 });
 

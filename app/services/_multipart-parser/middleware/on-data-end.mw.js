@@ -4,6 +4,7 @@ const { dbControllersRouter: defaultDbRouter, dbControllersRouter } = require(".
 const { DBAdapter } = require("../../database-adapter/models/db-adapter.model");
 const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.util");
 const { dataSetProcessorFactory } = require("../utils/mapper/controller/data-set-mapper.controller");
+const { Transactor } = require("../../transactor/v2/model/transactor.model");
 
 /**
  * Middleware для финальной обработки: сохранение файлов и запись в БД
@@ -47,7 +48,11 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
 
         const datasetProcessor = dataSetProcessorFactory({
-            linksBuffer:new LinksBuffer(),
+            linksBuffer: new LinksBuffer(),
+            transactor: new Transactor({
+                fileManager: filemanager,
+                dbControllersRouter:dbControllersRouter,
+            }),
         });
 
         const {tree, supply} = await datasetProcessor.process(payload, []);

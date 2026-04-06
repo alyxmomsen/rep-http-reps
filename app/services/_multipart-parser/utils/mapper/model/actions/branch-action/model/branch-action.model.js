@@ -17,6 +17,7 @@ const {
 const {
     LinksBuffer,
 } = require('../../../../../data-links-buffer/data-links-buffer.util');
+const { Transactor } = require('../../../../../../../transactor/v2/model/transactor.model');
 
 /**
  * 
@@ -26,7 +27,7 @@ const {
  * @param {FileManager} deps.filemanager - about
  * @param {Map<string,DBAdapter>} deps.dbControllersRouter - about
  * @param {LinksBuffer} deps.linksBufferInstance - about
- * @param {Transactions} deps.transactions - about
+ * @param {Transactor} deps.transactor - about
  * @returns {(payload:Object) => (Object)}
  * 
 */
@@ -38,9 +39,9 @@ function BranchActionFactory(deps = {}) {
 
     // test
 
-    const transactions = deps.transactions || null;
+    const transactor = deps.transactor || null;
 
-    if (!transactions || transactions instanceof Transactions === false) {
+    if (!transactor || transactor instanceof Transactor === false) {
         throw new Error(`BranchActionFactory: transactions required`);
     }
 
@@ -92,7 +93,23 @@ function BranchActionFactory(deps = {}) {
 
         const {semantic:semanticTrace , prop:propTrace } = getTrace(parentTrace);
 
-        if(semanticTrace[0] === 'tableName' || semanticTrace[1] === 'groupId') {
+        if (semanticTrace[0] === 'tableName' || semanticTrace[1] === 'groupId') {
+
+
+
+
+            
+            /**
+             * 
+             * 
+             */
+
+            // /**
+            //  * @type {DBAdapter|undefined}
+            //  */
+            const dbAdapter = dbControllersRouter.get(propTrace[0]);
+
+            // dbAdapter.createOne()
             
             switch(propTrace[0]) {
 
@@ -100,7 +117,7 @@ function BranchActionFactory(deps = {}) {
 
                     console.log({childContext});
 
-                    transactions.getTransaction();
+                    transactor.useTransaction('files');
 
                     // throw new Error(`test 1`);
                     
@@ -114,7 +131,7 @@ function BranchActionFactory(deps = {}) {
                 }
                 case 'video-playlist': {
                     
-                    throw new Error(`test 3`);
+                    // throw new Error(`test 3`);
                     break;
                 }
                 default: {

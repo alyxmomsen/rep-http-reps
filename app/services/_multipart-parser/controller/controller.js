@@ -25,7 +25,8 @@ const multiTableGrouppingAgentFactory  = () => {
         multiTableProtocolParser:multiTableProtocolParser,
         fileDataSetSchema:FILE_DATA_SET_SCHEMA,
         linkedFieldDataSetSchema:LINKED_FIELD_DATA_SET_SCHEMA,
-        regularFieldDataSetSchema:REGULAR_FIELD_DATA_SET,
+        regularFieldDataSetSchema: REGULAR_FIELD_DATA_SET,
+        
     });
 }
 
@@ -46,7 +47,8 @@ multipartFormHandler.onDataEndListeners(
     onDataEndMiddleware({ 
         filemanager, 
         dbRouter: dbControllersRouter,
-        formDataLinksBufferFactory:formDataLinksBufferFactory,
+        formDataLinksBufferFactory: formDataLinksBufferFactory,
+        
     })
 );
 

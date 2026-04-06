@@ -1,7 +1,7 @@
 const { dataBase } = require("../../../database/controller/db.controller");
 const { DATABASE_TYPES, DATABASE_TABLES, DBAdapter } = require("../db-adapter.model");
 
-const { STRING, BOOLEAN, NUMBER } = DATABASE_TYPES;
+const { STRING, BOOLEAN, NUMBER, LINK } = DATABASE_TYPES;
 const { USERS } = DATABASE_TABLES;
 
 const UsersValidationSchema = {
@@ -22,21 +22,21 @@ const UsersValidationSchema = {
             autoIncrement:false,
         },
         ['avatar']:{
-            required:false,
+            required:true,
             type:'link',
             defaultValue:`no description`,
             primary:false,
             autoIncrement:false,
         },
         ['thumb-nail']:{
-            required:false,
+            required:true,
             type:'link',
             defaultValue:`no description`,
             primary:false,
             autoIncrement:false,
         },
         ['logo']:{
-            required:false,
+            required:true,
             type:'link',
             defaultValue:`no description`,
             primary:false,

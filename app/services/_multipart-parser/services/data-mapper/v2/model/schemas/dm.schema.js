@@ -71,12 +71,12 @@ const FILE_DATA_SET_SCHEMA = {
                             dataType:'buffer',
                         }, 
                     ],
-                    linkId: [
-                        'leaf', {
-                            data: '__linkId',
-                            dataType:'string',
-                        }, 
-                    ],
+                    // linkId: [
+                    //     'leaf', {
+                    //         data: '__linkId',
+                    //         dataType:'string',
+                    //     }, 
+                    // ],
                 }
             ]
         }

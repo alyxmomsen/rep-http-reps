@@ -1,4 +1,6 @@
-const { DBAdapter } = require('../../../database-adapter/models/db-adapter.model');
+const {
+    DBAdapter,
+} = require('../../../database-adapter/models/db-adapter.model');
 const { DataBase } = require('../../../database/database');
 const {
     FileManager,
@@ -21,18 +23,18 @@ class Transaction {
      *
      * @param {Object} data
      * @param {Buffer<ArrayBuffer>} data.fileData
+     * @param {string} data.mime
+     * @param {string} data.linkId
+     * @param {string} data.originalFileName
      */
     async processFile(data) {
-        console.log({isfailed:this.#failed});
+        console.log({ isfailed: this.#failed });
+
         if (this.#failed) {
             throw new Error(`Transaction: this transaction is already failed`);
         }
 
-        if (!data.fileData || data.fileData instanceof Buffer === false) {
-            throw new Error(
-                `Transaction: file data shuld be an instance of a Buffer`
-            );
-        }
+        this.#argumentsValidation(data);
 
         const { fileData, originalFileName, mime } = data;
 
@@ -40,45 +42,72 @@ class Transaction {
 
         if (fmResponse.error) {
             this.#failed = true;
-            console.log({failedcheck:this.#failed});
-             throw new Error(
-                `Transaction: filemanager failed`
-            );
+            console.log({ failedcheck: this.#failed });
+            throw new Error(`Transaction: filemanager failed`);
         }
-        
-        if(!fmResponse.success) {
+
+        if (!fmResponse.success) {
             this.#failed = true;
             // console.log({failedcheck:this.#failed});
-             throw new Error(
-                `Transaction: filemanager iternal error`
-            );
+            throw new Error(`Transaction: filemanager iternal error`);
         }
 
         const dbadapter = this.#dbControllersRouter.get('files');
 
+        console.log({ dbadapter });
+
         const dbresult = dbadapter.createOne({
-            originalFileName, mime, fileSystemFilename:fmResponse.success.filename,
+            originalFileName: originalFileName,
+            mime,
+            fileSystemFilename: fmResponse.success.filename,
         });
 
         if (dbresult.error) {
-            
+            throw new Error(`Transaction: database err`);
         }
 
-        
-        
+        if (!dbresult.success) {
+            throw new Error(`Transaction: database no succ`);
+        }
+
+        console.log({ dbresult });
+
         this.#fileResult = fmResponse.success;
 
-        if(this.#fieldPending) {
-
+        if (this.#fieldPending) {
             this.#fieldPending(this.#fileResult);
         }
 
         // this.#dbadapter.createOne();
     }
 
-    processRegularField() {}
+    async processRegularField() {}
 
-    processLinkedField() {}
+    async processLinkedField() {
+
+        
+
+    }
+
+    #argumentsValidation(data) {
+        if (!data.fileData || data.fileData instanceof Buffer === false) {
+            throw new Error(
+                `Transaction: file data shuld be an instance of a Buffer`
+            );
+        }
+
+        if (!data.mime) {
+            throw new Error(`Transaction: mime required`);
+        }
+
+        if (!data.originalFileName) {
+            throw new Error(`Transaction: originalFileName required`);
+        }
+
+        if (!data.linkId) {
+            throw new Error(`Transaction: linkId required`);
+        }
+    }
 
     /**
      * @type {Map<string,DBAdapter>}
@@ -122,7 +151,7 @@ class Transactor {
      * @returns {Transaction}
      */
     useTransaction(id) {
-        console.log({transactions:this.#transactions})
+        console.log({ transactions: this.#transactions });
         if (!this.#transactions.has(id)) {
             console.log(`\x1b[31m`, 'create a new transaction', `\x1b[0m`);
             this.#transactions.set(

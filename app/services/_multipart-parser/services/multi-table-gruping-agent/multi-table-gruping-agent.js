@@ -199,10 +199,16 @@ class MultiTableGrouppingAgent {
              */
             
 
+            /**
+             * @description 
+             * группа = LINK_ID,
+             * для того что бы поле могло ссылаться на эту группу
+             */
+            const fileDataSetGroupId = LINK_ID;
             const fileDataSet = {
-                linkId:LINK_ID,
+                // linkId:LINK_ID,
                 tableName: process.env.FILES_DATA_TABLE || 'files',
-                groupId: randomBytes(32).toString("hex"),
+                groupId: /* randomBytes(32).toString("hex") */fileDataSetGroupId,
                 columnName,
                 dataType,
                 contentType,
@@ -250,6 +256,13 @@ class MultiTableGrouppingAgent {
                 dataType:'link',
                 contentType,
                 filename,
+                /**
+                 * @description
+                 * тот же самый `LINK_ID`, что
+                 * присвоен группе файла
+                 * т.е. ссылается на группу файла
+                 * , а файл имеет уникальный `GroupID`
+                 */
                 body:LINK_ID,
             }
             

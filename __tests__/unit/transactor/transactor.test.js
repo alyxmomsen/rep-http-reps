@@ -24,23 +24,27 @@ describe('transaction', () => {
     let filemanager;
 
     /**
-     * @type {Function}
+     * @type {() => ({error?:{},success?:{}})}}
      */
-    let mockFManagerReadOne;
+    let mockFManagerWriteOne;
+
+    /**
+     * @type {DBAdapter}
+     */
+    let dbadapter;
 
     beforeEach(() => {
-        dbcontrollersRouter = new Map();
-        dbcontrollersRouter.set('files', {
-            createOne: jest.fn(),
-            readOne: jest.fn(),
-            readAllRows: jest.fn(),
-        });
 
-        dbcontrollersRouter.set('users', {
+        dbadapter = {
             createOne: jest.fn(),
             readOne: jest.fn(),
             readAllRows: jest.fn(),
-        });
+        }
+
+        dbcontrollersRouter = new Map();
+        dbcontrollersRouter.set('files', dbadapter);
+
+        dbcontrollersRouter.set('users', dbadapter);
 
         filemanager = {
             read: jest.fn(),
@@ -59,40 +63,63 @@ describe('transaction', () => {
         const transaction = transactor.useTransaction('123-123-123-123');
         expect(transaction).toBeDefined();
 
-        mockFManagerReadOne = jest.fn().mockReturnValue({
+        mockFManagerWriteOne = jest.fn().mockReturnValue({
             success: {
-                filename: 'return to Salem’s Lot',
+                filename: '123123123123',
             },
         });
 
-        filemanager.write = mockFManagerReadOne;
+        filemanager.write = mockFManagerWriteOne;
 
-        await transaction.processFile({
-            fileData: Buffer.from(`hello world`),
+        dbadapter.createOne = jest.fn().mockReturnValue({
+            success: {
+                newRowIdHash:'123-123-123-123',
+                row:{foo:'bar'},
+            },
         });
 
-        expect(mockFManagerReadOne).toBeCalled();
-        expect(mockFManagerReadOne).toBeCalledWith(Buffer.from(`hello world`));
+        const dataset = {
+            fileData: Buffer.from(`return to Salem’s Lot`),
+            originalFileName: 'text.txt',
+            mime: 'foo/mime',
+            linkId:'123-123',
+        };
+
+        await transaction.processFile(dataset);
+
+        expect(mockFManagerWriteOne).toBeCalled();
+        expect(mockFManagerWriteOne).toBeCalledWith(dataset.fileData);
+
+        expect(dbadapter.createOne).toBeCalled();
+        expect(dbadapter.createOne).toBeCalledWith({
+            originalFileName:'text.txt',
+            mime: 'foo/mime',
+            fileSystemFilename:'123123123123'
+        });
     });
 
     test('shuld trhow error if the transaction aleady failed', async () => {
+        
         const transaction = transactor.useTransaction('123-123-123-123');
         expect(transaction).toBeDefined();
 
-        mockFManagerReadOne = jest.fn().mockReturnValue({
+        mockFManagerWriteOne = jest.fn().mockReturnValue({
             error: {},
         });
 
-        filemanager.write = mockFManagerReadOne;
+        filemanager.write = mockFManagerWriteOne;
 
         await expect(
             async () => transaction.processFile({
                 fileData: Buffer.from(`hello world`),
+                mime: 'text/plain',
+                originalFileName: 'foo.bar',
+                linkId:'123-123'
             })
         ).rejects.toThrow(`Transaction: filemanager failed`);
 
-        expect(mockFManagerReadOne).toBeCalled();
-        expect(mockFManagerReadOne).toBeCalledWith(Buffer.from(`hello world`));
+        expect(mockFManagerWriteOne).toBeCalled();
+        expect(mockFManagerWriteOne).toBeCalledWith(Buffer.from(`hello world`));
 
         const newTrans = transactor.useTransaction('123-123-123-123');
 
@@ -105,30 +132,44 @@ describe('transaction', () => {
         })).rejects.toThrow(`Transaction: this transaction is already failed`);
     });
 
-    test(`3`, async () => {
-        
-        const transaction = transactor.useTransaction('123-123-123-123');
-        expect(transaction).toBeDefined();
 
-        mockFManagerReadOne = jest.fn().mockReturnValue({
-            error: {},
+    test('chain', async () => {
+
+        const transaction = transactor.useTransaction('123-123');
+
+        mockFManagerWriteOne = jest.fn().mockReturnValue({
+            success: {
+                filename: 'abcdefg',
+            },
         });
 
-        filemanager.write = mockFManagerReadOne;
+        filemanager.write = mockFManagerWriteOne;
+
+        dbadapter.createOne = jest.fn().mockReturnValue({
+            success: {
+                newRowIdHash:'123-123-123-123',
+                row:{foo:'bar'},
+            },
+        });
 
         await transaction.processFile({
-            fileData: Buffer.from(`hello world`),
+            fileData: Buffer.from('hello world'),
+            linkId: '_',
+            mime: 'mime/mime',
+            originalFileName:'file.txt',
         });
 
-        expect(mockFManagerReadOne).toBeCalled();
-        expect(mockFManagerReadOne).toBeCalledWith(Buffer.from(`hello world`));
+        const transaction2 = transactor.useTransaction('123-123');
 
-        transactor.useTransaction('123-123-123-123');
+        await transaction.processLinkedField({
+            ft 
+        });
 
-        expect(async () => {
-            await transaction.processFile({
-                fileData: Buffer.from(`hello world`),
-            });
-        }).rejects.toThrow(`Transaction: this transaction is already failed`);
-    });
+        // await transaction.processLinkedField();
+
+
+        // expect()
+    }) 
+
+    
 });
