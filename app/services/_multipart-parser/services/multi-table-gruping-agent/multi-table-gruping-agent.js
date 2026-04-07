@@ -239,7 +239,8 @@ class MultiTableGrouppingAgent {
             this.#mergedGroups.files = this.#dataTransformer.process(
                 this.#fileDataSetSchema,
                 fileDataSet,
-                this.#mergedGroups.files);
+                this.#mergedGroups.files,
+            );
             
             /**
              * Step 4c: Create linked field dataset

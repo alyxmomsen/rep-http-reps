@@ -1,5 +1,6 @@
 const { randomBytes } = require("node:crypto");
 const { createWriteStream, createReadStream } = require("node:fs");
+const { readdir, stat, rm,  } = require("node:fs/promises");
 const { resolve, join } = require("node:path");
 const { Readable } = require("node:stream");
 
@@ -35,7 +36,7 @@ class FileManager {
             });
 
             readStream.on("end" , () => {
-                console.log('the end');
+                console.log('Filemanager/on-end');
                 res({
                     success:{
                         filename ,
@@ -105,6 +106,43 @@ class FileManager {
 
             
         });
+    }
+
+    async delete (filename) {
+
+        const testFileFullPath = join(this.#rootPath, filename); 
+        
+        try {
+            
+            const fileStats = await stat(testFileFullPath);
+            
+            await rm(testFileFullPath);
+
+            console.log(`FileManager/methods/delete: `, 'success');
+
+        }
+        catch (err) {
+
+
+
+            console.log(`FileManager/errors/handled error: `, {err});
+        }
+        
+        try {
+            const checkedFileStat = await stat(testFileFullPath);
+            
+        }
+        catch (err) {
+            
+            if(err?.code === 'ENOENT') {
+                console.log(`file manager: file ${filename} successfully removed`);
+                return;
+            }
+
+            console.log(`FileManager/check the removed file: `, {err});
+        }
+
+
     }
 
     #rootPath;
