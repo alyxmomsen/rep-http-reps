@@ -188,10 +188,10 @@ describe('premapping', () => {
 
     test('def', async () => {
         let context = {}
-        // // files
-        // context = premapper.process(FILES_SCHEMA, dataSet[0], context);
-        // context = premapper.process(FILES_SCHEMA, dataSet[1], context);
-        // context = premapper.process(FILES_SCHEMA, dataSet[2], context);
+        // files
+        context = premapper.process(FILES_SCHEMA, dataSet[0], context);
+        context = premapper.process(FILES_SCHEMA, dataSet[1], context);
+        context = premapper.process(FILES_SCHEMA, dataSet[2], context);
         // links
         context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[3], context);
         context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[4], context);
@@ -206,10 +206,10 @@ describe('premapping', () => {
         // regular
         context = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[11], context);
         context = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[12], context);
-        // files
-        context = premapper.process(FILES_SCHEMA, dataSet[0], context);
-        context = premapper.process(FILES_SCHEMA, dataSet[1], context);
-        context = premapper.process(FILES_SCHEMA, dataSet[2], context);
+        // // files
+        // context = premapper.process(FILES_SCHEMA, dataSet[0], context);
+        // context = premapper.process(FILES_SCHEMA, dataSet[1], context);
+        // context = premapper.process(FILES_SCHEMA, dataSet[2], context);
 
 
         const postMapperDataSet = context;
