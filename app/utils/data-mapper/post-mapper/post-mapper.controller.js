@@ -1,7 +1,4 @@
-
-const { dbControllersRouter } = require("../../../services/database-adapter/controller/db-adapter.controller");
-const { filemanager } = require("../../../services/filemanager.service.js/fmanager.controller");
-const { DataActionFactory, FileActionFactory, LinkActionFactory, PostMapper } = require("./post-mapper.model");
+const { PostMapper } = require("./post-mapper.model");
 
 /**
  * @throws {Error} - PostMapperDIContainer: PostMapper required
@@ -11,13 +8,9 @@ class PostMapperDIContainer {
     getPostMapper () {
     
         return new PostMapper({
-            dataAction:DataActionFactory({}),
-            fileAction:FileActionFactory({
-                fileManager:filemanager,
-            }),
-            linkAction:LinkActionFactory({}),
-            // fileManager:filemanager,
-            dbControllersRouter:dbControllersRouter,
+            dataAction:DataAction,
+            fileAction:FileAction,
+            linkAction:LinkAction,
         })
     }
 
@@ -26,9 +19,33 @@ class PostMapperDIContainer {
      */
     #postMapper;
 
-    constructor (deps={}) {}
+    
+    constructor (deps={}) {
+
+    }
 }
 
 const postMapperDIContainer = new PostMapperDIContainer({});
 
 module.exports = { postMapperDIContainer }
+
+/**
+ * @this {PostMapper}
+ */
+function LinkAction  (payload) {
+    console.log(`Link action`, {payload});
+}
+
+/**
+ * @this {PostMapper}
+*/
+function FileAction  (payload) {
+    console.log(`File action`, {payload});
+}
+
+/**
+ * @this {PostMapper}
+*/
+function DataAction  (payload) {
+    console.log(`Data action`, {payload});
+}

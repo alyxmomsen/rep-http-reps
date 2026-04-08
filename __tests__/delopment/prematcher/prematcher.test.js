@@ -214,12 +214,12 @@ describe('premapping', () => {
 
         const postMapperDataSet = context;
 
+        console.dir(context, {depth:20});
+        
         await postMapper.process(postMapperDataSet);
 
-        console.dir(context, {depth:20});
-
-        console.dir(dataBase.readAll('users'), {depth:20});
-        console.dir(dataBase.readAll('files'), {depth:20});
+        // console.dir(dataBase.readAll('users'), {depth:20});
+        // console.dir(dataBase.readAll('files'), {depth:20});
 
     });
 
