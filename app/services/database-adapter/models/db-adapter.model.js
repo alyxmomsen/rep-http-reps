@@ -42,8 +42,8 @@ class DBAdapter {
                 const providedPropValue = data[key];
                 if(!providedPropValue) {
                     if(strategyPropertyModel.required) {
-                        console.log({data, str:this.#strategy.tableName});
-                        throw new Error(`DBAdapter: required link: ${key}`);
+                        console.log(`DBAdapter::createOne/fail/required`, {key});
+                        throw new Error(`DBAdapter::createOne: required: ${key}`);
                     }
                     validatedData[key] = strategyPropertyModel.defaultValue;
                     continue;
