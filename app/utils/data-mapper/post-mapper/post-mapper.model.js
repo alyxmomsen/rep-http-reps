@@ -1,11 +1,30 @@
 
-const { dbControllersRouter } = require("../../../services/database-adapter/controller/db-adapter.controller");
+// const { dbControllersRouter } = require("../../../services/database-adapter/controller/db-adapter.controller");
+const { DBAdapter } = require("../../../services/database-adapter/models/db-adapter.model");
 const { FileManager } = require("../../../services/filemanager.service.js/filemanager.service");
 
 /**
  * 
- * @typedef {(payload:Object) => Promise<any>} ActionHandler
- * @typedef {"pending"|"ready"|"waiting for dependencies"|"failed"|"default"} TransactionState
+ * @typedef {(context:PostMapper,payload:Object) => Promise<any>} ActionHandler
+ * @typedef {"pending"|"ready"|"waiting for dependencies"|"failed"|"default"|"rejected"} TransactionState
+ * 
+ */
+
+
+/**
+ * @typedef {Object} SuccessCommitterReturnContsistentData
+ * @property {string} CommitterReturnContsistentData.tableName
+ * @property {string} CommitterReturnContsistentData.rowId
+ * @property {Object} CommitterReturnContsistentData.storedRowData
+ * @typedef {Object} ErrorCommitterReturnContsistentData
+ * @property {string} CommitterReturnContsistentData.message
+ */
+
+/**
+ * @typedef {"setRootContainer"|"setGroupIdContainer"} PostMapperEventName
+ */
+
+/**
  * 
  */
 
@@ -13,48 +32,146 @@ const { FileManager } = require("../../../services/filemanager.service.js/filema
 class PostMapper {
 
     /**
-     * @type {Map<string,Transaction_>}
+     * @type {Map<string,(context:Object) => any>}
      */
-    #transactions;
+    #eventListeners;
+
+    /**
+     * addListener нужно модифицировать как "private",
+     * а Actions байндить 
+     */
+
+    /**
+     * 
+     * @param {PostMapperEventName} eventName 
+     * @param {(context:Object) => any} handler 
+     */
+    addListener (eventName, handler) {
+        this.#eventListeners.set(eventName, handler);
+    }
+
+    /**
+     * 
+     * @param {PostMapperEventName} eventName 
+     * @param {Object} context 
+     */
+    emmit(eventName, context) {
+        console.log('PostMapper::emmit: ', {context, eventName});
+        const providedEventName = eventName;
+        for (const [listenerEventName, handler] of this.#eventListeners.entries()) {
+            if(listenerEventName === providedEventName) {
+                handler(context);
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param {string} tableName 
+     * @returns {TransactionsContainer}
+     */
+    #setTransactionRootContainer (tableName) {
+
+        if(this.#rootTransactionsContainers.has(tableName)) {
+            throw new Error(`PostMapper::process/iteration/table: tableName ${tableName} already registered`);
+        }
+        this.#rootTransactionsContainers.set(tableName, new TransactionsContainer(`${tableName}`));
+        const groupContainer = this.#rootTransactionsContainers.get(tableName);
+
+        // emmits
+
+        this.emmit("setRootContainer", { 
+            groupContainer:groupContainer, tableName 
+        });
+
+        return groupContainer;
+    }
 
     async process(data) {
 
         for (const [tableName, groups] of Object.entries(data)) {
 
-            if(this.#transactionsRouter.has(tableName)) {
-                throw new Error(`PostMapper::process/iteration/table: tableName ${tableName} already registered`);
-            }
+            const tableRootContainer = this.#setTransactionRootContainer(tableName);
 
-            this.#transactionsRouter.set(tableName, new TransactionsContainer(`${tableName}`));
-            const tableContainer = this.#transactionsRouter.get(tableName);
+            // if(this.#rootTransactionsContainers.has(tableName)) {
+            //     throw new Error(`PostMapper::process/iteration/table: tableName ${tableName} already registered`);
+            // }
+
+            // this.#rootTransactionsContainers.set(tableName, new TransactionsContainer(`${tableName}`));
+            // const tableRootContainer = this.#rootTransactionsContainers.get(tableName);
 
             for (const [groupId, columns] of Object.entries(groups)) {
 
-                tableContainer.setChildContainer(groupId, new TransactionsContainer(`${tableName}/${groupId}`));
-                const groupIdContainer = tableContainer.getChildContainer(groupId);
+                tableRootContainer.setChildContainer(groupId, new TransactionsContainer(`${tableName}/${groupId}`));
+                const groupIdContainer = tableRootContainer.getChildContainer(groupId);
 
-                groupIdContainer.addCommitHandler(async (data, transContainer) => {
+                // --------- event emitting --------- 
+
+                this.emmit('setGroupIdContainer', { groupIdContainer });
+
+                // --------- -------------- --------- 
+
+                const groupCommittHandler = async (data, transContainer) => {
 
                     try {
-
-                        const controller = dbControllersRouter.get(tableName);
-                        console.log(`started`, {controller});
+                        // получаем контроллер, адаптер для работы с Базой Данных 
+                        const controller = this.#dbControllersRouter.get(tableName);
+                        // console.log(`started`, {controller});
                         if(!controller) {
                             console.log({controller,tableName});
-                            throw new Error(`TransactionsContainer::committHandler/fail`);
+                            throw new Error(`groupCommittHandler/fail`);
                         }
+                        // --- // --- // --- // --- // --- // --- // --- //
                         const result = controller.createOne(data);
-                        console.log(`TransactionsContainer::committHandler/success`, {controller,  tableName:'files', result});
+                        console.log(`groupCommittHandler/result`, {controller,  tableName:'files', result});
+    
+                        
 
-                        return result;
+                        /**
+                         * @type {{success?:SuccessCommitterReturnContsistentData;error?:Object}}
+                         */
+                        const consistentRerurnData = {
+                            // success?:{},
+                            // error?:{},
+                        }
+
+                        if(!result) {
+                            throw new Error (`groupCommittHandler/internal error: result required but not returned from db-adapter`) ;
+                        }
+
+                        if(result.error) {
+                            consistentRerurnData.error =  result.error;
+                            return consistentRerurnData;
+                        }
+
+                        if(!result.success) {
+                            throw new Error(`groupCommittHandler/dbAdapter/result: no success provided`);
+                        }
+
+                        const rowId = result.success.newRowIdHash;
+                        const storedRowData = result.success.row;
+
+                        if(!rowId) {
+                            throw new Error(`groupCommittHandler/at success: no rowId returned`);
+                        }
+
+                        consistentRerurnData.success = {
+                            tableName:tableName,
+                            rowId:rowId,
+                            storedRowData:storedRowData,
+                        }
+                        
+                        return consistentRerurnData;
                     }
                     catch (err) {
                         console.log('check this', {err});
                     }
+                }
+                groupIdContainer.addCommitter( groupCommittHandler );
 
-                });
+                // console.log(`PostMapper::process/for-groups/group:`, {groupId, row: columns});
 
-                console.log(`PostMapper::process/for-groups/group:`, {groupId, row: columns});
+                // ============================================
 
                 const rowTransactions = await this.#handleRow(columns);
 
@@ -62,20 +179,22 @@ class PostMapper {
                     groupIdContainer.addLocalTransaction(name, transaction);
                 }
 
+                // console.log(`PostMapper::process/for/end`, {result: rowTransactions});
 
-                console.log(`PostMapper::process/for/end`, {result: rowTransactions});
+                // =========== try to commit ===========
 
                 try {
                     await groupIdContainer.commit();
                 }
                 catch (err) {
+                    // исключение коммита
                     console.log(`PostManager::process/for/try-to-commit/failed`, {groupId, err});
                 }
             }
         }
 
-        console.log('PostMapper/process/result:', {trans:this.#transactions});
-        console.dir(this.#transactions, {depth:10});
+        // console.log('PostMapper/process/result:', {trans:this.#transactions});
+        // console.dir(this.#transactions, {depth:10});
     }
  
     /**
@@ -87,13 +206,18 @@ class PostMapper {
     async #handleRow(row, groupIdTransactions, tableName) {
 
         /**
+         * Здесь мы перебираем данные для каждого столбца Базы Данных
+         * 
+         */
+
+        /**
          * @type {Map<string,Transaction_>}
          */
         const rowTransactions = new Map();
         
         for (const [colName, colData] of Object.entries(row)) {
             
-            console.log(`PostMapper::handleRow/for/iteration` , {colName, colData});
+            // console.log(`PostMapper::handleRow/for/iteration` , {colName, colData});
 
             const Action = this.#actions.get(colData.action);
             if(!Action) {
@@ -103,10 +227,13 @@ class PostMapper {
             /**
              * @type {Transaction_}
              */
-            const colTransaction =  await Action(colData.payload, this.#transactionsRouter);
+            const colTransaction =  await Action(this, colData.payload, this.#rootTransactionsContainers);
             if(rowTransactions.has(colName)) {
                 throw new Error(`PostMapper::#handleRow: transaction <${colName}> is already exist`);
             }
+
+            // ----------------------------------
+
             rowTransactions.set(colName, colTransaction);
         }
 
@@ -114,6 +241,11 @@ class PostMapper {
     }
 
     /**
+     * 
+     * @description 
+     * this probably will be deprecated
+     * becose these all Actions at firs time
+     * must provided as Dependencies
      * 
      * @param {string} actionName 
      * @param {ActionHandler} handler 
@@ -123,6 +255,11 @@ class PostMapper {
     }
 
     /**
+     * @type {Map<string,Transaction_>}
+     */
+    #transactions;
+
+    /**
      * @type {Map<string,ActionHandler}
      */
     #actions;
@@ -130,7 +267,15 @@ class PostMapper {
     /**
      * @type {Map<string,TransactionsContainer>}
      */
-    #transactionsRouter;
+    #rootTransactionsContainers;
+
+    /**
+     * 
+     */
+    /**
+     * @type {Map<string,DBAdapter>}
+     */
+    #dbControllersRouter;
 
     /**
      * 
@@ -138,29 +283,44 @@ class PostMapper {
      * @param {ActionHandler} deps.fileAction 
      * @param {ActionHandler} deps.dataAction
      * @param {ActionHandler} deps.linkAction
+     * @param {Map<string,DBAdapter>} deps.dbControllersRouter
      * @throws {Error} - PostMapper: all the Actions required
      */
     constructor (deps={}) {
+
+        // util deps
 
         const fileActionHandler = deps.fileAction;
         const dataActionHandler = deps.dataAction;
         const linkActionHandler = deps.linkAction;
 
+        // service deps
+
+        const dbControllersRouter = deps.dbControllersRouter;
+        // const fileManager = deps.fileManager; // filemanager proivded locally in the FileAction
+
+        // --- validate the dependencies
+
         if(!fileActionHandler || !dataActionHandler || !linkActionHandler) {
-            throw new Error(`PostMapper: all the Actions required`);
+            throw new Error(`PostMapper::constructor: all the util Actions dependencies required`);
         }
-        
+
         this.#actions = new Map();
         this.#actions.set('file', fileActionHandler);
         this.#actions.set('data', dataActionHandler);
         this.#actions.set('link', linkActionHandler);
 
-        /**
-         * 
-         */
+        if(!dbControllersRouter || /* !fileManager */false) {
+            throw new Error(`PostMapper::constructor: all the service dependencies required `);
+        }dbControllersRouter
+        
+        this.#dbControllersRouter = deps.dbControllersRouter;
+
         this.#transactions = new Map();
 
-        this.#transactionsRouter = new Map();
+        this.#rootTransactionsContainers = new Map();
+
+        this.#eventListeners = new Map();
     }
 }
 
@@ -184,10 +344,10 @@ function FileActionFactory (deps={}) {
     }
 
     /**
-     * @type {(payload:Buffer<ArrayBuffer>) => Promise<any> } payload
+     * @type {(context:PostMapper,payload:Buffer<ArrayBuffer>) => Promise<any> } payload
      * @throws {Error} - FileAction: payload shuld be instance of the Buffer
     */
-    const FileAction = async (payload) => {
+    const FileAction = async (context, payload) => {
 
         const transaction_ = new Transaction_();
        
@@ -238,13 +398,14 @@ function LinkActionFactory (deps={}) {
 
     /**
      * 
+     * @param {PostMapper} context - global context
      * @param {Object} payload 
      * @param {Object} payload.tableName 
      * @param {Object} payload.groupId
-     * @param {Map<string,TransactionsContainer>} transactions 
+     * @param {Map<string,TransactionsContainer>} rootTransactions 
      * @returns {Transaction_}
      */
-    const LinkAction = async (payload, transactions) => {
+    const LinkAction = async (context, payload, rootTransactions) => {
 
         const transaction = new Transaction_();
 
@@ -259,15 +420,63 @@ function LinkActionFactory (deps={}) {
         const tableName = payload.tableName;
         const groupId = payload.groupId;
 
-        console.log(`LinkAction/arguments` , {payload, transactions, tableName, groupId});
+        // console.log(`LinkAction/arguments` , {payload, transactions, tableName, groupId});
         
-        const targetContainer = transactions.get(payload.tableName).getChildContainer(payload.groupId);
+        const targetContainer = rootTransactions.get(payload.tableName)?.getChildContainer(payload.groupId);
         
+        // console.log(`LinkAction/check transactions root Map: `, {transactions});
         if (!targetContainer) {
-            throw new Error(`LinkAction: target container is not exist`);
+
+            /**
+             * 
+             * @param {{groupIdContainer:TransactionsContainer;tableName:string}} context 
+             */
+            const eventHandler = (context) => {
+                
+                const { groupIdContainer, tableName } = context || {};
+
+                if(!groupIdContainer/*  || !tableName */) {
+                    console.log('PostMapper',{context});
+                    throw new Error(`PostMapper/setRootContainer-listener: both of context.groupContainer and context.tableName required`);
+                } 
+
+                if(groupIdContainer.getName() === `${payload.tableName}/${payload.groupId}`) {
+                    
+                    groupIdContainer.addListener('commit', (payload) => {
+
+                        
+    
+                        const { container:targetContainer } = payload;
+    
+                        console.log('eventhandler666', {targetContainer});
+
+                        const containerState = {
+                            state:targetContainer.getState(),
+                            data:targetContainer.getData(),
+                            contName:targetContainer.getName(),
+                        }
+                        
+                        console.log(`LinkAction/target-container-state: `, {containerState, targetContainer});
+    
+                        if(containerState.state === 'committed') {
+                            transaction.setData(containerState.data);
+                            transaction.setState("ready");
+                            // throw new Error(`666`);
+                        }
+
+                        
+                    });
+                }
+            }
+
+            context.addListener("setGroupIdContainer", eventHandler);
+
+            transaction.setState("pending");
+
+            return transaction;
         }
 
-        console.log(`LinkAction/check target container: `, targetContainer);
+        // console.log(`LinkAction/check target container: `, targetContainer);
 
         const containerState = {
             state:targetContainer.getState(),
@@ -276,20 +485,6 @@ function LinkActionFactory (deps={}) {
         }
         
         console.log(`LinkAction/target-container-state: `, {containerState, targetContainer});
-
-        
-        const tarContTransactions = targetContainer.getLocalTransactions();
-
-        // const dbSet = {};
-        // for (const [colName, colTransaction] of tarContTransactions.entries()) {
-        //     const data = colTransaction.getData();
-        //     const state = colTransaction.getState();
-        //     if(state !== 'ready') {
-        //         throw new Error(`LinkAction: code 1`);
-        //     }
-        //     dbSet[colName] = data;
-        // }
-
 
         if(containerState.state === 'committed') {
             transaction.setData(containerState.data);
@@ -310,7 +505,13 @@ function LinkActionFactory (deps={}) {
  */
 function DataActionFactory (deps={}) {
 
-    const DataAction = async (payload) => {
+    /**
+     * 
+     * @param {PostMapper} context - global context 
+     * @param {Object} payload 
+     * @returns 
+     */
+    const DataAction = async (context, payload) => {
     
         const transaction = new Transaction_();
 
@@ -440,11 +641,37 @@ class TransactionsContainer {
      */
     #containerName;
 
+    /**
+     * @type {Map<string,(n:any) => any>}
+     */
+    #eventLiseners;
+
+    /**
+     * 
+     * @param {string} eventName 
+     * @param {(n:any) => any} handler 
+     */
+    addListener(eventName, handler) {
+        this.#eventLiseners.set(eventName, handler);
+        console.log('added listener', {eventName, handler});
+        // throw new Error(`add listener`);
+    }
+
+    emit(eventName, context) {
+        
+        for (const [listenerEventName, handler] of this.#eventLiseners.entries()) {
+            if(eventName === listenerEventName) {
+                handler(context);
+                return;
+            }
+        }
+    }
+
     getName() {
         return this.#containerName;
     }
 
-    addCommitHandler(handler) {
+    addCommitter(handler) {
         console.log(`TransactionsContainer::addCommitHandler`, handler);
         this.#commitHandler = handler;
     }
@@ -452,26 +679,74 @@ class TransactionsContainer {
     async commit() {
 
         const transactionsData = {};
+
+        // validate local transactions
+
+        
+        let someOneIsNotReady = false;
         for (const [name, transaction] of this.#localTransactions.entries()) {
+
             const state = transaction.getState();
             const data = transaction.getData();
+            
             console.log(`TransactionsContainer::commit/state` , {state, data});
             if(state !== "ready") {
-                this.#state = "rejected";
-                throw new Error (`TransactionsContainer::commit: one of transactions is not ready; name='${name}' state='${state}'`);
-                break;
+                someOneIsNotReady = true;
+                if(state === "rejected") {
+                    this.#state = "rejected";
+                    throw new Error (`TransactionsContainer::commit: one of transactions is rejected; name='${name}' state='${state}'`);
+                }
+                else if (state === "pending") {
+                    continue;
+                }
             }
+
             transactionsData[name] = data;
+            
         }
 
-        console.log(`TransactionsContainer::commit/try commit`);
+        if(someOneIsNotReady) {
+            this.#state = "pending";
+            throw new Error(`TransactionsContainer::commit/some one is not ready`);
+        }
 
-        const commitResult = await this.#commitHandler(transactionsData);
+        console.log(`TransactionsContainer::commit/try to commit`);
+
+        /**
+         * @type {{success?:SuccessCommitterReturnContsistentData;error?:Object}}
+         */
+        const commitHandlerResult = await this.#commitHandler(transactionsData);
+
+        
+        if(commitHandlerResult.error) {
+            console.log(`TransactionsContainer::commit/failed: got error`, {commitResult: commitHandlerResult});
+            this.#data = null;
+            this.#state = 'rejected';
+            return;
+        }
+        
+        if(!commitHandlerResult.success) {
+            console.log(`TransactionsContainer::commit/failed: got no success`, {commitResult: commitHandlerResult});
+            this.#data = null;
+            this.#state = 'rejected';
+            return;
+        }
+        
+        
+
+        /**
+         * сохраняем данные успешного коммита группы
+         */
+        this.#data  = {
+            rowId:commitHandlerResult.success.rowId,
+            tableName:commitHandlerResult.success.tableName,
+        };
 
         this.#state = 'committed';
-        this.#data  = commitResult.success;
 
-        console.log(`\x1b[31mTransactionsContainer::commit: successfully committed\x1b[0m`, {transactionsData, commitResult});
+        this.emit('commit', {container:this});
+
+        console.log(`\x1b[31mTransactionsContainer::commit: successfully committed\x1b[0m`, {transactionsData, commitResult: commitHandlerResult});
     }
 
     addLocalTransaction(name , transaction) {
@@ -569,6 +844,6 @@ class TransactionsContainer {
             state:this.#state, data:this.#data, name:this.#containerName, check
         });
 
-
+        this.#eventLiseners = new Map();
     }
 }

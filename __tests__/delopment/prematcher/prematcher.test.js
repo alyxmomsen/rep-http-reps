@@ -33,6 +33,7 @@ describe('premapping', () => {
         const groupId = '123-123-123-123';
 
         dataSet = [
+            // file data-set
             def1({
                 // body:Buffer.from('hello world'),
                 // contentType:'video/matroska',
@@ -41,6 +42,7 @@ describe('premapping', () => {
                 groupId:'01',
                 // columnName:'avatar',
             }),
+            // file data-set
             def1({
                 // body:Buffer.from('hello world'),
                 // contentType:'video/matroska',
@@ -49,6 +51,7 @@ describe('premapping', () => {
                 groupId:'00',
                 // columnName:'avatar',
             }),
+            // file data-set
             def1({
                 // body:Buffer.from('hello world'),
                 // contentType:'video/matroska',
@@ -57,7 +60,7 @@ describe('premapping', () => {
                 // groupId:'00',
                 // columnName:'avatar',
             }),
-            // to link
+            // a link column
             def1({
                 body:{
                     tableName:'files',
@@ -70,7 +73,7 @@ describe('premapping', () => {
                 groupId:'00',
                 columnName:'avatar',
             }),
-            // to link
+            // a link column
             def1({
                 body:{
                     tableName:'files',
@@ -83,7 +86,7 @@ describe('premapping', () => {
                 groupId:'00',
                 columnName:'logo',
             }),
-            // to link
+            // a link column
             def1({
                 body:{
                     tableName:'files',
@@ -116,7 +119,7 @@ describe('premapping', () => {
             def1({
                 body:{
                     tableName:'files',
-                    groupId:'00',
+                    groupId:'01',
                     columnName:'fileSystemFileName',
                 },
                 // contentType:'video/matroska',
@@ -129,7 +132,7 @@ describe('premapping', () => {
             def1({
                 body:{
                     tableName:'files',
-                    groupId:'00',
+                    groupId:'01',
                     columnName:'fileSystemFileName',
                 },
                 // contentType:'video/matroska',
@@ -142,7 +145,7 @@ describe('premapping', () => {
             def1({
                 body:{
                     tableName:'files',
-                    groupId:'00',
+                    groupId:'01',
                     columnName:'fileSystemFileName',
                 },
                 // contentType:'video/matroska',
@@ -184,25 +187,39 @@ describe('premapping', () => {
     });
 
     test('def', async () => {
-
-        // files
-        let result = premapper.process(FILES_SCHEMA, dataSet[0], {});
-        result = premapper.process(FILES_SCHEMA, dataSet[1], result);
-        result = premapper.process(FILES_SCHEMA, dataSet[2], result);
+        let context = {}
+        // // files
+        // context = premapper.process(FILES_SCHEMA, dataSet[0], context);
+        // context = premapper.process(FILES_SCHEMA, dataSet[1], context);
+        // context = premapper.process(FILES_SCHEMA, dataSet[2], context);
         // links
-        result = premapper.process(LINK_COLUMN_SCHEMA, dataSet[3], result);
-        result = premapper.process(LINK_COLUMN_SCHEMA, dataSet[4], result);
-        result = premapper.process(LINK_COLUMN_SCHEMA, dataSet[5], result);
+        context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[3], context);
+        context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[4], context);
+        context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[5], context);
         // regular
-        result = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[6], result);
-        result = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[7], result);
+        context = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[6], context);
+        context = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[7], context);
+        // links
+        context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[8], context);
+        context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[9], context);
+        context = premapper.process(LINK_COLUMN_SCHEMA, dataSet[10], context);
+        // regular
+        context = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[11], context);
+        context = premapper.process(REGULAR_COLUMN_SCHEMA, dataSet[12], context);
+        // files
+        context = premapper.process(FILES_SCHEMA, dataSet[0], context);
+        context = premapper.process(FILES_SCHEMA, dataSet[1], context);
+        context = premapper.process(FILES_SCHEMA, dataSet[2], context);
 
-        await postMapper.process(result);
 
-        // console.dir(result, {depth:20});
+        const postMapperDataSet = context;
 
-        console.log(dataBase.readAll('users'));
-        console.log(dataBase.readAll('files'));
+        await postMapper.process(postMapperDataSet);
+
+        console.dir(context, {depth:20});
+
+        console.dir(dataBase.readAll('users'), {depth:20});
+        console.dir(dataBase.readAll('files'), {depth:20});
 
     });
 

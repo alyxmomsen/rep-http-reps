@@ -1,4 +1,5 @@
 
+const { dbControllersRouter } = require("../../../services/database-adapter/controller/db-adapter.controller");
 const { filemanager } = require("../../../services/filemanager.service.js/fmanager.controller");
 const { DataActionFactory, FileActionFactory, LinkActionFactory, PostMapper } = require("./post-mapper.model");
 
@@ -15,6 +16,8 @@ class PostMapperDIContainer {
                 fileManager:filemanager,
             }),
             linkAction:LinkActionFactory({}),
+            // fileManager:filemanager,
+            dbControllersRouter:dbControllersRouter,
         })
     }
 
