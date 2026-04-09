@@ -1,28 +1,22 @@
-const { Transaction } = require("./transaction.model");
+const { Transaction } = require('./transaction.model');
 
 class TransactionsContainer {
-
     /**
      * @type {Transaction}
      */
     #transactions;
 
-    rollback () {
+    rollback() {}
 
-    }
-
-    commit () {
-
-    }
+    commit() {}
 
     /**
-     * 
-     * @param {Object.<string,Transaction} transactions 
+     *
+     * @param {Object.<string,Transaction} transactions
      */
-    constructor () {
+    constructor() {
         this.#transactions = new Map();
-
     }
 }
 
-module.exports = { TransactionsContainer }
+module.exports = { TransactionsContainer };

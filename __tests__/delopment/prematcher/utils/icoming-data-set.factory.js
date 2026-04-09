@@ -4,22 +4,21 @@ module.exports = { defaultState };
  * @typedef {Object} IncomingDataSet
  * @property {Buffer<ArrayBuffer>} body
  * @property {string} filename
- * @property {string} contentType 
- * @property {string} tableName 
- * @property {string} groupId 
- * @property {string} columnName 
+ * @property {string} contentType
+ * @property {string} tableName
+ * @property {string} groupId
+ * @property {string} columnName
  */
 
-
 /**
- * 
- * @param {Object} data 
- * @param {Buffer<ArrayBuffer>} data.body 
+ *
+ * @param {Object} data
+ * @param {Buffer<ArrayBuffer>} data.body
  * @param {string} data.filename
- * @param {string} data.contentType 
- * @param {string} data.tableName 
- * @param {string} data.groupId 
- * @param {string} data.columnName 
+ * @param {string} data.contentType
+ * @param {string} data.tableName
+ * @param {string} data.groupId
+ * @param {string} data.columnName
  * @returns {(overrides:IncomingDataSet) => {
  *  body:Buffer<ArrayBuffer>;
  *  filename:string;
@@ -29,19 +28,17 @@ module.exports = { defaultState };
  *  columnName:string;
  * }}
  */
-function defaultState (data) {
-
+function defaultState(data) {
     /**
-     * 
-     * @param {Object} overrides 
-     * @param {Buffer<ArrayBuffer>} overrides.body 
+     *
+     * @param {Object} overrides
+     * @param {Buffer<ArrayBuffer>} overrides.body
      * @param {string} overrides.filename
-     * @param {string} overrides.contentType 
-     * @param {string} overrides.tableName 
-     * @param {string} overrides.groupId 
-     * @param {Object} overrides.columnName 
+     * @param {string} overrides.contentType
+     * @param {string} overrides.tableName
+     * @param {string} overrides.groupId
+     * @param {Object} overrides.columnName
      * @returns {}
      */
-    return (overrides) => ({...data, ...overrides});
+    return (overrides) => ({ ...data, ...overrides });
 }
-
