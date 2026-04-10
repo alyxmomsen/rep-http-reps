@@ -102,6 +102,22 @@ class StateRollBackContainer {
     }
 
     /**
+     * @description
+     * - локальный контекст экшна, при выполнении имеет доступ к приватному свойству `this.#data`,
+     * посредством "контроллера" (интерфейс для текущего контейнера) переданного в аргумент,
+     * т.е. он может устанавливать состояния контейнера (`this.#data`, `this.#state` ...)
+     * ---
+     * - экшн вызывается в `this.#preCommit`
+     * ---
+     * @example
+     * 
+     * setAction ('action-name', (controller, deps) => {
+     *  controller.setData('any data'); 
+     *  controller.getData(); 
+     *  controller.setState("done"); // "pending"|"rejected"|"done"
+     *  controller.getState()
+     * 
+     * 
      * @type {Map<string,PreCommitAction>}
      */
     #actions;

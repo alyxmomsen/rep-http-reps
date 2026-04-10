@@ -73,13 +73,13 @@ function LinkActionFactory(deps = {}) {
      * @returns
      */
     const LinkAction = async (payload) => {
-        const transaction = rollBackContainerFactory.create();
+        const container = rollBackContainerFactory.create();
 
-        transaction.setAction('main', (controller, deps) => {
+        container.setAction('main', (controller, deps) => {
             const globalContainers = deps;
 
-            const tarContKey = `${payload.tableName}/${payload.groupId}`;
-            const targetContainer = globalContainers.get(tarContKey);
+            const targetContainerKey = `${payload.tableName}/${payload.groupId}`;
+            const targetContainer = globalContainers.get(targetContainerKey);
 
             if (!targetContainer) {
                 
@@ -90,8 +90,9 @@ function LinkActionFactory(deps = {}) {
                 });
                 controller.setState(
                     'pending',
-                    `no target container ${tarContKey}`,
-                    tarContKey,
+                    `no target container ${targetContainerKey}`,// пока что пометка для разработки, 
+                    // но каждый случай можно закодировать для дальнейшего использования в системе
+                    targetContainerKey,// пока что я сохраняю ключ целевого контейнера для повторной попытки.
                 );
                 return;
             }
@@ -102,7 +103,19 @@ function LinkActionFactory(deps = {}) {
                 targetContainer,
                 targetContainerData:targetContainer.getData(),
             });
-            // console.log({ targetContState: targetContainer.getState() });
+            
+            // ===================================================
+
+            /**
+             * 
+             * 
+             * 
+             * 
+             */
+            
+            // ===================================================
+
+            targetContainer.getData
 
             controller.setState('done', 'target container is exist');
             controller.setData('datatatatata');
@@ -112,7 +125,7 @@ function LinkActionFactory(deps = {}) {
         //     // console.log('link main rollback');
         // });
 
-        return transaction;
+        return container;
     };
 
     return LinkAction;

@@ -8,15 +8,7 @@ const {
 } = require('./transactions/transactios-container.model');
 
 class PostMapper {
-    /**
-     * @type {Map<string,StateRollBackContainer>}
-     */
-    #containers;
-
-    /**
-     * @type {Map<string,() => any>}
-     */
-    #actions;
+    
 
     /**
      *
@@ -28,17 +20,73 @@ class PostMapper {
     #setContainer(tableName, groupId, container) {
         const generatedKey = `${tableName}/${groupId}`;
 
-        if (this.#containers.has(generatedKey)) {
+        if (this.#groupContainers.has(generatedKey)) {
             throw new Error(
                 `PostMapper::setContainer: key is already exist ${generatedKey}`
             );
         }
 
-        this.#containers.set(generatedKey, container);
+        this.#groupContainers.set(generatedKey, container);
 
         return container;
     }
 
+    
+    async process(data) {
+        for (const [tableName, groups] of Object.entries(data)) {
+            for (const [groupId, groupColumns] of Object.entries(groups)) {
+
+                const rowContainer = await this.#handleRow(groupColumns);
+                const groupContainerAddress = `${tableName}/${groupId}`;
+                this.#groupContainers.set(groupContainerAddress, rowContainer);
+
+                // await rowTransacton.commit();
+                
+                // const rowState = rowTransacton.getState();
+                // console.log(
+                //     'row state: ',
+                //     { tableName, groupId },
+                //     { rowState }
+                // );
+            }
+        }
+
+        const pended = [];
+        const rejected = [];
+        const done = [];
+        for (const [contName, cont] of this.#groupContainers.entries()) {
+            await cont.preCommit();
+            const state = cont.getState();
+            
+            switch (state.value) {
+                case "done":
+                    done.push(cont);
+                    break;
+                    case "rejected":
+                        rejected.push(cont);
+                    break;
+                    case "pending":
+                    pended.push(cont);
+                    break;
+                }
+                
+                // console.log({ finalState: state, contName, pended, rejected, done });
+            }
+
+            if (rejected.length) {
+            throw new Error();
+        }
+
+        if (pended.length) {
+            throw new Error()
+        }
+        
+        for (const container of done) {
+            const data = container.getData();
+            console.log({data});
+        }
+    }
+    
     async #handleRow(groupColumns) {
         // const container = new StateRollBackContainer();
         const container = this.#stateRollBackFactory.create();
@@ -52,8 +100,8 @@ class PostMapper {
             colName,
             { action: actionName, payload: actionPayload },
         ] of Object.entries(groupColumns)) {
-            const action = this.#actions.get(actionName);
-            if (!action) {
+            const DataAction = this.#actions.get(actionName);
+            if (!DataAction) {
                 throw new Error(
                     `PostMapper::process/action: incorrect action key`
                 );
@@ -62,7 +110,7 @@ class PostMapper {
             /**
              * @type {StateRollBackContainer}
              */
-            const columnContainer = await action(actionPayload);
+            const columnContainer = await DataAction(actionPayload);
 
             rowContainers.set(colName, columnContainer);
         }
@@ -73,7 +121,7 @@ class PostMapper {
 
             let isDone = true;
             for (const [colContainerName, colContainer] of rowContainers.entries()) {
-                await colContainer.preCommit(this.#containers);
+                await colContainer.preCommit(this.#groupContainers);
 
                 /**
                  * 
@@ -137,60 +185,15 @@ class PostMapper {
         return container;
     }
 
-    async process(data) {
-        for (const [tableName, groups] of Object.entries(data)) {
-            for (const [groupId, groupColumns] of Object.entries(groups)) {
+    /**
+     * @type {Map<string,StateRollBackContainer>}
+     */
+    #groupContainers;
 
-                const rowTransacton = await this.#handleRow(groupColumns);
-                const globalContainerId = `${tableName}/${groupId}`;
-                this.#containers.set(globalContainerId, rowTransacton);
-
-                // await rowTransacton.commit();
-
-                // const rowState = rowTransacton.getState();
-                // console.log(
-                //     'row state: ',
-                //     { tableName, groupId },
-                //     { rowState }
-                // );
-            }
-        }
-
-        const pended = [];
-        const rejected = [];
-        const done = [];
-        for (const [contName, cont] of this.#containers.entries()) {
-            await cont.preCommit();
-            const state = cont.getState();
-
-            switch (state.value) {
-                case "done":
-                    done.push(cont);
-                    break;
-                case "rejected":
-                    rejected.push(cont);
-                    break;
-                case "pending":
-                    pended.push(cont);
-                    break;
-            }
-
-            // console.log({ finalState: state, contName, pended, rejected, done });
-        }
-
-        if (rejected.length) {
-            throw new Error();
-        }
-
-        if (pended.length) {
-            throw new Error()
-        }
-
-        for (const container of done) {
-            const data = container.getData();
-            console.log({data});
-        }
-    }
+    /**
+     * @type {Map<string,() => any>}
+     */
+    #actions;
 
     /**
      * @type {StateRollBackContainerFactory}
@@ -247,7 +250,7 @@ class PostMapper {
 
         // ------------
 
-        this.#containers = new Map();
+        this.#groupContainers = new Map();
     }
 }
 
