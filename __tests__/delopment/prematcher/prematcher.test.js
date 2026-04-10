@@ -312,12 +312,11 @@ describe('premapping', () => {
         await postMapper.process(postMapperDataSet);
         console.log(`process executing: end`);
         
-        // console
-        console.dir(await dataBase.readAll('users'), {depth:20});
-        console.dir(await dataBase.readAll('files'), {depth:20});
+        console.dir(dataBase.readAll('users'), {depth:20});
+        console.dir(dataBase.readAll('files'), {depth:20});
 
         // expect(mockCreate).toHaveBeenCalled();
-        // expect(mockSetRollBack).toHaveBeenCalled();
+        expect(mockSetRollBack).not.toHaveBeenCalled();
         // expect(mockSetRollBack).toHaveBeenCalledTimes(1);
         // expect(mockSetRollBack).toHaveBeenCalledWith("main", () => {});
     });
