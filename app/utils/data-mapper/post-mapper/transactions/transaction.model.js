@@ -135,7 +135,10 @@ class StateRollBackContainer {
 
     constructor() {
         this.#data = null;
-        this.#state = 'pending';
+        this.#state = {
+            value:'pending',
+            message:'default state',
+        };
 
         this.#actions = new Map();
 

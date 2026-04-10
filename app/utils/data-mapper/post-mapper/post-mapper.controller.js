@@ -6,6 +6,7 @@ const {
     StateRollBackContainerFactory: SetRollBackContainerFactory,
     StateRollBackContainerFactory,
 } = require('./transactions/transaction.controller');
+const { StateRollBackContainer } = require('./transactions/transaction.model');
 
 /**
  * @throws {Error} - PostMapperDIContainer: PostMapper required
@@ -75,12 +76,21 @@ function LinkActionFactory(deps = {}) {
     const LinkAction = async (payload) => {
         const container = rollBackContainerFactory.create();
 
-        container.setAction('main', (controller, deps) => {
+        /**
+         * 
+         * @param {import('./transactions/transaction.model').PreCommitActionController} controller 
+         * @param {*} deps 
+         */
+        const columnContainerAction = (controller, deps) => {
+            
+            /**
+             * @type {Map<string,StateRollBackContainer>}
+             */
             const globalContainers = deps;
-
+    
             const targetContainerKey = `${payload.tableName}/${payload.groupId}`;
             const targetContainer = globalContainers.get(targetContainerKey);
-
+    
             if (!targetContainer) {
                 
                 console.log('link payload', {
@@ -88,6 +98,7 @@ function LinkActionFactory(deps = {}) {
                     globalContainers,
                     targetContainer,
                 });
+                
                 controller.setState(
                     'pending',
                     `no target container ${targetContainerKey}`,// пока что пометка для разработки, 
@@ -96,16 +107,16 @@ function LinkActionFactory(deps = {}) {
                 );
                 return;
             }
-
-            console.log('link payload check', {
-                payload,
-                globalContainers,
-                targetContainer,
-                targetContainerData:targetContainer.getData(),
-            });
+    
+            // console.log('link payload check', {
+            //     payload,
+            //     globalContainers,
+            //     targetContainer,
+            //     targetContainerData:targetContainer.getData(),
+            // });
             
             // ===================================================
-
+    
             /**
              * 
              * 
@@ -114,17 +125,38 @@ function LinkActionFactory(deps = {}) {
              */
             
             // ===================================================
+    
+            const targetContainerState = targetContainer.getState();
+            const targetContainerData = targetContainer.getData();
+    
+            console.log('LinkAction/columnContainerAction/tar cont state: ', {targetContainerState, targetContainerData});
 
-            targetContainer.getData
+            if(targetContainerState.value === "done") {
 
-            controller.setState('done', 'target container is exist');
-            controller.setData('datatatatata');
-        });
+                controller.setState('done', 'target container is "done"');
+                controller.setData(targetContainerData);
+                return;
+            }
+            
+            if(targetContainerState.value === 'rejected') {
+                
+                controller.setState('rejected', 'target container is rejected, and current must be too');
+                controller.setData(null);
+                return;
+            }
+            
+            
+            controller.setState('pending', 'target container is pending, and current must be too');
+            controller.setData(null);
 
+        }
+        
+        container.setAction('main', columnContainerAction);
+    
         // transaction.setRollBack('main', () => {
         //     // console.log('link main rollback');
         // });
-
+    
         return container;
     };
 

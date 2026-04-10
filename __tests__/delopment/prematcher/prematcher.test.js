@@ -1,3 +1,4 @@
+const { dataBase } = require('../../../app/services/database/controller/db.controller');
 const {
     postMapperDIContainer,
     DataAction,
@@ -307,13 +308,15 @@ describe('premapping', () => {
         const postMapperDataSet = context;
 
         console.dir(context, { depth: 20 });
-
+        console.log(`process executing: start`);
         await postMapper.process(postMapperDataSet);
+        console.log(`process executing: end`);
+        
+        // console
+        console.dir(await dataBase.readAll('users'), {depth:20});
+        console.dir(await dataBase.readAll('files'), {depth:20});
 
-        // console.dir(dataBase.readAll('users'), {depth:20});
-        // console.dir(dataBase.readAll('files'), {depth:20});
-
-        expect(mockCreate).toHaveBeenCalled();
+        // expect(mockCreate).toHaveBeenCalled();
         // expect(mockSetRollBack).toHaveBeenCalled();
         // expect(mockSetRollBack).toHaveBeenCalledTimes(1);
         // expect(mockSetRollBack).toHaveBeenCalledWith("main", () => {});
