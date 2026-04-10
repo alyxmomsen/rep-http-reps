@@ -5,6 +5,10 @@ const { DBAdapter } = require("../../database-adapter/models/db-adapter.model");
 const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.util");
 const { dataSetProcessorFactory } = require("../utils/mapper/controller/data-set-mapper.controller");
 const { Transactor } = require("../../transactor/v2/model/transactor.model");
+const { PostMapper } = require("../../../utils/data-mapper/post-mapper/post-mapper.model");
+const { DataAction, DataActionFactory, FileActionFactory, LinkActionFactory } = require("../../../utils/data-mapper/post-mapper/post-mapper.controller");
+const { StateRollBackContainerFactory } = require("../../../utils/data-mapper/post-mapper/transactions/transaction.controller");
+const { dataBase } = require("../../database/controller/db.controller");
 
 /**
  * Middleware для финальной обработки: сохранение файлов и запись в БД
@@ -42,28 +46,71 @@ module.exports = function onDataEndMiddleware(deps = {}) {
      */
     const fn = async (payload, next) => {
 
-        console.log('on-data-end middleware: payload data' , {payload});
+        console.log('on-data-end middleware: payload data:');
+        console.dir(payload, {depth:10});
 
-        // console.dir(payload, {depth:20});
 
-
-        const datasetProcessor = dataSetProcessorFactory({
-            linksBuffer: new LinksBuffer(),
-            transactor: new Transactor({
-                fileManager: filemanager,
-                dbControllersRouter:dbControllersRouter,
+        const postMapper = new PostMapper({
+            dataAction:DataActionFactory({
+                rollBackContainerFactory:new StateRollBackContainerFactory(),
             }),
+            fileAction:FileActionFactory({
+                rollBackContainerFactory:new StateRollBackContainerFactory(),
+            }),
+            linkAction:LinkActionFactory({
+                rollBackContainerFactory:new StateRollBackContainerFactory(),
+            }),
+            stateRollBackContainerFactory:new StateRollBackContainerFactory(),
         });
 
-        const {tree, supply} = await datasetProcessor.process(payload, []);
+        // console.dir(payload, {depth:10});
 
-        console.dir({dspr:supply}, {depth:10});
+        await postMapper.process(payload);
+
+        console.log('check that');
+        const filesResult = dataBase.readAll('files');
+        const usersResult = dataBase.readAll('users');
+        const videoPlaylistResult = dataBase.readAll('video-playlist');
+
+        const filesDbObject = convertMapToObjectsArray(filesResult?.success?.tableRows || new Map());
+        const usersDbObject = convertMapToObjectsArray(usersResult?.success?.tableRows || new Map());
+        const videoDbObject = convertMapToObjectsArray(videoPlaylistResult?.success?.tableRows || new Map());
+
+        console.dir({
+            filesDbObject, usersDbObject, 
+            videoDbObject,  filesResult, 
+            usersResult, videoPlaylistResult
+        }, {depth:10});
+
 
         // возвращаем "успех" и данные для репорта клиенту
-        return await next({ success: { addedData:[] } });
+        return await next({ success: { addedData:[...videoDbObject, ...usersDbObject] } });
     };
 
     return fn;
 };
 
+/**
+ * 
+ * @param {Map} mapData 
+ */
+function convertMapToObjectsArray (mapData) {
 
+    console.log({mapData});
+
+    const tableData = [];
+
+    for (const [rowId, rowData] of mapData.entries()) {
+        
+        const _rowData = {};
+
+        for (const [colName,colData] of rowData.entries()) {
+
+            _rowData[colName] = {rowId, colData};
+        }
+
+        tableData.push(_rowData);
+    }
+
+    return tableData;
+}

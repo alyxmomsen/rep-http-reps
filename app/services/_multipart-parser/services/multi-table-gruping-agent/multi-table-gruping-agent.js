@@ -31,6 +31,8 @@
 const { randomBytes } = require("crypto");
 const { DataMapper } = require("../data-mapper/v2/model/data-mapper.v2.model");
 const { filemanager } = require("../../../filemanager.service.js/fmanager.controller");
+const { PreMapper, FILES_SCHEMA, LINK_COLUMN_SCHEMA, REGULAR_COLUMN_SCHEMA } = require("../../../../utils/data-mapper/pre-mapper/pre-mapper.model");
+const { defaultState: defaultStateDataSetFactory } = require("../../../../../__tests__/delopment/prematcher/utils/icoming-data-set.factory");
 
 /**
  * @typedef {Object} ParsedFormDataPart
@@ -178,141 +180,48 @@ class MultiTableGrouppingAgent {
                 throw new Error(`MultiTableGrouppingAgent: as "filename" received then "contentType" required too`);
             }
             
-            /**
-             * Generate unique identifier for this file
-             * Used to link file metadata with target table references
-             * 
-             * @see dev.log.md#1 for design rationale
-             */
-            const LINK_ID = randomBytes(32).toString('hex');
-
-            /**
-             * Step 4b: Create file metadata dataset
-             * 
-             * This dataset will be merged into the `files` group and later stored
-             * in the dedicated files table.
-             * 
-             * Key design decisions:
-             * - TABLE_NAME = 'files' (configurable via env) — all files go to one table
-             * - GROUP_ID = LINK_ID — ensures each file gets its own group (no merging)
-             * 
-             * @see dev.log.md#1.2 for grouping strategy
-             */
-            
-
-            /**
-             * @description 
-             * группа = LINK_ID,
-             * для того что бы поле могло ссылаться на эту группу
-             */
-            const FILE_DATASET_GROUP_ID = LINK_ID;
-            const fileDataSet = {
-                linkId:LINK_ID,
-                tableName: process.env.FILES_DATA_TABLE || 'files',
-                groupId: /* randomBytes(32).toString("hex") */FILE_DATASET_GROUP_ID,
-                columnName,
-                fileSystemFileName: {
-                    action: 'file',
-                    payload:body,
-                },
+            const fileGroupId = randomBytes(32).toString("hex");
+            const fileDataSet = defaultStateDataSetFactory({
                 contentType,
                 filename,
+                groupId:fileGroupId,
+                tableName:'files',
                 body,
-            }
-            
-            /**
-             * Merge file metadata into files group
-             * This structure will be processed by onDataEndMiddleware
-             * 
-             * Final structure example:
-             * {
-             *   files: {
-             *     [LINK_ID]: {
-             *       linkId: { data: LINK_ID, type: 'string' },
-             *       originalFileName: { data: 'avatar.jpg', type: 'string' },
-             *       mime: { data: 'image/jpeg', type: 'string' },
-             *       body: { data: Buffer, type: 'binary' }
-             *     }
-             *   }
-             * }
-             */
-            this.#mergedGroups.files = this.#dataTransformer.process(
-                this.#fileDataSetSchema,
-                fileDataSet,
-                this.#mergedGroups.files,
-            );
-            
-            /**
-             * Step 4c: Create linked field dataset
-             * 
-             * This creates a reference in the target table that points to the file.
-             * The `body` field contains the LINK_ID, which will be resolved to a
-             * proper foreign key during database insertion.
-             * 
-             * Example: users table gets an 'avatar' column containing the file ID
-             */
+            })();
 
-
-            const linkedFieldDataSet = {
-                groupId,
+            const linkColumnDataSet = defaultStateDataSetFactory({
+                body: {
+                    tableName: 'files',
+                    groupId:fileGroupId,
+                    columnName: 'fileSystemFileName',
+                },
                 tableName,
-                // tableId,
+                groupId,
                 columnName,
-                dataType:'link',
-                // contentType,
-                // filename,
-                /**
-                 * @description
-                 * тот же самый `LINK_ID`, что
-                 * присвоен группе файла
-                 * т.е. ссылается на группу файла
-                 * , а файл имеет уникальный `GroupID`
-                 */
-                body:LINK_ID,
-                
-            }
-            
-            this.#mergedGroups.fields = this.#dataTransformer.process(
-                this.#linkedFieldDataSetSchema/*  || LINKED_FIELD_DATA_SET_SCHEMA */,
-                linkedFieldDataSet,
-                this.#mergedGroups.fields);
-            
+            })();
+
+            this.#mergedGroups = this.#dataTransformer.process(FILES_SCHEMA, fileDataSet, this.#mergedGroups );
+            this.#mergedGroups = this.#dataTransformer.process(LINK_COLUMN_SCHEMA, linkColumnDataSet, this.#mergedGroups );
+
+            // console.dir(context, {depth:10});
+            // throw new Error();
+
             return ;
         } 
         
-        /**
-         * Step 4d: Regular field processing (non-file)
-         * 
-         * Creates dataset for regular input fields (text, number, etc.)
-         * This data will be merged into the `fields` group and later stored
-         * in the target tables.
-         * 
-         * Fields from the same groupId are merged together,
-         * allowing multiple inputs to populate a single database row.
-         * 
-         * Example:
-         * - First call: groupId='0025', columnName='name', body='John'
-         * - Second call: groupId='0025', columnName='email', body='john@mail.com'
-         * - Result: One row with both name and email
-         */
-        // const regularFieldDataSet = this.#regularFieldDataSetAdapter?.({
-        //     body, columnName, dataType,
-        //     groupId, tableName,
-        // })/*  || regularFieldDataSetFactory({
-        //     body, columnName, dataType,
-        //     groupId, tableName,
-        // })  */;
+        const regularDataSet = defaultStateDataSetFactory({
+            body,
+            tableName,
+            groupId,
+            columnName,
+        })();
 
-        const regularFieldDataSet = {
-            body, columnName, dataType ,groupId, tableName,
-        }
+        console.log('foo bar: 1');
+        this.#mergedGroups = this.#dataTransformer.process(REGULAR_COLUMN_SCHEMA, regularDataSet, this.#mergedGroups);
+        console.dir(this.#mergedGroups, {depth:10});
+        console.log('foo bar: 2');
         
-        this.#mergedGroups.fields = this.#dataTransformer.process(
-            this.#regularFieldDataSetSchema,
-            regularFieldDataSet,
-            this.#mergedGroups.fields,
-        );
-        
+
     }
 
     /**
@@ -516,10 +425,7 @@ class MultiTableGrouppingAgent {
         this.#dataTransformer = dataTransformer;
         this.#multitableProtocolParser = multiTableProtocolParser;
 
-        this.#mergedGroups = {
-            files: {},
-            fields: {},
-        }
+        this.#mergedGroups = {}
     }
 }
 

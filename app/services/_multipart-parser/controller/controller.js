@@ -16,11 +16,12 @@ const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.ut
 // const { dataSetProcessorFactory } = require("../utils/mapper/controller/data-set-mapper.controller");
 const { FILE_DATA_SET_SCHEMA, REGULAR_FIELD_DATA_SET, LINKED_FIELD_DATA_SET_SCHEMA } = require("../services/data-mapper/v2/model/schemas/dm.schema");
 const { dataMapperFactory } = require("../services/data-mapper/v2/controller/data-mapper.controller");
+const { PreMapper } = require("../../../utils/data-mapper/pre-mapper/pre-mapper.model");
 
 const multiTableGrouppingAgentFactory  = () => {
     return new MultiTableGrouppingAgent({
         // mapper:new Mapper(),
-        dataTransformer: dataMapperFactory(),
+        dataTransformer: new PreMapper(),
         // dataTransformer: new DataTransformer(),
         multiTableProtocolParser:multiTableProtocolParser,
         fileDataSetSchema:FILE_DATA_SET_SCHEMA,

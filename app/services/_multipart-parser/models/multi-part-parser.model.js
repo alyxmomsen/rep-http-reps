@@ -110,10 +110,7 @@ class MultipartFormdataHandler {
                         3. база данных
                     
                 */
-                const middlewareresponse = await this.#executeMiddleware({
-                    ...mergedGroups.files,
-                    ...mergedGroups.fields, 
-                }, this.#onDataEndMiddleware);
+                const middlewareresponse = await this.#executeMiddleware(mergedGroups, this.#onDataEndMiddleware);
 
                 // console.log();
 
