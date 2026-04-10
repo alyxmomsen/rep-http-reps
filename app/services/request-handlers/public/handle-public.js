@@ -1,63 +1,61 @@
-const { IncomingMessage, ServerResponse } = require("node:http");
-const { sendFallBack } = require("../../../utils/error-factory");
-const { join, resolve, extname } = require("node:path");
-const { readFile } = require("node:fs/promises");
+const { IncomingMessage, ServerResponse } = require('node:http');
+const { sendFallBack } = require('../../../utils/error-factory');
+const { join, resolve, extname } = require('node:path');
+const { readFile } = require('node:fs/promises');
 
 const MIMETypeValue = {
-    TextCSS:'text/css' ,
+    TextCSS: 'text/css',
     TextJavaScript: 'text/javascript',
-    TextPlain:'text/plain',
-}
+    TextPlain: 'text/plain',
+};
 
 const MIME_KEY_MAP = {
     '.css': MIMETypeValue.TextCSS,
-    '.js':MIMETypeValue.TextJavaScript,
-}
+    '.js': MIMETypeValue.TextJavaScript,
+};
 
-function bundleLeaf (filename) {
+function bundleLeaf(filename) {
     return {
         filename,
-        mime:MIME_KEY_MAP[extname(filename)] || MIMETypeValue.TextPlain, 
-    }
+        mime: MIME_KEY_MAP[extname(filename)] || MIMETypeValue.TextPlain,
+    };
 }
 
-const { TextCSS , TextJavaScript } = MIMETypeValue ;
+const { TextCSS, TextJavaScript } = MIMETypeValue;
 
 const PUBLIC_SRC_MAP = {
-    typeRouter:{
-        'css':{
-            rootPath:resolve(join('.','public','css')),
-            idRouter:{
-                'main':bundleLeaf('main.css'),
-                'form':bundleLeaf('form.css'),
-            } ,
-        } ,
-        'js':{
-            rootPath:resolve(join('.','public','js')),
-            idRouter:{
-                'main':bundleLeaf('main.js'),
-                'form':bundleLeaf('form.js'),
-                'req-man':bundleLeaf('request-manager.js'),
-            } ,
-        } ,
-    }
-}
+    typeRouter: {
+        css: {
+            rootPath: resolve(join('.', 'public', 'css')),
+            idRouter: {
+                main: bundleLeaf('main.css'),
+                form: bundleLeaf('form.css'),
+            },
+        },
+        js: {
+            rootPath: resolve(join('.', 'public', 'js')),
+            idRouter: {
+                main: bundleLeaf('main.js'),
+                form: bundleLeaf('form.js'),
+                'req-man': bundleLeaf('request-manager.js'),
+            },
+        },
+    },
+};
 
 class PublicRouter {
+    css(id, filename, mime) {}
 
-    css (id , filename , mime) {
-
+    js(id, filename, mime) {
+        this.#addRoute('js', id, filename, mime);
     }
 
-    js(id , filename , mime) {
-        this.#addRoute('js' , id , filename , mime);
-    }
-    
     #routes;
 
-    #addRoute (type , id , filename , mime) {
+    #addRoute(type, id, filename, mime) {
         this.#routes.set(type, {
-            rootPath: resolve(join('.', 'public', 'js')), idRouter: new Map([[id, { filename, mime }]])
+            rootPath: resolve(join('.', 'public', 'js')),
+            idRouter: new Map([[id, { filename, mime }]]),
         });
     }
 
@@ -73,89 +71,101 @@ class PublicRouter {
     }
 
     /**
-     * 
-     * @param {string} type 
+     *
+     * @param {string} type
      */
     addBranch(type) {
         this.#routes[type] = {
-            rootPath:resolve(join('.','public', type)),
+            rootPath: resolve(join('.', 'public', type)),
             idRouter: new Map(),
-        }
+        };
     }
 
-    constructor () {
+    constructor() {
         this.#routes = new Map();
         const routes = ['css', 'js'];
-        routes.forEach(route => {
+        routes.forEach((route) => {
             this.#routes[route] = {
-                rootPath: {
-
-                },
+                rootPath: {},
                 idRouter: {},
-            }
+            };
         });
     }
 }
 
 const typeRouter = new PublicRouter();
-typeRouter.js('form' , 'form.js' , 'text/javascript');
+typeRouter.js('form', 'form.js', 'text/javascript');
 
 /**
- * 
- * @param {IncomingMessage} req 
- * @param {ServerResponse} res 
+ *
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
  * @returns {Promise<any>}
  */
-async function handlePublic(req , res) {
+async function handlePublic(req, res) {
+    const { params } = req;
+    const { type, id } = params || {};
 
-    const { params } = req ;
-    const { type , id } = params || {} ;
+    console.log({ type, id });
 
-    console.log({type , id});
-
-    if(!type || !id) {
+    if (!type || !id) {
         sendFallBack(
-            res, 400, 'handlePublic', 
-            'no "type" or "id" params provided', {type , id}
+            res,
+            400,
+            'handlePublic',
+            'no "type" or "id" params provided',
+            { type, id }
         );
-        return ;
+        return;
     }
 
-    const { typeRouter } = PUBLIC_SRC_MAP ;
+    const { typeRouter } = PUBLIC_SRC_MAP;
 
-    const { rootPath , idRouter } = typeRouter[type] || {} ;
+    const { rootPath, idRouter } = typeRouter[type] || {};
 
-    if(!rootPath || !idRouter) {
-        sendFallBack(
-            res, 400, 'handlePublic', 
-            'incorrect "TYPE" argument', {type , id , rootPath , idRouter , src:PUBLIC_SRC_MAP[type]}
-        );
-        return ;
-    }
-    
-    const { filename  , mime } = idRouter[id] || {} ;
-    
-    if(!filename || !mime) {
-
-        sendFallBack(
-            res, 400, 'handlePublic', 
-            'incorrect "filename"|"mime" arguments', {type , id , rootPath , idRouter , filename , mime , src:PUBLIC_SRC_MAP[type]}
-        );
-        return ;
+    if (!rootPath || !idRouter) {
+        sendFallBack(res, 400, 'handlePublic', 'incorrect "TYPE" argument', {
+            type,
+            id,
+            rootPath,
+            idRouter,
+            src: PUBLIC_SRC_MAP[type],
+        });
+        return;
     }
 
-    const fullPath = join(rootPath , filename) ;
+    const { filename, mime } = idRouter[id] || {};
+
+    if (!filename || !mime) {
+        sendFallBack(
+            res,
+            400,
+            'handlePublic',
+            'incorrect "filename"|"mime" arguments',
+            {
+                type,
+                id,
+                rootPath,
+                idRouter,
+                filename,
+                mime,
+                src: PUBLIC_SRC_MAP[type],
+            }
+        );
+        return;
+    }
+
+    const fullPath = join(rootPath, filename);
 
     try {
-        const file = await readFile(fullPath , 'utf-8') ;
-        res.writeHead(200 , 'ok' , {
-            'content-type':mime || 'text/plain' ,
+        const file = await readFile(fullPath, 'utf-8');
+        res.writeHead(200, 'ok', {
+            'content-type': mime || 'text/plain',
         });
         res.end(file);
-    }
-    catch (e) {
-        console.log({e});
+    } catch (e) {
+        console.log({ e });
     }
 }
 
-module.exports = { handlePublic }
+module.exports = { handlePublic };

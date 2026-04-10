@@ -1,8 +1,8 @@
-const { IncomingMessage, ServerResponse } = require("node:http");
-const { readFile } = require("node:fs/promises");
-const { resolve, join, extname } = require("node:path");
+const { IncomingMessage, ServerResponse } = require('node:http');
+const { readFile } = require('node:fs/promises');
+const { resolve, join, extname } = require('node:path');
 
-const PUBLIC_DIR = resolve(join('.', 'public' , 'static'));
+const PUBLIC_DIR = resolve(join('.', 'public', 'static'));
 
 const MIME_TYPES = {
     '.css': 'text/css',
@@ -19,25 +19,25 @@ const MIME_TYPES = {
     '.woff': 'font/woff',
     '.woff2': 'font/woff2',
     '.ttf': 'font/ttf',
-    '.eot': 'application/vnd.ms-fontobject'
+    '.eot': 'application/vnd.ms-fontobject',
 };
 
 /**
  * Универсальный обработчик статических файлов
- * @param {IncomingMessage} req 
- * @param {ServerResponse} res 
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
  */
 async function handleStatic(req, res) {
     try {
         // Получаем путь из URL (всё после /static/)
         const filePath = req.url.replace(/^\/static/, '');
-        
+
         // Защита от path traversal атак
         const normalizedPath = filePath.replace(/\.\.\//g, '');
         const fullPath = join(PUBLIC_DIR, normalizedPath);
 
-        console.log({fullPath});
-        
+        console.log({ fullPath });
+
         // Проверяем, что путь ведёт в public директорию
         if (!fullPath.startsWith(PUBLIC_DIR)) {
             res.writeHead(403);
@@ -51,13 +51,12 @@ async function handleStatic(req, res) {
 
         // Читаем и отдаём файл
         const file = await readFile(fullPath);
-        
+
         res.writeHead(200, 'OK', {
             'Content-Type': mimeType,
-            'Cache-Control': 'public, max-age=31536000' // кэширование на год
+            'Cache-Control': 'public, max-age=31536000', // кэширование на год
         });
         res.end(file);
-        
     } catch (error) {
         if (error.code === 'ENOENT') {
             res.writeHead(404);

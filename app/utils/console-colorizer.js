@@ -1,25 +1,21 @@
-
 class ConsoleColorizer {
-
     #colors;
 
-    getColorsMap () {
+    getColorsMap() {
+        const colorsMap = {};
 
-        const colorsMap = {} ;
-        
-        for (const [key , value] of this.#colors.entries()) {
-            colorsMap[key] = value ;
+        for (const [key, value] of this.#colors.entries()) {
+            colorsMap[key] = value;
         }
 
-        return colorsMap ;
-
+        return colorsMap;
     }
 
-    addColor (colorName , code) {
-        this.#colors.set(colorName , `\x1b[${code}m`);
+    addColor(colorName, code) {
+        this.#colors.set(colorName, `\x1b[${code}m`);
     }
 
-    constructor () {
+    constructor() {
         this.#colors = new Map();
     }
 }

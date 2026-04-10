@@ -20,31 +20,31 @@ const Actions = {
      * }} payload
      */
     branch: (payload) => {
-        console.log(`DataTransformer_2_0/Action/tableName/start`)
-        const { actionPayload, reqursiveCallFn, dataSet, context } = payload
+        console.log(`DataTransformer_2_0/Action/tableName/start`);
+        const { actionPayload, reqursiveCallFn, dataSet, context } = payload;
 
-        console.log({ actionPayload, reqursiveCallFn, dataSet })
+        console.log({ actionPayload, reqursiveCallFn, dataSet });
 
-        const result = reqursiveCallFn(actionPayload, dataSet, context)
+        const result = reqursiveCallFn(actionPayload, dataSet, context);
 
-        console.log(`DataTransformer_2_0/Action/tableName/result`, { result })
-        return result
+        console.log(`DataTransformer_2_0/Action/tableName/result`, { result });
+        return result;
     },
     leaf: (payload) => {
-        const { actionPayload, reqursiveCallFn, dataSet } = payload
+        const { actionPayload, reqursiveCallFn, dataSet } = payload;
 
         console.log(
             'DataTransformer_2_0/Action/propertyRegular:',
             actionPayload,
             dataSet
-        )
+        );
 
-        const { data, dataType } = actionPayload
+        const { data, dataType } = actionPayload;
 
         if (!data || !dataType) {
             throw new Error(
                 `DataTransformer_2_0/Action/propertyRegular:both of dataType & data are required`
-            )
+            );
         }
 
         return {
@@ -54,9 +54,9 @@ const Actions = {
             dataType: dataType.startsWith('__')
                 ? dataSet[dataType.replace('__', '')]
                 : dataType,
-        }
+        };
     },
-}
+};
 
 class DataMapper {
     /**
@@ -135,10 +135,10 @@ class DataMapper {
          *  value:any;
          * }}
          */
-        const currentContext = { ...context }
+        const currentContext = { ...context };
 
         for (const [schemaPropKey, schemaModel] of Object.entries(schema)) {
-            const [actionName, actionPayload] = schemaModel
+            const [actionName, actionPayload] = schemaModel;
 
             /**
              * @type {string}
@@ -148,18 +148,18 @@ class DataMapper {
                       schemaPropKey.replace('__', ''),
                       dataSet
                   )
-                : schemaPropKey
+                : schemaPropKey;
 
             if (!Actions[actionName]) {
                 throw new Error(
                     `DataTransformer_2_0/action-extracting: no action`
-                )
+                );
             }
 
             /**
              * @type {(payload:Object) => Object }
              */
-            const action = Actions[actionName]
+            const action = Actions[actionName];
 
             /**
              * @type {Object}
@@ -169,20 +169,20 @@ class DataMapper {
                 reqursiveCallFn: this.process.bind(this),
                 dataSet,
                 context: context[parsedPropKey]?.[1]?.value || {},
-            })
+            });
 
             /**
              *
              *
              *
              */
-            const child = currentContext[parsedPropKey] || []
-            const [innerAction, innerPayload] = child
+            const child = currentContext[parsedPropKey] || [];
+            const [innerAction, innerPayload] = child;
 
             if (innerAction && innerPayload) {
                 // console.log(`\x1b[31mDataTransformer_2_0/dbug:\x1b[0m`, {actionName, actionResult, x:currentContext});
                 for (const [k, v] of Object.entries(actionResult)) {
-                    innerPayload.value[k] = v
+                    innerPayload.value[k] = v;
                 }
                 // currentContext[parsedPropKey] = innerPayload;
             } else {
@@ -199,25 +199,25 @@ class DataMapper {
                         },
                         value: actionResult,
                     },
-                ]
+                ];
             }
         }
 
-        return currentContext
+        return currentContext;
     }
 
     #extractDataByKey(key, dataSet) {
-        console.log(`DataTransformer_2_0/#extractDataByKey/dataSet: `, dataSet)
-        const extractedDataByKey = dataSet[key]
+        console.log(`DataTransformer_2_0/#extractDataByKey/dataSet: `, dataSet);
+        const extractedDataByKey = dataSet[key];
         if (!extractedDataByKey) {
             throw new Error(
                 `DataTransformer_2_0: value by key ${extractedDataByKey} is not received `
-            )
+            );
         }
-        return extractedDataByKey
+        return extractedDataByKey;
     }
 
     constructor() {}
 }
 
-module.exports = { DataMapper, Actions }
+module.exports = { DataMapper, Actions };

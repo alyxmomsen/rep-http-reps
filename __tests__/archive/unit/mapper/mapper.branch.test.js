@@ -1,18 +1,22 @@
 // __tests__/unit/mapper/mapper.branch.test.js
 
 const { Mapper } = require('../../../app/utils/mapper-2.0/mapper.2.0');
-const { MULTITABLE_DATA_SCHEMA, PropType, ValueType } = require('../../../app/utils/mapper-2.0/schemas/multitable-data-schema');
+const {
+    MULTITABLE_DATA_SCHEMA,
+    PropType,
+    ValueType,
+} = require('../../../app/utils/mapper-2.0/schemas/multitable-data-schema');
 
 describe('🧪 Mapper - обработка Branch', () => {
     test('должен обработать существующий branch в контексте', () => {
         const mapper = new Mapper(MULTITABLE_DATA_SCHEMA);
-        
+
         // Создаем схему с branch
         const branchSchema = {
             tableName: {
                 property: {
                     type: PropType.Dinamic,
-                    srcPath: 'tableName'
+                    srcPath: 'tableName',
                 },
                 value: {
                     type: ValueType.Branch,
@@ -21,33 +25,33 @@ describe('🧪 Mapper - обработка Branch', () => {
                             existingField: {
                                 property: {
                                     type: PropType.Static,
-                                    staticKey: 'existingKey'
+                                    staticKey: 'existingKey',
                                 },
                                 value: {
                                     type: ValueType.Leaf,
-                                    src: { path: 'someValue' }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                    src: { path: 'someValue' },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         };
 
         const source = {
             tableName: 'existingTable',
-            someValue: 'test data'
+            someValue: 'test data',
         };
 
         // Создаем контекст с уже существующим branch
         const context = {
             existingTable: {
                 // какой-то существующий контент
-            }
+            },
         };
 
         const result = mapper.process(branchSchema, source, context);
-        console.log({result});
+        console.log({ result });
         // Проверяем, что данные смержились, а не перезаписались
         expect(result.existingTable).toBeDefined();
     });

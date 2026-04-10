@@ -1,8 +1,9 @@
-const { DataBase } = require("../../../app/services/database/database");
-const { ResolveSuccessError } = require("../../../app/utils/success-error-resolver/model/suc-err-res");
+const { DataBase } = require('../../../app/services/database/database');
+const {
+    ResolveSuccessError,
+} = require('../../../app/utils/success-error-resolver/model/suc-err-res');
 
 describe('in-memory database', () => {
-
     /**
      * @type {DataBase}
      */
@@ -14,7 +15,6 @@ describe('in-memory database', () => {
     let succErr;
 
     beforeEach(() => {
-
         db = new DataBase();
 
         succErr = new ResolveSuccessError();
@@ -24,8 +24,7 @@ describe('in-memory database', () => {
     });
 
     test('correct data will be correct handled', () => {
-
-        db.createOne('mytable', {foo:'bar'});
+        db.createOne('mytable', { foo: 'bar' });
 
         const response = db.readAll('mytable');
 
@@ -38,30 +37,35 @@ describe('in-memory database', () => {
     });
 
     test('13', () => {
-
         const responses = [];
 
         const tableId = 'another table';
 
-        const arr = ['foo', {bar:'baz'}, 13, true, {}, []] ;
+        const arr = ['foo', { bar: 'baz' }, 13, true, {}, []];
 
         const message = `DataBase.createOne: required an Object but provided not`;
 
-        expect(() => responses.push(db.createOne(tableId, arr[0]))).toThrow(message); // 🛑 : 'foo'
-        expect(() => responses.push(db.createOne(tableId, arr[2]))).toThrow(message); // 🛑 : 13
-        expect(() => responses.push(db.createOne(tableId, arr[3]))).toThrow(message); // 🛑 : true
-        expect(() => responses.push(db.createOne(tableId, arr[1]))).not.toThrow(message); // ✅ {bar:'baz'}
-        expect(() => responses.push(db.createOne(tableId, arr[4]))).not.toThrow(message); // ✅ {}
-        expect(() => responses.push(db.createOne(tableId, arr[5]))).not.toThrow(message); // ✅ []
-        
-        const data =  db.readAll(tableId);
-        
-        console.dir(data, {depth:10});
+        expect(() => responses.push(db.createOne(tableId, arr[0]))).toThrow(
+            message
+        ); // 🛑 : 'foo'
+        expect(() => responses.push(db.createOne(tableId, arr[2]))).toThrow(
+            message
+        ); // 🛑 : 13
+        expect(() => responses.push(db.createOne(tableId, arr[3]))).toThrow(
+            message
+        ); // 🛑 : true
+        expect(() => responses.push(db.createOne(tableId, arr[1]))).not.toThrow(
+            message
+        ); // ✅ {bar:'baz'}
+        expect(() => responses.push(db.createOne(tableId, arr[4]))).not.toThrow(
+            message
+        ); // ✅ {}
+        expect(() => responses.push(db.createOne(tableId, arr[5]))).not.toThrow(
+            message
+        ); // ✅ []
 
+        const data = db.readAll(tableId);
+
+        console.dir(data, { depth: 10 });
     });
-
-
-
 });
-
-

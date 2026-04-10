@@ -252,13 +252,11 @@ function submitFinalHandlerMiddleware(deps = {}) {
 
         formModalWindow.style.display = 'none';
 
-
         for (const storedDataItem of dbStoredData) {
-
             const toolTipCreator = toolTipCreatorRouter.get(
                 storedDataItem.tableName
             );
-            
+
             console.log({
                 toolTipCreator,
                 tablename: storedDataItem.tableName,

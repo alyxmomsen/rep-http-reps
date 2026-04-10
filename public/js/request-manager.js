@@ -1,49 +1,45 @@
 class RequestManager {
-
     /**
-     * 
-     * @param {Object} body 
+     *
+     * @param {Object} body
      */
-    async exec (body = {}) {
+    async exec(body = {}) {
         const response = await fetch(this.#url, {
-            method:this.#method,
-            ...(this.#method === 'get' ? {} : { body })
+            method: this.#method,
+            ...(this.#method === 'get' ? {} : { body }),
         });
 
-        this.#executeMiddleware([...this.#middleware], this.#handler, { response } );
+        this.#executeMiddleware([...this.#middleware], this.#handler, {
+            response,
+        });
     }
 
-    async #executeMiddleware (middleware, finalHandler, payload) {
-
+    async #executeMiddleware(middleware, finalHandler, payload) {
         let index = 0;
 
         const next = async (nextPayload) => {
-
-            if(index < middleware.length) {
+            if (index < middleware.length) {
                 const currentIndex = index++;
 
                 const handler = middleware[currentIndex];
 
-                if(handler) {
+                if (handler) {
                     try {
                         await handler(nextPayload, next);
-                    }
-                    catch (error) {
+                    } catch (error) {
                         throw error;
                     }
                 }
-            }
-            else {
-                if(finalHandler) {
+            } else {
+                if (finalHandler) {
                     await finalHandler(nextPayload, next);
                 }
             }
-        }
+        };
 
-        if(middleware.length > 0) {
+        if (middleware.length > 0) {
             await next(payload);
-        }
-        else if (finalHandler) {
+        } else if (finalHandler) {
             await finalHandler(payload);
         }
     }
@@ -68,16 +64,15 @@ class RequestManager {
      */
     #handler;
 
-    constructor (url, method, ...handlers) {
-
-        if(!url) {
+    constructor(url, method, ...handlers) {
+        if (!url) {
             throw new Error(`url required but not provided`);
         }
-        
-        if(!method) {
+
+        if (!method) {
             throw new Error(`method required but not provided`);
         }
-        
+
         if (!handlers.length) {
             throw new Error(`handlers.length must be > "0"`);
         }

@@ -1,15 +1,18 @@
-const { PropertyKeyType, PropertyValueType } = require("./mapper");
+const { PropertyKeyType, PropertyValueType } = require('./mapper');
 
 const SCHEMA = {
-    tables: { // Node
-        type:
+    tables: {
+        // Node
+        type: '', // what is this
         keyPath: 'tables',
         valueSchema: {
-            groups: { // Node
+            groups: {
+                // Node
                 type: NodeTypes.DINAMIC,
                 keyPath: 'groupId',
                 valueSchema: {
-                    fields: { // Node
+                    fields: {
+                        // Node
                         type: NodeTypes.STATIC,
                         valueSchema: {
                             fileName: {
@@ -26,13 +29,12 @@ const SCHEMA = {
                             },
                         },
                     },
-
                 },
-            },      
+            },
         },
     },
-}
+};
 
 module.exports = {
     SCHEMA,
-}
+};

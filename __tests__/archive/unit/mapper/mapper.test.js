@@ -3,9 +3,15 @@
 const { describe } = require('node:test');
 // const { Mapper } = require('../../../app/utils/mapper-2.0/mapper.2.0');
 // const { MULTITABLE_DATA_SCHEMA, PropType, ValueType } = require('../../../app/utils/mapper-2.0/schemas/multitable-data-schema');
-const { DataTransformer } = require('../../../app/services/_multipart-parser/services/data-transformer/data-transfromer');
-const { fileDataSetFactory } = require('../../../app/services/_multipart-parser/utils/factrories/file-data-set.factory');
-const { FILE_DATA_SET_SCHEMA } = require('../../../app/services/_multipart-parser/services/data-transformer/schemas/file-data-set.schema');
+const {
+    DataTransformer,
+} = require('../../../app/services/_multipart-parser/services/data-transformer/data-transfromer');
+const {
+    fileDataSetFactory,
+} = require('../../../app/services/_multipart-parser/utils/factrories/file-data-set.factory');
+const {
+    FILE_DATA_SET_SCHEMA,
+} = require('../../../app/services/_multipart-parser/services/data-transformer/schemas/file-data-set.schema');
 
 // 1. Тестовые данные - как в реальном приложении
 const createTestData = (overrides = {}) => ({
@@ -15,10 +21,8 @@ const createTestData = (overrides = {}) => ({
     columnName: 'title',
     groupId: '25', // как в DB_TABLES_MAP_SCHEMA
     tableName: 'files',
-    ...overrides
+    ...overrides,
 });
-
-
 
 describe('🧪 Mapper в контексте приложения', () => {
     let dataTransformer;
@@ -34,12 +38,12 @@ describe('🧪 Mapper в контексте приложения', () => {
     // ===========================================
     test('должен преобразовать данные видео-файла в иерархию', () => {
         const dataSet = fileDataSetFactory({
-            body:Buffer.from('hello world'),
-            contentType:'text/plain',
-            filename:'foobar.txt',
-            groupId:'00',
-            linkId:'123',
-            tableName:'files',
+            body: Buffer.from('hello world'),
+            contentType: 'text/plain',
+            filename: 'foobar.txt',
+            groupId: '00',
+            linkId: '123',
+            tableName: 'files',
         });
 
         dataTransformer.process(FILE_DATA_SET_SCHEMA, dataSet, context);
@@ -47,11 +51,11 @@ describe('🧪 Mapper в контексте приложения', () => {
         expect(context).toHaveProperty('files');
         expect(context['files']).toHaveProperty('00');
         expect(context['files']['00']).toHaveProperty('mime');
-    
+
         const mimeData = context['files']['00']['mime'];
-    
+
         // Исправляем ожидание: fileMIME вместо contentType
-        expect(mimeData).toEqual({data:'text/plain',dataType:'string'});
+        expect(mimeData).toEqual({ data: 'text/plain', dataType: 'string' });
     });
 
     // // ===========================================
@@ -79,7 +83,7 @@ describe('🧪 Mapper в контексте приложения', () => {
     //     // Проверяем, что оба поля на месте
     //     expect(context['video-files']['25']).toHaveProperty('title');
     //     expect(context['video-files']['25']).toHaveProperty('description');
-        
+
     //     // Данные не перемешались
     //     expect(context['video-files']['25']['title'].fileBody)
     //         .toEqual(Buffer.from('title data'));

@@ -1,4 +1,3 @@
-
 /**
  * @type {Object}
  * @example
@@ -15,40 +14,39 @@
  * }
  */
 const FILE_DATA_SET_SCHEMA = {
-
-    __tableName:{
-        value:null,
-        children:{
-            __groupId:{
-                value:null,
-                children:{
-                    originalFileName:{
-                        value:{
-                            key:'__originalFileName'
+    __tableName: {
+        value: null,
+        children: {
+            __groupId: {
+                value: null,
+                children: {
+                    originalFileName: {
+                        value: {
+                            key: '__originalFileName',
                         },
-                        children:null,
+                        children: null,
                     },
-                    mime:{
-                        value:{
-                            key:'__mime'
+                    mime: {
+                        value: {
+                            key: '__mime',
                         },
-                        children:null,
+                        children: null,
                     },
-                    file:{
-                        value:{
-                            key:'__body'
+                    file: {
+                        value: {
+                            key: '__body',
                         },
-                        children:null,
+                        children: null,
                     },
                     linkId: {
-                        value:{
-                            key:'__linkId',
+                        value: {
+                            key: '__linkId',
                         },
-                    }
+                    },
                 },
-            }
-        }
-    }
+            },
+        },
+    },
 };
 
-module.exports = { FILE_DATA_SET_SCHEMA }
+module.exports = { FILE_DATA_SET_SCHEMA };

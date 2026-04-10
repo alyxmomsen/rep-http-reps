@@ -1,25 +1,24 @@
-
 /* #algorithm
     поиск подстроки в строке
 */
 
 /**
- * 
- * @param {string} data 
- * @param {string} separator 
- * @param {number} start 
+ *
+ * @param {string} data
+ * @param {string} separator
+ * @param {number} start
  */
-function bar (data, separator, start = 0) {
+function bar(data, separator, start = 0) {
     for (let index = start; index <= data.length - separator.length; index++) {
         let found = true;
-        for (let j = 0; j< separator.length; j++) {
-            if(data[index + j] !== separator[j]) {
+        for (let j = 0; j < separator.length; j++) {
+            if (data[index + j] !== separator[j]) {
                 found = false;
                 break;
             }
         }
 
-        if(found === true) {
+        if (found === true) {
             return index;
         }
     }
@@ -27,8 +26,6 @@ function bar (data, separator, start = 0) {
     return -1;
 }
 
-
-
 const result = bar('hello', 'lo');
 
-console.log({result});
+console.log({ result });

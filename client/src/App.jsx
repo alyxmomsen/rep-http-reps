@@ -8,16 +8,35 @@ function App() {
     return (
         <Router>
             <div className="wrapper--main">
-                <nav className="flex flex--gap-2" style={{ padding: '9px', marginBottom: '18px', borderBottom: '1px solid wheat' }}>
-                    <Link to="/" style={{ color: 'bisque', textDecoration: 'none', padding: '9px' }}>
+                <nav
+                    className="flex flex--gap-2"
+                    style={{
+                        padding: '9px',
+                        marginBottom: '18px',
+                        borderBottom: '1px solid wheat',
+                    }}
+                >
+                    <Link
+                        to="/"
+                        style={{
+                            color: 'bisque',
+                            textDecoration: 'none',
+                            padding: '9px',
+                        }}
+                    >
                         🎬 Загрузить видео
                     </Link>
-                    <Link to="/playlist" style={{ color: 'bisque', textDecoration: 'none', padding: '9px' }}>
+                    <Link
+                        to="/playlist"
+                        style={{
+                            color: 'bisque',
+                            textDecoration: 'none',
+                            padding: '9px',
+                        }}
+                    >
                         📋 Плейлист
                     </Link>
-                    <Link to="/another-one-page">
-                        anotherOnePage
-                    </Link>
+                    <Link to="/another-one-page">anotherOnePage</Link>
                 </nav>
 
                 <Routes>

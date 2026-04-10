@@ -12,15 +12,15 @@ try {
     process.chdir('./client');
     console.log('📦 Установка зависимостей...');
     execSync('npm install', { stdio: 'inherit' });
-    
+
     console.log('🔨 Сборка React...');
     execSync('npm run build', { stdio: 'inherit' });
-    
+
     console.log('✅ React приложение собрано!');
-    
+
     // Возвращаемся в корень проекта
     process.chdir(PROJECT_ROOT);
-    
+
     // Пути
     const buildPath = path.join(PROJECT_ROOT, 'client', 'build');
     const targetPath = path.join(PROJECT_ROOT, 'public');
@@ -56,7 +56,7 @@ try {
     // Копируем index.html
     const indexPath = path.join(buildPath, 'index.html');
     const targetIndexPath = path.join(targetPath, 'static', 'react.html');
-    
+
     console.log(`📄 Копирование ${indexPath} -> ${targetIndexPath}`);
     fs.copyFileSync(indexPath, targetIndexPath);
 
@@ -64,16 +64,13 @@ try {
     if (fs.existsSync(targetStaticPath)) {
         const files = fs.readdirSync(targetStaticPath, { recursive: true });
         console.log('\n📋 Скопированные файлы:');
-        files.forEach(file => console.log(`   - ${file}`));
+        files.forEach((file) => console.log(`   - ${file}`));
     }
-    
+
     console.log('\n✨ Готово! React приложение доступно по URL: /react.html');
-    
 } catch (error) {
     console.error('❌ Ошибка сборки:', error);
     process.exit(1);
 }
 
-function buildRaeactProject() {
-    
-}
+function buildRaeactProject() {}

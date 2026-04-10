@@ -1,11 +1,11 @@
-const { DataBase } = require("../../database/database");
+const { DataBase } = require('../../database/database');
 
 const DATABASE_TYPES = {
-    STRING:'string',
-    NUMBER:'number',
+    STRING: 'string',
+    NUMBER: 'number',
     BOOLEAN: 'boolean',
-    LINK:'link',
-}
+    LINK: 'link',
+};
 
 /* #warning
     db tables map defined locally!
@@ -15,43 +15,43 @@ const DATABASE_TYPES = {
     app\services\_multipart-parser\services\multi-table-gruping-agent\multi-table-gruping-agent.js
  */
 const DATABASE_TABLES = {
-    VIDEO_FILES:'video-files',
-    PLAYLIST:'video-playlist',
-    USERS:'users',
-    FILES:'files',
-}
+    VIDEO_FILES: 'video-files',
+    PLAYLIST: 'video-playlist',
+    USERS: 'users',
+    FILES: 'files',
+};
 
 class DBAdapter {
-
     createOne(data) {
-
         // console.log(`выводим данные для транзакции`, {data}, this.#strategy.tableName)
 
         const errors = {};
         const validatedData = {};
         const { schema, tableName } = this.#strategy;
 
-
-
-        /** 
+        /**
          * validation process
          */
-        for (const [key, strategyPropertyModel] of Object.entries(this.#strategy.schema)) {
-
+        for (const [key, strategyPropertyModel] of Object.entries(
+            this.#strategy.schema
+        )) {
             try {
                 const providedPropValue = data[key];
-                if(!providedPropValue) {
-                    if(strategyPropertyModel.required) {
-                        console.log(`DBAdapter::createOne/fail/required`, {key});
-                        throw new Error(`DBAdapter::createOne: required: ${key}`);
+                if (!providedPropValue) {
+                    if (strategyPropertyModel.required) {
+                        console.log(`DBAdapter::createOne/fail/required`, {
+                            key,
+                        });
+                        throw new Error(
+                            `DBAdapter::createOne: required: ${key}`
+                        );
                     }
                     validatedData[key] = strategyPropertyModel.defaultValue;
                     continue;
                 }
-                validatedData[key] = providedPropValue ;
-            }
-            catch(err) {
-                console.log('\x1b[31mDBAdapter error: \x1b[0m', {err});
+                validatedData[key] = providedPropValue;
+            } catch (err) {
+                console.log('\x1b[31mDBAdapter error: \x1b[0m', { err });
                 const [_, errorType, subject] = err.message.split(/;\s*/);
                 errors[errorType] = subject;
             }
@@ -63,58 +63,62 @@ class DBAdapter {
                     type: 'required link',
                     payload: {
                         // propertyName:
-                    }
-                }
-            }
+                    },
+                },
+            };
         }
 
-        const { success, error } = this.#dataBase.createOne(this.#strategy.tableName, validatedData);
+        const { success, error } = this.#dataBase.createOne(
+            this.#strategy.tableName,
+            validatedData
+        );
 
-        if(error) {
+        if (error) {
             return {
                 error,
-            }
+            };
         }
 
         return {
             success,
-        }
-
+        };
     }
 
     readOne(rowId) {
-
         // console.log(`take one`.toUpperCase());
 
-        const {success, error} = this.#dataBase.readOne(this.#strategy.tableName, rowId);
+        const { success, error } = this.#dataBase.readOne(
+            this.#strategy.tableName,
+            rowId
+        );
 
         // console.log('db row: ', {success, error});
 
-
         // ==================================================
-        // =================== validation =================== 
+        // =================== validation ===================
 
         for (const [k, v] of Object.entries(this.#strategy.schema)) {
             // console.log({k, v});
         }
 
-        // =================== validation =================== 
-        // ================================================== 
+        // =================== validation ===================
+        // ==================================================
 
         return {
-            success , error,
-        }
-
+            success,
+            error,
+        };
     }
 
     readAllRows() {
-        const { success, error } = this.#dataBase.readAll(this.#strategy.tableName);
+        const { success, error } = this.#dataBase.readAll(
+            this.#strategy.tableName
+        );
 
-        if(error) {
-
+        if (error) {
             return {
                 error,
-            }
+            };
         }
 
         /**
@@ -122,13 +126,13 @@ class DBAdapter {
          */
         const tableRows = success.tableRows;
 
-        if(!tableRows) {
+        if (!tableRows) {
             console.log('db adapter: no tableRows');
             return {
-                error:{
-                    message:'no tableRows',
-                }
-            }
+                error: {
+                    message: 'no tableRows',
+                },
+            };
         }
 
         /**
@@ -138,35 +142,36 @@ class DBAdapter {
 
         // проходим по всем строкам
         for (const [rowId, rowData] of tableRows.entries()) {
-
             const validatedRow = {};
 
             // validate row
-            for (const [propertyKey, propertySchema] of Object.entries(this.#strategy.schema)) {
-            
+            for (const [propertyKey, propertySchema] of Object.entries(
+                this.#strategy.schema
+            )) {
                 const dbRowPropValue = rowData.get(propertyKey);
 
-                if(dbRowPropValue === undefined) {
-                    console.log('db adapter validation: internal db adapter errror');
+                if (dbRowPropValue === undefined) {
+                    console.log(
+                        'db adapter validation: internal db adapter errror'
+                    );
                     return {
-                        error:{
-                            message:'internal db adapter error'
-                        }
-                    }
+                        error: {
+                            message: 'internal db adapter error',
+                        },
+                    };
                 }
-                
+
                 validatedRow[propertyKey] = dbRowPropValue;
             }
 
             validatedData[rowId] = validatedRow;
         }
 
-
         return {
-            success:{
-                validatedData,      
+            success: {
+                validatedData,
             },
-        }
+        };
     }
 
     /**
@@ -174,7 +179,6 @@ class DBAdapter {
      */
     #strategy;
     #errors;
-
 
     // dependencies
 
@@ -198,19 +202,20 @@ class DBAdapter {
      * @param {{tableName:string;schema:Object}} strategy
      * @param {{
      *  dataBase:DataBase;
-     * }} [deps={}] 
+     * }} [deps={}]
      */
-    constructor (strategy,  deps = {}) {
-
-        if(!strategy) {
+    constructor(strategy, deps = {}) {
+        if (!strategy) {
             throw new Error(`Db Adapter: schema required but not provided`);
         }
 
         const tableName = strategy.tableName;
-        const schema = strategy.schema; 
+        const schema = strategy.schema;
 
-        if(!tableName || !schema) {
-            throw new Error(`Db Adapter: schema must contained fields tableName & schema, but not provided`);
+        if (!tableName || !schema) {
+            throw new Error(
+                `Db Adapter: schema must contained fields tableName & schema, but not provided`
+            );
         }
 
         this.#strategy = strategy;
@@ -219,19 +224,27 @@ class DBAdapter {
 
         const dataBase = deps.dataBase || undefined;
 
-        if(!dataBase) {
-            console.log(`\x1b[31m` + `- ❌ DBAdapter:${this.#strategy.tableName}: database is required but not porvided ❌` +`\x1b[0m`);
-            throw new Error(`database is required but not porvided`.toUpperCase());
+        if (!dataBase) {
+            console.log(
+                `\x1b[31m` +
+                    `- ❌ DBAdapter:${this.#strategy.tableName}: database is required but not porvided ❌` +
+                    `\x1b[0m`
+            );
+            throw new Error(
+                `database is required but not porvided`.toUpperCase()
+            );
         }
 
         this.#dataBase = dataBase;
 
-        console.log(`\x1b[32m` + `- ✅ DBAdapter:${this.#strategy.tableName}: database is connected ✅` +`\x1b[0m`);
+        console.log(
+            `\x1b[32m` +
+                `- ✅ DBAdapter:${this.#strategy.tableName}: database is connected ✅` +
+                `\x1b[0m`
+        );
 
         this.#errors = new Map();
-
-
     }
 }
 
-module.exports = { DBAdapter, DATABASE_TYPES, DATABASE_TABLES }
+module.exports = { DBAdapter, DATABASE_TYPES, DATABASE_TABLES };

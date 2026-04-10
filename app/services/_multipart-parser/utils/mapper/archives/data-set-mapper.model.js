@@ -1,8 +1,3 @@
-
-
-
-
-
 // const Values = {
 //     CHILDS:'__childs__',
 // }
@@ -117,7 +112,7 @@
 //      * '__' означает любая строка
 //      */
 //     if (prop.startsWith('__')) {
-        
+
 //     }
 
 //     parseChilds(childs);
@@ -134,17 +129,16 @@
 // }
 
 /**
- * 
- * @param {Object} data 
- * @param {any[]} parentCallStack 
+ *
+ * @param {Object} data
+ * @param {any[]} parentCallStack
  * @param {{
  *  a:Function;
  *  b:Function;
- * }} actions 
- * @throws {Error} if somthing 
+ * }} actions
+ * @throws {Error} if somthing
  */
 async function dataSetMapper(data, parentCallStack, actions) {
-    
     // console.dir(data, {depth:10});
 
     // console.log(`dataSetMapper: start`);
@@ -153,19 +147,18 @@ async function dataSetMapper(data, parentCallStack, actions) {
     // });
 
     const collection = {};
-    
-    for (const [propKey, config] of Object.entries(data)) {
 
+    for (const [propKey, config] of Object.entries(data)) {
         const currentIterationCallStack = [];
 
         const [actionName, actionPayload] = config;
-        
+
         /**
          * @description
-         * meta.title для трассировки 
-         * 
+         * meta.title для трассировки
+         *
          * @type {string}
-         * 
+         *
          */
         const metaTitle = actionPayload?.meta?.title;
 
@@ -173,23 +166,25 @@ async function dataSetMapper(data, parentCallStack, actions) {
          * проверяем содержатся ли ожидаемые поля
          */
         if (!actionPayload || !actionPayload.meta || !actionPayload.value) {
-            throw new Error(`dataSetMapper: actionPayload|actionPayload.meta|actionPayload.value required`);
+            throw new Error(
+                `dataSetMapper: actionPayload|actionPayload.meta|actionPayload.value required`
+            );
         }
 
         // console.log(`dataSetMapper: `, { propKey, config, metaTitle });
-        
+
         currentIterationCallStack.push({
             propKey: propKey,
-            propDescription:metaTitle
+            propDescription: metaTitle,
         });
-        
+
         // console.log(`dataSetMapper/show callstack: `, {callStack: parentCallStack});
 
         const action =
-            (actionName === 'tableName' || actionName === 'groupId')
-                ? actions.a : actions.b;
-        
-        
+            actionName === 'tableName' || actionName === 'groupId'
+                ? actions.a
+                : actions.b;
+
         if (!action) {
             throw new Error(`dataSetMapper: error: action is not received`);
         }
@@ -200,49 +195,44 @@ async function dataSetMapper(data, parentCallStack, actions) {
             callStack: [...parentCallStack, ...currentIterationCallStack],
             // callStack: [...parentCallStack, ...currentIterationCallStack],
             actions,
-        });    
+        });
 
         for (const [k, v] of Object.entries(actionResult)) {
-            collection[k, v]
+            collection[(k, v)];
         }
 
         // console.log({ actionResult });
-        
+
         collection[metaTitle] = actionResult;
     }
 
     return collection;
-
 }
 
 /**
- * 
- * @param {Object} schema 
- * @param {Object} data 
+ *
+ * @param {Object} schema
+ * @param {Object} data
  */
 function mapper_(schema, data) {
-
     const dataKeys = Object.keys(data);
     const schemaKeys = Object.keys(schema);
 
     const validatedKeys = [];
 
     let schemaKey;
-    while (schemaKey = schemaKeys.pop()) {
+    while ((schemaKey = schemaKeys.pop())) {
         console.log({ schemaKey });
         if (schemaKey.startsWith('__')) {
-            
-        }
-        else {
+        } else {
             if (dataKeys.includes(schemaKey)) {
                 console.log(data[schemaKey]);
-            }
-            else {
+            } else {
                 throw new Error(`no key ${schemaKey} in the data`);
             }
         }
     }
-    
+
     // for (const [prop, value] of Object.entries()) {
 
     //     // const Object.entries(schema);
@@ -251,7 +241,5 @@ function mapper_(schema, data) {
 
     // }
 }
-
-
 
 // module.exports = { dataSetMapper: dataSetMapper, DataSetProcessor }

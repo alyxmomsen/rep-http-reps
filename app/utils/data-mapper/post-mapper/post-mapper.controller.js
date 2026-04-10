@@ -74,7 +74,6 @@ function LinkActionFactory(deps = {}) {
      * @returns
      */
     const LinkAction = async (payload) => {
-
         /**
          * @description
          * контейнер для обрабатываемго поля
@@ -82,86 +81,89 @@ function LinkActionFactory(deps = {}) {
         const columnContainer = containerFactory.create();
 
         /**
-         * 
-         * @param {import('./transactions/transaction.model').PreCommitActionController} controller 
-         * @param {*} deps 
+         *
+         * @param {import('./transactions/transaction.model').PreCommitActionController} controller
+         * @param {*} deps
          */
         const preCommitAction = (controller, deps) => {
-            
             /**
              * @type {Map<string,StateRollBackContainer>}
              */
             const globalContainers = deps;
-    
+
             const targetContainerKey = `${payload.tableName}/${payload.groupId}`;
             const targetContainer = globalContainers.get(targetContainerKey);
-    
+
             if (!targetContainer) {
-                
                 console.log('link payload', {
                     payload,
                     globalContainers,
                     targetContainer,
                 });
-                
+
                 controller.setState(
                     'pending',
-                    `no target container ${targetContainerKey}`,// пока что пометка для разработки, 
+                    `no target container ${targetContainerKey}`, // пока что пометка для разработки,
                     // но каждый случай можно закодировать для дальнейшего использования в системе
-                    targetContainerKey,// пока что я сохраняю ключ целевого контейнера для повторной попытки.
+                    targetContainerKey // пока что я сохраняю ключ целевого контейнера для повторной попытки.
                 );
                 return;
             }
-    
+
             // console.log('link payload check', {
             //     payload,
             //     globalContainers,
             //     targetContainer,
             //     targetContainerData:targetContainer.getData(),
             // });
-            
+
             // ===================================================
-    
+
             /**
-             * 
-             * 
-             * 
-             * 
+             *
+             *
+             *
+             *
              */
-            
+
             // ===================================================
-    
+
             const targetContainerState = targetContainer.getState();
             const targetContainerData = targetContainer.getData();
-    
-            console.log('LinkAction/columnContainerAction/tar cont state: ', {targetContainerState, targetContainerData});
 
-            if(targetContainerState.value === "done") {
+            console.log('LinkAction/columnContainerAction/tar cont state: ', {
+                targetContainerState,
+                targetContainerData,
+            });
 
+            if (targetContainerState.value === 'done') {
                 controller.setState('done', 'target container is "done"');
                 controller.setData(targetContainerData);
                 return;
             }
-            
-            if(targetContainerState.value === 'rejected') {
-                
-                controller.setState('rejected', 'target container is rejected, and current must be too');
+
+            if (targetContainerState.value === 'rejected') {
+                controller.setState(
+                    'rejected',
+                    'target container is rejected, and current must be too'
+                );
                 controller.setData(null);
                 return;
             }
-            
-            
-            controller.setState('pending', 'target container is pending, and current must be too');
-            controller.setData(null);
 
-        }
-        
+            controller.setState(
+                'pending',
+                'target container is pending, and current must be too'
+            );
+            controller.setData(null);
+        };
+
         columnContainer.setAction('main', preCommitAction);
-    
+
         // transaction.setRollBack('main', () => {
         //     // console.log('link main rollback');
         // });
-    
+
         return columnContainer;
     };
 
@@ -182,7 +184,6 @@ function FileActionFactory(deps = {}) {
     }
 
     const FileAction = async (payload) => {
-        
         const columnContainer = rollBackContainerFactory.create();
 
         /**
@@ -237,15 +238,15 @@ function DataActionFactory(deps = {}) {
 
     const DataAction = async (payload) => {
         const transaction = rollBackContainerFactory.create();
-        
+
         transaction.setAction('main', (controller) => {
-            
-            controller.setData(payload instanceof Buffer? payload.toString('utf-8'): payload);
+            controller.setData(
+                payload instanceof Buffer ? payload.toString('utf-8') : payload
+            );
             controller.setState('done');
-            
+
             controller.setRollBack('main', async () => {
                 console.log(`Container/test rollback`);
-
             });
         });
 

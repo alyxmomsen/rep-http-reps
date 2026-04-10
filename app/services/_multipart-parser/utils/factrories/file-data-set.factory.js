@@ -1,12 +1,10 @@
-
-
 /**
  * @description если установить флаг "auto" в значение
  * "true", то если какие-то required поля будут пропущены,
  * то они будут заменены на defaul values
- * @throws 
+ * @throws
  * `file-data factory: incorrect data received` :
- * если какое-то required поле будет не переданно 
+ * если какое-то required поле будет не переданно
  * @param {{
  *  groupId:string;
  *  tableName:string;
@@ -14,16 +12,15 @@
  *  contentType:string;
  *  linkId:string;
  *  body:Buffer<ArrayBuffer>;
- * }} data 
+ * }} data
  * @param {{
  *  auto:boolean;
  * }} flags
- * @returns 
+ * @returns
  */
-function fileDataSetFactory (data = {} , flags = {}) {
-
+function fileDataSetFactory(data = {}, flags = {}) {
     // если этот флаг установлен, то
-    // no provided required values will be replaced with default 
+    // no provided required values will be replaced with default
     const auto = flags.auto || false;
 
     // replace with default if the flag "auto" is "true"
@@ -33,21 +30,28 @@ function fileDataSetFactory (data = {} , flags = {}) {
     const contentType = data.contentType || (auto && 'unknown/default') || null;
     const linkId = data.linkId || (auto && 'default123') || null;
     const body = data.body || (auto && 'default-body') || null;
-    
-    if(!groupId || !tableName || !filename || !contentType || !linkId || !body) {
+
+    if (
+        !groupId ||
+        !tableName ||
+        !filename ||
+        !contentType ||
+        !linkId ||
+        !body
+    ) {
         throw new Error(`file-data factory: incorrect data received`);
     }
 
     return {
-        groupId, 
+        groupId,
         tableName,
-        originalFileName:{data:filename,dataType:'string'}, 
-        mime:{data:contentType,dataType:'string'}, 
-        linkId:{data:linkId, dataType:'link'},
+        originalFileName: { data: filename, dataType: 'string' },
+        mime: { data: contentType, dataType: 'string' },
+        linkId: { data: linkId, dataType: 'link' },
         body,
-    }
+    };
 }
 
 module.exports = {
     fileDataSetFactory,
-}
+};

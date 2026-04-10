@@ -1,7 +1,13 @@
-const onDataEndMw = require("../../../../../app/services/_multipart-parser/middleware/on-data-end.mw");
-const { LinksBuffer } = require("../../../../../app/services/_multipart-parser/utils/data-links-buffer/data-links-buffer.util");
-const { DBAdapter } = require("../../../../../app/services/database-adapter/models/db-adapter.model");
-const { FileManager } = require("../../../../../app/services/filemanager.service.js/filemanager.service");
+const onDataEndMw = require('../../../../../app/services/_multipart-parser/middleware/on-data-end.mw');
+const {
+    LinksBuffer,
+} = require('../../../../../app/services/_multipart-parser/utils/data-links-buffer/data-links-buffer.util');
+const {
+    DBAdapter,
+} = require('../../../../../app/services/database-adapter/models/db-adapter.model');
+const {
+    FileManager,
+} = require('../../../../../app/services/filemanager.service.js/filemanager.service');
 
 /**
  * @typedef {Object} OriginalFilename
@@ -10,12 +16,11 @@ const { FileManager } = require("../../../../../app/services/filemanager.service
  */
 
 describe('on-data-end middleware', () => {
-
     /**
      * @type {Map<string,DBAdapter>}
      */
     let dbRouter;
-    
+
     /**
      * @type {DBAdapter}
      */
@@ -42,14 +47,13 @@ describe('on-data-end middleware', () => {
     let formDataLinksBufferFactory;
 
     beforeEach(() => {
-
         dbAdapter = {
             createOne: jest.fn().mockReturnValue({
                 success: {
-                    rowIdHash:'123-123-123',
+                    rowIdHash: '123-123-123',
                 },
             }),
-        }
+        };
 
         dbRouter = new Map();
         dbRouter.set('files', dbAdapter);
@@ -58,10 +62,10 @@ describe('on-data-end middleware', () => {
         filemanager = {
             write: jest.fn().mockResolvedValue({
                 success: {
-                    filename:'filename-123',
-                }
+                    filename: 'filename-123',
+                },
             }),
-        }
+        };
 
         linksBuffer = {
             push: jest.fn().mockReturnValue({
@@ -84,19 +88,14 @@ describe('on-data-end middleware', () => {
             filemanager,
             formDataLinksBufferFactory,
         });
-
-
     });
 
-
-
     test('must do smth', async () => {
-
         let next = jest.fn().mockResolvedValue(undefined);
 
         /**
-         * 
-         * @param {Object.<string,any>} overrides 
+         *
+         * @param {Object.<string,any>} overrides
          * @returns {{
          *  originalFileName:OriginalFilename;
          *  file:Buffer;
@@ -120,12 +119,12 @@ describe('on-data-end middleware', () => {
                     dataType: 'string',
                 },
                 ...overrides,
-            }
-        }
+            };
+        };
 
         /**
-         * 
-         * @param {Object.<string,any>} overrides 
+         *
+         * @param {Object.<string,any>} overrides
          * @returns {{
          *  originalFileName:OriginalFilename;
          *  file:Buffer;
@@ -139,29 +138,31 @@ describe('on-data-end middleware', () => {
                 data: Buffer.from('test data'),
                 dataType: 'string',
                 ...overrides,
-            }
-        }
+            };
+        };
 
-        await middleware({
-            mergedGroups: {
-                files: {
-                    'files': {
-                        '00': createFileData(),
-                        '01': createFileData(),
+        await middleware(
+            {
+                mergedGroups: {
+                    files: {
+                        files: {
+                            '00': createFileData(),
+                            '01': createFileData(),
+                        },
+                    },
+                    fields: {
+                        users: {
+                            '00': createFieldData(),
+                            '01': createFieldData(),
+                        },
                     },
                 },
-                fields: {
-                    'users': {
-                        '00': createFieldData(),
-                        '01': createFieldData(),
-                    }
-                },
-            }
-        }, next);
+            },
+            next
+        );
 
         expect(linksBuffer.getAllLinks()).toEqual([]);
         expect(formDataLinksBufferFactory).toHaveBeenCalled();
         expect(filemanager.write).toHaveBeenCalledTimes(2);
-
     });
 });

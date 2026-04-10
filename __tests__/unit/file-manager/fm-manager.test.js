@@ -1,9 +1,14 @@
-const { FileManager } = require("../../../app/services/filemanager.service.js/filemanager.service");
-const { filemanager } = require("../../../app/services/filemanager.service.js/fmanager.controller");
-const { ResolveSuccessError } = require("../../../app/utils/success-error-resolver/model/suc-err-res");
+const {
+    FileManager,
+} = require('../../../app/services/filemanager.service.js/filemanager.service');
+const {
+    filemanager,
+} = require('../../../app/services/filemanager.service.js/fmanager.controller');
+const {
+    ResolveSuccessError,
+} = require('../../../app/utils/success-error-resolver/model/suc-err-res');
 
-describe ('file  manager', () => {
-
+describe('file  manager', () => {
     /**
      * @type {FileManager}
      */
@@ -28,7 +33,6 @@ describe ('file  manager', () => {
     let mockOnBadResponseHandler; // no
 
     beforeEach(() => {
-
         fmanager = new FileManager();
         succerr = new ResolveSuccessError();
 
@@ -47,45 +51,40 @@ describe ('file  manager', () => {
         });
     });
 
-    afterEach(() => {
-
-    });
+    afterEach(() => {});
 
     test('default', async () => {
-
         const result = await fmanager.write(Buffer.from('foo bar baz'));
 
-        console.log({result});
+        console.log({ result });
 
         await succerr.handle(result);
         expect(mockOnSuccess).toHaveBeenCalled();
-        
     });
-    
-    test ('returs the same data as those was been stored like' , async () => {
-        
+
+    test('returs the same data as those was been stored like', async () => {
         const fakeFileData = 'have bean cold';
 
         const result = await fmanager.write(Buffer.from(fakeFileData));
-        
+
         await succerr.handle(result);
 
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(result).toHaveProperty('success');
         expect(result.success).toHaveProperty('filename');
         expect(result.success.filename.length).toBe(64);
-        
-        const filename =  result.success.filename ;
-        
+
+        const filename = result.success.filename;
+
         const readResult = await fmanager.read(filename);
-        
+
         await succerr.handle(readResult);
-        
+
         expect(readResult).toHaveProperty('success');
         expect(readResult.success).toHaveProperty('readStream');
-        
-        const data = await new Promise ((res, rej) => {
-            const chunks = []
+
+        const data = await new Promise((res, rej) => {
+            const chunks = [];
             readResult.success.readStream.on('data', (chunk) => {
                 chunks.push(chunk);
             });
@@ -94,7 +93,7 @@ describe ('file  manager', () => {
                 const wholeData = Buffer.concat(chunks);
                 res(wholeData);
             });
-        }) ;
+        });
 
         expect(data).toBeDefined();
         expect(data).toBeInstanceOf(Buffer);
@@ -102,6 +101,5 @@ describe ('file  manager', () => {
         const str = data.toString('utf-8');
 
         expect(str).toEqual(fakeFileData);
-
-    }); 
+    });
 });

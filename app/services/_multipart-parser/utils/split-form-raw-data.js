@@ -1,30 +1,34 @@
-const { findSeparatorIndexInBuffer } = require("../../../utils/find-separator-index-in-buffer.util");
+const {
+    findSeparatorIndexInBuffer,
+} = require('../../../utils/find-separator-index-in-buffer.util');
 
 /**
- * 
- * @param {Buffer<ArrayBuffer>} formData 
- * @param {Buffer<ArrayBuffer>} boundary 
+ *
+ * @param {Buffer<ArrayBuffer>} formData
+ * @param {Buffer<ArrayBuffer>} boundary
  * @returns {Array<Buffer<ArrayBuffer>>}
  */
-function splitFormData (formData , boundary) {
+function splitFormData(formData, boundary) {
+    const parts = [];
+    let start = 0;
+    let index = 0;
 
-    const parts = [] ;
-    let start = 0
-    let index = 0 ;
-
-    while ((index = findSeparatorIndexInBuffer(formData , boundary , start)) !== -1) {
-        const part = formData.subarray(start , index) ;
+    while (
+        (index = findSeparatorIndexInBuffer(formData, boundary, start)) !== -1
+    ) {
+        const part = formData.subarray(start, index);
         parts.push(part);
-        start = index + boundary.length ;
-        if(
-            formData[start] === 0x0d // \r 
-            && formData[start + 1] === 0x0a // \n
-        ) start += 2 ;
+        start = index + boundary.length;
+        if (
+            formData[start] === 0x0d && // \r
+            formData[start + 1] === 0x0a // \n
+        )
+            start += 2;
     }
 
     parts.push(formData.subarray(start)); // rest part
 
-    return parts ;
+    return parts;
 }
 
-module.exports = { splitFormData }
+module.exports = { splitFormData };

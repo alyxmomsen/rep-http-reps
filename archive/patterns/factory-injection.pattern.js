@@ -1,14 +1,13 @@
 class MyClass {
-
-    exec (data) {
+    exec(data) {
         const { success, error } = this.#privateMethod(data);
 
-        if(error) {
+        if (error) {
             console.log('error');
             return;
         }
 
-        if(!success) {
+        if (!success) {
             console.log('no success');
             return;
         }
@@ -17,48 +16,46 @@ class MyClass {
     }
 
     /**
-     * 
-     * @param {string} data 
+     *
+     * @param {string} data
      * @returns {
      *  success?:{length:number};
      *  error?:{message:string};
      * }
      */
-    #privateMethod (data) {
-        if(data === undefined) {
+    #privateMethod(data) {
+        if (data === undefined) {
             return {
-                error:{
-                    message:'data required but not prvided',
+                error: {
+                    message: 'data required but not prvided',
                 },
-            }
+            };
         }
 
         return {
             success: {
-                length:data.length,
+                length: data.length,
             },
-        }
+        };
     }
 
-    constructor (deps = {}) {}
+    constructor(deps = {}) {}
 }
 
-function factory () {
+function factory() {
     return new MyClass();
 }
 
 /**
- * 
- * @param {() => MyClass} factory 
+ *
+ * @param {() => MyClass} factory
  */
-function textFn (factory) {
-    
-    for (let i=0; i<1000; i++) {
-
-        if(i > 998) {
+function textFn(factory) {
+    for (let i = 0; i < 1000; i++) {
+        if (i > 998) {
             const myClass = factory();
             const result = myClass.exec('hellow world');
-            console.log({result});
+            console.log({ result });
         }
     }
 }

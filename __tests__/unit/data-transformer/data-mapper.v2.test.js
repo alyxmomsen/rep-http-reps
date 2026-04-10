@@ -13,10 +13,18 @@ const {
 const {
     dataSetProcessorFactory,
 } = require('../../../app/services/_multipart-parser/utils/mapper/controller/data-set-mapper.controller');
-const { Transactions } = require('../../../app/services/transactor/transactions.model');
-const { DataSetProcessor } = require('../../../app/services/_multipart-parser/utils/mapper/model/data-set-processor.model');
-const { dbControllersRouter } = require('../../../app/services/database-adapter/controller/db-adapter.controller');
-const { filemanager } = require('../../../app/services/filemanager.service.js/fmanager.controller');
+const {
+    Transactions,
+} = require('../../../app/services/transactor/transactions.model');
+const {
+    DataSetProcessor,
+} = require('../../../app/services/_multipart-parser/utils/mapper/model/data-set-processor.model');
+const {
+    dbControllersRouter,
+} = require('../../../app/services/database-adapter/controller/db-adapter.controller');
+const {
+    filemanager,
+} = require('../../../app/services/filemanager.service.js/fmanager.controller');
 
 /**
  * @typedef {{
@@ -60,7 +68,6 @@ describe('data mapper v2', () => {
     });
 
     test('should smth', async () => {
-
         /**
          * @description
          * для каждого <file-data-set> нужны уникальные группы
@@ -108,8 +115,6 @@ describe('data mapper v2', () => {
             }),
             context
         );
-
-        
 
         const fileDataSetProducer = dataSetDecorator({
             body: Buffer.from('buffer data'), // данные файла
@@ -318,17 +323,17 @@ describe('data mapper v2', () => {
         expect(context).toEqual(result);
 
         const transactions = new Transactions({
-            dataBaseControllersRouter:dbControllersRouter,
-            fileManager:filemanager,
+            dataBaseControllersRouter: dbControllersRouter,
+            fileManager: filemanager,
         });
 
         const datasetprocessor = dataSetProcessorFactory({
             // transactions:new ResolveSuccessError(),
-            transactions:transactions,
+            transactions: transactions,
         });
 
         const datasetprocessorresult = await datasetprocessor.process(
-            context,
+            context
             // []
         );
 

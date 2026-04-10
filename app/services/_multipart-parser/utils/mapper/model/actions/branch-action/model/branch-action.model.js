@@ -17,7 +17,9 @@ const {
 const {
     LinksBuffer,
 } = require('../../../../../data-links-buffer/data-links-buffer.util');
-const { Transactor } = require('../../../../../../../transactor/v2/model/transactor.model');
+const {
+    Transactor,
+} = require('../../../../../../../transactor/v2/model/transactor.model');
 
 /**
  * 
@@ -86,17 +88,26 @@ function BranchActionFactory(deps = {}) {
      * @throws {Error} - branch action: incorrect payload data
      */
     const fn = async (payload = {}) => {
-        
-        const { actionCaller, payloadToCaller:payloadToCaller, trace:parentTrace } = payload;
+        const {
+            actionCaller,
+            payloadToCaller: payloadToCaller,
+            trace: parentTrace,
+        } = payload;
 
-        const { context:childContext } = await actionCaller(payloadToCaller, parentTrace);
+        const { context: childContext } = await actionCaller(
+            payloadToCaller,
+            parentTrace
+        );
 
-        const {semantic:semanticTrace , prop:propTrace } = getTrace(parentTrace);
+        const { semantic: semanticTrace, prop: propTrace } =
+            getTrace(parentTrace);
 
-        if (semanticTrace[0] === 'tableName' && semanticTrace[1] === 'groupId') {
-
+        if (
+            semanticTrace[0] === 'tableName' &&
+            semanticTrace[1] === 'groupId'
+        ) {
             console.log('Branch-Action: caller result', {
-                childContext
+                childContext,
             });
 
             const dbAdapter = dbControllersRouter.get(propTrace[0]);
@@ -108,16 +119,13 @@ function BranchActionFactory(deps = {}) {
             const result = dbAdapter.createOne(childContext);
 
             if (result.error) {
-                
                 transactor.useTransaction();
             }
 
             transactor.useTransaction();
-            
         }
 
-        return {result:childContext};
-
+        return { result: childContext };
     };
 
     return fn;
@@ -125,8 +133,7 @@ function BranchActionFactory(deps = {}) {
 
 module.exports = { BranchActionFactory: BranchActionFactory };
 
-function getTrace (trace) {
-
+function getTrace(trace) {
     const propSemanticTrace = [];
     const propKeyTrace = [];
 
@@ -136,8 +143,7 @@ function getTrace (trace) {
     }
 
     return {
-        semantic:propSemanticTrace,
-        prop:propKeyTrace,
-    }
-
+        semantic: propSemanticTrace,
+        prop: propKeyTrace,
+    };
 }

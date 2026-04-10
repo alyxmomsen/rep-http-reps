@@ -1,16 +1,15 @@
-const { IncomingMessage, ServerResponse } = require("node:http");
-const { readFile } = require("node:fs/promises");
-const { resolve, join } = require("node:path");
+const { IncomingMessage, ServerResponse } = require('node:http');
+const { readFile } = require('node:fs/promises');
+const { resolve, join } = require('node:path');
 
 const REACT_APP_PATH = resolve(join('.', 'public', 'static', 'react.html'));
 
 /**
  * Отдает React приложение
- * @param {IncomingMessage} req 
- * @param {ServerResponse} res 
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
  */
 async function handleReactApp(req, res) {
-
     console.log('handle react app');
 
     try {

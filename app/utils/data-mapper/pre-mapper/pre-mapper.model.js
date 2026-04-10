@@ -1,76 +1,75 @@
-
 const ValueType = {
-    Leaf:'leaf',
-    Branch:'branch',
-}
+    Leaf: 'leaf',
+    Branch: 'branch',
+};
 
 const REGULAR_COLUMN_SCHEMA = {
     __tableName: {
-        type:ValueType.Branch,
+        type: ValueType.Branch,
         value: {
-            __groupId:{
-                type:ValueType.Branch,
-                value:{
+            __groupId: {
+                type: ValueType.Branch,
+                value: {
                     __columnName: {
-                        type:ValueType.Leaf,
-                        value:{
-                            action:'data',
-                            payload:'__body',
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+                        type: ValueType.Leaf,
+                        value: {
+                            action: 'data',
+                            payload: '__body',
+                        },
+                    },
+                },
+            },
+        },
+    },
+};
 
 const LINK_COLUMN_SCHEMA = {
     __tableName: {
-        type:ValueType.Branch,
+        type: ValueType.Branch,
         value: {
-            __groupId:{
-                type:ValueType.Branch,
-                value:{
+            __groupId: {
+                type: ValueType.Branch,
+                value: {
                     __columnName: {
-                        type:ValueType.Leaf,
-                        value:{
-                            action:'link',
-                            payload:'__body',
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+                        type: ValueType.Leaf,
+                        value: {
+                            action: 'link',
+                            payload: '__body',
+                        },
+                    },
+                },
+            },
+        },
+    },
+};
 
 const FILES_SCHEMA = {
     __tableName: {
-        type:ValueType.Branch,
-        value:{
-            __groupId:{
-                type:ValueType.Branch,
-                value:{
-                    originalFileName:{
-                        type:ValueType.Leaf,
-                        value:{
-                            action:'data',
-                            payload:'__filename',
-                        }
-                    },
-                    mime:{
-                        type:ValueType.Leaf,
+        type: ValueType.Branch,
+        value: {
+            __groupId: {
+                type: ValueType.Branch,
+                value: {
+                    originalFileName: {
+                        type: ValueType.Leaf,
                         value: {
-                            action:'data',
-                            payload:'__contentType',
+                            action: 'data',
+                            payload: '__filename',
                         },
                     },
-                    fileSystemFilename:{
-                        type:ValueType.Leaf,
-                        value:{
-                            action:'file',
-                            payload:'__body',
-                        }
+                    mime: {
+                        type: ValueType.Leaf,
+                        value: {
+                            action: 'data',
+                            payload: '__contentType',
+                        },
+                    },
+                    fileSystemFilename: {
+                        type: ValueType.Leaf,
+                        value: {
+                            action: 'file',
+                            payload: '__body',
+                        },
                     },
                     // __columnName:{
                     //     type:ValueType.Leaf,
@@ -83,51 +82,58 @@ const FILES_SCHEMA = {
             },
         },
     },
-}
+};
 
 class PreMapper {
-
-    process(schema, dataSet, parentContext = {}){
-        
-        const currentContext = {...parentContext};
+    process(schema, dataSet, parentContext = {}) {
+        const currentContext = { ...parentContext };
 
         for (const [prop, config] of Object.entries(schema)) {
-
             const { type, value } = config;
 
-            const newProp = prop.startsWith('__') ? dataSet[prop.replace('__', '')] : prop;
-            
-            if(type === ValueType.Branch) {
-                const nextSchema = value;
-                
-                if(currentContext[newProp]) {
+            const newProp = prop.startsWith('__')
+                ? dataSet[prop.replace('__', '')]
+                : prop;
 
-                    const branchHandlerResult = this.#branchHandler(nextSchema, dataSet, currentContext[newProp]);
+            if (type === ValueType.Branch) {
+                const nextSchema = value;
+
+                if (currentContext[newProp]) {
+                    const branchHandlerResult = this.#branchHandler(
+                        nextSchema,
+                        dataSet,
+                        currentContext[newProp]
+                    );
                     for (const [k, v] of Object.entries(branchHandlerResult)) {
-                        
                         currentContext[newProp][k] = v;
                     }
-                }
-                else {
-                    const branchHandlerResult = this.#branchHandler(nextSchema, dataSet, {});
+                } else {
+                    const branchHandlerResult = this.#branchHandler(
+                        nextSchema,
+                        dataSet,
+                        {}
+                    );
                     currentContext[newProp] = branchHandlerResult;
                 }
-
-            }
-            else {
-                
+            } else {
                 // type === ValueType.Leaf
-                
-                if(currentContext[newProp]) {
 
-                    const leafHandlerResult = this.#leafHandler(value, dataSet, currentContext[newProp]);
+                if (currentContext[newProp]) {
+                    const leafHandlerResult = this.#leafHandler(
+                        value,
+                        dataSet,
+                        currentContext[newProp]
+                    );
                     for (const [k, v] of Object.entries(leafHandlerResult)) {
                         currentContext[newProp][k] = v;
                     }
-                }
-                else {
-                    const leafHandlerResult = this.#leafHandler(value, dataSet, {});
-                    currentContext[newProp] = leafHandlerResult;    
+                } else {
+                    const leafHandlerResult = this.#leafHandler(
+                        value,
+                        dataSet,
+                        {}
+                    );
+                    currentContext[newProp] = leafHandlerResult;
                 }
             }
         }
@@ -135,41 +141,41 @@ class PreMapper {
         return currentContext;
     }
 
-    #branchHandler (schema, dataSet, context) {
+    #branchHandler(schema, dataSet, context) {
         const result = this.process(schema, dataSet, context);
         return result;
     }
 
-    #leafHandler (leafData, dataSet, context) {
-
+    #leafHandler(leafData, dataSet, context) {
         const fn = () => {
-
             /**
              * @type {Object}
              */
             const returnValue = {
-                action:leafData.action,
-            }
+                action: leafData.action,
+            };
 
-            if(typeof leafData.payload === "object") {
-                
+            if (typeof leafData.payload === 'object') {
                 returnValue.payload = leafData.payload;
                 return returnValue;
             }
-            
-            returnValue.payload = leafData.payload.startsWith('__') 
-                ? dataSet[leafData.payload.replace('__','')] 
-                : leafData.payload 
+
+            returnValue.payload = leafData.payload.startsWith('__')
+                ? dataSet[leafData.payload.replace('__', '')]
+                : leafData.payload;
 
             return returnValue;
-        }
+        };
 
         return fn();
     }
 
-    constructor () {
-        
-    }
+    constructor() {}
 }
 
-module.exports = { PreMapper , FILES_SCHEMA, LINK_COLUMN_SCHEMA, REGULAR_COLUMN_SCHEMA }
+module.exports = {
+    PreMapper,
+    FILES_SCHEMA,
+    LINK_COLUMN_SCHEMA,
+    REGULAR_COLUMN_SCHEMA,
+};

@@ -1,10 +1,13 @@
 // __tests__/unit/mapper/mapper.constructor.test.js
 
 const { Mapper } = require('../../../app/utils/mapper-2.0/mapper.2.0');
-const { MULTITABLE_DATA_SCHEMA, PropType, ValueType } = require('../../../app/utils/mapper-2.0/schemas/multitable-data-schema');
+const {
+    MULTITABLE_DATA_SCHEMA,
+    PropType,
+    ValueType,
+} = require('../../../app/utils/mapper-2.0/schemas/multitable-data-schema');
 
 describe('🧪 Mapper - конструктор', () => {
-    
     test('должен создать экземпляр класса', () => {
         const mapper = new Mapper({});
         expect(mapper).toBeInstanceOf(Mapper);
@@ -15,10 +18,10 @@ describe('🧪 Mapper - конструктор', () => {
             {},
             { test: 'schema' },
             MULTITABLE_DATA_SCHEMA,
-            { complex: { nested: { schema: true } } }
+            { complex: { nested: { schema: true } } },
         ];
 
-        schemas.forEach(schema => {
+        schemas.forEach((schema) => {
             expect(() => {
                 new Mapper(schema); // создание всегда работает
             }).not.toThrow();
@@ -27,20 +30,24 @@ describe('🧪 Mapper - конструктор', () => {
 
     test('созданный экземпляр должен обрабатывать данные с правильной схемой', () => {
         const mapper = new Mapper(MULTITABLE_DATA_SCHEMA);
-        
+
         const testData = {
             tableName: 'test-table',
             groupId: 'test-group',
             columnName: 'test-column',
             fileMIME: 'text/plain',
             fileBody: Buffer.from('test content'),
-            dataType: 'string'
+            dataType: 'string',
         };
 
         const context = {};
-        
-        const result = mapper.process(MULTITABLE_DATA_SCHEMA, testData, context);
-        
+
+        const result = mapper.process(
+            MULTITABLE_DATA_SCHEMA,
+            testData,
+            context
+        );
+
         expect(result).toBeDefined();
     });
 
@@ -57,7 +64,7 @@ describe('🧪 Mapper - конструктор', () => {
             columnName: 'col1',
             fileMIME: 'text/plain',
             fileBody: Buffer.from('data1'),
-            dataType: 'string'
+            dataType: 'string',
         };
 
         const data2 = {
@@ -66,7 +73,7 @@ describe('🧪 Mapper - конструктор', () => {
             columnName: 'col2',
             fileMIME: 'text/plain',
             fileBody: Buffer.from('data2'),
-            dataType: 'string'
+            dataType: 'string',
         };
 
         mapper1.process(MULTITABLE_DATA_SCHEMA, data1, context1);
@@ -87,13 +94,13 @@ describe('🧪 Mapper - конструктор', () => {
                 property: {
                     type: PropType.Static,
                     staticKey: 'result',
-                    srcPath: null
+                    srcPath: null,
                 },
                 value: {
                     type: ValueType.Leaf,
-                    src: { path: 'data' }
-                }
-            }
+                    src: { path: 'data' },
+                },
+            },
         };
 
         const mapper = new Mapper(minimalSchema);

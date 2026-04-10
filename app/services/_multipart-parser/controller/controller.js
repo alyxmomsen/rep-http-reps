@@ -1,39 +1,60 @@
 // _multipart-parser/controller/controller.js
 
-const { MultipartFormdataHandler } = require("../models/multi-part-parser.model");
-const { MultiTableGrouppingAgent } = require("../services/multi-table-gruping-agent/multi-table-gruping-agent");
+const {
+    MultipartFormdataHandler,
+} = require('../models/multi-part-parser.model');
+const {
+    MultiTableGrouppingAgent,
+} = require('../services/multi-table-gruping-agent/multi-table-gruping-agent');
 
 // Импортируем middleware
-const extractProtocolMiddleware = require("../middleware/extract-protocol.mw");
-const onDataEndMiddleware = require("../middleware/on-data-end.mw");
+const extractProtocolMiddleware = require('../middleware/extract-protocol.mw');
+const onDataEndMiddleware = require('../middleware/on-data-end.mw');
 
 // Внешние зависимости
-const { filemanager } = require("../../filemanager.service.js/filemanager.service");
-const { dbControllersRouter } = require("../../database-adapter/controller/db-adapter.controller");
-const { extractProtocolName } = require("../services/name-attribute-parser/utlils/extract-protocol-name");
-const { multiTableProtocolParser } = require("../services/multi-table-gruping-agent/utils/extract-multitable-form-protocol-data");
-const { LinksBuffer } = require("../utils/data-links-buffer/data-links-buffer.util");
+const {
+    filemanager,
+} = require('../../filemanager.service.js/filemanager.service');
+const {
+    dbControllersRouter,
+} = require('../../database-adapter/controller/db-adapter.controller');
+const {
+    extractProtocolName,
+} = require('../services/name-attribute-parser/utlils/extract-protocol-name');
+const {
+    multiTableProtocolParser,
+} = require('../services/multi-table-gruping-agent/utils/extract-multitable-form-protocol-data');
+const {
+    LinksBuffer,
+} = require('../utils/data-links-buffer/data-links-buffer.util');
 // const { dataSetProcessorFactory } = require("../utils/mapper/controller/data-set-mapper.controller");
-const { FILE_DATA_SET_SCHEMA, REGULAR_FIELD_DATA_SET, LINKED_FIELD_DATA_SET_SCHEMA } = require("../services/data-mapper/v2/model/schemas/dm.schema");
-const { dataMapperFactory } = require("../services/data-mapper/v2/controller/data-mapper.controller");
-const { PreMapper } = require("../../../utils/data-mapper/pre-mapper/pre-mapper.model");
+const {
+    FILE_DATA_SET_SCHEMA,
+    REGULAR_FIELD_DATA_SET,
+    LINKED_FIELD_DATA_SET_SCHEMA,
+} = require('../services/data-mapper/v2/model/schemas/dm.schema');
+const {
+    dataMapperFactory,
+} = require('../services/data-mapper/v2/controller/data-mapper.controller');
+const {
+    PreMapper,
+} = require('../../../utils/data-mapper/pre-mapper/pre-mapper.model');
 
-const multiTableGrouppingAgentFactory  = () => {
+const multiTableGrouppingAgentFactory = () => {
     return new MultiTableGrouppingAgent({
         // mapper:new Mapper(),
         dataTransformer: new PreMapper(),
         // dataTransformer: new DataTransformer(),
-        multiTableProtocolParser:multiTableProtocolParser,
-        fileDataSetSchema:FILE_DATA_SET_SCHEMA,
-        linkedFieldDataSetSchema:LINKED_FIELD_DATA_SET_SCHEMA,
+        multiTableProtocolParser: multiTableProtocolParser,
+        fileDataSetSchema: FILE_DATA_SET_SCHEMA,
+        linkedFieldDataSetSchema: LINKED_FIELD_DATA_SET_SCHEMA,
         regularFieldDataSetSchema: REGULAR_FIELD_DATA_SET,
-        
     });
-}
+};
 
 const formDataLinksBufferFactory = () => {
     return new LinksBuffer();
-}
+};
 
 // Создаём экземпляр
 const multipartFormHandler = new MultipartFormdataHandler({
@@ -41,15 +62,14 @@ const multipartFormHandler = new MultipartFormdataHandler({
 });
 
 multipartFormHandler.useMiddleware(
-    extractProtocolMiddleware({ extractProtocolName }),
+    extractProtocolMiddleware({ extractProtocolName })
 );
 
 multipartFormHandler.onDataEndListeners(
-    onDataEndMiddleware({ 
-        filemanager, 
+    onDataEndMiddleware({
+        filemanager,
         dbRouter: dbControllersRouter,
         formDataLinksBufferFactory: formDataLinksBufferFactory,
-        
     })
 );
 

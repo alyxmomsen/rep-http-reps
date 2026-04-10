@@ -1,26 +1,21 @@
-const { dbControllersRouter } = require('../../../app/services/database-adapter/controller/db-adapter.controller');
-const { DBAdapter } = require('../../../app/services/database-adapter/models/db-adapter.model');
+const {
+    dbControllersRouter,
+} = require('../../../app/services/database-adapter/controller/db-adapter.controller');
+const {
+    DBAdapter,
+} = require('../../../app/services/database-adapter/models/db-adapter.model');
 
 require('http');
 
-
 describe('data base', () => {
-
-
     /**
      * @type {DBAdapter}
      */
     let dbAdapter;
 
-    beforeEach (() => {
-
-        
-
-    });
-
+    beforeEach(() => {});
 
     test('', () => {
-
         // fileSystemFilename:{
         //     required:true,
         //     type:STRING,
@@ -41,10 +36,10 @@ describe('data base', () => {
 
         expect(dbAdapter).toBeDefined();
 
-        const {success, error} = dbAdapter.createOne({
-            fileSystemFilename:'fs 123',
-            originalFileName:'original 123',
-            mime:'test/mime'
+        const { success, error } = dbAdapter.createOne({
+            fileSystemFilename: 'fs 123',
+            originalFileName: 'original 123',
+            mime: 'test/mime',
         });
 
         expect(success).toBeDefined();
@@ -55,8 +50,5 @@ describe('data base', () => {
 
         dbAdapter = dbControllersRouter.get('users');
         dbAdapter = dbControllersRouter.get('video-playlist');
-
-
     });
-
-})
+});

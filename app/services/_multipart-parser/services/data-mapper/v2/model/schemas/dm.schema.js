@@ -1,22 +1,21 @@
-
 const ActionsKeys = {
     TABLE_NAME: {
-        Auto:'__tableName',
-        Manual:'tableName',
+        Auto: '__tableName',
+        Manual: 'tableName',
     },
-    GROUP_ID:{
-        Auto:'__groupId',
-        Manual:'groupId',
+    GROUP_ID: {
+        Auto: '__groupId',
+        Manual: 'groupId',
     },
-    COLUMN_NAME:{
-        Auto:'__columnName',
-        Manual:'columnName',
+    COLUMN_NAME: {
+        Auto: '__columnName',
+        Manual: 'columnName',
     },
     // TABLE_NAME:{
     //     Auto:'',
     //     Manual:'',
     // },
-}
+};
 
 /**
  * @type {Object}
@@ -34,59 +33,63 @@ const ActionsKeys = {
  * }
  */
 const FILE_DATA_SET_SCHEMA = {
-
     /**
      * Ключ свойства:
-     * 
+     *
      * в результирующей структуре, это будет ключом свойства
      * при этом , если есть префикс "__", то Mapper будет искать во входных данных ключ "tableName"
      * Если префикс "__" отсутствует, то в результирующей структуре просто будте свойство "tableName".
-     * 
+     *
      * Всегда содержит структуру: ['actionName', data = {}]
      */
-    __tableName: [ 
+    __tableName: [
         /**
          * action-name "branch" сообщает Mapper что, результирующее значение свойства
          * будет структурой . Mapper вызовет BranchAction и передаст в него {__groupId: [...}
-         * 
+         *
          */
-        'branch', {
+        'branch',
+        {
             __groupId: [
-                'branch', {
+                'branch',
+                {
                     originalFileName: [
-                        'leaf', {
+                        'leaf',
+                        {
                             data: '__filename',
-                            dataType:'string',
-                        }, 
+                            dataType: 'string',
+                        },
                     ],
                     mime: [
-                        'leaf', {
+                        'leaf',
+                        {
                             data: '__contentType',
-                            dataType:'string',
-                        }, 
+                            dataType: 'string',
+                        },
                     ],
                     fileSystemFileName: [
-                        'leaf', {
+                        'leaf',
+                        {
                             data: '__fileSystemFileName',
                             dataType: 'string',
-                        }
-                    ]
+                        },
+                    ],
                     // file: [
                     //     'leaf', {
                     //         data: '__body',
                     //         dataType:'buffer',
-                    //     }, 
+                    //     },
                     // ],
                     // linkId: [
                     //     'leaf', {
                     //         data: '__linkId',
                     //         dataType:'string',
-                    //     }, 
+                    //     },
                     // ],
-                }
-            ]
-        }
-    ]
+                },
+            ],
+        },
+    ],
 };
 
 /**
@@ -94,36 +97,46 @@ const FILE_DATA_SET_SCHEMA = {
  */
 const LINKED_FIELD_DATA_SET_SCHEMA = {
     __tableName: [
-        'branch', {
+        'branch',
+        {
             __groupId: [
-                'branch', {
+                'branch',
+                {
                     __columnName: [
-                        'leaf', {
+                        'leaf',
+                        {
                             data: '__body',
-                            dataType:'link',
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
+                            dataType: 'link',
+                        },
+                    ],
+                },
+            ],
+        },
+    ],
+};
 
 const REGULAR_FIELD_DATA_SET = {
     __tableName: [
-        'branch', {
+        'branch',
+        {
             __groupId: [
-                'branch', {
+                'branch',
+                {
                     __columnName: [
-                        'leaf', {
+                        'leaf',
+                        {
                             data: '__body',
-                            dataType:'__dataType',
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
+                            dataType: '__dataType',
+                        },
+                    ],
+                },
+            ],
+        },
+    ],
+};
 
-module.exports = { FILE_DATA_SET_SCHEMA: FILE_DATA_SET_SCHEMA, REGULAR_FIELD_DATA_SET, LINKED_FIELD_DATA_SET_SCHEMA }
+module.exports = {
+    FILE_DATA_SET_SCHEMA: FILE_DATA_SET_SCHEMA,
+    REGULAR_FIELD_DATA_SET,
+    LINKED_FIELD_DATA_SET_SCHEMA,
+};

@@ -1,12 +1,9 @@
-
-
 class Mapper {
-    
     process(data, context) {
         console.log({ data });
 
         const Types = dataTypes();
-        
+
         for (const [k, v] of Object.entries(this.#schema)) {
             const { type, keyPath } = v;
 
@@ -18,18 +15,15 @@ class Mapper {
                 }
 
                 if (context[dataPropertyValue] === undefined) {
-                    
                 }
 
-                console.log({dataPropertyValue});
-
+                console.log({ dataPropertyValue });
             }
-
         }
 
-        return {}
+        return {};
     }
-    
+
     #schema;
 
     constructor(schema) {
@@ -47,17 +41,16 @@ for (const chunk of dataHash()) {
 
 function DataProperties() {
     return {
-        TABLE_NAME:'tableName',
-        GROUP_ID:'groupId',
-        COLUMN_NAME:'columnName',
-        FILE_NAME:'fileName',
+        TABLE_NAME: 'tableName',
+        GROUP_ID: 'groupId',
+        COLUMN_NAME: 'columnName',
+        FILE_NAME: 'fileName',
         CONTENT_TYPE: 'fileMIME',
-        BODY:'fileBody',
-    }
+        BODY: 'fileBody',
+    };
 }
 
 function dataHash() {
-
     const Keys = DataProperties();
 
     return [
@@ -93,15 +86,14 @@ function dataHash() {
             [Keys.CONTENT_TYPE]: 'text/plain',
             [Keys.BODY]: '0101011100100101',
         },
-        
-    ]
+    ];
 }
 
 function dataTypes() {
     return {
         Dinamic: 'dinamic',
         Static: 'static',
-    }
+    };
 }
 
 function schemaProducer() {
@@ -109,7 +101,7 @@ function schemaProducer() {
     return {
         tableName: {
             type: DataTypes.Dinamic,
-            keyPath:'tableName',
-        }
-    }
+            keyPath: 'tableName',
+        },
+    };
 }

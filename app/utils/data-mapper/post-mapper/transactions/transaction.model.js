@@ -12,15 +12,15 @@
  */
 class StateRollBackContainer {
     /**
-     * 
+     *
      * @returns {ContainerState}
      */
     getState() {
         return this.#state;
     }
-    
+
     /**
-     * 
+     *
      * @returns {any}
      */
     getData() {
@@ -110,14 +110,14 @@ class StateRollBackContainer {
      * - экшн вызывается в `this.#preCommit`
      * ---
      * @example
-     * 
+     *
      * setAction ('action-name', (controller, deps) => {
-     *  controller.setData('any data'); 
-     *  controller.getData(); 
+     *  controller.setData('any data');
+     *  controller.getData();
      *  controller.setState("done"); // "pending"|"rejected"|"done"
      *  controller.getState()
-     * 
-     * 
+     *
+     *
      * @type {Map<string,PreCommitAction>}
      */
     #actions;
@@ -136,8 +136,8 @@ class StateRollBackContainer {
     constructor() {
         this.#data = null;
         this.#state = {
-            value:'pending',
-            message:'default state',
+            value: 'pending',
+            message: 'default state',
         };
 
         this.#actions = new Map();

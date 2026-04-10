@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 function AnotherOnePage() {
-    
-    const [ state , setState ] = useState('hello world');
+    const [state, setState] = useState('hello world');
 
     useEffect(() => {
         alert();
-    } , [ state ]);
+    }, [state]);
 
     return (
-        <div className="" style={{color:'red' , backgroundColor:'bisque'}}>
+        <div className="" style={{ color: 'red', backgroundColor: 'bisque' }}>
             <nav>
                 <div>hello world</div>
             </nav>

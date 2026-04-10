@@ -1,4 +1,6 @@
-const { dataBase } = require('../../../app/services/database/controller/db.controller');
+const {
+    dataBase,
+} = require('../../../app/services/database/controller/db.controller');
 const {
     postMapperDIContainer,
     DataAction,
@@ -313,8 +315,8 @@ describe('premapping', () => {
         // console.log(`process executing: end`);
 
         const result = postMapper.getResult();
-        
-        console.dir(result, {depth:10});
+
+        console.dir(result, { depth: 10 });
 
         // console.dir(dataBase.readAll('users'), {depth:20});
         // console.dir(dataBase.readAll('files'), {depth:20});

@@ -10,25 +10,28 @@ class DataSetProcessor {
      * @returns
      */
     async process(currentBranch, parentTrace = []) {
-
         console.log('actions: ', this.#actions);
-        if(!this.#actions) throw new Error(`no actions`);
+        if (!this.#actions) throw new Error(`no actions`);
 
         const currentContext = {};
 
         try {
             // console.log('Datasetprocessor: ', { data: currentBranch, parentTrace });
 
-            
+            for (const [prop, currentBranchConfig] of Object.entries(
+                currentBranch
+            )) {
+                const [actionName, { meta, value: childBranch }] =
+                    currentBranchConfig;
 
-            for (const [prop, currentBranchConfig] of Object.entries(currentBranch)) {
-                const [actionName, { meta, value:childBranch }] = currentBranchConfig;
-
-                console.log(`get action:`, {actionName, meta, childBranch});
+                console.log(`get action:`, { actionName, meta, childBranch });
                 const Action = this.#actions.get(actionName);
 
                 // const currentIterationTrace = [...parentTrace, prop];
-                const currentIterationTrace = [...parentTrace, {knotProp:prop, knotPropSemantic:meta.title}];
+                const currentIterationTrace = [
+                    ...parentTrace,
+                    { knotProp: prop, knotPropSemantic: meta.title },
+                ];
 
                 const actionResult = await Action({
                     actionCaller: this.process.bind(this),
@@ -43,12 +46,13 @@ class DataSetProcessor {
                 // console.log('DataSetProcessor:', { prop, config: currentBranchConfig, actionResult });
             }
 
-            console.log({currentContext});
+            console.log({ currentContext });
 
-            return { context:currentContext }
-
+            return { context: currentContext };
         } catch (error) {
-            console.log('DataSetProcessor err: ', error, { data: currentBranch });
+            console.log('DataSetProcessor err: ', error, {
+                data: currentBranch,
+            });
             throw error;
         }
     }

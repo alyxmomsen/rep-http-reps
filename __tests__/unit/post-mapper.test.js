@@ -1,8 +1,13 @@
-const { DataAction, FileAction, LinkAction } = require("../../app/utils/data-mapper/post-mapper/post-mapper.controller");
-const { PostMapper } = require("../../app/utils/data-mapper/post-mapper/post-mapper.model");
+const {
+    DataAction,
+    FileAction,
+    LinkAction,
+} = require('../../app/utils/data-mapper/post-mapper/post-mapper.controller');
+const {
+    PostMapper,
+} = require('../../app/utils/data-mapper/post-mapper/post-mapper.model');
 
 describe('post-mapper', () => {
-
     /**
      * @type {PostMapper}
      */
@@ -15,7 +20,7 @@ describe('post-mapper', () => {
             linkAction: LinkAction,
         });
     });
-    
+
     test('def', () => {
         postMapper();
     });

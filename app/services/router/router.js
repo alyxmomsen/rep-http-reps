@@ -1,14 +1,7 @@
 class Router {
+    async handleRequest() {}
 
-
-
-    async handleRequest () {
-
-    }
-
-    constructor () {
-
-    }
+    constructor() {}
 }
 
-module.exports = { Router }
+module.exports = { Router };

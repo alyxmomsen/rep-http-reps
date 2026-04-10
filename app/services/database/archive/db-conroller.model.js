@@ -1,6 +1,5 @@
 // const { database } = require("../database");
 
-
 // const CONSTANTS = {
 //     CRUD:{
 //         CREATE_ONE_ROW:'CREATE_ONE_ROW',
@@ -9,7 +8,7 @@
 //         UPDATE_ONE_ROW:'UPDATE_ONE_ROW',
 //         DELETE_ONE_ROW:'DELETE_ONE_ROW',
 //         DELETE_TABLE:'DELETE_TABLE',
-//     } , 
+//     } ,
 //     PROPERTY_VALUE_CONFIG_KEYS:{
 //         VALUE_TYPE:'VALUE_TYPE' ,
 //         DEFAULT_VALUE:'DEFAULT_VALUE' ,
@@ -30,8 +29,8 @@
 // class DBController {
 
 //     /**
-//      * 
-//      * @param {Object.<string,string|Buffer<ArrayBuffer>>} incomingData 
+//      *
+//      * @param {Object.<string,string|Buffer<ArrayBuffer>>} incomingData
 //      */
 //     addOne (tablename , incomingData) {
 
@@ -49,10 +48,10 @@
 //             /* ошибки входящего property */
 //             let propertyErrors = [] ;
 
-//             /* 
+//             /*
 //             проверка входных данных на существование значения в соответствии с [MODEL_PROPERTY_NAME]
 //             если значение поля является "falsy" значением, то добавляется запись в массив "propertyErrors"
-//             */ 
+//             */
 //             const valueByPropertyName = incomingData[MODEL_PROPERTY_NAME] ;
 //             // console.log({MODEL_PROPERTY_NAME , valueByPropertyName});
 //             if(!valueByPropertyName) {
@@ -77,18 +76,18 @@
 //             /* валидация типа входных данных в соответствии с моделью */
 //             if(typeof valueByPropertyName !== valueTypeModel) {
 //                 /* #warning
-//                 * отсутвует фабрика 
+//                 * отсутвует фабрика
 //                 */
 //                 propertyErrors.push({
-//                     key: MODEL_PROPERTY_NAME , 
+//                     key: MODEL_PROPERTY_NAME ,
 //                     value: valueByPropertyName ,
 //                     message:'wrong type' ,
 //                 })
 //             }
 
 //             /* если есть хотябы одна инвалидность то поле считается не валидным */
-//             /* #warning 
-//             * отсутствует валидация по "required" флагу 
+//             /* #warning
+//             * отсутствует валидация по "required" флагу
 //             */
 //             if(propertyErrors.length) {
 //                 allErrors.push(propertyErrors);
@@ -121,14 +120,14 @@
 //     #model;
 
 //     /**
-//      * 
-//      * @param {Object} validationModel 
+//      *
+//      * @param {Object} validationModel
 //      */
 //     constructor (validationModel) {
 
 //         this.#model = {} ;
 
-//         for(const [ propertyName , validationRules ] of Object.entries(validationModel)) {      
+//         for(const [ propertyName , validationRules ] of Object.entries(validationModel)) {
 //             this.#model[propertyName] = validationRules ;
 //         }
 //     }
@@ -136,13 +135,13 @@
 
 // module.exports = { DBController , CONSTANTS }
 
-// // utils 
+// // utils
 
 // /**
-//  * 
-//  * @param {string} propertyKey 
-//  * @param {string|Buffer<ArrayBuffer>} propertyValue 
-//  * @param {string} message 
+//  *
+//  * @param {string} propertyKey
+//  * @param {string|Buffer<ArrayBuffer>} propertyValue
+//  * @param {string} message
 //  * @returns {{
 //  *  key:string;
 //  *  value:string|Buffer<ArrayBuffer>;
@@ -151,7 +150,7 @@
 //  */
 // function errorFactoryUtil (propertyKey , propertyValue , message) {
 //     return {
-//         key: propertyKey, 
+//         key: propertyKey,
 //         value: propertyValue,
 //         message ,
 //     }

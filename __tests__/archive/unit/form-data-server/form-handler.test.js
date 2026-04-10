@@ -1,13 +1,17 @@
 // __tests__/unit/form-data-server/form-handler.test.js
 
 const { IncomingMessage, ServerResponse } = require('node:http');
-const { FormHandler } = require('../../../app/services/form-data-server/form-parser.router.entry-point');
+const {
+    FormHandler,
+} = require('../../../app/services/form-data-server/form-parser.router.entry-point');
 const { sendFallBack } = require('../../../app/utils/error-factory');
-const { contentTypeHandlersRouter } = require('../../../app/services/form-data-server/controller/content-type.controller');
+const {
+    contentTypeHandlersRouter,
+} = require('../../../app/services/form-data-server/controller/content-type.controller');
 
 // Мокаем sendFallBack, чтобы не мешал тестам
 jest.mock('../../../app/utils/error-factory', () => ({
-    sendFallBack: jest.fn()
+    sendFallBack: jest.fn(),
 }));
 
 describe('🧪 FormHandler.processForm', () => {
@@ -20,22 +24,24 @@ describe('🧪 FormHandler.processForm', () => {
         // Создаём реальные req/res для тестов
         req = new IncomingMessage(null);
         res = new ServerResponse(req);
-        
+
         // Мокаем методы res
         res.writeHead = jest.fn().mockReturnThis();
         res.end = jest.fn().mockReturnThis();
-        
+
         // Сбрасываем мок sendFallBack перед каждым тестом
         sendFallBack.mockClear();
-        
+
         // Создаём мок контроллера, который будет возвращать handler
         mockHandlerController = {
-            handle: jest.fn()
+            handle: jest.fn(),
         };
-        
+
         // Создаём мок роутера
         mockRouter = {
-            getHandlerController: jest.fn().mockReturnValue(mockHandlerController)
+            getHandlerController: jest
+                .fn()
+                .mockReturnValue(mockHandlerController),
         };
     });
 
@@ -45,26 +51,33 @@ describe('🧪 FormHandler.processForm', () => {
     test('✅ должен успешно обработать запрос с валидным content-type', async () => {
         // Подготовка
         req.headers = {
-            'content-type': 'multipart/form-data; boundary=----WebKitFormBoundary'
+            'content-type':
+                'multipart/form-data; boundary=----WebKitFormBoundary',
         };
-        
+
         mockHandlerController.handle.mockResolvedValue({
             success: { data: 'test' },
-            error: null
+            error: null,
         });
-        
+
         // Действие
-        await FormHandler.processForm(req, res, { contentTypeHandlersRouter:mockRouter });
-        
+        await FormHandler.processForm(req, res, {
+            contentTypeHandlersRouter: mockRouter,
+        });
+
         // Проверки
-        expect(mockRouter.getHandlerController).toHaveBeenCalledWith('multipart/form-data');
+        expect(mockRouter.getHandlerController).toHaveBeenCalledWith(
+            'multipart/form-data'
+        );
         expect(mockHandlerController.handle).toHaveBeenCalled();
         expect(res.writeHead).toHaveBeenCalledWith(200, {
-            'content-type': 'application/json'
+            'content-type': 'application/json',
         });
-        expect(res.end).toHaveBeenCalledWith(JSON.stringify({
-            success: { data: 'test' }
-        }));
+        expect(res.end).toHaveBeenCalledWith(
+            JSON.stringify({
+                success: { data: 'test' },
+            })
+        );
     });
 
     // // ===========================================
@@ -73,10 +86,10 @@ describe('🧪 FormHandler.processForm', () => {
     // test('❌ должен вернуть 400, если нет content-type заголовка', async () => {
     //     // Подготовка
     //     req.headers = {}; // нет content-type
-        
+
     //     // Действие
     //     await FormHandler.processForm(req, res, { contentTypeHandlersRouter:mockRouter });
-        
+
     //     // Проверки
     //     expect(sendFallBack).toHaveBeenCalledWith(
     //         res, 400,
@@ -93,23 +106,27 @@ describe('🧪 FormHandler.processForm', () => {
     test('❌ должен обработать ошибку при неизвестном content-type', async () => {
         // Подготовка
         req.headers = {
-            'content-type': 'unknown/type'
+            'content-type': 'unknown/type',
         };
-        
+
         mockRouter.getHandlerController.mockImplementation(() => {
             throw new Error('no handler for <unknown/type> content-type');
         });
-        
+
         // Действие
-        await FormHandler.processForm(req, res, { contentTypeHandlersRouter:mockRouter });
-        
+        await FormHandler.processForm(req, res, {
+            contentTypeHandlersRouter: mockRouter,
+        });
+
         // Проверки
-        expect(mockRouter.getHandlerController).toHaveBeenCalledWith('unknown/type');
+        expect(mockRouter.getHandlerController).toHaveBeenCalledWith(
+            'unknown/type'
+        );
         expect(res.writeHead).toHaveBeenCalledWith(520, {
-            'content-type': 'application/json'
+            'content-type': 'application/json',
         });
         expect(res.end).toHaveBeenCalled();
-        
+
         // // Проверяем, что в ответе есть ошибка
         const responseBody = JSON.parse(res.end.mock.calls[0][0]);
         expect(responseBody).toHaveProperty('message', 'unknown error');
@@ -124,15 +141,15 @@ describe('🧪 FormHandler.processForm', () => {
     //     req.headers = {
     //         'content-type': 'multipart/form-data; boundary=----'
     //     };
-        
+
     //     mockHandlerController.handle.mockResolvedValue({
     //         success: null,
     //         error: { message: 'something went wrong' }
     //     });
-        
+
     //     // Действие
     //     await FormHandler.processForm(req, res, { contentTypeHandlersRouter:mockRouter });
-        
+
     //     // Проверки
     //     expect(res.end).toHaveBeenCalledWith(JSON.stringify({ foo: 'bar' }));
     // });
@@ -143,20 +160,22 @@ describe('🧪 FormHandler.processForm', () => {
     test('❌ должен вернуть 500, если success = null', async () => {
         // Подготовка
         req.headers = {
-            'content-type': 'multipart/form-data; boundary=----'
+            'content-type': 'multipart/form-data; boundary=----',
         };
-        
+
         mockHandlerController.handle.mockResolvedValue({
             success: null,
-            error: null
+            error: null,
         });
-        
+
         // Действие
-        await FormHandler.processForm(req, res, { contentTypeHandlersRouter:mockRouter });
-        
+        await FormHandler.processForm(req, res, {
+            contentTypeHandlersRouter: mockRouter,
+        });
+
         // Проверки
         expect(res.writeHead).toHaveBeenCalledWith(500, {
-            'content-type': 'application/json'
+            'content-type': 'application/json',
         });
         // expect(res.end).toHaveBeenCalledWith(JSON.stringify({ error: 'internal error' }));
     });

@@ -83,11 +83,7 @@ class Transaction {
 
     async processRegularField() {}
 
-    async processLinkedField() {
-
-        
-
-    }
+    async processLinkedField() {}
 
     #argumentsValidation(data) {
         if (!data.fileData || data.fileData instanceof Buffer === false) {

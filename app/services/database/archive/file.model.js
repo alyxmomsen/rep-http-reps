@@ -3,7 +3,7 @@
 // const { DEFAULT_VALUE , REQUIRED  ,VALUE_TYPE } = DB_CONTROLLER_CONSTANTS.PROPERTY_VALUE_CONFIG_KEYS ;
 
 // /* #warning
-//  * not using 
+//  * not using
 //  */
 // const contentTypes = {
 //     TEXT_PLAIN:'text/plain' ,
@@ -12,8 +12,8 @@
 // const fileControllerModels = new Map();
 
 // // нужно добавить дополнительные CRUD модели
-// // в текущей реализации отсутствуют: 
-// // READ_ONE, READ_TABLE, UPDATE_ONE, 
+// // в текущей реализации отсутствуют:
+// // READ_ONE, READ_TABLE, UPDATE_ONE,
 // // DELETE_ONE, DELETE_TABLE
 // /* использовать Map для хранения моделей. и фабрики*/
 

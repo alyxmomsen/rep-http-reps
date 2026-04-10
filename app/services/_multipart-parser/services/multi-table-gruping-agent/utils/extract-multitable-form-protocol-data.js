@@ -1,7 +1,7 @@
 /**
  * @description ожидает строку вида "058e.video-min.string"
  * и возвращает \<groupId\>\<tableName\>.\<columnName\>.\<dataType\>
- * @param {string} nameAttr 
+ * @param {string} nameAttr
  * @returns {{
  *  groupId:string;
  *  tableId:string;
@@ -10,13 +10,14 @@
  * }}
  */
 function multiTableProtocolParser(nameAttr) {
-
     // example
     // 058e.video-min.string
 
-    const match = nameAttr.match(/([\d\w]{2})([\d\w]{2})\.([^\.]+)\.([^$;\s]+)/);
+    const match = nameAttr.match(
+        /([\d\w]{2})([\d\w]{2})\.([^\.]+)\.([^$;\s]+)/
+    );
 
-    if(!match) {
+    if (!match) {
         throw new Error(`multitable protocol required but received anoter`);
     }
 
@@ -30,7 +31,7 @@ function multiTableProtocolParser(nameAttr) {
         tableId,
         columnName,
         dataType,
-    }
+    };
 }
 
-module.exports = { multiTableProtocolParser }
+module.exports = { multiTableProtocolParser };
