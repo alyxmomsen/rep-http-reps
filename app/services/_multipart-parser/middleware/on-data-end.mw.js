@@ -67,24 +67,39 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
         await postMapper.process(payload);
 
-        console.log('check that');
-        const filesResult = dataBase.readAll('files');
-        const usersResult = dataBase.readAll('users');
-        const videoPlaylistResult = dataBase.readAll('video-playlist');
+        // console.log('check that');
+        // const filesResult = dataBase.readAll('files');
+        // const usersResult = dataBase.readAll('users');
+        // const videoPlaylistResult = dataBase.readAll('video-playlist');
 
-        const filesDbObject = convertMapToObjectsArray(filesResult?.success?.tableRows || new Map());
-        const usersDbObject = convertMapToObjectsArray(usersResult?.success?.tableRows || new Map());
-        const videoDbObject = convertMapToObjectsArray(videoPlaylistResult?.success?.tableRows || new Map());
+        // const filesDbObject = convertMapToObjectsArray(filesResult?.success?.tableRows || new Map());
+        // const usersDbObject = convertMapToObjectsArray(usersResult?.success?.tableRows || new Map());
+        // const videoDbObject = convertMapToObjectsArray(videoPlaylistResult?.success?.tableRows || new Map());
 
-        console.dir({
-            filesDbObject, usersDbObject, 
-            videoDbObject,  filesResult, 
-            usersResult, videoPlaylistResult
-        }, {depth:10});
+        // console.dir({
+        //     filesDbObject, usersDbObject, 
+        //     videoDbObject,  filesResult, 
+        //     usersResult, videoPlaylistResult
+        // }, {depth:10});
+
+        const result = postMapper.getResult();
 
 
+        const clientResponsePull = {};
+
+        for (const [addr, { rowId, tableName }] of Object.entries(result)) {
+            const { success, error } = dataBase.readOne(tableName, rowId);
+
+            if(tableName === 'files') continue;
+
+            clientResponsePull[tableName] = {success , error} ;
+
+        }
+        
+        console.log('result from data base', {clientResponsePull});
+        
         // возвращаем "успех" и данные для репорта клиенту
-        return await next({ success: { addedData:[...videoDbObject, ...usersDbObject] } });
+        return await next({ success: { clientResponsePull } });
     };
 
     return fn;

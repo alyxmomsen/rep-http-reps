@@ -60,9 +60,9 @@ module.exports = {
  * @returns (payload:Object) => Promise<any>
  */
 function LinkActionFactory(deps = {}) {
-    const rollBackContainerFactory = deps.rollBackContainerFactory;
+    const containerFactory = deps.rollBackContainerFactory;
 
-    if (!rollBackContainerFactory) {
+    if (!containerFactory) {
         throw new Error();
     }
 
@@ -74,14 +74,19 @@ function LinkActionFactory(deps = {}) {
      * @returns
      */
     const LinkAction = async (payload) => {
-        const container = rollBackContainerFactory.create();
+
+        /**
+         * @description
+         * контейнер для обрабатываемго поля
+         */
+        const columnContainer = containerFactory.create();
 
         /**
          * 
          * @param {import('./transactions/transaction.model').PreCommitActionController} controller 
          * @param {*} deps 
          */
-        const columnContainerAction = (controller, deps) => {
+        const preCommitAction = (controller, deps) => {
             
             /**
              * @type {Map<string,StateRollBackContainer>}
@@ -151,13 +156,13 @@ function LinkActionFactory(deps = {}) {
 
         }
         
-        container.setAction('main', columnContainerAction);
+        columnContainer.setAction('main', preCommitAction);
     
         // transaction.setRollBack('main', () => {
         //     // console.log('link main rollback');
         // });
     
-        return container;
+        return columnContainer;
     };
 
     return LinkAction;
@@ -177,8 +182,8 @@ function FileActionFactory(deps = {}) {
     }
 
     const FileAction = async (payload) => {
-        // console.log(`File action`, { payload });
-        const transaction = rollBackContainerFactory.create();
+        
+        const columnContainer = rollBackContainerFactory.create();
 
         /**
          *
@@ -209,9 +214,9 @@ function FileActionFactory(deps = {}) {
             });
         };
 
-        transaction.setAction('main', preCommitAction);
+        columnContainer.setAction('main', preCommitAction);
 
-        return transaction;
+        return columnContainer;
     };
 
     return FileAction;

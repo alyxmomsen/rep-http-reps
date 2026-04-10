@@ -307,13 +307,17 @@ describe('premapping', () => {
 
         const postMapperDataSet = context;
 
-        console.dir(context, { depth: 20 });
-        console.log(`process executing: start`);
+        // console.dir(context, { depth: 20 });
+        // console.log(`process executing: start`);
         await postMapper.process(postMapperDataSet);
-        console.log(`process executing: end`);
+        // console.log(`process executing: end`);
+
+        const result = postMapper.getResult();
         
-        console.dir(dataBase.readAll('users'), {depth:20});
-        console.dir(dataBase.readAll('files'), {depth:20});
+        console.dir(result, {depth:10});
+
+        // console.dir(dataBase.readAll('users'), {depth:20});
+        // console.dir(dataBase.readAll('files'), {depth:20});
 
         // expect(mockCreate).toHaveBeenCalled();
         expect(mockSetRollBack).not.toHaveBeenCalled();

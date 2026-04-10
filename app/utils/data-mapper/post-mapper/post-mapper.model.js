@@ -12,16 +12,19 @@ class PostMapper {
     
     async process(data) {
 
-        const pendedContainers = [];
-        let i = 0;
+        const pendedContainersBuffer = [];
+
+        let i = 0; // dev variable
+
         for (const [tableName, groups] of Object.entries(data)) {
             for (const [groupId, groupColumns] of Object.entries(groups)) {
 
-                const rowContainer = await this.#handleRow(groupColumns,tableName);
+                const rowContainer = await this.#handleRow(groupColumns, tableName);
                 const groupContainerAddress = `${tableName}/${groupId}`;
-                this.#groupContainers.set(groupContainerAddress, rowContainer);
 
-                await rowContainer.preCommit(this.#groupContainers);
+                this.#globalContainersPull.set(groupContainerAddress, rowContainer);
+
+                await rowContainer.preCommit(this.#globalContainersPull);
                 
                 const state = rowContainer.getState();
                 const data = rowContainer.getData();
@@ -32,9 +35,9 @@ class PostMapper {
                      * 
                      * устанавливаем executor для еще одной попытки
                      */
-                    pendedContainers.push(async () => {
+                    pendedContainersBuffer.push(async () => {
                         const container = rowContainer;
-                        await container.preCommit(this.#groupContainers);
+                        await container.preCommit(this.#globalContainersPull);
                         console.log('one more try: ', {
                             value:container.getState().value , 
                             message:container.getState().message,
@@ -55,7 +58,7 @@ class PostMapper {
             }
         }
 
-        for (const executor of pendedContainers) {
+        for (const executor of pendedContainersBuffer) {
             await executor();
         }
     }
@@ -68,158 +71,78 @@ class PostMapper {
      * @returns 
      */
     async #handleRow(groupColumns, tableName) {
-        // const container = new StateRollBackContainer();
-        const container = this.#stateRollBackFactory.create();
+        
+        /**
+         * @description
+         * represent the row and provide util interface
+         */
+        const currentRowContainer = this.#stateRollBackContainerFactory.create();
 
         /**
+         * @description
+         * для каждой DB колонки создается отдельный контейнер
+         * и пушится в этот буффер
          * @type {Map<string,StateRollBackContainer>}
          */
-        const rowContainers = new Map();
+        const rowContainersBuffer = new Map();
 
         for (const [
-            colName,
-            { action: actionName, payload: actionPayload },
+            columnName,
+            { action: columnActionName, payload: columnActionPayload },
         ] of Object.entries(groupColumns)) {
-            const ColumnAction = this.#actions.get(actionName);
-            if (!ColumnAction) {
+            const ColumnPayloadlAction = this.#actions.get(columnActionName);
+            if (!ColumnPayloadlAction) {
                 throw new Error(
-                    `PostMapper::process/action: incorrect action key`
+                    `PostMapper::process/action: action not received`
                 );
             }
 
             /**
              * @type {StateRollBackContainer}
              */
-            const columnContainer = await ColumnAction(actionPayload);
+            const currentRowColumnContainer = await ColumnPayloadlAction(columnActionPayload);
 
-            rowContainers.set(colName, columnContainer);
+            rowContainersBuffer.set(columnName, currentRowColumnContainer);
         }
 
-        container.setAction('main', async (controller) => {
+        /**
+         * у контейнеров есть метод preCommit
+         * который вызывает его Экшны, а те, в свою очередь, дочерние экшны
+         */
+        currentRowContainer.setAction('main', rowContainerActionFactory({
+            groupContainers:this.#globalContainersPull,
+            rowContainers:rowContainersBuffer,
+            tableName:tableName,
+        }));
 
-            const dataBaseDataSet = {}
+        return currentRowContainer;
+    }
 
-            let isDone = true;
-            for (const [colContainerName, colContainer] of rowContainers.entries()) {
-                await colContainer.preCommit(this.#groupContainers);
+    getResult () {
 
-                /**
-                 * 
-                 */
+        const dataPull = {};
 
-                /**
-                 * @type {import('./transactions/transaction.model').ContainerState}
-                 */
-                const colContainerState = colContainer.getState();
+        for (const [ address, container] of this.#globalContainersPull) {
+            dataPull[address] = container.getData();
+        }
 
-                /**
-                 * 
-                */
-                const colContainerData = colContainer.getData();
-                dataBaseDataSet[colContainerName] = colContainerData;
-               
-                // console.log('PostMapper::handleRow/setAction/column state: ', {colContainerName,colContainerState, colContainerData});
-                /**
-                 * если хотя бы одна колонка реджекнутая, то 
-                 * весь data-set идет в брак
-                 * вы
-                 */
-                if (colContainerState.value === 'rejected') {
-                    isDone = false;
-                    controller.setState('rejected', "some one column is rejected");
-                    return;
-                }
-
-                /**
-                 * если хотя бы одно поле "pending", 
-                 * то весь data-set идет в пендинг
-                 * как это делается: 
-                 * устанавливается флаг `isDone = false`
-                 */
-                if (colContainerState.value === 'pending') {
-                    console.log('colContainerState.message',colContainerState.message);
-                    isDone = false;
-                }
-
-                
-                console.log('column pre-commit state: ', { colName: colContainerName, st: colContainerState });
-            }
-
-            /**
-             * если мы дошли до этого места и флаг установлен как `false`,
-             * это значит небыло `rejected`
-             * но были `pending`
-             */
-            if (isDone === false) {
-                controller.setState('pending', "someone pending");
-                return;
-            }
-
-            /**
-             * 
-             * сохраняем данные в базе данных
-             * 
-             */
-            // --------------------------------------
-            /**
-             * @type {DBAdapter|undefined}
-             */
-            const dbAdapter = dbControllersRouter.get(tableName);
-            
-            if(!dbAdapter) {
-                controller.setState("rejected", "db name error");
-                controller.setData(null);
-                throw new Error();
-                return;
-            }
-            
-            // пробуем сохраниться
-            const dbAdapterResult = dbAdapter.createOne(dataBaseDataSet);
-            // console.log({dbAdapterResult});
-            // throw new Error();
-            
-            if(dbAdapterResult.error) {
-                /*  */
-                controller.setState("rejected", "db storring failed");
-                controller.setData(null);
-                throw new Error();
-                return;
-            }
-            
-            if(!dbAdapterResult.success) {
-                /* системная ошибка,- по каой-то причине не поля "success"*/
-                controller.setState("rejected", "internal db error");
-                controller.setData(null);
-                throw new Error();
-                return;
-            }
-
-            // --------------------------------------
-            // успешно
-            //---------------------------------------
-            console.log('database data-set', {dataBaseDataSet});
-            controller.setState('done', 'data was stored in the DB');
-            controller.setData({rowId:dbAdapterResult.success.newRowIdHash,tableName:tableName});
-
-        });
-
-        return container;
+        return dataPull;
     }
 
     /**
      * @type {Map<string,StateRollBackContainer>}
      */
-    #groupContainers;
+    #globalContainersPull;
 
     /**
-     * @type {Map<string,() => any>}
+     * @type {Map<string,() => Promise<StateRollBackContainer>>}
      */
     #actions;
 
     /**
      * @type {StateRollBackContainerFactory}
      */
-    #stateRollBackFactory;
+    #stateRollBackContainerFactory;
     /**
      *
      * @param {Object} deps
@@ -234,7 +157,6 @@ class PostMapper {
         const dataAction = deps.dataAction;
 
         if (!fileAction) {
-            // console.log({fileAction});
             throw new Error('File-Action required');
         }
         if (!linkAction) {
@@ -244,11 +166,11 @@ class PostMapper {
             throw new Error('Data-Action required');
         }
 
-        console.log('PostMapper::constructor: check actions: ', {
-            fileAction,
-            linkAction,
-            dataAction,
-        });
+        // console.log('PostMapper::constructor: check actions: ', {
+        //     fileAction,
+        //     linkAction,
+        //     dataAction,
+        // });
 
         this.#actions = new Map();
 
@@ -267,12 +189,161 @@ class PostMapper {
             );
         }
 
-        this.#stateRollBackFactory = stateRollBackContainerFactory;
+        this.#stateRollBackContainerFactory = stateRollBackContainerFactory;
 
         // ------------
 
-        this.#groupContainers = new Map();
+        this.#globalContainersPull = new Map();
     }
 }
 
 module.exports = { PostMapper };
+
+
+/**
+ * @example
+ * 
+ * will be
+ * 
+ * @param {Object} deps 
+ * @param {Map<string,StateRollBackContainer>} deps.groupContainers - global containers 
+ * @param {Map<string,StateRollBackContainer>} deps.rowContainers - represent db-columns containers
+ * @param {string} deps.tableName 
+ * @returns {(controller:import('./transactions/transaction.model').PreCommitActionController) => Promise<any>}
+ */
+function rowContainerActionFactory (deps={}) {
+
+    const groupContainers = deps.groupContainers;
+    const rowContainers = deps.rowContainers;
+    const tableName = deps.tableName;
+    
+    /**
+     * 
+     * @param {import('./transactions/transaction.model').PreCommitActionController} parentContainerController 
+     * @returns 
+     */
+    const RowContainerAction = async (parentContainerController) => {
+
+        /**
+         * @type {Object.<string,any>}
+         * @description
+         * buffer для накопления подготовленных данных перед отправкой в DataBase
+         */
+        const dataBaseDataSetBuffer = {}
+
+        /**
+         * 
+         */
+        let isDoneFlag = true;
+
+        /**
+         * 
+         */
+        for (const [columnContainerName, columnContainer] of rowContainers.entries()) {
+
+            await columnContainer.preCommit(groupContainers);
+
+            /**
+             * @type {import('./transactions/transaction.model').ContainerState}
+             */
+            const colContainerState = columnContainer.getState();
+
+            /**
+             * 
+            */
+            const colContainerData = columnContainer.getData();
+
+
+            dataBaseDataSetBuffer[columnContainerName] = colContainerData;
+            
+            // console.log('PostMapper::handleRow/setAction/column state: ', {colContainerName,colContainerState, colContainerData});
+            /**
+             * если хотя бы одна колонка реджекнутая, то 
+             * весь data-set идет в брак
+             */
+            if (colContainerState.value === 'rejected') {
+                isDoneFlag = false;
+                parentContainerController.setState('rejected', "some one column is rejected");
+                return;
+            }
+
+            /**
+             * если хотя бы одно поле "pending", 
+             * то весь data-set идет в пендинг
+             * как это делается: 
+             * устанавливается флаг `isDone = false`
+             */
+            if (colContainerState.value === 'pending') {
+                console.log('colContainerState.message',colContainerState.message);
+                isDoneFlag = false;
+            }
+
+            
+            console.log('column pre-commit state: ', { colName: columnContainerName, st: colContainerState });
+        }
+
+        /**
+         * @description
+         * если мы дошли до этого места и флаг `isDoneFlag` установлен как `false`,
+         * это значит `rejected` небыло,
+         * но были `pending`
+         */
+        if (isDoneFlag === false) {
+            parentContainerController.setState('pending', "someone pending");
+            return;
+        }
+
+        /**
+         * 
+         * сохраняем данные в базе данных
+         * 
+         */
+        // --------------------------------------
+        /**
+         * @type {DBAdapter|undefined}
+         */
+        const dbAdapter = dbControllersRouter.get(tableName);
+        
+        if(!dbAdapter) {
+            parentContainerController.setState("rejected", "db name error");
+            parentContainerController.setData(null);
+            throw new Error();
+            return;
+        }
+        
+        // пробуем сохраниться
+        const dbAdapterResult = dbAdapter.createOne(dataBaseDataSetBuffer);
+        // console.log({dbAdapterResult});
+        // throw new Error();
+        
+        if(dbAdapterResult.error) {
+            /*  */
+            parentContainerController.setState("rejected", "db storring failed");
+            parentContainerController.setData(null);
+            throw new Error();
+            return;
+        }
+        
+        if(!dbAdapterResult.success) {
+            /* системная ошибка,- по каой-то причине не поля "success"*/
+            parentContainerController.setState("rejected", "internal db error");
+            parentContainerController.setData(null);
+            throw new Error();
+            return;
+        }
+
+        // --------------------------------------
+        // успешно
+        console.log('database data-set', {dataBaseDataSet: dataBaseDataSetBuffer});
+        //---------------------------------------
+
+        parentContainerController.setState('done', 'data was stored in the DB');
+        parentContainerController.setData({
+            rowId:dbAdapterResult.success.newRowIdHash,
+            tableName:tableName,
+        });
+    }
+
+    return RowContainerAction;
+
+}

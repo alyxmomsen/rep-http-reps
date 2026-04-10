@@ -42,6 +42,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const mainFormCloseButton = document.getElementById(
         'form--main--close-button'
     );
+
     const showFormButton = document.getElementById(
         'controls--video__show-form'
     );
@@ -251,21 +252,28 @@ function submitFinalHandlerMiddleware(deps = {}) {
 
         formModalWindow.style.display = 'none';
 
-        dbStoredData.forEach((storedDataItem) => {
+
+        for (const storedDataItem of dbStoredData) {
+
             const toolTipCreator = toolTipCreatorRouter.get(
                 storedDataItem.tableName
             );
+            
             console.log({
                 toolTipCreator,
                 tablename: storedDataItem.tableName,
             });
+
             tooltipsFrame.appendChild(
                 toolTipCreator(storedDataItem.row, {
                     modalWindow: tooltipsFrame,
                     videoMainElement: videoMainElement,
                 })
             );
-        });
+        }
+
+        // dbStoredData.forEach((storedDataItem) => {
+        // });
         // playlistModalWindow.style.display = 'none';
 
         console.log({ success });
