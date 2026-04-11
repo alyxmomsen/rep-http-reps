@@ -71,30 +71,29 @@ router.post('/api/handle-form', (req, res) =>
     FormHandler.processForm(req, res, { contentTypeHandlersRouter })
 );
 
-createRoute('/api/get-playlist/:type', (req, res) => {
+createRoute('/api/get-playlist/:type', async (req, res) => {
     const dbAdapter = dbControllersRouter.get('video-playlist');
 
     try {
         const { error, success } = dbAdapter.readAllRows();
 
         if (error) {
-            res.writeHead(400, {
+            // Не возвращаем ошибку, если таблица пуста — возвращаем пустой массив
+            console.log('Playlist read error (possibly empty):', error);
+            res.writeHead(200, {
                 'content-type': 'application/json',
             });
             res.end(
                 JSON.stringify({
-                    message: 'bad request',
-                    error: error,
+                    success: {
+                        rows: {},
+                    },
                 })
             );
             return;
         }
 
-        const validatedData = success.validatedData;
-
-        // for (const [key, value] of Object.entries(validatedData)) {
-        //     console.log({key, value});
-        // }
+        const validatedData = success?.validatedData || {};
 
         res.end(
             JSON.stringify({
@@ -103,9 +102,18 @@ createRoute('/api/get-playlist/:type', (req, res) => {
                 },
             })
         );
-    } catch (er) {
+    } catch (err) {
         console.log('get playlist end-point: error: ', { err });
-        res.end(JSON.stringify({ holly: 'shit' }));
+        res.writeHead(200, {
+            'content-type': 'application/json',
+        });
+        res.end(
+            JSON.stringify({
+                success: {
+                    rows: {},
+                },
+            })
+        );
     }
 });
 

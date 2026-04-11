@@ -18,6 +18,54 @@ let playlistData = [];
 /* globals */
 /* ============ */
 
+async function refreshPlaylist(videoMainElement) {
+    console.log('refreshPlaylist: updating playlist...');
+    
+    const playlistContainer = document.getElementById('playlist--video');
+    if (!playlistContainer) {
+        console.error('playlist container not found');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/get-playlist/video`, {
+            method: 'GET',
+        });
+        
+        const jsonData = await response.json();
+        console.log({ refreshData: jsonData });
+        
+        if (jsonData.success && jsonData.success.rows) {
+            // Очищаем контейнер
+            playlistContainer.innerHTML = '';
+            
+            const rows = jsonData.success.rows;
+            for (const [rowId, rowData] of Object.entries(rows)) {
+                const { title, description, video } = rowData;
+                const videoRowId = video?.rowId;
+                
+                if (videoRowId) {
+                    // Используем ту же функцию newProp, что и в servePlaylistMiddleware
+                    const playlistItem = newProp(title, description, () => {
+                        if (videoMainElement) {
+                            videoMainElement.src = `/api/get-file/${videoRowId}`;
+                            videoMainElement.load();
+                        }
+                    });
+                    playlistContainer.appendChild(playlistItem);
+                }
+            }
+            console.log('refreshPlaylist: playlist updated, items count:', Object.keys(rows).length);
+        } else {
+            console.warn('refreshPlaylist: no success.rows in response', jsonData);
+        }
+    } catch (error) {
+        console.error('refreshPlaylist error:', error);
+    }
+}
+
+
+
 /**
  * @type {Map<string,(row:Object, context:{modalWindow:HTMLElement}) => HTMLElement>}
  */
@@ -219,11 +267,6 @@ function submitFinalHandlerMiddleware(deps = {}) {
         throw new Error(`tableNameResolver required but not provided`);
     }
 
-    /**
-     *
-     * @param {{success:{addedData:Array<any>}, error:Object}} payload
-     * @returns
-     */
     const handler = async (payload, next) => {
         const { success, error } = payload;
 
@@ -234,49 +277,62 @@ function submitFinalHandlerMiddleware(deps = {}) {
         }
 
         if (!success) {
-            alert('error: no success');
+            alert('error: no success from server');
             return;
         }
 
-        const { addedData: dbStoredData } = success;
+        const clientResponsePull = success.clientResponsePull;
 
-        if (!dbStoredData) {
-            alert('no added data');
+        if (!clientResponsePull) {
+            alert('no data from server');
             return;
         }
 
-        console.log({ dbStoredData });
+        console.log({ clientResponsePull });
 
-        tooltipsFrame.style.right = 0;
+        // Показываем панель с тултипами
+        tooltipsFrame.style.right = '0';
         tooltipsFrame.style.display = 'flex';
-
         formModalWindow.style.display = 'none';
 
-        for (const storedDataItem of dbStoredData) {
-            const toolTipCreator = toolTipCreatorRouter.get(
-                storedDataItem.tableName
-            );
+        // Очищаем старые тултипы (опционально)
+        // while (tooltipsFrame.firstChild) {
+        //     tooltipsFrame.removeChild(tooltipsFrame.firstChild);
+        // }
 
-            console.log({
-                toolTipCreator,
-                tablename: storedDataItem.tableName,
-            });
-
-            tooltipsFrame.appendChild(
-                toolTipCreator(storedDataItem.row, {
-                    modalWindow: tooltipsFrame,
-                    videoMainElement: videoMainElement,
-                })
-            );
+        // Создаём тултипы для каждой таблицы
+        for (const [tableName, tableData] of Object.entries(clientResponsePull)) {
+            if (tableName === 'files') continue;
+            
+            const toolTipCreator = toolTipCreatorRouter.get(tableName);
+            
+            if (toolTipCreator && tableData.success && tableData.success.rowById) {
+                let rowData = tableData.success.rowById;
+                if (rowData instanceof Map) {
+                    const obj = {};
+                    for (const [k, v] of rowData.entries()) {
+                        obj[k] = v;
+                    }
+                    rowData = obj;
+                }
+                
+                console.log('Creating tooltip for:', tableName, rowData);
+                
+                tooltipsFrame.appendChild(
+                    toolTipCreator(rowData, {
+                        modalWindow: tooltipsFrame,
+                        videoMainElement: videoMainElement,
+                    })
+                );
+            }
         }
 
-        // dbStoredData.forEach((storedDataItem) => {
-        // });
-        // playlistModalWindow.style.display = 'none';
+        // ОБНОВЛЯЕМ ПЛЕЙЛИСТ после успешной отправки
+        await refreshPlaylist(videoMainElement);
 
-        console.log({ success });
-
-        next({ hello: 'Dawg' });
+        if (next) {
+            await next({});
+        }
     };
 
     return handler;
@@ -432,17 +488,33 @@ function createPOSTLink(title, cb) {
  * @returns
  */
 const videotooltipCreator = (row = {}, context = {}) => {
-    /* 👇🏽 dependencies 👇🏽 */
-
-    /**
-     * @type {HTMLElement}
-     */
+    // ДИАГНОСТИКА — УДАЛИ ПОТОМ
+    console.log('=== videotooltipCreator DEBUG ===');
+    console.log('row type:', typeof row);
+    console.log('row keys:', Object.keys(row));
+    console.log('full row:', JSON.stringify(row, null, 2));
+    if (row instanceof Map) {
+        console.log('row is Map, entries:');
+        for (const [k, v] of row.entries()) {
+            console.log(`  ${k}:`, v);
+        }
+    }
+    // ======================================
     const modalWindow = context.modalWindow;
     const videoMainElement = context.videoMainElement;
 
-    /* 👆🏽 dependencies 👆🏽 */
+    // Извлекаем значения с учётом структуры { data: "значение" }
+    let title = row.title;
+    let description = row.description;
+    let video = row.video;
 
-    const { title, description, video } = row;
+    // Если значения обёрнуты в объекты с полем data — разворачиваем
+    if (title && typeof title === 'object' && 'data' in title) {
+        title = title.data;
+    }
+    if (description && typeof description === 'object' && 'data' in description) {
+        description = description.data;
+    }
 
     const mainContainer = document.createElement('div');
     mainContainer.className = 'tool-tip--added-data-response';
@@ -455,17 +527,17 @@ const videotooltipCreator = (row = {}, context = {}) => {
 
     mainContainer.appendChild(caption);
 
-    const titleProp = newProp('title: ', title, () => {});
+    const titleProp = newProp('title: ', title || 'untitled', () => {});
     mainContainer.appendChild(titleProp);
-    const descrProp = newProp('description: ', description);
+    const descrProp = newProp('description: ', description || 'no description');
     mainContainer.appendChild(descrProp);
+    
     const link = createPOSTLink('play', (innerContext) => {
-        const { baseElement } = innerContext;
-
-        const { rowId } = video;
-
-        videoMainElement.src = `/api/get-file/${rowId}`;
-        videoMainElement.load();
+        const videoRowId = video?.rowId;
+        if (videoRowId) {
+            videoMainElement.src = `/api/get-file/${videoRowId}`;
+            videoMainElement.load();
+        }
 
         mainContainer.remove();
         if (!modalWindow.childElementCount) {
@@ -474,7 +546,6 @@ const videotooltipCreator = (row = {}, context = {}) => {
         }
     });
     mainContainer.appendChild(link);
-
     mainContainer.appendChild(closebutton);
 
     closebutton.onclick = (e) => {
@@ -484,8 +555,6 @@ const videotooltipCreator = (row = {}, context = {}) => {
             modalWindow.style.display = 'none';
         }
     };
-
-    // mainContainer.onclick = (e) => onclick(e, { baseElement:mainContainer});
 
     return mainContainer;
 };
@@ -613,4 +682,73 @@ function init(deps = {}) {
     const fn = () => {};
 
     return fn;
+}
+
+
+async function refreshPlaylist(videoMainElement) {
+    console.log('refreshPlaylist: updating playlist...');
+    
+    const playlistContainer = document.getElementById('playlist--video');
+    if (!playlistContainer) {
+        console.error('playlist container not found');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/get-playlist/video`, {
+            method: 'GET',
+        });
+        
+        const jsonData = await response.json();
+        console.log({ refreshData: jsonData });
+        
+        if (jsonData.success && jsonData.success.rows) {
+            // Очищаем контейнер
+            playlistContainer.innerHTML = '';
+            
+            const rows = jsonData.success.rows;
+            for (const [rowId, rowData] of Object.entries(rows)) {
+                const { title, description, video } = rowData;
+                const videoRowId = video?.rowId;
+                
+                if (videoRowId) {
+                    const playlistItem = document.createElement('div');
+                    playlistItem.innerHTML = `
+                        <span><strong>${escapeHtml(title || 'untitled')}</strong></span>
+                        <span>${escapeHtml(description || '')}</span>
+                    `;
+                    playlistItem.style.cursor = 'pointer';
+                    playlistItem.style.padding = '8px';
+                    playlistItem.style.border = '1px solid #ccc';
+                    playlistItem.style.margin = '4px';
+                    playlistItem.style.borderRadius = '4px';
+                    
+                    playlistItem.onclick = () => {
+                        if (videoMainElement) {
+                            videoMainElement.src = `/api/get-file/${videoRowId}`;
+                            videoMainElement.load();
+                        }
+                    };
+                    
+                    playlistContainer.appendChild(playlistItem);
+                }
+            }
+            console.log('refreshPlaylist: playlist updated');
+        } else {
+            console.warn('refreshPlaylist: no success.rows in response', jsonData);
+        }
+    } catch (error) {
+        console.error('refreshPlaylist error:', error);
+    }
+}
+
+// Вспомогательная функция для защиты от XSS
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
