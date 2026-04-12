@@ -362,6 +362,7 @@ function FormDataRequestFinalHandler(deps = {}) {
         deps.playlistHTMLElement;
     };
 
+    let s;
     return fn;
 }
 
