@@ -5,28 +5,42 @@ document.addEventListener('DOMContentLoaded', () => {
         foo: 'bar',
     };
 
+    // =============================================
+
+    const Create = {
+        ToolTip: CreateToolTip,
+    };
+
+    // ============== REGISTRATE MIDDLEWARE (BEGIN) ==============
+
     const Middleware = {
-        DisplayStatus:DisplayStatusMW,
-        ConverResponseToJSON:ConvertResponseToJSONMiddleware,
-        FormClose:FormCloseMiddleware,
-        FormOpen:FormOpenMiddleware,
-    }
+        DisplayStatus: DisplayStatusMW,
+        ConverResponseToJSON: ConvertResponseToJSONMiddleware,
+        FormClose: FormCloseMiddleware,
+        FormOpen: FormOpenMiddleware,
+        DisplayToolTipsContainer: DisplayTooltipsContainerMW,
+        DisplayPlaylist: DisplayPlaylistMiddleWare,
+    };
+
+    // ============== REGISTRATE MIDDLEWARE (END) ==============
 
     const DOMElements = {
         /**
          * @type {HTMLButtonElement}
          */
-        openFormButton: grapDOMElement('controls--video__show-form'),
+        OpenFormButton: grabDOMElement('controls--video__show-form'),
         /**
          * @type {HTMLButtonElement}
          */
-        formModalWindow: grapDOMElement('modal-window--a'),
+        FormModalWindow: grabDOMElement('modal-window--a'),
         /**
          * @type {}
          */
-        formCloseButton: grapDOMElement('form--main--close-button'),
-        statusDisplay: grapDOMElement('status--upload'),
-        mainForm: grapDOMElement('form--main'),
+        FormCloseButton: grabDOMElement('form--main--close-button'),
+        StatusDisplay: grabDOMElement('status--upload'),
+        MainForm: grabDOMElement('form--main'),
+        ToolTipsContainer: grabDOMElement('modal-window--b'),
+        PlayList: grabDOMElement(`playlist--video`),
     };
 
     // ============= set middleware chains ==========
@@ -44,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ModalWindowControllers = {
         FormModalWindow: new ModalWindowController({
-            containerElement: DOMElements.formModalWindow,
+            containerElement: DOMElements.FormModalWindow,
         }),
     };
 
@@ -56,15 +70,23 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     );
 
-    DOMElements.openFormButton.addEventListener('click', async (ev) => {
+    DOMElements.OpenFormButton.addEventListener('click', async (ev) => {
         new MiddlewareChain(
             Middleware.FormOpen({
                 modalWindowController: ModalWindowControllers.FormModalWindow,
+            }),
+            Middleware.DisplayToolTipsContainer({
+                // flicker: {},
+                toolTipContainerHTMLElement: DOMElements.ToolTipsContainer,
             }),
             async (ctx) => {
                 console.log('final mw');
             }
         ).execute();
+
+        Create.ToolTip({
+            targetContainer: DOMElements.ToolTipsContainer,
+        })('u just opened the form');
     });
 
     // ------------ form close chain --------------
@@ -72,16 +94,23 @@ document.addEventListener('DOMContentLoaded', () => {
     MiddlewareChains.closeForm.addMiddleware(
         Middleware.FormClose({
             modalWindowController: ModalWindowControllers.FormModalWindow,
+        }),
+        Middleware.DisplayToolTipsContainer({
+            // flicker: {},
+            toolTipContainerHTMLElement: DOMElements.ToolTipsContainer,
         })
     );
 
-    DOMElements.formCloseButton.addEventListener('click', async () => {
+    DOMElements.FormCloseButton.addEventListener('click', async () => {
         await MiddlewareChains.closeForm.execute();
+        Create.ToolTip({
+            targetContainer: DOMElements.ToolTipsContainer,
+        })('u just closed the form');
     });
 
     // ------------- form processing -------------
 
-    // ===============================================
+    // ============== REGISTRATE REQUEST MANAGERS (BEGIN) ==============
 
     const RequestManagers = {
         Form: new RequestManager(
@@ -90,37 +119,50 @@ document.addEventListener('DOMContentLoaded', () => {
             FormDataRequestFinalHandler({
                 onSuccessMiddleware: new MiddlewareChain(
                     (ctx, next) => {
-                        DOMElements.statusDisplay.innerText = 'fucka'
+                        console.log('firs mw', { ctx });
+                        DOMElements.StatusDisplay.innerText = 'done';
                         next();
                     },
                     Middleware.FormClose({
-                        modalWindowController:ModalWindowControllers.FormModalWindow,
-                    }), (ctx) => {console.log('done')}
+                        modalWindowController:
+                            ModalWindowControllers.FormModalWindow,
+                    }),
+                    Middleware.DisplayPlaylist({
+                        playlistModalWindow: DOMElements.PlayList,
+                    }),
+                    (ctx) => {
+                        /** final mw */
+                        Create.ToolTip({
+                            targetContainer: DOMElements.ToolTipsContainer,
+                        })('SUCCESS');
+                        console.log('done', { ctx });
+                    }
                 ),
                 onFailMiddleware: new MiddlewareChain(
                     Middleware.DisplayStatus({
-                        errorDisplayElement: DOMElements.statusDisplay,
+                        errorDisplayElement: DOMElements.StatusDisplay,
                     }),
                     (ctx) => console.log('final')
                 ),
             }),
             (ctx) => {
                 console.log(`before request final handler`);
-            },
+            }
         ),
     };
 
-    // ===============================================
+    // ============== REGISTRATE REQUEST MANAGERS (END) ==============
 
     // add middleware
     RequestManagers.Form.addMiddleware(Middleware.ConverResponseToJSON());
     RequestManagers.Form.beforeRequest((ctx, next) => {
+        DOMElements.StatusDisplay.innerText = 'data send process...';
         next();
     });
 
-    DOMElements.mainForm.addEventListener('submit', async (e) => {
+    DOMElements.MainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(DOMElements.mainForm);
+        const formData = new FormData(DOMElements.MainForm);
         await RequestManagers.Form.execute(formData);
     });
 });
@@ -143,18 +185,18 @@ class MiddlewareChain {
     async execute(ctx) {
         let index = 0;
 
-        const next = async (nextCtx) => {
+        const next = async () => {
             if (index < this.#middleware.length) {
                 const currentIndex = index++;
 
                 const handler = this.#middleware[currentIndex];
 
                 if (handler) {
-                    await handler(nextCtx, next);
+                    await handler(ctx, next);
                 }
             } else {
                 if (this.#finalHandler) {
-                    await this.#finalHandler(nextCtx);
+                    await this.#finalHandler(ctx);
                 }
             }
         };
@@ -236,6 +278,7 @@ function FormCloseMiddleware(deps = {}) {
      * @type {(ctx, next) => Promise<any>}
      */
     const fn = async (ctx, next) => {
+        console.log('second mw', { ctx });
         modalWindowController.close();
         await next();
     };
@@ -279,10 +322,10 @@ function FormDataRequestFinalHandler(deps = {}) {
         console.log({ jsonResponse });
 
         if (!jsonResponse) {
-            await onFailMiddleware.execute();
+            await onFailMiddleware.execute(ctx);
         }
 
-        await onSuccessMiddleware.execute();
+        await onSuccessMiddleware.execute(ctx);
     };
 
     return fn;
@@ -424,10 +467,165 @@ class DisplayStatusController extends ModalWindowController {
  * @param {string} id
  * @returns {HTMLElement}
  */
-function grapDOMElement(id) {
+function grabDOMElement(id) {
     const elem = document.getElementById(id);
     if (!elem) throw new Error(`grapDOMElement: fail`);
     return elem;
 }
 
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLDivElement} deps.targetContainer
+ * @returns
+ */
+function CreateToolTip(deps = {}) {
+    if (!deps.targetContainer) {
+        throw new Error(`CreateToolTip: targetContainer required`);
+    }
 
+    let timeout = Infinity;
+
+    /**
+     *
+     * @param {string} text
+     */
+    const fn = (text) => {
+        const div = document.createElement('div');
+
+        div.className = 'tool-tip--added-data-response';
+
+        div.innerText = text;
+
+        timeout = setTimeout(() => {
+            div.remove();
+        }, 3000);
+
+        div.addEventListener('mouseover', () => {
+            console.log('over');
+            if (timeout !== Infinity) {
+                clearTimeout(timeout);
+            }
+        });
+
+        div.addEventListener('mouseleave', () => {
+            console.log('over');
+            if (timeout !== Infinity) {
+                clearTimeout(timeout);
+            }
+
+            timeout = setTimeout(() => div.remove(), 3000);
+        });
+
+        deps.targetContainer.appendChild(div);
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLElement} deps.toolTipContainerHTMLElement
+ * @returns
+ */
+function DisplayTooltipsContainerMW(deps = {}) {
+    if (!deps.toolTipContainerHTMLElement) {
+        throw new Error(
+            `DisplayTooltipsContainerMW: toolTipContainerHTMLElement required`
+        );
+    }
+
+    // const flicker = deps.flicker;
+
+    // if (!flicker) {
+    //     throw new Error(
+    //         `DisplayTooltipsContainer: ModalWindowController required`
+    //     );
+    // }
+
+    const fn = (ctx, next) => {
+        deps.toolTipContainerHTMLElement.style = 'display:flex;right:0';
+        next();
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLDivElement} deps.playlistModalWindow
+ * @returns {(ctx:Object,next:() => Promise<any>) => Promise<any>}
+ */
+function DisplayPlaylistMiddleWare(deps = {}) {
+    if (!deps.playlistModalWindow) {
+        throw new Error(
+            `DisplayPlaylistMiddleWare: playlistModalWindow required`
+        );
+    }
+
+    /**
+     *
+     * @param {Object} ctx
+     * @param {() => Promise<any>} next
+     */
+    const fn = (ctx, next) => {
+        deps.playlistModalWindow.style.display = 'flex';
+
+        next();
+    };
+
+    return fn;
+}
+
+class Flicker {
+    flick() {}
+
+    /**
+     * @type {Object}
+     */
+    #currentState;
+    /**
+     * @type {HTMLElement}
+     */
+    #targetElement;
+
+    /**
+     *
+     * @param {{
+     *  stateA:Object;
+     *  stateB:Object;
+     * }} deps
+     */
+    #states;
+
+    /**
+     *
+     * @param {{
+     *  stateA:Object;
+     *  stateB:Object;
+     *  targetElement:HTMLElement
+     * }} deps
+     */
+    constructor(deps = {}) {
+        const HTMLElement = deps.targetElement;
+        const stateA = deps.stateA;
+        const stateB = deps.stateB;
+
+        if (!HTMLElement) {
+            throw new Error(`Flicker::constructor: HTMLElement required`);
+        }
+
+        if (!deps.stateA || !deps.stateB) {
+            throw new Error(`Flicker::constructor: states required`);
+        }
+
+        this.#states = {
+            stateA,
+            stateB,
+        };
+
+        this.#targetElement = HTMLElement;
+    }
+}

@@ -4,9 +4,8 @@ class RequestManager {
      * @param {Object} body
      */
     async execute(body = {}) {
-
         await this.#executeMiddleware(
-            this.#beforeRequestMiddleware, 
+            this.#beforeRequestMiddleware,
             this.#beforeRequestFinalHandler
         );
 
@@ -23,12 +22,11 @@ class RequestManager {
     }
 
     /**
-     * 
-     * @param {(ctx:Object, next?:() => Promise<any>) => Promise<any>} handler 
+     *
+     * @param {(ctx:Object, next?:() => Promise<any>) => Promise<any>} handler
      */
-    beforeRequest (...middleware) {
-
-        middleware.forEach(mw => {
+    beforeRequest(...middleware) {
+        middleware.forEach((mw) => {
             this.#beforeRequestMiddleware.push(mw);
         });
     }
@@ -85,7 +83,7 @@ class RequestManager {
     #finalHandler;
 
     /**
-     * @type {(ctx:Object, next:() => Promise<any>) => Promise<any>} 
+     * @type {(ctx:Object, next:() => Promise<any>) => Promise<any>}
      */
     #beforeRequestMiddleware;
 
@@ -94,9 +92,8 @@ class RequestManager {
      */
     #beforeRequestFinalHandler;
 
-    constructor(url, method, finalHandler,  beforeRequestFinalHandler) {
-
-        if(!url || !method || !finalHandler || !beforeRequestFinalHandler) {
+    constructor(url, method, finalHandler, beforeRequestFinalHandler) {
+        if (!url || !method || !finalHandler || !beforeRequestFinalHandler) {
             throw new Error(`required all`);
         }
 
