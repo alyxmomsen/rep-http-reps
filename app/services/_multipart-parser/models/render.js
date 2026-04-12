@@ -4,7 +4,10 @@ const { resolve } = require('node:path');
 /* абсолютный путь для чтения файла */
 const FORM_TEMPLATE_PATH = resolve('./assets/html/form.html');
 
-async function renderMultipartForm(req, res) {
+async function renderMultipartForm(ctx) {
+
+    const { req, res } = ctx;
+
     console.log('render...');
 
     try {

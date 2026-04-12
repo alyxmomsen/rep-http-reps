@@ -1,4 +1,3 @@
-require('http');
 const { IncomingMessage, ServerResponse } = require('http');
 // const { multipartFormHandler } = require("../../_multipart-parser/controller/controller");
 const {
@@ -25,8 +24,8 @@ const {
 const {
     filemanager,
 } = require('../../filemanager.service.js/fmanager.controller');
-const { HTTPRouter } = require('../v2/model/router.model');
-
+const { HTTPRouter } = require('../v3/router.model');
+// const { HTTPRouter } = require('../v2/model/router.model');
 const router = new HTTPRouter();
 
 /* get static files */
@@ -50,9 +49,12 @@ router.get('/video/:filename', async (req, res) => {});
 /* view */
 router.get(
     '/l/form',
-    async (req, res, next, payload) => {
+    async (ctx, next) => {
+
+        const { req, res, params, queryParams } = ctx;
+    
         console.log('handle form middleware');
-        next('test');
+        await next('test');
         return;
     },
     renderMultipartForm
@@ -67,11 +69,18 @@ router.get(
     
     работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
 */
-router.post('/api/handle-form', (req, res) =>
-    FormHandler.processForm(req, res, { contentTypeHandlersRouter })
-);
+router.post('/api/handle-form', (ctx) => {
 
-createRoute('/api/get-playlist/:type', async (req, res) => {
+    const { req, res } = ctx;
+
+    FormHandler.processForm(req, res, { contentTypeHandlersRouter })
+
+});
+
+createRoute('/api/get-playlist/:type', async (ctx) => {
+
+    const { req, res, params  } = ctx;
+
     const dbAdapter = dbControllersRouter.get('video-playlist');
 
     try {
@@ -117,8 +126,8 @@ createRoute('/api/get-playlist/:type', async (req, res) => {
     }
 });
 
-createRoute('/api/get-file/:id', async (req, res) => {
-    const { params } = req;
+createRoute('/api/get-file/:id', async (ctx) => {
+    const { params } = ctx;
 
     const { id } = params;
 
@@ -200,7 +209,10 @@ createRoute('/api/get-file/:id', async (req, res) => {
 // router.post('/api/handle-multipart-form-data', multipartFormHandler.handle.bind(multipartFormHandler));
 
 /* test route for URL params */
-router.get('/test/:id/foo/:bar', async (req, res) => {
+router.get('/test/:id/foo/:bar', async (ctx) => {
+
+    const { req, res } = ctx;
+
     const { method, url, params, queryParams } = req;
     res.end(JSON.stringify({ method, url, params, queryParams }));
 });

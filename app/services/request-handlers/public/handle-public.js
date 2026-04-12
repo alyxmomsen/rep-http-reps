@@ -102,8 +102,8 @@ typeRouter.js('form', 'form.js', 'text/javascript');
  * @param {ServerResponse} res
  * @returns {Promise<any>}
  */
-async function handlePublic(req, res) {
-    const { params } = req;
+async function handlePublic(ctx) {
+    const { params, req, res } = ctx;
     const { type, id } = params || {};
 
     console.log({ type, id });
