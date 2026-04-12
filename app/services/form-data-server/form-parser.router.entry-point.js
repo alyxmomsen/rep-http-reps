@@ -3,11 +3,8 @@ const { readFile } = require('node:fs/promises');
 const { IncomingMessage, ServerResponse } = require('node:http');
 const { resolve, join } = require('node:path');
 /* кастомная утилита (пока-что просто утилита) для отправки фол-бэков */
-const { sendFallBack } = require('../../utils/error-factory');
 /* импор content-type из файла где происходит регистрация обработчиков для content-type случаев */
-const {
-    contentTypeHandlersRouter,
-} = require('./controller/content-type.controller');
+
 const { ContentTypeHandlersRouter } = require('./models/content-type.router');
 // const { ContentTypeHandlersRouter } = require("./models/content-type.router");
 
@@ -18,17 +15,7 @@ const FORM_HANDLER_CONSTANTS = {
     ASSETS_PATH: resolve('./assets/html/form.html'),
 };
 
-console.log(FORM_HANDLER_CONSTANTS);
-
-/*
- * собирался сделать роутинг для фол-бэков обработчиков
- * но приостановил, так как были более важные фокусы
- */
-/**
- * @type {Map<string,(...args:string)=>void>}
- */
-const fallbacks = new Map();
-fallbacks.set('error type', (...args) => {});
+console.log({FORM_HANDLER_CONSTANTS});
 
 /**
  *
@@ -44,7 +31,12 @@ class FormHandler {
      * @returns {Promise<void>}
      */
     static async processForm(req, res, deps = {}) {
+
+        // ----------- deps fetching --------------------
+
         const contentTypeHandlersRouter = deps.contentTypeHandlersRouter;
+
+        // ----------------------------------------------
 
         if (contentTypeHandlersRouter === undefined) {
             res.writeHead(400, {
@@ -60,10 +52,13 @@ class FormHandler {
                     'contentTypeHandlersRouter is not received' +
                     `x1b[0m`
             );
-            throw new Error(`contentTypeHandlersRouter is not received`);
+            throw new Error(`contentTypeHandlersRouter is not provided`);
         }
 
+        // ------------------------------------------------ 
+
         const { headers } = req;
+
         const contentTypeHeader = headers['content-type'];
 
         if (contentTypeHeader === undefined) {
@@ -153,12 +148,13 @@ class FormHandler {
             });
             res.end(file);
         } catch (e) {
-            // здесь нужно сделать редирект
+
             console.log({ e });
-            // res.setHeader("");
+
             res.writeHead(500, 'internal error', {
                 'content-type': 'text/plain',
             });
+            
             res.end('500. internal error');
         }
     }

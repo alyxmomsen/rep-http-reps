@@ -9,12 +9,6 @@ const {
     dbControllersRouter,
 } = require('../../database-adapter/controller/db-adapter.controller');
 const { DBAdapter } = require('../../database-adapter/models/db-adapter.model');
-const {
-    LinksBuffer,
-} = require('../utils/data-links-buffer/data-links-buffer.util');
-const {
-    dataSetProcessorFactory,
-} = require('../utils/mapper/controller/data-set-mapper.controller');
 const { Transactor } = require('../../transactor/v2/model/transactor.model');
 const {
     PostMapper,
@@ -86,21 +80,6 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         // console.dir(payload, {depth:10});
 
         await postMapper.process(payload);
-
-        // console.log('check that');
-        // const filesResult = dataBase.readAll('files');
-        // const usersResult = dataBase.readAll('users');
-        // const videoPlaylistResult = dataBase.readAll('video-playlist');
-
-        // const filesDbObject = convertMapToObjectsArray(filesResult?.success?.tableRows || new Map());
-        // const usersDbObject = convertMapToObjectsArray(usersResult?.success?.tableRows || new Map());
-        // const videoDbObject = convertMapToObjectsArray(videoPlaylistResult?.success?.tableRows || new Map());
-
-        // console.dir({
-        //     filesDbObject, usersDbObject,
-        //     videoDbObject,  filesResult,
-        //     usersResult, videoPlaylistResult
-        // }, {depth:10});
 
         const result = postMapper.getResult();
 

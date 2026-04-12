@@ -40,9 +40,10 @@ class ContentTypeHandlersRouter {
     }
 
     registrateContentTypeHandler(contentType, handler) {
+        
         let isContentTypeValid = false;
         for (const [key, registratedContentType] of Object.entries(
-            ContentTypeHandlersRouter.contentTypesMaps
+            ContentTypeHandlersRouter.contentTypesMap
         )) {
             if (contentType === registratedContentType) {
                 isContentTypeValid = true;
@@ -61,7 +62,7 @@ class ContentTypeHandlersRouter {
         console.log(`content-type <${contentType}> registrated successfull`);
     }
 
-    static contentTypesMaps = {
+    static contentTypesMap = {
         MULTIPART_FORM_DATA: 'multipart/form-data',
         TEXT_PLAIN: 'text/plain',
         APPLICATION_X_WWW_FORM_URLENCODED: 'application/x-www-form-urlencoded',

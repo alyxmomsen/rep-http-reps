@@ -81,5 +81,3 @@ class LinksBuffer {
         this.#links = [];
     }
 }
-
-module.exports = { LinksBuffer };
