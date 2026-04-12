@@ -1,7 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ============= grab HTML elements =============
 
-    const DOMEelemnts = {
+    const AppState = {
+        foo: 'bar',
+    };
+
+    const Middleware = {
+        DisplayStatus:DisplayStatusMW,
+        ConverResponseToJSON:ConvertResponseToJSONMiddleware,
+        FormClose:FormCloseMiddleware,
+        FormOpen:FormOpenMiddleware,
+    }
+
+    const DOMElements = {
         /**
          * @type {HTMLButtonElement}
          */
@@ -33,23 +44,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ModalWindowControllers = {
         FormModalWindow: new ModalWindowController({
-            containerElement: DOMEelemnts.formModalWindow,
+            containerElement: DOMElements.formModalWindow,
         }),
     };
-
-    // ===============================================
 
     // ------------- form open chain ------------
 
     MiddlewareChains.openForm.addMiddleware(
-        FormOpenMiddleware({
+        Middleware.FormOpen({
             modalWindowController: ModalWindowControllers.FormModalWindow,
         })
     );
 
-    DOMEelemnts.openFormButton.addEventListener('click', async (ev) => {
+    DOMElements.openFormButton.addEventListener('click', async (ev) => {
         new MiddlewareChain(
-            FormOpenMiddleware({
+            Middleware.FormOpen({
                 modalWindowController: ModalWindowControllers.FormModalWindow,
             }),
             async (ctx) => {
@@ -61,37 +70,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------ form close chain --------------
 
     MiddlewareChains.closeForm.addMiddleware(
-        FormCloseMiddleware({
+        Middleware.FormClose({
             modalWindowController: ModalWindowControllers.FormModalWindow,
         })
     );
 
-    DOMEelemnts.formCloseButton.addEventListener('click', async () => {
+    DOMElements.formCloseButton.addEventListener('click', async () => {
         await MiddlewareChains.closeForm.execute();
     });
 
     // ------------- form processing -------------
 
-    const formRequest = new RequestManager(
-        '/api/handle-form',
-        'post',
-        FormDataRequestFinalHandler({
-            onSuccessMiddleware: MiddlewareChains.closeForm,
-            onFailMiddleware: new MiddlewareChain(
-                DisplayStatusMW({
-                    errorDisplayElement: DOMEelemnts.statusDisplay,
-                }),
-                (ctx) => console.log('final')
-            ),
-        })
-    );
-    // add middleware
-    formRequest.addMiddleware(ConvertResponseToJSONMiddleware());
+    // ===============================================
 
-    DOMEelemnts.mainForm.addEventListener('submit', async (e) => {
+    const RequestManagers = {
+        Form: new RequestManager(
+            '/api/handle-form',
+            'post',
+            FormDataRequestFinalHandler({
+                onSuccessMiddleware: new MiddlewareChain(
+                    (ctx, next) => {
+                        DOMElements.statusDisplay.innerText = 'fucka'
+                        next();
+                    },
+                    Middleware.FormClose({
+                        modalWindowController:ModalWindowControllers.FormModalWindow,
+                    }), (ctx) => {console.log('done')}
+                ),
+                onFailMiddleware: new MiddlewareChain(
+                    Middleware.DisplayStatus({
+                        errorDisplayElement: DOMElements.statusDisplay,
+                    }),
+                    (ctx) => console.log('final')
+                ),
+            }),
+            (ctx) => {
+                console.log(`before request final handler`);
+            },
+        ),
+    };
+
+    // ===============================================
+
+    // add middleware
+    RequestManagers.Form.addMiddleware(Middleware.ConverResponseToJSON());
+    RequestManagers.Form.beforeRequest((ctx, next) => {
+        next();
+    });
+
+    DOMElements.mainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(DOMEelemnts.mainForm);
-        await formRequest.execute(formData);
+        const formData = new FormData(DOMElements.mainForm);
+        await RequestManagers.Form.execute(formData);
     });
 });
 
@@ -399,3 +429,5 @@ function grapDOMElement(id) {
     if (!elem) throw new Error(`grapDOMElement: fail`);
     return elem;
 }
+
+
