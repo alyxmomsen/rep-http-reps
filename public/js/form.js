@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
         DisplayPlaylist: DisplayPlaylistMiddleWare,
     };
 
+    const FinalHandlers = {
+        OnFormResponse: FormDataRequestFinalHandler,
+    };
+
     // ============== REGISTRATE MIDDLEWARE (END) ==============
 
     const DOMElements = {
@@ -116,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Form: new RequestManager(
             '/api/handle-form',
             'post',
-            FormDataRequestFinalHandler({
+            FinalHandlers.OnFormResponse({
                 onSuccessMiddleware: new MiddlewareChain(
                     (ctx, next) => {
                         console.log('firs mw', { ctx });
@@ -142,8 +146,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     Middleware.DisplayStatus({
                         errorDisplayElement: DOMElements.StatusDisplay,
                     }),
+                    // (ctx, next) => {
+                    //     document.inner
+                    // },
                     (ctx) => console.log('final')
                 ),
+                playlistHTMLElement: DOMElements.PlayList,
             }),
             (ctx) => {
                 console.log(`before request final handler`);
@@ -293,6 +301,7 @@ function FormCloseMiddleware(deps = {}) {
  * @param {Object} deps
  * @param {MiddlewareChain} deps.onSuccessMiddleware
  * @param {MiddlewareChain} deps.onFailMiddleware
+ * @param {HTMLElement} deps.playlistHTMLElement
  * @returns {(ctx:Object) => Promise<any>}
  */
 function FormDataRequestFinalHandler(deps = {}) {
@@ -311,21 +320,46 @@ function FormDataRequestFinalHandler(deps = {}) {
         );
     }
 
+    if (!deps.playlistHTMLElement) {
+        throw new Error(
+            `FormDataRequestFinalHandler: playlistHTMLElement required`
+        );
+    }
+
     /**
      *
      * @param {Object} ctx
      * @param {Object} ctx.jsonResponse
      */
     const fn = async (ctx) => {
-        const jsonResponse = ctx.jsonResponse;
+        // const jsonResponse = ctx.jsonResponse;
 
-        console.log({ jsonResponse });
+        console.log({ ctx });
 
-        if (!jsonResponse) {
+        if (!ctx.jsonResponse) {
             await onFailMiddleware.execute(ctx);
+            return;
         }
 
         await onSuccessMiddleware.execute(ctx);
+
+        const DBTables = {
+            'video-playlist': () => {},
+            users: () => {},
+        };
+
+        if (ctx.jsonResponse.success) {
+            if (ctx.jsonResponse.success.clientResponsePull) {
+                if (ctx.jsonResponse.success.clientResponsePull.success) {
+                    for (const dbROw of ctx.jsonResponse.success
+                        .clientResponsePull.success) {
+                        dbROw.tableName;
+                    }
+                }
+            }
+        }
+
+        deps.playlistHTMLElement;
     };
 
     return fn;
@@ -349,7 +383,7 @@ function ConvertResponseToJSONMiddleware() {
 
         try {
             const json = await response.json();
-            ctx.jsonResponses = json;
+            ctx.jsonResponse = json;
             next();
         } catch (err) {
             console.log(`ConverResponseToJSONMiddleware/error: `, { json });
@@ -476,56 +510,6 @@ function grabDOMElement(id) {
 /**
  *
  * @param {Object} deps
- * @param {HTMLDivElement} deps.targetContainer
- * @returns
- */
-function CreateToolTip(deps = {}) {
-    if (!deps.targetContainer) {
-        throw new Error(`CreateToolTip: targetContainer required`);
-    }
-
-    let timeout = Infinity;
-
-    /**
-     *
-     * @param {string} text
-     */
-    const fn = (text) => {
-        const div = document.createElement('div');
-
-        div.className = 'tool-tip--added-data-response';
-
-        div.innerText = text;
-
-        timeout = setTimeout(() => {
-            div.remove();
-        }, 3000);
-
-        div.addEventListener('mouseover', () => {
-            console.log('over');
-            if (timeout !== Infinity) {
-                clearTimeout(timeout);
-            }
-        });
-
-        div.addEventListener('mouseleave', () => {
-            console.log('over');
-            if (timeout !== Infinity) {
-                clearTimeout(timeout);
-            }
-
-            timeout = setTimeout(() => div.remove(), 3000);
-        });
-
-        deps.targetContainer.appendChild(div);
-    };
-
-    return fn;
-}
-
-/**
- *
- * @param {Object} deps
  * @param {HTMLElement} deps.toolTipContainerHTMLElement
  * @returns
  */
@@ -577,6 +561,67 @@ function DisplayPlaylistMiddleWare(deps = {}) {
     };
 
     return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLDivElement} deps.targetContainer
+ * @returns
+ */
+function CreateToolTip(deps = {}) {
+    if (!deps.targetContainer) {
+        throw new Error(`CreateToolTip: targetContainer required`);
+    }
+
+    let timeout = Infinity;
+
+    /**
+     *
+     * @param {string} text
+     */
+    const fn = (text) => {
+        const div = document.createElement('div');
+
+        div.className = 'tool-tip--added-data-response';
+
+        div.innerText = text;
+
+        timeout = setTimeout(() => {
+            div.remove();
+        }, 3000);
+
+        div.addEventListener('mouseover', () => {
+            console.log('over');
+            if (timeout !== Infinity) {
+                clearTimeout(timeout);
+            }
+        });
+
+        div.addEventListener('mouseleave', () => {
+            console.log('over');
+            if (timeout !== Infinity) {
+                clearTimeout(timeout);
+            }
+
+            timeout = setTimeout(() => div.remove(), 3000);
+        });
+
+        deps.targetContainer.appendChild(div);
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @returns
+ */
+function UpdatePlaylistMW(deps = {}) {
+    const mw = (ctx, next) => {};
+
+    return mw;
 }
 
 class Flicker {

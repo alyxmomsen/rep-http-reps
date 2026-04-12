@@ -83,14 +83,45 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
         const result = postMapper.getResult();
 
-        const clientResponsePull = {};
+        const clientResponsePull = {
+            success:[],
+            error:[],
+        };
 
         for (const [addr, { rowId, tableName }] of Object.entries(result)) {
-            const { success, error } = dataBase.readOne(tableName, rowId);
-
             if (tableName === 'files') continue;
 
-            clientResponsePull[tableName] = { success, error };
+            const DataBaseResponse = dataBase.readOne(tableName, rowId);
+
+
+            console.log({DataBaseResponse});
+
+
+            if(DataBaseResponse.success) {
+
+                const row = {};
+
+                for (const [prop, value] of DataBaseResponse.success.rowById.entries()) {
+                    row[prop] = value ;
+                }
+
+                clientResponsePull.success.push({tableName, row});
+
+                continue;
+            }
+
+            if(DataBaseResponse.error) {
+
+                const row = {};
+
+                for (const [prop, value] of DataBaseResponse.error.rowById.entries()) {
+                    row[prop] = value ;
+                }
+
+                clientResponsePull.error.push(row);
+
+                continue;
+            }
         }
 
         console.log('result from data base', { clientResponsePull });

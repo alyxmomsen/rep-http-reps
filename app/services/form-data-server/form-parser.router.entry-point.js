@@ -76,15 +76,16 @@ class FormHandler {
         const [contentType, contentTypeAttr] = contentTypeHeader.split(/;\s*/);
 
         try {
+
             const contentTypeController =
                 contentTypeHandlersRouter.getHandlerController(contentType);
-            const { success, error } = await contentTypeController.handle(
+            const ControllerResponse = await contentTypeController.handle(
                 req,
                 res,
                 contentTypeAttr
             );
 
-            if (error) {
+            if (ControllerResponse.error) {
                 res.writeHead(520, {
                     'content-type': 'application/json',
                 });
@@ -96,7 +97,7 @@ class FormHandler {
                 return;
             }
 
-            if (!success) {
+            if (!ControllerResponse.success) {
                 res.writeHead(500, {
                     'content-type': 'application/json',
                 });
@@ -112,9 +113,7 @@ class FormHandler {
                 'content-type': 'application/json',
             });
             res.end(
-                JSON.stringify({
-                    success,
-                })
+                JSON.stringify(ControllerResponse)
             );
             return;
         } catch (err) {
