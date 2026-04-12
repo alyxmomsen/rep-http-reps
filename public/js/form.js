@@ -1,754 +1,401 @@
-/* ============ */
-/* globals state */
+document.addEventListener('DOMContentLoaded', () => {
+    // ============= grab HTML elements =============
 
-/**
- * @typedef foo
- * @property {string} bar
- */
-
-/**
- * @type {boolean}
- */
-let isFormOpen = false;
-/**
- * @type {Array<Object>}
- */
-let playlistData = [];
-
-/* globals */
-/* ============ */
-
-async function refreshPlaylist(videoMainElement) {
-    console.log('refreshPlaylist: updating playlist...');
-    
-    const playlistContainer = document.getElementById('playlist--video');
-    if (!playlistContainer) {
-        console.error('playlist container not found');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/get-playlist/video`, {
-            method: 'GET',
-        });
-        
-        const jsonData = await response.json();
-        console.log({ refreshData: jsonData });
-        
-        if (jsonData.success && jsonData.success.rows) {
-            // Очищаем контейнер
-            playlistContainer.innerHTML = '';
-            
-            const rows = jsonData.success.rows;
-            for (const [rowId, rowData] of Object.entries(rows)) {
-                const { title, description, video } = rowData;
-                const videoRowId = video?.rowId;
-                
-                if (videoRowId) {
-                    // Используем ту же функцию newProp, что и в servePlaylistMiddleware
-                    const playlistItem = newProp(title, description, () => {
-                        if (videoMainElement) {
-                            videoMainElement.src = `/api/get-file/${videoRowId}`;
-                            videoMainElement.load();
-                        }
-                    });
-                    playlistContainer.appendChild(playlistItem);
-                }
-            }
-            console.log('refreshPlaylist: playlist updated, items count:', Object.keys(rows).length);
-        } else {
-            console.warn('refreshPlaylist: no success.rows in response', jsonData);
-        }
-    } catch (error) {
-        console.error('refreshPlaylist error:', error);
-    }
-}
-
-
-
-/**
- * @type {Map<string,(row:Object, context:{modalWindow:HTMLElement}) => HTMLElement>}
- */
-const toolTipCreatorRouter = new Map();
-
-window.addEventListener('DOMContentLoaded', async () => {
-    /* modals */
-
-    const formModalWindow = document.getElementById('modal-window--a');
-    const tooltipsFrame = document.getElementById('modal-window--b');
-    const videoModal = document.getElementById('modal-window--video');
-    const playlist = document.getElementById('playlist--video');
-
-    const videoMainElement = document.getElementById('video--main');
-
-    /* key elements */
-
-    const formHTML = document.getElementById('form--main');
-
-    /* controlls */
-
-    const mainFormCloseButton = document.getElementById(
-        'form--main--close-button'
-    );
-
-    const showFormButton = document.getElementById(
-        'controls--video__show-form'
-    );
-
-    /* --------- */
-
-    /* instance middleware */
-
-    const servePlaylistMW = servePlaylistMiddleware({
-        videoPlaylist: playlist,
-        videoMainElement: videoMainElement,
-        playlistData: playlistData,
-    });
-
-    /* -------------------- */
-
-    /* =============== */
-    /* initial state */
-
-    /* initial state */
-    /* =============== */
-
-    /* controlling */
-
-    mainFormCloseButton.addEventListener(
-        'click',
-        async (ev) =>
-            await middlewareExecutor({ hello: 'world', ev }, [
-                onformCloseButtonClicMW({
-                    formModalWindow: formModalWindow,
-                }),
-                async (payload, next) => {
-                    console.log('final mw', { payload });
-                    return await next(payload);
-                },
-            ])
-    );
-
-    showFormButton.addEventListener('click', (ev) =>
-        middlewareExecutor({}, [showFormMW1({ formModalWindow })])
-    );
-
-    /* ----------- */
-
-    /* requests */
-
-    const request = new RequestManager(
-        '/api/handle-form',
-        'post',
-        toJSONMiddleware(),
-        submitFinalHandlerMiddleware({
-            tooltipsFrame: tooltipsFrame,
-            HTMLFactoriesRouter: toolTipCreatorRouter,
-            videoMainElement: videoMainElement,
-            formModalWindow: formModalWindow,
-        }),
-        servePlaylistMW
-    );
-
-    formHTML.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const formData = new FormData(formHTML);
-        await request.exec(formData);
-    });
-
-    await middlewareExecutor({}, [servePlaylistMW]);
-});
-
-function generateRandomString(length) {
-    const characters =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-    return result;
-}
-
-/* middleware */
-
-/* ================ */
-/* show form mw     */
-
-/**
- *
- * @param {{
- *  formModalWindow:HTMLElement;
- * }} deps
- * @returns {(payload:Object, next:(payload:Object) => Promise<any>) => Promise<any>}
- */
-function showFormMW1(deps = {}) {
-    const formModalWindow = deps.formModalWindow;
-
-    if (!formModalWindow) {
-        throw new Error(
-            `showFormMW1: formModalWindow required but not provided`
-        );
-    }
-
-    const mw = async (payload, next) => {
-        formModalWindow.style.display = 'flex';
-
-        return await next({ hello: 'guys' });
+    const DOMEelemnts = {
+        /**
+         * @type {HTMLButtonElement}
+         */
+        openFormButton: grapDOMElement('controls--video__show-form'),
+        /**
+         * @type {HTMLButtonElement}
+         */
+        formModalWindow: grapDOMElement('modal-window--a'),
+        /**
+         * @type {}
+         */
+        formCloseButton: grapDOMElement('form--main--close-button'),
+        statusDisplay: grapDOMElement('status--upload'),
+        mainForm: grapDOMElement('form--main'),
     };
 
-    return mw;
-}
+    // ============= set middleware chains ==========
 
-/* show form mw     */
-/* ================ */
+    const MiddlewareChains = {
+        openForm: new MiddlewareChain((ctx) =>
+            console.log(`open form final handler`)
+        ),
+        closeForm: new MiddlewareChain((ctx) =>
+            console.log(`close form final handler`)
+        ),
+    };
 
-/* -------------- */
-/* close form mw */
+    // ============= set modal-window-controllers
 
-/**
- *
- * @param {{
- *  formModalWindow:HTMLElement;
- * }} deps
- * @returns {(payload:Object,next:(payload:Object)=>Promise<any>) => Promise<any>}
- */
-function onformCloseButtonClicMW(deps = {}) {
-    const formModalWindow = deps.formModalWindow;
+    const ModalWindowControllers = {
+        FormModalWindow: new ModalWindowController({
+            containerElement: DOMEelemnts.formModalWindow,
+        }),
+    };
 
-    if (!formModalWindow) {
-        throw new Error(
-            `onformCloseButtonClicMW: formModalWindow required but not provided`
-        );
+    // ===============================================
+
+    // ------------- form open chain ------------
+
+    MiddlewareChains.openForm.addMiddleware(
+        FormOpenMiddleware({
+            modalWindowController: ModalWindowControllers.FormModalWindow,
+        })
+    );
+
+    DOMEelemnts.openFormButton.addEventListener('click', async (ev) => {
+        new MiddlewareChain(
+            FormOpenMiddleware({
+                modalWindowController: ModalWindowControllers.FormModalWindow,
+            }),
+            async (ctx) => {
+                console.log('final mw');
+            }
+        ).execute();
+    });
+
+    // ------------ form close chain --------------
+
+    MiddlewareChains.closeForm.addMiddleware(
+        FormCloseMiddleware({
+            modalWindowController: ModalWindowControllers.FormModalWindow,
+        })
+    );
+
+    DOMEelemnts.formCloseButton.addEventListener('click', async () => {
+        await MiddlewareChains.closeForm.execute();
+    });
+
+    // ------------- form processing -------------
+
+    const formRequest = new RequestManager(
+        '/api/handle-form',
+        'post',
+        FormDataRequestFinalHandler({
+            onSuccessMiddleware: MiddlewareChains.closeForm,
+            onFailMiddleware: new MiddlewareChain(
+                DisplayStatusMW({
+                    errorDisplayElement: DOMEelemnts.statusDisplay,
+                }),
+                (ctx) => console.log('final')
+            ),
+        })
+    );
+    // add middleware
+    formRequest.addMiddleware(ConvertResponseToJSONMiddleware());
+
+    DOMEelemnts.mainForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(DOMEelemnts.mainForm);
+        await formRequest.execute(formData);
+    });
+});
+
+class MiddlewareChain {
+    /**
+     *
+     * @param  {...((ctx:Object, next:(payload:Object) => Promise<any>) => Promise<any>)} middleware
+     */
+    addMiddleware(...middleware) {
+        middleware.forEach((mw) => {
+            this.#middleware.push(mw);
+        });
     }
 
     /**
      *
-     * @param {Object} payload
-     * @param {(payload:Object) => Promise<any>} next
-     * @returns {any}
+     * @param {((ctx, next) => Pomise<any>)[]} middleware
      */
-    const mw = async (payload, next) => {
-        formModalWindow.style.display = 'none';
-        console.log('form should be closed');
+    async execute(ctx) {
+        let index = 0;
 
-        return await next({ foo: 'bar' });
-    };
+        const next = async (nextCtx) => {
+            if (index < this.#middleware.length) {
+                const currentIndex = index++;
 
-    return mw;
+                const handler = this.#middleware[currentIndex];
+
+                if (handler) {
+                    await handler(nextCtx, next);
+                }
+            } else {
+                if (this.#finalHandler) {
+                    await this.#finalHandler(nextCtx);
+                }
+            }
+        };
+
+        await next(ctx);
+    }
+
+    /**
+     *
+     */
+    #middleware;
+    #finalHandler;
+
+    constructor(...middleware) {
+        if (!middleware) {
+            throw new Error(
+                `MiddlewareExecutor::constructor: final handler required`
+            );
+        }
+
+        this.#finalHandler = middleware[middleware.length - 1];
+        this.#middleware = middleware.length > 1 ? middleware.slice(0, -1) : [];
+    }
 }
-
-/* close form mw */
-/* -------------- */
-
-/* form rquest #middleware */
 
 /**
  *
- * @param {{
- *  tooltipsFrame:HTMLDivElement;
- *  HTMLFactoriesRouter:Map<string,(row:string,context:{modalWindow:HTMLElement}) => Promise<any>>;
- *  videoMainElement:HTMLVideoElement;
- *  formModalWindow:HTMLElement;
- * }} deps
+ * @param  {...((ctx) => Promise<any>)} middleware
+ * @returns {}
+ */
+function MiddlewareDIContainer(deps, ...middleware) {
+    return;
+}
+
+// middleware
+
+/**
+ *
+ * @param {Object} deps
+ * @param {ModalWindowController} deps.modalWindowController
  * @returns
  */
-function submitFinalHandlerMiddleware(deps = {}) {
-    const tooltipsFrame = deps.tooltipsFrame || null;
-    const toolTipCreatorRouter = deps.HTMLFactoriesRouter || null;
-    const videoMainElement = deps.videoMainElement || null;
-    const formModalWindow = deps.formModalWindow || null;
+function FormOpenMiddleware(deps = {}) {
+    const modalWindowController = deps.modalWindowController;
 
-    if (!tooltipsFrame) {
-        throw new Error(`modal window required but not provided`);
+    if (!modalWindowController) {
+        throw new Error(`FormOpenMiddleware: ModalWindowController required`);
     }
 
-    if (!toolTipCreatorRouter) {
-        throw new Error(`tableNameResolver required but not provided`);
-    }
-
-    const handler = async (payload, next) => {
-        const { success, error } = payload;
-
-        if (error) {
-            console.error({ error });
-            alert('error: check console');
-            return;
-        }
-
-        if (!success) {
-            alert('error: no success from server');
-            return;
-        }
-
-        const clientResponsePull = success.clientResponsePull;
-
-        if (!clientResponsePull) {
-            alert('no data from server');
-            return;
-        }
-
-        console.log({ clientResponsePull });
-
-        // Показываем панель с тултипами
-        tooltipsFrame.style.right = '0';
-        tooltipsFrame.style.display = 'flex';
-        formModalWindow.style.display = 'none';
-
-        // Очищаем старые тултипы (опционально)
-        // while (tooltipsFrame.firstChild) {
-        //     tooltipsFrame.removeChild(tooltipsFrame.firstChild);
-        // }
-
-        // Создаём тултипы для каждой таблицы
-        for (const [tableName, tableData] of Object.entries(clientResponsePull)) {
-            if (tableName === 'files') continue;
-            
-            const toolTipCreator = toolTipCreatorRouter.get(tableName);
-            
-            if (toolTipCreator && tableData.success && tableData.success.rowById) {
-                let rowData = tableData.success.rowById;
-                if (rowData instanceof Map) {
-                    const obj = {};
-                    for (const [k, v] of rowData.entries()) {
-                        obj[k] = v;
-                    }
-                    rowData = obj;
-                }
-                
-                console.log('Creating tooltip for:', tableName, rowData);
-                
-                tooltipsFrame.appendChild(
-                    toolTipCreator(rowData, {
-                        modalWindow: tooltipsFrame,
-                        videoMainElement: videoMainElement,
-                    })
-                );
-            }
-        }
-
-        // ОБНОВЛЯЕМ ПЛЕЙЛИСТ после успешной отправки
-        await refreshPlaylist(videoMainElement);
-
-        if (next) {
-            await next({});
-        }
+    /**
+     *
+     * @param {Object} ctx
+     * @param {() => Promise<any>} next
+     */
+    const fn = (ctx, next) => {
+        modalWindowController.open();
+        next();
     };
 
-    return handler;
+    return fn;
 }
 
 /**
  *
  * @param {Object} deps
+ * @param {ModalWindowController} deps.modalWindowController
+ * @returns {(ctx:Object,next:() => Promise<any>) => Promise<any>}
  */
-function toJSONMiddleware(deps = {}) {
-    /**
-     *
-     * @param {{Response}} payload
-     * @param {Object} next
-     */
-    const handler = async (payload, next) => {
-        const { response } = payload;
+function FormCloseMiddleware(deps = {}) {
+    const modalWindowController = deps.modalWindowController;
 
-        if (response instanceof Response === false) {
-            throw new Error(`response is not Response`);
-        }
-
-        try {
-            const jsonData = await response.json();
-            await next(jsonData);
-        } catch (e) {
-            console.log({
-                error: e,
-            });
-        }
-    };
-
-    return handler;
-}
-
-/**
- *
- * @param {{
- *  videoMainElement:HTMLVideoElement;
- *  videoPlaylist:HTMLElement;
- *  playlistData:Array<Object>
- * }} deps
- * @returns
- */
-function servePlaylistMiddleware(deps = {}) {
-    const videoMainElement = deps.videoMainElement;
-    const videoPlaylist = deps.videoPlaylist;
-    const playlistData = deps.playlistData;
-
-    if (!videoMainElement) {
+    if (!modalWindowController) {
         throw new Error(
-            `servePlaylistMiddleware: videoMainElement is required but not provided`
+            `FormCloseMiddleware: instance of ModalWindowController required`
         );
     }
 
-    if (!videoPlaylist) {
-        throw new Error(
-            `servePlaylistMiddleware: videoPlaylist is required but not provided`
-        );
-    }
-
-    console.log(`servePlaylistMiddleware: given middleware`);
-
-    return async (payload, next) => {
-        console.log('playlist');
-
-        const response = await fetch(`/api/get-playlist/video`, {
-            method: 'get',
-        });
-
-        try {
-            const jsonData = await response.json();
-
-            console.log({ jsonData });
-
-            const { success } = jsonData;
-            const { rows } = success;
-
-            // удаляем старые данные из плейлиста
-            // плейлист должен содержать актуальные данные
-            let plData = undefined;
-            while ((plData = playlistData.pop())) {
-                console.log(plData);
-            }
-            console.log(`playlist is clear`);
-
-            for (const [rowId, rowData] of Object.entries(rows)) {
-                const { title, description, video } = rowData;
-                const { rowId: videoRowId } = video;
-
-                videoPlaylist.appendChild(
-                    newProp(title, description, () => {
-                        videoMainElement.src = `/api/get-file/${videoRowId}`;
-                        videoMainElement.load();
-                    })
-                );
-            }
-
-            /* здесь есть баг,- 
-            если в finalhandler вызвать next, то finalhandler 
-            будет зациклен */
-            // return await next();
-        } catch (error) {
-            console.log({ e: error });
-        }
-    };
-}
-
-/* virtual DOM   */
-
-/**
- *
- * @param {*} key
- * @param {*} value
- * @param {*} onClick
- * @returns
- */
-function newProp(key, value, onClick = (f) => f) {
-    const propertyContainer = document.createElement('div');
-    const propertyKey = document.createElement('span');
-    const propertyValue = document.createElement('span');
-    propertyKey.innerText = key;
-    propertyValue.innerText = value;
-    propertyContainer.appendChild(propertyKey);
-    propertyContainer.appendChild(propertyValue);
-    propertyContainer.onclick = onClick;
-    return propertyContainer;
-}
-
-/**
- *
- * @param {string} title
- * @param {(innerContext:{baseElement:HTMLElement}) => void} cb
- */
-function createPOSTLink(title, cb) {
-    const container = document.createElement('div');
-    container.innerText = title;
-    container.style.cursor = 'pointer';
-    container.onclick = (e) => {
-        e.stopPropagation();
-        cb({ baseElement: container });
-    };
-    return container;
-}
-
-/**
- *
- * @param {Object} row
- * @param {{
- *  modalWindow:HTMLElement;
- *  videoMainElement:HTMLVideoElement;
- * }} context
- * @returns
- */
-const videotooltipCreator = (row = {}, context = {}) => {
-    // ДИАГНОСТИКА — УДАЛИ ПОТОМ
-    console.log('=== videotooltipCreator DEBUG ===');
-    console.log('row type:', typeof row);
-    console.log('row keys:', Object.keys(row));
-    console.log('full row:', JSON.stringify(row, null, 2));
-    if (row instanceof Map) {
-        console.log('row is Map, entries:');
-        for (const [k, v] of row.entries()) {
-            console.log(`  ${k}:`, v);
-        }
-    }
-    // ======================================
-    const modalWindow = context.modalWindow;
-    const videoMainElement = context.videoMainElement;
-
-    // Извлекаем значения с учётом структуры { data: "значение" }
-    let title = row.title;
-    let description = row.description;
-    let video = row.video;
-
-    // Если значения обёрнуты в объекты с полем data — разворачиваем
-    if (title && typeof title === 'object' && 'data' in title) {
-        title = title.data;
-    }
-    if (description && typeof description === 'object' && 'data' in description) {
-        description = description.data;
-    }
-
-    const mainContainer = document.createElement('div');
-    mainContainer.className = 'tool-tip--added-data-response';
-
-    const closebutton = document.createElement('div');
-    closebutton.className = 'close-button';
-
-    const caption = document.createElement('h3');
-    caption.innerText = 'added item in video-playlist: ';
-
-    mainContainer.appendChild(caption);
-
-    const titleProp = newProp('title: ', title || 'untitled', () => {});
-    mainContainer.appendChild(titleProp);
-    const descrProp = newProp('description: ', description || 'no description');
-    mainContainer.appendChild(descrProp);
-    
-    const link = createPOSTLink('play', (innerContext) => {
-        const videoRowId = video?.rowId;
-        if (videoRowId) {
-            videoMainElement.src = `/api/get-file/${videoRowId}`;
-            videoMainElement.load();
-        }
-
-        mainContainer.remove();
-        if (!modalWindow.childElementCount) {
-            modalWindow.style.right = '-200vw';
-            modalWindow.style.display = 'none';
-        }
-    });
-    mainContainer.appendChild(link);
-    mainContainer.appendChild(closebutton);
-
-    closebutton.onclick = (e) => {
-        mainContainer.remove();
-        if (!modalWindow.childElementCount) {
-            modalWindow.style.right = '-200vw';
-            modalWindow.style.display = 'none';
-        }
-    };
-
-    return mainContainer;
-};
-
-toolTipCreatorRouter.set('video-playlist', videotooltipCreator);
-
-toolTipCreatorRouter.set('users', (row = {}, context = {}) => {
     /**
-     * @type {HTMLElement}
+     * @type {(ctx, next) => Promise<any>}
      */
-    const modalWindow = context.modalWindow;
-
-    const name = row['name'];
-    const lastName = row['last-name'];
-    const thumbNailFileData = row['thumb-nail'];
-    const logoNailFileData = row['logo'];
-    const avatarNailFileData = row['avatar'];
-
-    const container = document.createElement('div');
-    container.className = 'tool-tip--added-data-response';
-
-    const closebutton = document.createElement('div');
-    closebutton.className = 'close-button';
-
-    const caption = document.createElement('h3');
-    caption.innerText = 'added user: ';
-
-    const nameProp = newProp('name: ', name);
-    const lastNameProp = newProp('last name: ', lastName);
-
-    const image = document.createElement('img');
-
-    /**
-     * @type {HTMLImageElement}
-     */
-    const avatarImg = image.cloneNode();
-    avatarImg.src = `/api/get-file/${avatarNailFileData.rowId}`;
-    avatarImg.alt = '💔';
-    /**
-     * @type {HTMLImageElement}
-     */
-    const logoImg = image.cloneNode();
-    logoImg.src = `/api/get-file/${logoNailFileData.rowId}`;
-    logoImg.alt = '💔';
-    /**
-     * @type {HTMLImageElement}
-     */
-    const thumbNailImg = image.cloneNode();
-    thumbNailImg.src = `/api/get-file/${thumbNailFileData.rowId}`;
-    thumbNailImg.alt = '💔';
-
-    container.appendChild(caption);
-    container.appendChild(nameProp);
-    container.appendChild(lastNameProp);
-
-    const tooltipImageContainer = document.createElement('div');
-    tooltipImageContainer.className = 'tool-tip__image--container';
-    tooltipImageContainer.appendChild(avatarImg);
-    tooltipImageContainer.appendChild(logoImg);
-    tooltipImageContainer.appendChild(thumbNailImg);
-    container.appendChild(tooltipImageContainer);
-
-    container.appendChild(closebutton);
-
-    closebutton.onclick = (e) => {
-        container.remove();
-        if (!modalWindow.childElementCount) {
-            modalWindow.style.right = '-200vw';
-            modalWindow.style.display = 'none';
-        }
+    const fn = async (ctx, next) => {
+        modalWindowController.close();
+        await next();
     };
-
-    // const
-
-    return container;
-});
-
-/* #utils */
-
-/**
- *
- * @param {Object} payload
- * @param {((payload:Object,next:(payload:Object)=>Promise<any>) => Promise<any>)[]} middleware
- */
-async function middlewareExecutor(payload, middleware) {
-    console.log(`middleware executor`);
-
-    let index = 0;
-
-    const next = async (nextPayload) => {
-        if (index < middleware.length) {
-            const currentIndex = index++;
-            const handler = middleware[currentIndex];
-            if (handler) {
-                try {
-                    await handler(nextPayload, next);
-                } catch (err) {
-                    throw err;
-                }
-            }
-        } else {
-            return nextPayload;
-        }
-    };
-
-    if (middleware.length > 0) {
-        console.log('middleware executor: go middleware');
-        return await next(payload);
-    }
-}
-
-/**
- *
- * @param {{
- *  formModalWindow:HTMLElement
- * }} deps
- */
-function init(deps = {}) {
-    const formModalWindow = deps.formModalWindow;
-
-    if (!formModalWindow) {
-        throw new Error(`init: formModalWindow required but not provided`);
-    }
-
-    const fn = () => {};
 
     return fn;
 }
 
+// --------------------------------------
 
-async function refreshPlaylist(videoMainElement) {
-    console.log('refreshPlaylist: updating playlist...');
-    
-    const playlistContainer = document.getElementById('playlist--video');
-    if (!playlistContainer) {
-        console.error('playlist container not found');
-        return;
+/**
+ *
+ * @param {Object} deps
+ * @param {MiddlewareChain} deps.onSuccessMiddleware
+ * @param {MiddlewareChain} deps.onFailMiddleware
+ * @returns {(ctx:Object) => Promise<any>}
+ */
+function FormDataRequestFinalHandler(deps = {}) {
+    const onSuccessMiddleware = deps.onSuccessMiddleware;
+    const onFailMiddleware = deps.onFailMiddleware;
+
+    if (!onSuccessMiddleware) {
+        throw new Error(
+            `FormDataRequestFinalHandler: onSuccessMiddleware required`
+        );
     }
-    
-    try {
-        const response = await fetch(`/api/get-playlist/video`, {
-            method: 'GET',
-        });
-        
-        const jsonData = await response.json();
-        console.log({ refreshData: jsonData });
-        
-        if (jsonData.success && jsonData.success.rows) {
-            // Очищаем контейнер
-            playlistContainer.innerHTML = '';
-            
-            const rows = jsonData.success.rows;
-            for (const [rowId, rowData] of Object.entries(rows)) {
-                const { title, description, video } = rowData;
-                const videoRowId = video?.rowId;
-                
-                if (videoRowId) {
-                    const playlistItem = document.createElement('div');
-                    playlistItem.innerHTML = `
-                        <span><strong>${escapeHtml(title || 'untitled')}</strong></span>
-                        <span>${escapeHtml(description || '')}</span>
-                    `;
-                    playlistItem.style.cursor = 'pointer';
-                    playlistItem.style.padding = '8px';
-                    playlistItem.style.border = '1px solid #ccc';
-                    playlistItem.style.margin = '4px';
-                    playlistItem.style.borderRadius = '4px';
-                    
-                    playlistItem.onclick = () => {
-                        if (videoMainElement) {
-                            videoMainElement.src = `/api/get-file/${videoRowId}`;
-                            videoMainElement.load();
-                        }
-                    };
-                    
-                    playlistContainer.appendChild(playlistItem);
-                }
-            }
-            console.log('refreshPlaylist: playlist updated');
-        } else {
-            console.warn('refreshPlaylist: no success.rows in response', jsonData);
+
+    if (!onFailMiddleware) {
+        throw new Error(
+            `FormDataRequestFinalHandler: onFailMiddleware required`
+        );
+    }
+
+    /**
+     *
+     * @param {Object} ctx
+     * @param {Object} ctx.jsonResponse
+     */
+    const fn = async (ctx) => {
+        const jsonResponse = ctx.jsonResponse;
+
+        console.log({ jsonResponse });
+
+        if (!jsonResponse) {
+            await onFailMiddleware.execute();
         }
-    } catch (error) {
-        console.error('refreshPlaylist error:', error);
+
+        await onSuccessMiddleware.execute();
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @returns {(ctx:Object, next:() => Promise<any>) => Promise<any>}
+ */
+function ConvertResponseToJSONMiddleware() {
+    /**
+     *
+     * @param {Object} ctx
+     * @param {() => Promise<any>} next
+     */
+    const mw = async (ctx, next) => {
+        /**
+         * @type { Response }
+         */
+        const response = ctx.response;
+
+        try {
+            const json = await response.json();
+            ctx.jsonResponses = json;
+            next();
+        } catch (err) {
+            console.log(`ConverResponseToJSONMiddleware/error: `, { json });
+        }
+    };
+
+    return mw;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLElement} deps.errorDisplayElement
+ * @returns {(ctx:Object, next:() => Promise<any>) => Promise<any>}
+ */
+function DisplayStatusMW(deps = {}) {
+    const errorDisplayElement = deps.errorDisplayElement;
+
+    console.log({ hello: deps });
+
+    if (!errorDisplayElement) {
+        throw new Error(`DisplayStatusMW: errorDisplayElement required`);
+    }
+
+    /**
+     * @type {(ctx:Object,next:() => Promise<any>) => Promise<any>}
+     */
+    const fn = (ctx, next) => {
+        errorDisplayElement.innerText = 'foo bar';
+
+        next();
+    };
+
+    return fn;
+}
+
+// ======================
+
+// /**
+//  *
+//  * @param {Object} deps
+//  * @param {Object} deps.div
+//  * @returns {ModalWindowController}
+//  */
+// function ModalWindowControllerFactory (deps={}) {
+
+//     const mwHTMLElement = deps.div;
+
+//     if(!mwHTMLElement) {
+//         throw new Error (`ModalWindowControllerFactory: mwHTMLElement required`);
+//     }
+
+//     return new ModalWindowController(mwHTMLElement);
+// }
+
+class ModalWindowController {
+    open() {
+        this._htmlElement.style.display = 'flex';
+    }
+
+    close() {
+        this._htmlElement.style.display = 'none';
+    }
+
+    /**
+     * @type { HTMLElement }
+     */
+    _htmlElement;
+
+    /**
+     *
+     * @param {Object} deps
+     * @param {HTMLDivElement} deps.containerElement
+     */
+    constructor(deps = {}) {
+        const container = deps.containerElement;
+
+        if (!container) {
+            throw new Error(
+                `ModalWindowController::constructor: container required"`
+            );
+        }
+
+        this._htmlElement = container;
     }
 }
 
-// Вспомогательная функция для защиты от XSS
-function escapeHtml(str) {
-    if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+class DisplayStatusController extends ModalWindowController {
+    /**
+     *
+     * @param {string} value
+     */
+    display(value) {
+        this._htmlElement.innerText(value);
+    }
+
+    open() {}
+
+    close() {}
+
+    /**
+     *
+     * @param {Object} deps
+     * @param {HTMLElement} deps.HTMLElement
+     */
+    constructor(deps = {}) {
+        super(deps);
+    }
+}
+
+// utils
+
+/**
+ *
+ * @param {string} id
+ * @returns {HTMLElement}
+ */
+function grapDOMElement(id) {
+    const elem = document.getElementById(id);
+    if (!elem) throw new Error(`grapDOMElement: fail`);
+    return elem;
 }

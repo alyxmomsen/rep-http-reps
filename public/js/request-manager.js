@@ -3,84 +3,75 @@ class RequestManager {
      *
      * @param {Object} body
      */
-    async exec(body = {}) {
+    async execute(body = {}) {
         const response = await fetch(this.#url, {
             method: this.#method,
             ...(this.#method === 'get' ? {} : { body }),
         });
 
-        this.#executeMiddleware([...this.#middleware], this.#handler, {
-            response,
+        await this.#executeMiddleware(
+            [...this.#middleware],
+            this.#finalHandler,
+            { response }
+        );
+    }
+
+    addMiddleware(...middleware) {
+        middleware.forEach((mw) => {
+            this.#middleware.push(mw);
         });
     }
 
-    async #executeMiddleware(middleware, finalHandler, payload) {
+    /**
+     *
+     * @param {} middleware
+     */
+    async #executeMiddleware(middleware, finalHandler, ctx) {
         let index = 0;
 
-        const next = async (nextPayload) => {
+        const next = async () => {
             if (index < middleware.length) {
                 const currentIndex = index++;
 
                 const handler = middleware[currentIndex];
 
                 if (handler) {
-                    try {
-                        await handler(nextPayload, next);
-                    } catch (error) {
-                        throw error;
-                    }
+                    await handler(ctx, next);
                 }
             } else {
                 if (finalHandler) {
-                    await finalHandler(nextPayload, next);
+                    await finalHandler(ctx);
                 }
             }
         };
 
-        if (middleware.length > 0) {
-            await next(payload);
-        } else if (finalHandler) {
-            await finalHandler(payload);
-        }
+        await next();
     }
 
+    /**
+     * @type {string}
+     */
+    #method;
     /**
      * @type {string}
      */
     #url;
 
     /**
-     * @type {string}
-     */
-    #method;
-
-    /**
-     * @type {((payload:Object, next:(payload:Object) => Promise<any>) => Promise<any>)[]}
+     * @type {((ctx:{}, next:() => Promise<any>) => Promise<any>)[]}
      */
     #middleware;
 
     /**
-     * @type {(payload:Object) => Promise<any>}
+     * @type {() => Promise<any>}
      */
-    #handler;
+    #finalHandler;
 
-    constructor(url, method, ...handlers) {
-        if (!url) {
-            throw new Error(`url required but not provided`);
-        }
-
-        if (!method) {
-            throw new Error(`method required but not provided`);
-        }
-
-        if (!handlers.length) {
-            throw new Error(`handlers.length must be > "0"`);
-        }
-
-        this.#method = method;
+    constructor(url, method, finalHandler) {
         this.#url = url;
+        this.#method = method;
 
-        this.#middleware = handlers.length > 0 ? handlers.slice(0, -1) : [];
-        this.#handler = handlers[handlers.length - 1];
+        this.#middleware = [];
+        this.#finalHandler = finalHandler;
     }
 }
