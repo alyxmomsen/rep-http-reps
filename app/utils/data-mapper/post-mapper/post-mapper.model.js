@@ -5,45 +5,74 @@ const {
     DBAdapter,
 } = require('../../../services/database-adapter/models/db-adapter.model');
 const {
-    StateRollBackContainerFactory: StateRollBackContainerFactory,
+    StateContainerController: StateRollBackContainerFactory,
 } = require('./transactions/transaction.controller');
-const { StateRollBackContainer } = require('./transactions/transaction.model');
-const {
-    TransactionsContainer,
-} = require('./transactions/transactios-container.model');
+const { StateContainer } = require('./transactions/transaction.model');
+// const {
+//     StateContainer: StateContainer,
+// } = require('./transactions/transaction.model');
+// const {
+//     TransactionsContainer,
+// } = require('./transactions/transactios-container.model');
 
 class PostMapper {
-    async process(data) {
-        const pendedContainersBuffer = [];
+    async processDataSet(data) {
+        const DevVars = {
+            ConsoleLog: {
+                index: 0,
+            },
+        };
 
-        let i = 0; // dev variable
+        // -------------------------------------
+
+        const Flags = {};
+
+        const Buffer = {
+            Conrainers: {
+                Pended: [],
+            },
+        };
 
         for (const [tableName, groups] of Object.entries(data)) {
             for (const [groupId, groupColumns] of Object.entries(groups)) {
-                const rowContainer = await this.#handleRow(
-                    groupColumns,
-                    tableName
+                // structs of the iteration
+
+                const ProcessedGroup = {
+                    Container: await this.#processGroup(
+                        groupColumns,
+                        tableName
+                    ),
+                };
+
+                const ContainersAddresses = {
+                    Group: `${tableName}/${groupId}`,
+                };
+
+                // ====================================
+
+                let id = ContainersAddresses.Group;
+                this.#globalPull.containers.set(id, ProcessedGroup.Container);
+
+                await ProcessedGroup.Container.preCommit(
+                    this.#globalPull.containers
                 );
-                const groupContainerAddress = `${tableName}/${groupId}`;
 
-                this.#globalContainersPull.set(
-                    groupContainerAddress,
-                    rowContainer
-                );
+                const PrecommittedGroupContainerSnapShot = {
+                    state: ProcessedGroup.Container.getState(),
+                    data: ProcessedGroup.Container.getData(),
+                };
 
-                await rowContainer.preCommit(this.#globalContainersPull);
-
-                const state = rowContainer.getState();
-                const data = rowContainer.getData();
-
-                if (state.value === 'pending') {
+                if (
+                    PrecommittedGroupContainerSnapShot.state.value ===
+                    StateContainer.States.Pending
+                ) {
                     /**
                      *
                      * устанавливаем executor для еще одной попытки
                      */
-                    pendedContainersBuffer.push(async () => {
-                        const container = rowContainer;
-                        await container.preCommit(this.#globalContainersPull);
+                    Buffer.Conrainers.Pended.push(async () => {
+                        const container = ProcessedGroup.Container;
+                        await container.preCommit(this.#globalPull.containers);
                         console.log('one more try: ', {
                             value: container.getState().value,
                             message: container.getState().message,
@@ -52,51 +81,54 @@ class PostMapper {
                     });
                 }
 
-                console.log(++i + ') post pre commit result: ', {
-                    state,
-                    data,
-                });
+                // ----------- console log -----------
 
-                // const rowState = rowTransacton.getState();
-                // console.log(
-                //     'row state: ',
-                //     { tableName, groupId },
-                //     { rowState }
-                // );
+                console.log(
+                    ++DevVars.ConsoleLog.index + ') post pre commit result: ',
+                    {
+                        state: PrecommittedGroupContainerSnapShot.state,
+                        data: PrecommittedGroupContainerSnapShot.data,
+                    }
+                );
+
+                // -----------------------------------
             }
         }
 
-        for (const executor of pendedContainersBuffer) {
+        for (const executor of Buffer.Conrainers.Pended) {
             await executor();
         }
     }
 
     /**
      *
-     * @param {Object.<string,Object>} groupColumns
-     * @param {string} tableName
+     * @param {Object.<string,Object>} tableRowDataSet
+     * @param {string} dbTableName
      * @returns
      */
-    async #handleRow(groupColumns, tableName) {
+    async #processGroup(tableRowDataSet, dbTableName) {
         /**
          * @description
          * represent the row and provide util interface
          */
-        const currentRowContainer =
-            this.#stateRollBackContainerFactory.create();
+        const currentRowContainer = this.#StateContainerFactory.create();
+
+        const Buffer = {
+            GroupContainer: '',
+        };
 
         /**
          * @description
          * для каждой DB колонки создается отдельный контейнер
          * и пушится в этот буффер
-         * @type {Map<string,StateRollBackContainer>}
+         * @type {Map<string,StateCon>}
          */
         const rowContainersBuffer = new Map();
 
         for (const [
             columnName,
             { action: columnActionName, payload: columnActionPayload },
-        ] of Object.entries(groupColumns)) {
+        ] of Object.entries(tableRowDataSet)) {
             const ColumnPayloadlAction = this.#actions.get(columnActionName);
             if (!ColumnPayloadlAction) {
                 throw new Error(
@@ -105,7 +137,7 @@ class PostMapper {
             }
 
             /**
-             * @type {StateRollBackContainer}
+             * @type {StateContainer}
              */
             const currentRowColumnContainer =
                 await ColumnPayloadlAction(columnActionPayload);
@@ -120,9 +152,9 @@ class PostMapper {
         currentRowContainer.setAction(
             'main',
             rowContainerActionFactory({
-                groupContainers: this.#globalContainersPull,
+                groupContainers: this.#globalPull.containers,
                 rowContainers: rowContainersBuffer,
-                tableName: tableName,
+                tableName: dbTableName,
             })
         );
 
@@ -132,7 +164,7 @@ class PostMapper {
     getResult() {
         const dataPull = {};
 
-        for (const [address, container] of this.#globalContainersPull) {
+        for (const [address, container] of this.#globalPull.containers) {
             dataPull[address] = container.getData();
         }
 
@@ -140,19 +172,29 @@ class PostMapper {
     }
 
     /**
-     * @type {Map<string,StateRollBackContainer>}
+     * @type {{
+     *  containers:Map<string,StateContainer>;
+     * }}
      */
-    #globalContainersPull;
+    #globalPull;
 
     /**
-     * @type {Map<string,() => Promise<StateRollBackContainer>>}
+     * @type {Map<string,() => Promise<StateContainer>>}
      */
     #actions;
 
     /**
      * @type {StateRollBackContainerFactory}
      */
-    #stateRollBackContainerFactory;
+    #StateContainerFactory;
+
+    /**
+     * @type {{
+     *  StateContainer:StateRollBackContainerFactory;
+     * }}
+     */
+    #factories;
+
     /**
      *
      * @param {Object} deps
@@ -176,12 +218,6 @@ class PostMapper {
             throw new Error('Data-Action required');
         }
 
-        // console.log('PostMapper::constructor: check actions: ', {
-        //     fileAction,
-        //     linkAction,
-        //     dataAction,
-        // });
-
         this.#actions = new Map();
 
         this.#actions.set('link', linkAction);
@@ -199,11 +235,17 @@ class PostMapper {
             );
         }
 
-        this.#stateRollBackContainerFactory = stateRollBackContainerFactory;
+        this.#StateContainerFactory = stateRollBackContainerFactory;
 
-        // ------------
+        this.#factories = {
+            StateContainer: stateRollBackContainerFactory,
+        };
 
-        this.#globalContainersPull = new Map();
+        // ------------ structs -----------------
+
+        this.#globalPull = {
+            containers: new Map(),
+        };
     }
 }
 
@@ -215,8 +257,8 @@ module.exports = { PostMapper };
  * will be
  *
  * @param {Object} deps
- * @param {Map<string,StateRollBackContainer>} deps.groupContainers - global containers
- * @param {Map<string,StateRollBackContainer>} deps.rowContainers - represent db-columns containers
+ * @param {Map<string,StateContainer>} deps.groupContainers - global containers
+ * @param {Map<string,StateContainer>} deps.rowContainers - represent db-columns containers
  * @param {string} deps.tableName
  * @returns {(controller:import('./transactions/transaction.model').PreCommitActionController) => Promise<any>}
  */

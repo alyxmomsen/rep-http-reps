@@ -3,10 +3,10 @@ const {
 } = require('../../../services/filemanager.service.js/fmanager.controller');
 const { PostMapper } = require('./post-mapper.model');
 const {
-    StateRollBackContainerFactory: SetRollBackContainerFactory,
-    StateRollBackContainerFactory,
+    StateContainerController: SetRollBackContainerFactory,
+    StateContainerController: StateRollBackContainerFactory,
 } = require('./transactions/transaction.controller');
-const { StateRollBackContainer } = require('./transactions/transaction.model');
+const { StateContainer: StateRollBackContainer } = require('./transactions/transaction.model');
 
 /**
  * @throws {Error} - PostMapperDIContainer: PostMapper required

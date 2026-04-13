@@ -10,7 +10,7 @@
  * }} PreCommitActionController
  *
  */
-class StateRollBackContainer {
+class StateContainer {
     /**
      *
      * @returns {ContainerState}
@@ -61,7 +61,7 @@ class StateRollBackContainer {
     }
 
     /**
-     * @param {Map<string,StateRollBackContainer>} globalContainers
+     * @param {Map<string,StateContainer>} globalContainers
      * @returns {Promise<any>}
      */
     async preCommit(globalContainers) {
@@ -133,6 +133,12 @@ class StateRollBackContainer {
      */
     #state;
 
+    static States = {
+        Pending:'pending',
+        Rejected:'rejected',
+        Done:'done',
+    };
+
     constructor() {
         this.#data = null;
         this.#state = {
@@ -146,7 +152,7 @@ class StateRollBackContainer {
     }
 }
 
-module.exports = { StateRollBackContainer };
+module.exports = { StateContainer };
 
 // /**
 //  *

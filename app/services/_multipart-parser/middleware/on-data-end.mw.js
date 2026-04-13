@@ -20,7 +20,7 @@ const {
     LinkActionFactory,
 } = require('../../../utils/data-mapper/post-mapper/post-mapper.controller');
 const {
-    StateRollBackContainerFactory,
+    StateContainerController: StateRollBackContainerFactory,
 } = require('../../../utils/data-mapper/post-mapper/transactions/transaction.controller');
 const { dataBase } = require('../../database/controller/db.controller');
 
@@ -79,7 +79,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
         // console.dir(payload, {depth:10});
 
-        await postMapper.process(payload);
+        await postMapper.processDataSet(payload);
 
         const result = postMapper.getResult();
 
