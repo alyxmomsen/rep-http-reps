@@ -255,6 +255,9 @@ async function StreamVideoRouteHandler (ctx) {
         console.log({range});
     }
 
+
+    // if(ranges)
+
     const dbresponse = dataBase.readOne('files', ctx.params.rowId);
 
     if(dbresponse.error) {
