@@ -66,10 +66,10 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
         const postMapper = new PostMapper({
             dataAction: DataActionFactory({
-                rollBackContainerFactory: new StateRollBackContainerFactory(),
+                StateContainerFactory: new StateRollBackContainerFactory(),
             }),
             fileAction: FileActionFactory({
-                rollBackContainerFactory: new StateRollBackContainerFactory(),
+                StateContainerFactory: new StateRollBackContainerFactory(),
             }),
             linkAction: LinkActionFactory({
                 StateContainerFactory: new StateRollBackContainerFactory(),
@@ -129,7 +129,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         console.log('result from data base', { clientResponsePull });
 
         // возвращаем "успех" и данные для репорта клиенту
-        return await next({ success: { clientResponsePull } });
+        return await next(clientResponsePull);
     };
 
     return fn;

@@ -25,8 +25,14 @@ const {
     filemanager,
 } = require('../../filemanager.service.js/fmanager.controller');
 const { HTTPRouter } = require('../v3/router.model');
+const { dataBase } = require('../../database/controller/db.controller');
 // const { HTTPRouter } = require('../v2/model/router.model');
 const router = new HTTPRouter();
+
+
+const RouterHandlers = {
+    StreamVideo:StreamVideoRouteHandler,
+}
 
 /* get static files */
 router.get('/static/*', async (req, res) => await handleStatic(req, res));
@@ -44,7 +50,7 @@ router.get('/api/videos', async (req, res) => {
     res.end();
 });
 /* get video-stream */
-router.get('/video/:filename', async (req, res) => {});
+router.get('/video/:rowId', RouterHandlers.StreamVideo);
 
 /* view */
 router.get(
@@ -230,4 +236,39 @@ module.exports = { router };
  */
 function createRoute(url, handler) {
     router.get(url, handler);
+}
+
+
+async function StreamVideoRouteHandler (ctx) {
+
+    console.log('StreamVideoRouteHandler: called', {ctx:ctx.params.rowId});
+
+    const rowId = ctx?.params?.rowId;
+
+    const dbresponse = dataBase.readOne('files', ctx.params.rowId);
+
+    if(dbresponse.error) {
+
+        ctx.res.end(JSON.stringify({
+            hello:'world',
+        }));
+        return;
+    }
+    
+    if(!dbresponse.success) {
+        
+        ctx.res.end(JSON.stringify({
+            foo:'bar',
+        }));
+        return;
+    }
+
+    const filename = dbresponse.success.rowById.get('fileSystemFilename');
+
+    const filmanagerResponse = await filemanager.read(filename);
+
+    console.log('fm response: ', filmanagerResponse);
+
+    await filmanagerResponse.success.readStream.pipe(ctx.res);
+
 }

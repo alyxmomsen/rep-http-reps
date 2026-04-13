@@ -96,7 +96,7 @@ class DataBase {
      * @param {string} rowId
      */
     readOne(tableId, rowId) {
-        console.log('read one', { tableId, rowId });
+        console.log('read one', { tableId, rowId }, this.#data);
 
         const tableById = this.#data.get(tableId);
         if (!tableById) {

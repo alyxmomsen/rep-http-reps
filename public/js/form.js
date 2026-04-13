@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const Create = {
         ToolTip: CreateToolTip,
+        PlaylistItem: CreatePlaylistItem,
     };
 
     // ============== REGISTRATE MIDDLEWARE (BEGIN) ==============
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         FormOpen: FormOpenMiddleware,
         DisplayToolTipsContainer: DisplayTooltipsContainerMW,
         DisplayPlaylist: DisplayPlaylistMiddleWare,
+        PlayVideo: PlayVideoMW,
     };
 
     const FinalHandlers = {
@@ -45,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         MainForm: grabDOMElement('form--main'),
         ToolTipsContainer: grabDOMElement('modal-window--b'),
         PlayList: grabDOMElement(`playlist--video`),
+        VideoPlayer: grabDOMElement(`video--main`),
     };
 
     // ============= set middleware chains ==========
@@ -56,7 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
         closeForm: new MiddlewareChain((ctx) =>
             console.log(`close form final handler`)
         ),
+        playVideo: new MiddlewareChain((ctx) => {
+            console.log(`play video final handler`);
+        }),
     };
+
+    MiddlewareChains.playVideo.addMiddleware(
+        PlayVideoMW({
+            vidoePlayerHTMLElement: DOMElements.VideoPlayer,
+        })
+    );
 
     // ============= set modal-window-controllers
 
@@ -152,6 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     (ctx) => console.log('final')
                 ),
                 playlistHTMLElement: DOMElements.PlayList,
+                playlistItemCreator: Create.PlaylistItem({
+                    targetContainer: DOMElements.PlayList,
+                    playVideoMWChain: MiddlewareChains.playVideo,
+                }),
             }),
             (ctx) => {
                 console.log(`before request final handler`);
@@ -302,6 +318,7 @@ function FormCloseMiddleware(deps = {}) {
  * @param {MiddlewareChain} deps.onSuccessMiddleware
  * @param {MiddlewareChain} deps.onFailMiddleware
  * @param {HTMLElement} deps.playlistHTMLElement
+ * @param {(dataSet:{title:string;description:string;file:Object}) => void} deps.playlistItemCreator
  * @returns {(ctx:Object) => Promise<any>}
  */
 function FormDataRequestFinalHandler(deps = {}) {
@@ -326,6 +343,12 @@ function FormDataRequestFinalHandler(deps = {}) {
         );
     }
 
+    if (!deps.playlistItemCreator) {
+        throw new Error(
+            `FormDataRequestFinalHandler: playlistItemCreator required`
+        );
+    }
+
     /**
      *
      * @param {Object} ctx
@@ -333,6 +356,11 @@ function FormDataRequestFinalHandler(deps = {}) {
      */
     const fn = async (ctx) => {
         // const jsonResponse = ctx.jsonResponse;
+
+        ActionName = {
+            VideoPlaylist: 'video-playlist',
+            Users: 'users',
+        };
 
         console.log({ ctx });
 
@@ -343,19 +371,35 @@ function FormDataRequestFinalHandler(deps = {}) {
 
         await onSuccessMiddleware.execute(ctx);
 
-        const DBTables = {
-            'video-playlist': () => {},
-            users: () => {},
+        const ServerSuccessResponse = {};
+
+        const Action = {
+            'video-playlist': (payload) => {
+                console.log({ payload });
+
+                const PlaylistDataSet = {
+                    title: payload.title,
+                    description: payload.description,
+                    video: {
+                        rowId: payload.video.rowId,
+                        tableName: payload.video.tableName,
+                    },
+                };
+
+                deps.playlistItemCreator({
+                    title: PlaylistDataSet.title,
+                    description: PlaylistDataSet.description,
+                    video: PlaylistDataSet.video,
+                });
+            },
+            users: () => {
+                //
+            },
         };
 
         if (ctx.jsonResponse.success) {
-            if (ctx.jsonResponse.success.clientResponsePull) {
-                if (ctx.jsonResponse.success.clientResponsePull.success) {
-                    for (const dbROw of ctx.jsonResponse.success
-                        .clientResponsePull.success) {
-                        dbROw.tableName;
-                    }
-                }
+            for (const DBRow of ctx.jsonResponse.success) {
+                Action[DBRow.tableName](DBRow.row);
             }
         }
 
@@ -567,6 +611,68 @@ function DisplayPlaylistMiddleWare(deps = {}) {
 /**
  *
  * @param {Object} deps
+ * @param {HTMLElement} deps.targetContainer
+ * @param {MiddlewareChain} deps.playVideoMWChain
+ * @returns {(data:Object) => void}
+ */
+function CreatePlaylistItem(deps = {}) {
+    if (!deps.targetContainer) {
+        throw new Error(`CreatePlaylistItem-factory: targetContainer required`);
+    }
+
+    if (!deps.playVideoMWChain) {
+        throw new Error(
+            `CreatePlaylistItem-factory: playVideoMWChain required`
+        );
+    }
+
+    /**
+     *
+     * @param {Object} data
+     * @param {string} data.title
+     * @param {string} data.description
+     * @param {{
+     *  rowId:string,
+     *  tableName:string,
+     * }} data.video
+     * @returns {void}
+     */
+    const fn = (data = {}) => {
+        console.log({ data });
+        if (!data.title || !data.description || !data.video) {
+            throw new Error(`CreatePlaylistItem: required consistent data`);
+        }
+
+        const newElementUnits = {
+            base: document.createElement(`div`),
+            title: document.createElement(`div`),
+            description: document.createElement(`div`),
+        };
+
+        newElementUnits.title.innerText = data.title;
+        newElementUnits.description.innerText = data.description;
+
+        newElementUnits.base.appendChild(newElementUnits.title);
+        newElementUnits.base.appendChild(newElementUnits.description);
+
+        newElementUnits.base.addEventListener('click', () => {
+            deps.playVideoMWChain.execute({
+                rowId: data.video.rowId,
+                tableName: data.video.tableName,
+            });
+        });
+
+        deps.targetContainer.appendChild(newElementUnits.base);
+
+        return;
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
  * @param {HTMLDivElement} deps.targetContainer
  * @returns
  */
@@ -609,6 +715,33 @@ function CreateToolTip(deps = {}) {
         });
 
         deps.targetContainer.appendChild(div);
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLVideoElement} deps.vidoePlayerHTMLElement
+ * @returns {() => Promise<any>}
+ */
+function PlayVideoMW(deps = {}) {
+    if (!deps.vidoePlayerHTMLElement) {
+        throw new Error(`PlayVideoMW: vidoePlayerHTMLElement required`);
+    }
+
+    const fn = (ctx, next) => {
+        console.log('play video', { ctx });
+
+        if (!ctx.rowId || !ctx.tableName) {
+            throw new Error(`PlayVideoMW: ctx.rowId && ctx.tableName required`);
+        }
+
+        deps.vidoePlayerHTMLElement.src = `/video/${ctx.rowId}`;
+        deps.vidoePlayerHTMLElement.load();
+        // alert('what');
+        next();
     };
 
     return fn;
