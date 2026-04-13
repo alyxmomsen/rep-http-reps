@@ -191,13 +191,17 @@ function FileActionFactory(deps = {}) {
     /**
      * 
      * @param {Buffer<ArrayBuffer>} payload 
-     * @returns 
+     * @returns {(payload:Buffer<ArrayBuffer>) => Promise<any>}
      */
     const FileAction = async (payload) => {
 
-        console.log('file action payload: ', {payload});
+        const LeafActionArgs = {
+            FileData:payload,
+        }
 
-        const columnContainer = rollBackContainerFactory.create();
+        console.log('FileAction/args: ', LeafActionArgs);
+
+        const LeafStateContainer = rollBackContainerFactory.create();
 
         /**
          *
@@ -205,33 +209,34 @@ function FileActionFactory(deps = {}) {
          * @param {Object} deps
          * @param {Map<string,StateContainer>} deps.globalContainers
          */
-        const preCommitAction = async (controller, deps = {}) => {
-            const { success, error } = await filemanager.write(payload);
+        const StateContainerAction = async (StateContainerInterface, deps = {}) => {
+           
+            const fileManagerResult = await filemanager.write(LeafActionArgs.FileData);
 
-            if (error) {
-                controller.setState('rejected');
+            if (fileManagerResult.error) {
+                StateContainerInterface.setState(StateContainer.States.Rejected);
                 throw new Error(1);
                 return;
             }
 
-            if (!success) {
-                controller.setState('rejected');
+            if (!fileManagerResult.success) {
+                StateContainerInterface.setState(StateContainer.States.Rejected);
                 throw new Error(2);
                 return;
             }
 
-            controller.setState('done');
-            controller.setData(success.filename);
-            console.log('fmresult', { success });
+            StateContainerInterface.setState(StateContainer.States.Done);
+            StateContainerInterface.setData(fileManagerResult.success.filename);
+            console.log('fmresult', fileManagerResult);
 
-            controller.setRollBack('main', async () => {
-                await filemanager.delete(success.filename);
+            StateContainerInterface.setRollBack('main', async () => {
+                await filemanager.delete(fileManagerResult.success.filename);
             });
         };
 
-        columnContainer.setAction('main', preCommitAction);
+        LeafStateContainer.setAction('main', StateContainerAction);
 
-        return columnContainer;
+        return LeafStateContainer;
     };
 
     return FileAction;
