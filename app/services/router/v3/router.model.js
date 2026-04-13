@@ -61,10 +61,10 @@ class HTTPRouter {
         this.#globalMiddleware = [];
 
         const HTTPMethods = {
-            GET: "GET",
-            POST: "POST",
-            PUT: "PUT",
-            DELETE: "DELETE",
+            GET: 'GET',
+            POST: 'POST',
+            PUT: 'PUT',
+            DELETE: 'DELETE',
         };
 
         for (const method of Object.values(HTTPMethods)) {
@@ -89,13 +89,15 @@ class HTTPRouter {
 
             res.writeHead(405, {
                 'Content-Type': 'application/json',
-                'Allow': allowedMethods.join(', ')
+                Allow: allowedMethods.join(', '),
             });
 
-            res.end(JSON.stringify({
-                message: 'Method Not Allowed',
-                allow: allowedMethods
-            }));
+            res.end(
+                JSON.stringify({
+                    message: 'Method Not Allowed',
+                    allow: allowedMethods,
+                })
+            );
             return;
         }
 
@@ -132,10 +134,15 @@ class HTTPRouter {
                 console.error('Router error:', error);
                 if (!res.headersSent) {
                     res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({
-                        message: 'Internal Server Error',
-                        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-                    }));
+                    res.end(
+                        JSON.stringify({
+                            message: 'Internal Server Error',
+                            error:
+                                process.env.NODE_ENV === 'development'
+                                    ? error.message
+                                    : undefined,
+                        })
+                    );
                 }
             }
             return;
@@ -187,10 +194,11 @@ class HTTPRouter {
      */
     #splitURL(rawURL) {
         const [url, queryString] = rawURL.split('?');
-        const cleanUrl = url && url.endsWith('/') && url !== '/' 
-            ? url.slice(0, -1) 
-            : (url || '/');
-        
+        const cleanUrl =
+            url && url.endsWith('/') && url !== '/'
+                ? url.slice(0, -1)
+                : url || '/';
+
         return {
             url: cleanUrl,
             queryString: queryString || null,
@@ -220,13 +228,15 @@ class HTTPRouter {
      */
     #addRoute(template, method, middleware) {
         const methodRoutes = this.#routes.get(method);
-        
+
         if (!methodRoutes) {
             throw new Error(`HTTPRouter::addRoute: incorrect method ${method}`);
         }
 
         if (methodRoutes.has(template)) {
-            console.warn(`Route ${method} ${template} already exists, overwriting...`);
+            console.warn(
+                `Route ${method} ${template} already exists, overwriting...`
+            );
         }
 
         const routeBundle = this.#compileRouteBundle(template, middleware);
@@ -252,13 +262,13 @@ class HTTPRouter {
         }
 
         const keys = [];
-        
+
         // Экранируем спецсимволы regex
         let regexTemplate = template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        
+
         // Заменяем wildcard (\* после экранирования)
         regexTemplate = regexTemplate.replace(/\\\*/g, '.*');
-        
+
         // Заменяем параметры :param
         regexTemplate = regexTemplate.replace(/:([^\/]+)/g, (_, key) => {
             keys.push(key);

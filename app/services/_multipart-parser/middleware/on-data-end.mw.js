@@ -84,8 +84,8 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         const result = postMapper.getResult();
 
         const clientResponsePull = {
-            success:[],
-            error:[],
+            success: [],
+            error: [],
         };
 
         for (const [addr, { rowId, tableName }] of Object.entries(result)) {
@@ -93,29 +93,31 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
             const DataBaseResponse = dataBase.readOne(tableName, rowId);
 
+            console.log({ DataBaseResponse });
 
-            console.log({DataBaseResponse});
-
-
-            if(DataBaseResponse.success) {
-
+            if (DataBaseResponse.success) {
                 const row = {};
 
-                for (const [prop, value] of DataBaseResponse.success.rowById.entries()) {
-                    row[prop] = value ;
+                for (const [
+                    prop,
+                    value,
+                ] of DataBaseResponse.success.rowById.entries()) {
+                    row[prop] = value;
                 }
 
-                clientResponsePull.success.push({tableName, row});
+                clientResponsePull.success.push({ tableName, row });
 
                 continue;
             }
 
-            if(DataBaseResponse.error) {
-
+            if (DataBaseResponse.error) {
                 const row = {};
 
-                for (const [prop, value] of DataBaseResponse.error.rowById.entries()) {
-                    row[prop] = value ;
+                for (const [
+                    prop,
+                    value,
+                ] of DataBaseResponse.error.rowById.entries()) {
+                    row[prop] = value;
                 }
 
                 clientResponsePull.error.push(row);

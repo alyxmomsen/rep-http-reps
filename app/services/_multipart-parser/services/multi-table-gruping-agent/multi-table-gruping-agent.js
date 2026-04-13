@@ -193,13 +193,6 @@ class MultiTableGrouppingAgent {
                 );
             }
 
-
-
-
-
-
-
-
             const fileGroupId = randomBytes(32).toString('hex');
 
             const fileDataSet = defaultStateDataSetFactory({
@@ -409,7 +402,6 @@ class MultiTableGrouppingAgent {
      * });
      */
     constructor(deps = {}) {
-
         const dataTransformer = deps.dataTransformer || null;
         const multiTableProtocolParser = deps.multiTableProtocolParser || null;
 

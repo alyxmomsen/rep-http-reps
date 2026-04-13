@@ -15,7 +15,7 @@ const FORM_HANDLER_CONSTANTS = {
     ASSETS_PATH: resolve('./assets/html/form.html'),
 };
 
-console.log({FORM_HANDLER_CONSTANTS});
+console.log({ FORM_HANDLER_CONSTANTS });
 
 /**
  *
@@ -31,7 +31,6 @@ class FormHandler {
      * @returns {Promise<void>}
      */
     static async processForm(req, res, deps = {}) {
-
         // ----------- deps fetching --------------------
 
         const contentTypeHandlersRouter = deps.contentTypeHandlersRouter;
@@ -55,7 +54,7 @@ class FormHandler {
             throw new Error(`contentTypeHandlersRouter is not provided`);
         }
 
-        // ------------------------------------------------ 
+        // ------------------------------------------------
 
         const { headers } = req;
 
@@ -76,7 +75,6 @@ class FormHandler {
         const [contentType, contentTypeAttr] = contentTypeHeader.split(/;\s*/);
 
         try {
-
             const contentTypeController =
                 contentTypeHandlersRouter.getHandlerController(contentType);
             const ControllerResponse = await contentTypeController.handle(
@@ -112,9 +110,7 @@ class FormHandler {
             res.writeHead(200, {
                 'content-type': 'application/json',
             });
-            res.end(
-                JSON.stringify(ControllerResponse)
-            );
+            res.end(JSON.stringify(ControllerResponse));
             return;
         } catch (err) {
             res.writeHead(520, {
@@ -147,13 +143,12 @@ class FormHandler {
             });
             res.end(file);
         } catch (e) {
-
             console.log({ e });
 
             res.writeHead(500, 'internal error', {
                 'content-type': 'text/plain',
             });
-            
+
             res.end('500. internal error');
         }
     }

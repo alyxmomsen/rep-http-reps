@@ -50,9 +50,8 @@ router.get('/video/:filename', async (req, res) => {});
 router.get(
     '/l/form',
     async (ctx, next) => {
-
         const { req, res, params, queryParams } = ctx;
-    
+
         console.log('handle form middleware');
         await next('test');
         return;
@@ -70,16 +69,13 @@ router.get(
     работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
 */
 router.post('/api/handle-form', (ctx) => {
-
     const { req, res } = ctx;
 
-    FormHandler.processForm(req, res, { contentTypeHandlersRouter })
-
+    FormHandler.processForm(req, res, { contentTypeHandlersRouter });
 });
 
 createRoute('/api/get-playlist/:type', async (ctx) => {
-
-    const { req, res, params  } = ctx;
+    const { req, res, params } = ctx;
 
     const dbAdapter = dbControllersRouter.get('video-playlist');
 
@@ -210,7 +206,6 @@ createRoute('/api/get-file/:id', async (ctx) => {
 
 /* test route for URL params */
 router.get('/test/:id/foo/:bar', async (ctx) => {
-
     const { req, res } = ctx;
 
     const { method, url, params, queryParams } = req;

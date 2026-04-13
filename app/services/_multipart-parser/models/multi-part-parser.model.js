@@ -12,7 +12,6 @@ class MultipartFormdataHandler {
      * @returns {Promise<{error?:Object;success?:Object}>}
      */
     async handle(req, res, payload) {
-
         if (!payload) {
             return {
                 error: {
@@ -110,7 +109,7 @@ class MultipartFormdataHandler {
 
                 /* получаем смердженную иерархическую структуру  */
                 const mergedGroups = multiTableGroupingAgent.getGroups();
-                
+
                 const middlewareresponse = await this.#executeMiddleware(
                     mergedGroups,
                     this.#onDataEndMiddleware

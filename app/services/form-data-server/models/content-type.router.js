@@ -40,7 +40,6 @@ class ContentTypeHandlersRouter {
     }
 
     registrateContentTypeHandler(contentType, handler) {
-        
         let isContentTypeValid = false;
         for (const [key, registratedContentType] of Object.entries(
             ContentTypeHandlersRouter.contentTypesMap

@@ -5,7 +5,6 @@ const { resolve } = require('node:path');
 const FORM_TEMPLATE_PATH = resolve('./assets/html/form.html');
 
 async function renderMultipartForm(ctx) {
-
     const { req, res } = ctx;
 
     console.log('render...');

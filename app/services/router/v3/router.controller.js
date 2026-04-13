@@ -1,14 +1,7 @@
-
-
 class DIContainer {
-
-    
-
     /**
-     * 
-     * @param {Object} deps 
+     *
+     * @param {Object} deps
      */
-    constructor(deps={}) {
-        
-    }
+    constructor(deps = {}) {}
 }

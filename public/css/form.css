@@ -3,10 +3,10 @@
 }
 
 input {
-	padding: 4px;
-	border-radius: 4px;
-	font-weight: bold;
-	color: #002e86;
+    padding: 4px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #002e86;
 }
 
 .form-element {
@@ -56,14 +56,14 @@ input {
 
 /* video elem modal window */
 #modal-window--video {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: auto;
-	/* display: none; */
-	display: flex;
-	aspect-ratio: 16/9;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    /* display: none; */
+    display: flex;
+    aspect-ratio: 16/9;
 }
 
 #controls--video__show-form {
@@ -74,10 +74,10 @@ input {
 }
 
 video#video--main {
-	width: 100%;
-	aspect-ratio: 16/9;
-	background-color: #091117;
-	position: absolute;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background-color: #091117;
+    position: absolute;
 }
 
 /* form modal-window */
@@ -174,26 +174,26 @@ video#video--main {
 /* video-playlist */
 
 #controls--video {
-	z-index: 0;
-	align-self: end;
-	width: 100%;
-	top: 100%;
-	position: absolute;
+    z-index: 0;
+    align-self: end;
+    width: 100%;
+    top: 100%;
+    position: absolute;
 }
 
 #playlist--video {
-	position: absolute;
-	top: 0;
-	color: #22232b;
-	background-color: #0e1f3267;
-	padding: 9px;
-	width: 40%;
-	height: 100%;
-	/* display: flex; */
-	display: none;
-	flex-direction: column;
-	gap: 9px;
-	transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
+    position: absolute;
+    top: 0;
+    color: #22232b;
+    background-color: #0e1f3267;
+    padding: 9px;
+    width: 40%;
+    height: 100%;
+    /* display: flex; */
+    display: none;
+    flex-direction: column;
+    gap: 9px;
+    transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
 }
 
 #playlist--video:hover {
