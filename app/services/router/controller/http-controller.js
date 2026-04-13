@@ -238,12 +238,22 @@ function createRoute(url, handler) {
     router.get(url, handler);
 }
 
-
+/**
+ * 
+ * @param {{req:IncomingMessage;res:ServerResponse}} ctx 
+ * @returns 
+ */
 async function StreamVideoRouteHandler (ctx) {
 
     console.log('StreamVideoRouteHandler: called', {ctx:ctx.params.rowId});
 
-    const rowId = ctx?.params?.rowId;
+    const { req, res } = ctx;
+
+    const headers = req.headers;
+
+    if(headers.range) {
+        console.log({range});
+    }
 
     const dbresponse = dataBase.readOne('files', ctx.params.rowId);
 
