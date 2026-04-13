@@ -1,12 +1,12 @@
-const { StateContainer: StateRollBackContainer } = require('./transaction.model');
+const { StateContainer } = require("./transaction.model");
 
-class StateContainerController {
+class StateContainerFactory {
     create() {
-        const container = new StateRollBackContainer({});
+        const container = new StateContainer({});
         return container;
     }
 
     constructor() {}
 }
 
-module.exports = { StateContainerController: StateContainerController };
+module.exports = { StateContainerFactory };

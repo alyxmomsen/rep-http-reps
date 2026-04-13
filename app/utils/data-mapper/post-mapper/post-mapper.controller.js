@@ -3,10 +3,11 @@ const {
 } = require('../../../services/filemanager.service.js/fmanager.controller');
 const { PostMapper } = require('./post-mapper.model');
 const {
-    StateContainerController: SetRollBackContainerFactory,
-    StateContainerController: StateRollBackContainerFactory,
+    StateContainerFactory: SetRollBackContainerFactory,
+    StateContainerFactory: StateRollBackContainerFactory,
+    StateContainerFactory,
 } = require('./transactions/transaction.controller');
-const { StateContainer: StateRollBackContainer } = require('./transactions/transaction.model');
+const { StateContainer: StateRollBackContainer, StateContainer } = require('./transactions/transaction.model');
 
 /**
  * @throws {Error} - PostMapperDIContainer: PostMapper required
@@ -21,7 +22,7 @@ class PostMapperDIContainer {
                 rollBackContainerFactory: new SetRollBackContainerFactory(),
             }),
             linkAction: LinkActionFactory({
-                rollBackContainerFactory: new SetRollBackContainerFactory(),
+                StateContainerFactory: new SetRollBackContainerFactory(),
             }),
             stateRollBackContainerFactory: new SetRollBackContainerFactory(),
         });
@@ -40,7 +41,7 @@ const postMapperDIContainer = new PostMapperDIContainer({});
 module.exports = {
     postMapperDIContainer,
     LinkAction: LinkActionFactory({
-        rollBackContainerFactory: new StateRollBackContainerFactory(),
+        StateContainerFactory: new StateRollBackContainerFactory(),
     }),
     FileAction: FileActionFactory({
         rollBackContainerFactory: new StateRollBackContainerFactory(),
@@ -56,13 +57,13 @@ module.exports = {
 /**
  *
  * @param {Object} deps
- * @param {StateRollBackContainerFactory} deps.rollBackContainerFactory
- * @returns (payload:Object) => Promise<any>
+ * @param {StateContainerFactory} deps.StateContainerFactory
+ * @returns {(payload:Object) => Promise<any>}
  */
 function LinkActionFactory(deps = {}) {
-    const containerFactory = deps.rollBackContainerFactory;
+    const StateContainerFactory = deps.StateContainerFactory;
 
-    if (!containerFactory) {
+    if (!deps.StateContainerFactory) {
         throw new Error();
     }
 
@@ -71,37 +72,40 @@ function LinkActionFactory(deps = {}) {
     /**
      *
      * @param {Object} payload
-     * @returns
+     * @param {Object} payload.tableName
+     * @param {Object} payload.groupId
+     * @returns {StateContainer}
      */
     const LinkAction = async (payload) => {
         /**
          * @description
          * контейнер для обрабатываемго поля
          */
-        const columnContainer = containerFactory.create();
+        const CurrentContainer = StateContainerFactory.create();
 
         /**
          *
-         * @param {import('./transactions/transaction.model').PreCommitActionController} controller
-         * @param {*} deps
+         * @param {import('./transactions/transaction.model').PreCommitActionController} ContainerInterface
+         * @param {Object} deps
+         * @param {Map<string,StateContainer>} deps.globalContainers
          */
-        const preCommitAction = (controller, deps) => {
-            /**
-             * @type {Map<string,StateRollBackContainer>}
-             */
-            const globalContainers = deps;
+        const ContainerActionCallBack = (ContainerInterface, deps) => {
+            // /**
+            //  * @type {Map<string,StateContainer>}
+            //  */
+            // const globalContainers = deps;
 
             const targetContainerKey = `${payload.tableName}/${payload.groupId}`;
-            const targetContainer = globalContainers.get(targetContainerKey);
+            const targetContainer = deps.globalContainers.get(targetContainerKey);
 
             if (!targetContainer) {
                 console.log('link payload', {
                     payload,
-                    globalContainers,
+                    globalContainers:deps.globalContainers,
                     targetContainer,
                 });
 
-                controller.setState(
+                ContainerInterface.setState(
                     'pending',
                     `no target container ${targetContainerKey}`, // пока что пометка для разработки,
                     // но каждый случай можно закодировать для дальнейшего использования в системе
@@ -137,34 +141,34 @@ function LinkActionFactory(deps = {}) {
             });
 
             if (targetContainerState.value === 'done') {
-                controller.setState('done', 'target container is "done"');
-                controller.setData(targetContainerData);
+                ContainerInterface.setState('done', 'target container is "done"');
+                ContainerInterface.setData(targetContainerData);
                 return;
             }
 
             if (targetContainerState.value === 'rejected') {
-                controller.setState(
+                ContainerInterface.setState(
                     'rejected',
                     'target container is rejected, and current must be too'
                 );
-                controller.setData(null);
+                ContainerInterface.setData(null);
                 return;
             }
 
-            controller.setState(
+            ContainerInterface.setState(
                 'pending',
                 'target container is pending, and current must be too'
             );
-            controller.setData(null);
+            ContainerInterface.setData(null);
         };
 
-        columnContainer.setAction('main', preCommitAction);
+        CurrentContainer.setAction('main', ContainerActionCallBack);
 
         // transaction.setRollBack('main', () => {
         //     // console.log('link main rollback');
         // });
 
-        return columnContainer;
+        return CurrentContainer;
     };
 
     return LinkAction;
@@ -183,13 +187,23 @@ function FileActionFactory(deps = {}) {
         throw new Error();
     }
 
+
+    /**
+     * 
+     * @param {Buffer<ArrayBuffer>} payload 
+     * @returns 
+     */
     const FileAction = async (payload) => {
+
+        console.log('file action payload: ', {payload});
+
         const columnContainer = rollBackContainerFactory.create();
 
         /**
          *
-         * @param {import("./transactions/transaction.model").PreCommitActionController} controller
+         * @param {import('./transactions/transaction.model').PreCommitActionController} ContainerInterface
          * @param {Object} deps
+         * @param {Map<string,StateContainer>} deps.globalContainers
          */
         const preCommitAction = async (controller, deps = {}) => {
             const { success, error } = await filemanager.write(payload);
@@ -239,7 +253,7 @@ function DataActionFactory(deps = {}) {
     const DataAction = async (payload) => {
         const transaction = rollBackContainerFactory.create();
 
-        transaction.setAction('main', (controller) => {
+        transaction.setAction('main', (controller, deps) => {
             controller.setData(
                 payload instanceof Buffer ? payload.toString('utf-8') : payload
             );

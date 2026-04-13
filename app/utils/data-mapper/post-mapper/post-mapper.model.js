@@ -5,8 +5,9 @@ const {
     DBAdapter,
 } = require('../../../services/database-adapter/models/db-adapter.model');
 const {
-    StateContainerController: StateRollBackContainerFactory,
+    StateContainerFactory,
 } = require('./transactions/transaction.controller');
+
 const { StateContainer } = require('./transactions/transaction.model');
 // const {
 //     StateContainer: StateContainer,
@@ -14,6 +15,10 @@ const { StateContainer } = require('./transactions/transaction.model');
 // const {
 //     TransactionsContainer,
 // } = require('./transactions/transactios-container.model');
+
+const Factories = {
+    GroupContainerAction: GroupContainerActionFactory,
+};
 
 class PostMapper {
     async processDataSet(data) {
@@ -107,68 +112,86 @@ class PostMapper {
      * @returns
      */
     async #processGroup(tableRowDataSet, dbTableName) {
-        /**
-         * @description
-         * represent the row and provide util interface
-         */
-        const currentRowContainer = this.#StateContainerFactory.create();
-
-        const Buffer = {
-            GroupContainer: '',
+        const Args = {
+            TableRowDataSet: tableRowDataSet,
+            dbTableName: dbTableName,
         };
 
-        /**
-         * @description
-         * для каждой DB колонки создается отдельный контейнер
-         * и пушится в этот буффер
-         * @type {Map<string,StateCon>}
-         */
-        const rowContainersBuffer = new Map();
+        const CurrentGroup = {
+            /**
+             * @description
+             * represent the row and provide util interface
+             */
+            Container: this.#factories.StateContainer.create(),
+        };
+
+        const Buffers = {
+            /**
+             * @description
+             * для каждой DB колонки создается отдельный контейнер
+             * и пушится в этот буффер
+             * @type {Map<string,StateContainer>}
+             */
+            GroupContainersPull: new Map(),
+        };
 
         for (const [
-            columnName,
-            { action: columnActionName, payload: columnActionPayload },
-        ] of Object.entries(tableRowDataSet)) {
-            const ColumnPayloadlAction = this.#actions.get(columnActionName);
-            if (!ColumnPayloadlAction) {
+            tableColumnName,
+            { action: leafActionName, payload: leafActionPayload },
+        ] of Object.entries(Args.TableRowDataSet)) {
+            const IterationState = {
+                tableColumnName: tableColumnName,
+                leafActionName: leafActionName,
+                leafActionPayload: leafActionPayload,
+            };
+
+            const LeafPropertyAction =
+                this.#Actions[IterationState.leafActionName];
+            if (!LeafPropertyAction) {
                 throw new Error(
                     `PostMapper::process/action: action not received`
                 );
             }
 
             /**
-             * @type {StateContainer}
+             * @type {{LeafStateContainer:StateContainer}}
              */
-            const currentRowColumnContainer =
-                await ColumnPayloadlAction(columnActionPayload);
+            const LeafActionResult = {
+                LeafStateContainer: await LeafPropertyAction(
+                    IterationState.leafActionPayload
+                ),
+            };
 
-            rowContainersBuffer.set(columnName, currentRowColumnContainer);
+            Buffers.GroupContainersPull.set(
+                IterationState.tableColumnName,
+                LeafActionResult.LeafStateContainer
+            );
         }
 
         /**
          * у контейнеров есть метод preCommit
          * который вызывает его Экшны, а те, в свою очередь, дочерние экшны
          */
-        currentRowContainer.setAction(
+        CurrentGroup.Container.setAction(
             'main',
-            rowContainerActionFactory({
-                groupContainers: this.#globalPull.containers,
-                rowContainers: rowContainersBuffer,
-                tableName: dbTableName,
+            Factories.GroupContainerAction({
+                globalContainersPull: this.#globalPull.containers,
+                groupLeafsContainers: Buffers.GroupContainersPull,
+                DBTableName: Args.dbTableName,
             })
         );
 
-        return currentRowContainer;
+        return CurrentGroup.Container;
     }
 
-    getResult() {
-        const dataPull = {};
+    getGlobalContainersPullStates() {
+        const dataSet = {};
 
         for (const [address, container] of this.#globalPull.containers) {
-            dataPull[address] = container.getData();
+            dataSet[address] = container.getData();
         }
 
-        return dataPull;
+        return dataSet;
     }
 
     /**
@@ -179,18 +202,22 @@ class PostMapper {
     #globalPull;
 
     /**
-     * @type {Map<string,() => Promise<StateContainer>>}
+     * @type {{
+     *  file:() => Promise<StateContainer>;
+     *  link:() => Promise<StateContainer>;
+     *  data:() => Promise<StateContainer>;
+     * }}
      */
-    #actions;
+    #Actions;
 
     /**
-     * @type {StateRollBackContainerFactory}
+     * @type {StateContainerFactory}
      */
     #StateContainerFactory;
 
     /**
      * @type {{
-     *  StateContainer:StateRollBackContainerFactory;
+     *  StateContainer:StateContainerFactory;
      * }}
      */
     #factories;
@@ -201,7 +228,10 @@ class PostMapper {
      * @param {Function} deps.fileAction
      * @param {Function} deps.linkAction
      * @param {Function} deps.dataAction
-     * @param {StateRollBackContainerFactory} deps.stateRollBackContainerFactory
+     * @param {StateContainerFactory} deps.stateRollBackContainerFactory
+     * @param {{
+     *  Group:Object;
+     * }} deps.containerActionFactories
      */
     constructor(deps = {}) {
         const fileAction = deps.fileAction;
@@ -218,11 +248,11 @@ class PostMapper {
             throw new Error('Data-Action required');
         }
 
-        this.#actions = new Map();
-
-        this.#actions.set('link', linkAction);
-        this.#actions.set('file', fileAction);
-        this.#actions.set('data', dataAction);
+        this.#Actions = {
+            file: fileAction,
+            link: linkAction,
+            data: dataAction,
+        };
 
         // services deps
 
@@ -236,6 +266,8 @@ class PostMapper {
         }
 
         this.#StateContainerFactory = stateRollBackContainerFactory;
+
+        // set factories
 
         this.#factories = {
             StateContainer: stateRollBackContainerFactory,
@@ -257,64 +289,93 @@ module.exports = { PostMapper };
  * will be
  *
  * @param {Object} deps
- * @param {Map<string,StateContainer>} deps.groupContainers - global containers
- * @param {Map<string,StateContainer>} deps.rowContainers - represent db-columns containers
- * @param {string} deps.tableName
+ * @param {Map<string,StateContainer>} deps.globalContainersPull - global containers
+ * @param {Map<string,StateContainer>} deps.groupLeafsContainers - represent db-columns containers
+ * @param {string} deps.DBTableName
  * @returns {(controller:import('./transactions/transaction.model').PreCommitActionController) => Promise<any>}
  */
-function rowContainerActionFactory(deps = {}) {
-    const groupContainers = deps.groupContainers;
-    const rowContainers = deps.rowContainers;
-    const tableName = deps.tableName;
+function GroupContainerActionFactory(deps = {}) {
+    if (
+        !deps.groupLeafsContainers ||
+        !deps.globalContainersPull ||
+        !deps.DBTableName
+    ) {
+        throw new Error(`GroupContainerActionFactory: deps required`);
+    }
 
     /**
      *
-     * @param {import('./transactions/transaction.model').PreCommitActionController} parentContainerController
-     * @returns
+     * @param {import('./transactions/transaction.model').PreCommitActionController} ServedContainerInterface
+     * @returns {Function}
      */
-    const RowContainerAction = async (parentContainerController) => {
-        /**
-         * @type {Object.<string,any>}
-         * @description
-         * buffer для накопления подготовленных данных перед отправкой в DataBase
-         */
-        const dataBaseDataSetBuffer = {};
+    const StateContainerAction = async (ServedContainerInterface) => {
+        // const dataBaseDataSetBuffer = {};
 
-        /**
-         *
-         */
-        let isDoneFlag = true;
+        const LocalDataCache = {
+            /**
+             * @type {Object.<string,any>}
+             * @description
+             * buffer для накопления подготовленных данных перед отправкой в DataBase
+             */
+            DBDataSet: {},
+        };
+
+        const Flags = {
+            /**
+             * @default true
+             * @description the flag let to set his state with the 'false'
+             * @type {boolean}
+             */
+
+            allLeafsIsDone: true,
+        };
 
         /**
          *
          */
         for (const [
-            columnContainerName,
-            columnContainer,
-        ] of rowContainers.entries()) {
-            await columnContainer.preCommit(groupContainers);
+            propertyName,
+            leafContainer,
+        ] of deps.groupLeafsContainers.entries()) {
+            const CurrentIteration = {
+                propertyName,
+                leafContainer,
+            };
 
-            /**
-             * @type {import('./transactions/transaction.model').ContainerState}
-             */
-            const colContainerState = columnContainer.getState();
+            // const Leaf = {
+            //     Container: leafContainer,
+            //     ContainerSnapShot: null,
+            // };
 
-            /**
-             *
-             */
-            const colContainerData = columnContainer.getData();
+            // Leaf.Container.preCommit(deps.globalContainersPull);
 
-            dataBaseDataSetBuffer[columnContainerName] = colContainerData;
+            await CurrentIteration.leafContainer.preCommit(
+                deps.globalContainersPull
+            );
+
+            const LeafContainerSnapshot = {
+                /**
+                 * @type {import('./transactions/transaction.model').ContainerState}
+                 */
+                state: CurrentIteration.leafContainer.getState(),
+                data: CurrentIteration.leafContainer.getData(),
+            };
+
+            LocalDataCache.DBDataSet[CurrentIteration.propertyName] =
+                LeafContainerSnapshot.data;
 
             // console.log('PostMapper::handleRow/setAction/column state: ', {colContainerName,colContainerState, colContainerData});
             /**
              * если хотя бы одна колонка реджекнутая, то
              * весь data-set идет в брак
              */
-            if (colContainerState.value === 'rejected') {
-                isDoneFlag = false;
-                parentContainerController.setState(
-                    'rejected',
+            if (
+                LeafContainerSnapshot.state.value ===
+                StateContainer.States.Rejected
+            ) {
+                Flags.allLeafsIsDone = false;
+                ServedContainerInterface.setState(
+                    StateContainer.States.Rejected,
                     'some one column is rejected'
                 );
                 return;
@@ -326,30 +387,45 @@ function rowContainerActionFactory(deps = {}) {
              * как это делается:
              * устанавливается флаг `isDone = false`
              */
-            if (colContainerState.value === 'pending') {
-                console.log(
-                    'colContainerState.message',
-                    colContainerState.message
-                );
-                isDoneFlag = false;
+            if (
+                LeafContainerSnapshot.state.value ===
+                StateContainer.States.Pending
+            ) {
+                console.log('LeafContainerSnapshot: ', LeafContainerSnapshot);
+                Flags.allLeafsIsDone = false;
             }
 
             console.log('column pre-commit state: ', {
-                colName: columnContainerName,
-                st: colContainerState,
+                colName: CurrentIteration.propertyName,
+                st: LeafContainerSnapshot.state,
             });
         }
 
         /**
          * @description
-         * если мы дошли до этого места и флаг `isDoneFlag` установлен как `false`,
+         * если мы дошли до этого места и флаг `Flags.groupStateIsDone` установлен как `false`,
          * это значит `rejected` небыло,
-         * но были `pending`
+         * но были `pending` states
          */
-        if (isDoneFlag === false) {
-            parentContainerController.setState('pending', 'someone pending');
+        if (Flags.allLeafsIsDone === false) {
+            ServedContainerInterface.setState(
+                StateContainer.States.Pending,
+                'someone is pending'
+            );
             return;
         }
+
+        console.log(`StateContainerAction/state: `, {
+            groupLeafsContainers: deps.groupLeafsContainers,
+        });
+
+        /**
+         *
+         * state: leafs state satisfied
+         *
+         * next step:
+         *
+         */
 
         /**
          *
@@ -360,52 +436,47 @@ function rowContainerActionFactory(deps = {}) {
         /**
          * @type {DBAdapter|undefined}
          */
-        const dbAdapter = dbControllersRouter.get(tableName);
+        const dbAdapter = dbControllersRouter.get(deps.DBTableName);
 
         if (!dbAdapter) {
-            parentContainerController.setState('rejected', 'db name error');
-            parentContainerController.setData(null);
+            ServedContainerInterface.setState('rejected', 'db name error');
+            ServedContainerInterface.setData(null);
             throw new Error();
             return;
         }
 
         // пробуем сохраниться
-        const dbAdapterResult = dbAdapter.createOne(dataBaseDataSetBuffer);
+        const dbAdapterResult = dbAdapter.createOne(LocalDataCache.DBDataSet);
         // console.log({dbAdapterResult});
         // throw new Error();
 
         if (dbAdapterResult.error) {
             /*  */
-            parentContainerController.setState(
-                'rejected',
-                'db storring failed'
-            );
-            parentContainerController.setData(null);
+            ServedContainerInterface.setState('rejected', 'db storring failed');
+            ServedContainerInterface.setData(null);
             throw new Error();
             return;
         }
 
         if (!dbAdapterResult.success) {
             /* системная ошибка,- по каой-то причине не поля "success"*/
-            parentContainerController.setState('rejected', 'internal db error');
-            parentContainerController.setData(null);
+            ServedContainerInterface.setState('rejected', 'internal db error');
+            ServedContainerInterface.setData(null);
             throw new Error();
             return;
         }
 
         // --------------------------------------
         // успешно
-        console.log('database data-set', {
-            dataBaseDataSet: dataBaseDataSetBuffer,
-        });
+        console.log('database data-set', { Buffer: LocalDataCache });
         //---------------------------------------
 
-        parentContainerController.setState('done', 'data was stored in the DB');
-        parentContainerController.setData({
+        ServedContainerInterface.setState('done', 'data was stored in the DB');
+        ServedContainerInterface.setData({
             rowId: dbAdapterResult.success.newRowIdHash,
-            tableName: tableName,
+            tableName: deps.DBTableName,
         });
     };
 
-    return RowContainerAction;
+    return StateContainerAction;
 }

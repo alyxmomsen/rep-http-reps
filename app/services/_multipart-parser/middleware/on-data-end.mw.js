@@ -20,7 +20,7 @@ const {
     LinkActionFactory,
 } = require('../../../utils/data-mapper/post-mapper/post-mapper.controller');
 const {
-    StateContainerController: StateRollBackContainerFactory,
+    StateContainerFactory: StateRollBackContainerFactory,
 } = require('../../../utils/data-mapper/post-mapper/transactions/transaction.controller');
 const { dataBase } = require('../../database/controller/db.controller');
 
@@ -72,7 +72,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
                 rollBackContainerFactory: new StateRollBackContainerFactory(),
             }),
             linkAction: LinkActionFactory({
-                rollBackContainerFactory: new StateRollBackContainerFactory(),
+                StateContainerFactory: new StateRollBackContainerFactory(),
             }),
             stateRollBackContainerFactory: new StateRollBackContainerFactory(),
         });
@@ -81,7 +81,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
 
         await postMapper.processDataSet(payload);
 
-        const result = postMapper.getResult();
+        const result = postMapper.getGlobalContainersPullStates();
 
         const clientResponsePull = {
             success: [],

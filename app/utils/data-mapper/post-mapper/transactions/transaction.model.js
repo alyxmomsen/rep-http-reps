@@ -72,7 +72,7 @@ class StateContainer {
                     setRollBack: this.setRollBack.bind(this),
                     setData: (value) => this.#setData(value),
                 },
-                globalContainers
+                {globalContainers}
             );
         }
     }

@@ -21,11 +21,11 @@ class Transaction {
 
     /**
      *
-     * @param {Object} data
-     * @param {Buffer<ArrayBuffer>} data.fileData
-     * @param {string} data.mime
-     * @param {string} data.linkId
-     * @param {string} data.originalFileName
+     * @param {Object} Data
+     * @param {Buffer<ArrayBuffer>} Data.fileData
+     * @param {string} Data.mime
+     * @param {string} Data.linkId
+     * @param {string} Data.originalFileName
      */
     async processFile(data) {
         console.log({ isfailed: this.#failed });
