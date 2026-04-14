@@ -1,5 +1,6 @@
 :root {
     --scale-value: 9px;
+    --playlistWidht:40%;
 }
 
 input {
@@ -56,14 +57,15 @@ input {
 
 /* video elem modal window */
 #modal-window--video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    /* display: none; */
-    display: flex;
-    aspect-ratio: 16/9;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: auto;
+	/* display: none; */
+	display: flex;
+	aspect-ratio: 16/9;
+	overflow: hidden;
 }
 
 #controls--video__show-form {
@@ -82,17 +84,17 @@ video#video--main {
 
 /* form modal-window */
 #modal-window--a {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    /* display: flex; */
-    display: none;
-    justify-content: center;
-    align-items: center;
-    background-color: #281f30d4;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 2;
+	/* display: flex; */
+	display: none;
+	justify-content: center;
+	align-items: center;
+	background-color: #281f30d4;
 }
 
 #modal-window--a .frame {
@@ -174,48 +176,73 @@ video#video--main {
 /* video-playlist */
 
 #controls--video {
-    z-index: 0;
-    align-self: end;
-    width: 100%;
-    top: 100%;
-    position: absolute;
+	z-index: 0;
+	align-self: end;
+	width: 100%;
+	bottom: 90%;
+	position: absolute;
+	display: flex;
+	justify-content: end;
+	background-color: #20515d6b;
 }
 
 #playlist--video {
+    z-index: 1;
+	--width: 40%;
 	position: absolute;
 	top: 0;
-	color: #22232b;
+	color: #fff;
 	background-color: #0e1f3267;
 	padding: 9px;
 	width: 40%;
-	height: 100%;
-	/* display: flex; */
-	display: none;
+	height: 93%;
+	display: flex;
+	/* display: none; */
 	flex-direction: column;
 	gap: 9px;
 	transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
-	right: 88%;
+	right: 98%;
+	/* animation: ShowPlayList .2s ease-out 0s 1 forwards; */
 }
 
 #playlist--video:hover {
-    background-color: #0a066f;
-    color: #8a8fb3;
+	background-color: #2e2e51ed;
+	color: #8a8fb3;
 }
 
 #playlist--video > div {
-    display: flex;
-    gap: 9px;
-    padding: 4px;
-    border: 1px solid #322e2e4a;
-    border-radius: 4px;
-    transition: color 1s cubic-bezier(0, 0.39, 0, 0.62);
-    transition: color 0.2s ease-out;
-    cursor: pointer;
+	display: flex;
+	gap: 9px;
+	padding: 6px;
+	border: 1px solid #322e2e4a;
+	border-radius: 4px;
+	transition: color 1s cubic-bezier(0, 0.39, 0, 0.62);
+	transition: color 0.2s ease-out;
+	cursor: pointer;
 }
 
-#playlist--video:hover > div {
+#playlist--video > div:hover {
     border: 1px solid #8547a26b;
 }
 
 #playlist--video > div:hover {
+
+}
+
+@keyframes ShowPlayList {
+    from {
+        right:98%;
+    }
+    to {
+        right:calc(100% - var(--playlistWidht))
+    }
+}
+
+@keyframes HidePlaylist {
+    from {
+        right:calc(100% - var(--playlistWidht))
+    }
+    to {
+        right:98%;
+    }
 }
