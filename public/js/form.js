@@ -1,3 +1,18 @@
+/**
+ *
+ * @typedef {{
+ *   baseHTML: HTMLElement;
+ *   timeoutsMap: Map<string,Object>,
+ *   options:{
+ *    rollBackImplementation:() => Promise<any>;
+ *    rollBackTimeOut:number;
+ *   };
+ *   callerFnName:string;
+ *  }} ActionContextParam
+ *
+ * @typedef {(ctx:ActionContextParam) => Promise<any>} HTMLControllerAction
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
     // ============= grab HTML elements =============
 
@@ -69,63 +84,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }),
         Playlist: () =>
             new HTMLElementControllerBehaviors({
-                /**
-                 *
-                 * @param {{
-                 *  baseHTML: HTMLElement;
-                 *  timeoutsMap: Map<string,Object>,
-                 *  options:{
-                 *   rollBackImplementation:() => Promise<any>;
-                 *   rollBackTimeOut:number;
-                 *  };
-                 *  callerFnName;
-                 * }} ctx
-                 */
-                show: (ctx = {}) => {
-                    console.log(`Playlist show beh`);
-
-                    const {
-                        baseHTML,
-                        options /* : { rollBackImplementation, rollBackTimeOut } */,
-                        timeoutsMap,
-                    } = ctx;
-
-                    const RollBack = {
-                        Implementation:
-                            ctx.options
-                                .rollBackImplementation /* || ((f) => f) */,
-                        timeoutDuration: ctx.options.rollBackTimeOut /* || 0 */,
-                    };
-
-                    const clientId = ctx.callerFnName;
-
-                    ctx.baseHTML.style.display = 'flex';
-                    ctx.baseHTML.style.animation =
-                        'ShowPlayList .2s ease-out 0s 1 forwards';
-
-                    const Timeout = ctx.timeoutsMap.get(clientId);
-
-                    if (Timeout && Timeout.Id !== Infinity) {
-                        clearTimeout(Timeout.Id);
-                    }
-
-                    ctx.timeoutsMap.set(clientId, {
-                        Id: setTimeout(
-                            RollBack.Implementation,
-                            RollBack.timeoutDuration
-                        ),
-                        handler: RollBack.Implementation,
-                        duration: RollBack.timeoutDuration,
-                    });
-
-                    console.log({ timeoouts: ctx.timeoutsMap });
-                },
+                show: PlaylistControllerShowActon({}),
                 hide: (ctx) => {
                     ctx.baseHTML.style.animation =
                         'HidePlaylist .2s ease-out 0s 1 forwards';
                     ctx.baseHTML.onanimationend = () => {};
                 },
             }),
+    };
+
+    const ControllerBehaviors = {
+        Controls: {
+            Behavior: {},
+            Actions: {
+                Show: PlaylistControllerShowActon,
+            },
+        },
     };
 
     // --------------------------------------------
@@ -1222,4 +1196,53 @@ class HTMLElementControllerBehaviors {
         this.#actions.show = actions.show || ((f) => f);
         this.#actions.hide = actions.hide || ((f) => f);
     }
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @returns {HTMLControllerAction}
+ */
+function PlaylistControllerShowActon(deps = {}) {
+    /**
+     * 
+     * @param {ActionContextParam} ctx 
+     */
+    const Action = (ctx = {}) => {
+        console.log(`Playlist show beh`);
+
+        const {
+            baseHTML,
+            options /* : { rollBackImplementation, rollBackTimeOut } */,
+            timeoutsMap,
+        } = ctx;
+
+        const RollBack = {
+            Implementation:
+                ctx.options.rollBackImplementation /* || ((f) => f) */,
+            timeoutDuration: ctx.options.rollBackTimeOut /* || 0 */,
+        };
+
+        const clientId = ctx.callerFnName;
+
+        ctx.baseHTML.style.display = 'flex';
+        ctx.baseHTML.style.animation =
+            'ShowPlayList .2s ease-out 0s 1 forwards';
+
+        const Timeout = ctx.timeoutsMap.get(clientId);
+
+        if (Timeout && Timeout.Id !== Infinity) {
+            clearTimeout(Timeout.Id);
+        }
+
+        ctx.timeoutsMap.set(clientId, {
+            Id: setTimeout(RollBack.Implementation, RollBack.timeoutDuration),
+            handler: RollBack.Implementation,
+            duration: RollBack.timeoutDuration,
+        });
+
+        console.log({ timeoouts: ctx.timeoutsMap });
+    };
+
+    return Action;
 }
