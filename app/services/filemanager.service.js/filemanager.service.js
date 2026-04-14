@@ -75,14 +75,44 @@ class FileManager {
      * }>}
      */
     async read(filname) {
-        return await new Promise((res, rej) => {
+        let step = 0;
+        return await new Promise(async (res, rej) => {
+            console.log(`fm/step ${++step} | start`);
+            const Stats = {
+                fileSize:null,
+            }
+            
+            console.log(`fm/step ${++step} | stats init`);
             const readStream = createReadStream(join(this.#rootPath, filname));
+            
+            try {
+                console.log(`fm/step ${++step} | try get stats start`);
+                const stats = await stat(join(this.#rootPath, filname));
+                Stats.fileSize = stats.size ;
+                console.log(`fm/step ${++step} | try get stats end`);
+                // throw new Error(`fuckin err`);
+            }
+            catch (err) {
+                
+                console.log('FileManager::read/error: ', {err});
 
+                rej({
+                    error: {
+                        location: 'FileManager::read',
+                        message: 'get stats error',
+                        subjects: { error: err },
+                    },
+                });
+
+            }
+            
+            console.log(`fm/step ${++step} | `);
             readStream.on('ready', () => {
-                console.log('ready');
+                console.log('fm/ready');
                 res({
                     success: {
                         readStream,
+                        fileStats:Stats,
                     },
                 });
             });
@@ -98,7 +128,19 @@ class FileManager {
             });
 
             readStream.on('data', () => {});
+            console.log(`fm/step ${++step} | end`);
+
+            res({
+                success: {
+                    readStream,
+                    fileStats:Stats,
+                },
+            });
         });
+    }
+
+    async getRootPath () {
+        return this.#rootPath;
     }
 
     async delete(filename) {

@@ -182,18 +182,19 @@ video#video--main {
 }
 
 #playlist--video {
-    position: absolute;
-    top: 0;
-    color: #22232b;
-    background-color: #0e1f3267;
-    padding: 9px;
-    width: 40%;
-    height: 100%;
-    /* display: flex; */
-    display: none;
-    flex-direction: column;
-    gap: 9px;
-    transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
+	position: absolute;
+	top: 0;
+	color: #22232b;
+	background-color: #0e1f3267;
+	padding: 9px;
+	width: 40%;
+	height: 100%;
+	/* display: flex; */
+	display: none;
+	flex-direction: column;
+	gap: 9px;
+	transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
+	right: 88%;
 }
 
 #playlist--video:hover {

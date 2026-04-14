@@ -26,6 +26,8 @@ const {
 } = require('../../filemanager.service.js/fmanager.controller');
 const { HTTPRouter } = require('../v3/router.model');
 const { dataBase } = require('../../database/controller/db.controller');
+const { createReadStream } = require('fs');
+const { join } = require('path');
 // const { HTTPRouter } = require('../v2/model/router.model');
 const router = new HTTPRouter();
 
@@ -240,48 +242,176 @@ function createRoute(url, handler) {
 
 /**
  * 
- * @param {{req:IncomingMessage;res:ServerResponse}} ctx 
+ * @param {{
+ *  req:IncomingMessage;
+ *  res:ServerResponse;
+ *  params:Object.<string,string>;
+ *  queryParams:Object.<string,string>;
+ * }} ctx 
  * @returns 
  */
 async function StreamVideoRouteHandler (ctx) {
 
-    console.log('StreamVideoRouteHandler: called', {ctx:ctx.params.rowId});
+    let step = 0;
 
-    const { req, res } = ctx;
-
-    const headers = req.headers;
-
-    if(headers.range) {
-        console.log({range});
+    const Flags = {
+        IsRangeHeader: true,
+        IsRowIdParam: true,
     }
 
+    console.log('step: ', ++step);
 
-    // if(ranges)
+    console.log('StreamVideoRouteHandler: called');
 
-    const dbresponse = dataBase.readOne('files', ctx.params.rowId);
+    const { req, res, params, queryParams } = ctx;
 
-    if(dbresponse.error) {
-
-        ctx.res.end(JSON.stringify({
-            hello:'world',
-        }));
-        return;
-    }
-    
-    if(!dbresponse.success) {
+    if(!ctx.req || !ctx.res) {
         
+        throw new Error(`StreamVideoRouteHandler/ctx cust: no ctx.req || ctx.res`);
+    }
+    console.log('step: ', ++step)
+    if(!ctx.params || !ctx.queryParams) {
+        
+        console.log(`StreamVideoRouteHandler/ctx cust: no ctx.params || ctx.queryParams`);
+        ctx.res.writeHead(400, {
+            "content-type":'application/json',
+        });
         ctx.res.end(JSON.stringify({
-            foo:'bar',
+            message:'params required',
         }));
         return;
     }
+    console.log('step: ', ++step)
+    if(!ctx.params.rowId) {
+        
+        console.log(`StreamVideoRouteHandler/params cust: params.rowId no received`);
+        ctx.res.end(JSON.stringify({
+            message:'rowid required but not received',
+        }));
+        ctx.res.writeHead(400, {
+            "content-type":"application/json",
+        });
+        return;
+    }
+    console.log('step: ', ++step)
+    if(!req.headers.range) {
 
-    const filename = dbresponse.success.rowById.get('fileSystemFilename');
+        Flags.IsRangeHeader = false;
+    }
 
-    const filmanagerResponse = await filemanager.read(filename);
+    console.log('StreamVideoRouteHandler: params-set',{params:ctx.params, queryParams:ctx.queryParams});
+    console.log('step: ', ++step)
+    const ParamsSet = {
+        params:ctx.params,
+        queryParams:ctx.queryParams,
+    }
 
-    console.log('fm response: ', filmanagerResponse);
+    const dbresponse = dataBase.readOne('files', ParamsSet.params.rowId);
+    console.log('step: ', ++step)
+    if(dbresponse.error) {
+        ctx.res.writeHead(500, {
+            'content-type':'application/json',
+        });
+        ctx.res.end(JSON.stringify({
+            message:'db negative response',
+            error:dbresponse.error,
+        }));
+        return;
+    }   
+    console.log('step: ', ++step)    
+    if(!dbresponse.success) {
+        ctx.res.writeHead(500, {
+            'content-type':'application/json',
+        });
+        ctx.res.end(JSON.stringify({
+            message:'iternal error',
+        }));
+        return;
+    }
+    console.log('step: ', ++step)
+    const FileDataSet = {
+        start:0,
+        end:0,
+        mime:'application/octet-stream',
+        fileName:'',
+    }
 
-    await filmanagerResponse.success.readStream.pipe(ctx.res);
+    const fileSystemFilename = dbresponse.success.rowById.get('fileSystemFilename');
+    console.log('step: ', ++step)
+    const mime = dbresponse.success.rowById.get('mime');
+    console.log('step: ', ++step , 'message: smth')
+    const filmanagerResponse = await filemanager.read(fileSystemFilename);
+    console.log('step: ', ++step,  {filmanagerResponse})
+    if(filmanagerResponse.error) {
+        ctx.res.writeHead(500, {
+            'content-type':'application/json',
+        });
+        ctx.res.end(JSON.stringify({
+            message:'iternal error',
+            error:filmanagerResponse.error,
+        }));
+        return;
+    }
+    console.log('step: ', ++step)
+    console.log('StreamVideoRouteHandler/filmanagerResponse: ', {filmanagerResponse});
+
+    if(!ctx.req.headers.range) {
+
+        ctx.res.writeHead(200, {
+            'content-type':mime,
+            'content-length':filmanagerResponse.success.fileStats.fileSize,
+            'Accept-Ranges': 'bytes',
+        });
+
+        
+        await filmanagerResponse.success.readStream.pipe(ctx.res);
+        throw new Error();
+        return;
+    }
+    console.log('step: ', ++step)
+    // ctx.res.writeHead(200, {
+    //     'content-type':mime,
+    //     'content-length':filmanagerResponse.success.fileStats.fileSize,
+    // });
+
+    // await filmanagerResponse.success.readStream.pipe(ctx.res);
+
+    const FileStats = {
+        start:0,
+        end:0,
+        rangeLength:0,
+    }
+
+    const ranges = ctx.req.headers.range.replace('bytes=', '').split('-');
+
+    console.log('StreamVideoRouteHandler: ', {ranges} , filmanagerResponse.success.fileStats.fileSize);
+    console.log('step: ', ++step)
+    FileStats.start = Number.parseInt(ranges[0], 10);
+    FileStats.end = ranges[1] ? Number.parseInt(ranges[1], 10) : filmanagerResponse.success.fileStats.fileSize - 1;
+
+    const fileRootPath = await filemanager.getRootPath();
+    
+    const rs = createReadStream(join(fileRootPath, fileSystemFilename), {
+        start:FileStats.start,
+        end:FileStats.end,
+    });
+
+    console.log(`check that: ` , {start:FileStats.start, end:FileStats.end});
+    console.log('step: ', ++step)
+    ctx.res.writeHead(206, {
+        'Content-Type':mime,
+        'Content-Length':`${(FileStats.end - FileStats.start) + 1}`,
+        'Content-Range':`bytes ${FileStats.start}-${FileStats.end}/${filmanagerResponse.success.fileStats.fileSize}`,
+        'Accept-Ranges':'bytes',
+    });
+
+    console.log({
+        'Content-Type':mime,
+        'Content-Length':`${(FileStats.end - FileStats.start) + 1}`,
+        'Content-Range':`bytes ${FileStats.start}-${FileStats.end}/${filmanagerResponse.success.fileStats.fileSize}`,
+        'Accept-Ranges':'bytes',
+    });
+    console.log('step: ', ++step)
+    rs.pipe(ctx.res);
 
 }
