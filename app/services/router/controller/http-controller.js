@@ -82,12 +82,15 @@ router.post('/api/handle-form', (ctx) => {
     FormHandler.processForm(req, res, { contentTypeHandlersRouter });
 });
 
-createRoute('/api/get-playlist/:type', async (ctx) => {
+
+createRoute('/api/get-playlist', async (ctx) => {
+    console.log('step 1');
     const { req, res, params } = ctx;
 
     const dbAdapter = dbControllersRouter.get('video-playlist');
 
     try {
+        console.log('step 2');
         const { error, success } = dbAdapter.readAllRows();
 
         if (error) {
@@ -105,7 +108,7 @@ createRoute('/api/get-playlist/:type', async (ctx) => {
             );
             return;
         }
-
+        console.log('step 3');
         const validatedData = success?.validatedData || {};
 
         res.end(
@@ -116,6 +119,7 @@ createRoute('/api/get-playlist/:type', async (ctx) => {
             })
         );
     } catch (err) {
+        console.log('step 4');
         console.log('get playlist end-point: error: ', { err });
         res.writeHead(200, {
             'content-type': 'application/json',
@@ -128,6 +132,8 @@ createRoute('/api/get-playlist/:type', async (ctx) => {
             })
         );
     }
+
+    console.log('step 5');
 });
 
 /* 

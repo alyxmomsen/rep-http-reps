@@ -94,7 +94,7 @@ class RequestManager {
 
     constructor(url, method, finalHandler, beforeRequestFinalHandler) {
         if (!url || !method || !finalHandler || !beforeRequestFinalHandler) {
-            throw new Error(`required all`);
+            throw new Error(`required all deps`);
         }
 
         this.#url = url;
