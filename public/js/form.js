@@ -17,6 +17,10 @@ const AppState = {
     Pools: {
         Playlist: [],
     },
+    Playlist: {},
+    Form: {
+        isOpen: false,
+    },
 };
 
 // =============================================
@@ -1337,3 +1341,123 @@ function PlaylistControllerShowActon(deps = {}) {
 
     return Action;
 }
+
+class KeyController {
+    #keys;
+    #deps;
+
+    /**
+     * @description DI container — валидация зависимостей перед созданием инстанса
+     * @param {Object} deps — зависимости для внедрения
+     * @param {[]} deps.trackedKeys — зависимости для внедрения
+     * @param {Function} deps.onKeyChange — зависимости для внедрения
+     * @param {{isOpen:boolean}} deps.FormState — зависимости для внедрения
+     * @returns {() => KeyController} — фабрика создания экземпляра
+     */
+    static Instance(deps = {}) {
+        // Валидация зависимостей
+        if (deps.trackedKeys && !Array.isArray(deps.trackedKeys)) {
+            throw new Error('trackedKeys must be an array');
+        }
+
+        if (deps.onKeyChange && typeof deps.onKeyChange !== 'function') {
+            throw new Error('onKeyChange must be a function');
+        }
+
+        // Возвращаем фабрику с проверенными зависимостями
+        return () => new KeyController(deps);
+    }
+
+    constructor(deps = {}) {
+        this.#keys = new Set();
+        this.#deps = deps;
+
+        // Привязываем обработчики к экземпляру для возможности отписки
+        this.handleKeyDown = this.#handleKeyDown.bind(this);
+        this.handleKeyUp = this.#handleKeyUp.bind(this);
+
+        window.addEventListener('keydown', this.handleKeyDown);
+        window.addEventListener('keyup', this.handleKeyUp);
+    }
+
+    #handleKeyDown(e) {
+        // Фильтрация автоповтора
+        if (e.repeat) return;
+
+        // Если отслеживаем только определённые клавиши
+        const { trackedKeys } = this.#deps;
+        if (trackedKeys && !trackedKeys.includes(e.code)) return;
+
+        this.addKey(e.code);
+
+        // Опциональный callback
+        this.#deps.onKeyChange?.({ code: e.code, state: 'pressed' });
+    }
+
+    #handleKeyUp(e) {
+        this.removeKey(e.code);
+        this.#deps.onKeyChange?.({ code: e.code, state: 'released' });
+    }
+
+    update() {
+        const ActionsMap = {
+            KeyK: () => {
+                // this.#deps.FormState.isOpen
+                console.log('pressed K');
+            },
+        };
+
+        for (const [_, key] of this.#keys.entries()) {
+            ActionsMap[key]?.();
+        }
+
+        // for (const key of this.#deps.trackedKeys) {
+        //     if (this.#keys.has(key)) {
+        //         console.log('is');
+        //     }
+        // }
+    }
+
+    addKey(code) {
+        this.#keys.add(code);
+    }
+
+    removeKey(code) {
+        this.#keys.delete(code);
+    }
+
+    isPressed(code) {
+        return this.#keys.has(code);
+    }
+
+    getPressedKeys() {
+        return Array.from(this.#keys);
+    }
+
+    // Очистка ресурсов — критически важно для предотвращения утечек
+    destroy() {
+        window.removeEventListener('keydown', this.handleKeyDown);
+        window.removeEventListener('keyup', this.handleKeyUp);
+        this.#keys.clear();
+    }
+}
+
+// Создание экземпляра с зависимостями
+const kc = KeyController.Instance({
+    trackedKeys: ['KeyK', 'KeyW', 'KeyA', 'KeyS', 'KeyD'], // отслеживаем только эти клавиши
+    onKeyChange: (event) => {
+        // console.log(`Клавиша ${event.code} ${event.state}`);
+    },
+    FormState: AppState.Form,
+})();
+
+// Цикл обновления с разумной частотой (60 FPS)
+const updateLoop = () => {
+    kc.update();
+    requestAnimationFrame(updateLoop);
+};
+
+updateLoop();
+
+// Очистка при необходимости
+// window.addEventListener('beforeunload', () => kc.destroy());
