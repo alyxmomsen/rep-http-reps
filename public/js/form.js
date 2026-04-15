@@ -17,12 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============= grab HTML elements =============
 
     const AppState = {
-        Playlist: {
-            Timeouts: {
-                HidePlaylist: {
-                    hide: Infinity,
-                },
-            },
+        Pools: {
+            Playlist:[],
         },
     };
 
@@ -75,11 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const DOMEElementsControllersBehaviors = {
         Controlls: () =>
             new HTMLElementControllerBehaviors({
-                hide: () => {
-                    console.log(`Controlls hide beh`);
-                },
-                show: () => {
-                    console.log(`Controlls show beh`);
+                show: ControlsPanelShowAction({}),
+                hide: (ctx) => {
+                    // ctx.baseHTML.style.display = 'flex'
+                    ctx.baseHTML.style.animation = 'HideControllPanel .2s ease-out 0s 1 forwards'
+                    ctx.baseHTML.onanimationend = () => {};
+                    
                 },
             }),
         Playlist: () =>
@@ -114,9 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
     };
 
-    const Utils = {
-        TimeoutController: TimeoutController.Instance,
-    };
+    // const Utils = {
+    //     TimeoutController: TimeoutController.Instance,
+    // };
 
     // ============= set middleware chains ==========
 
@@ -133,9 +130,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     MiddlewareChains.playVideo.addMiddleware(
+        async (ctx, next) => {
+            await next();
+        },
         PlayVideoMW({
             vidoePlayerHTMLElement: DOMElements.VideoPlayer,
-        })
+        }),
+        async (ctx, next) => {
+            // alert();
+            await next();
+        }
     );
 
     // ============= set modal-window-controllers
@@ -216,14 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         timeoutController: { reset: () => {}, set: () => {} },
                     }),
                     (ctx, next) => {
-                        // alert();
                         DOMEElementsControllers.Playlist.show({
                             rollBackImplementation: () => {
                                 DOMEElementsControllers.Playlist.hide();
                             },
                             rollBackTimeOut: 3000,
                         });
-                        // alert();
+                        next();
                     },
                     (ctx) => {
                         /** final mw */
@@ -243,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 playlistItemCreator: Create.PlaylistItem({
                     targetContainer: DOMElements.PlayList,
                     playVideoMWChain: MiddlewareChains.playVideo,
+                    playlistItemsPool:AppState.Pools.Playlist,
                 }),
             }),
             (ctx) => {
@@ -269,20 +273,19 @@ document.addEventListener('DOMContentLoaded', () => {
     DOMElements.VideoPlayer.addEventListener('mousemove', () => {
         DOMEElementsControllers.Playlist.show({
             rollBackImplementation: () => {
-                // alert();
+                
                 DOMEElementsControllers.Playlist.hide();
             },
             rollBackTimeOut: 1000,
         });
-
-        DOMElements.ControlsModalWindow;
-
-        // new MiddlewareChain(
-        //     Middleware.ShowPlaylist({
-        //         playlistModalWindow:DOMElements.PlayList,
-        //     }),
-        //     (ctx) => {}
-        // ).execute();
+        
+        DOMEElementsControllers.Controlls.show({
+            rollBackImplementation: () => {
+                
+                DOMEElementsControllers.Controlls.hide();
+            }, 
+            rollBackTimeOut: 1000,
+        });
     });
 
     DOMElements.VideoPlayer.addEventListener('mouse', () => {
@@ -716,6 +719,7 @@ function ShowPlaylistMiddleWare(deps = {}) {
  * @param {Object} deps
  * @param {HTMLElement} deps.targetContainer
  * @param {MiddlewareChain} deps.playVideoMWChain
+ * @param {Object[]} deps.playlistItemsPool
  * @returns {(data:Object) => void}
  */
 function CreatePlaylistItem(deps = {}) {
@@ -727,6 +731,10 @@ function CreatePlaylistItem(deps = {}) {
         throw new Error(
             `CreatePlaylistItem-factory: playVideoMWChain required`
         );
+    }
+
+    if(!deps.playlistItemsPool || deps.playlistItemsPool.length) {
+        throw new Error(`CreatePlaylistItem-factory: foo bar`);
     }
 
     /**
@@ -741,31 +749,52 @@ function CreatePlaylistItem(deps = {}) {
      * @returns {void}
      */
     const fn = (data = {}) => {
-        console.log({ data });
+        
         if (!data.title || !data.description || !data.video) {
             throw new Error(`CreatePlaylistItem: required consistent data`);
         }
 
-        const newElementUnits = {
+        const ElementUnits = {
             base: document.createElement(`div`),
             title: document.createElement(`div`),
             description: document.createElement(`div`),
+            status: document.createElement(`div`),
         };
 
-        newElementUnits.title.innerText = data.title;
-        newElementUnits.description.innerText = data.description;
+        ElementUnits.title.innerText = data.title;
+        ElementUnits.description.innerText = data.description;
+        ElementUnits.status.innerText = '🖤';
 
-        newElementUnits.base.appendChild(newElementUnits.title);
-        newElementUnits.base.appendChild(newElementUnits.description);
+        ElementUnits.base.appendChild(ElementUnits.title);
+        ElementUnits.base.appendChild(ElementUnits.description);
+        ElementUnits.base.appendChild(ElementUnits.status);
 
-        newElementUnits.base.addEventListener('click', () => {
-            deps.playVideoMWChain.execute({
+        ElementUnits.base.addEventListener('click', async () => {
+
+            deps.playlistItemsPool.forEach(PlailistItem => {
+                PlailistItem.Item.style.backgroundColor = '#ffffff00'
+            });
+
+            ElementUnits.status.innerText = '🔃'
+            ElementUnits.status.style.animation = 'Rolling 1s ease-out 0s infinite forwards';
+            
+            await deps.playVideoMWChain.execute({
                 rowId: data.video.rowId,
                 tableName: data.video.tableName,
             });
+            
+            ElementUnits.status.style.animation = '';
+            ElementUnits.status.innerText = '✅'
+            ElementUnits.base.style.backgroundColor = '#2f5d7e'
+
         });
 
-        deps.targetContainer.appendChild(newElementUnits.base);
+        deps.targetContainer.appendChild(ElementUnits.base);
+
+        deps.playlistItemsPool.push({
+            id:Infinity,
+            Item:ElementUnits.base,
+        });
 
         return;
     };
@@ -834,17 +863,26 @@ function PlayVideoMW(deps = {}) {
         throw new Error(`PlayVideoMW: vidoePlayerHTMLElement required`);
     }
 
-    const fn = (ctx, next) => {
-        console.log('play video', { ctx });
+    const fn = async (ctx, next) => {
 
-        if (!ctx.rowId || !ctx.tableName) {
-            throw new Error(`PlayVideoMW: ctx.rowId && ctx.tableName required`);
-        }
+        await new Promise((resolve, reject) => {
 
-        deps.vidoePlayerHTMLElement.src = `/video/${ctx.rowId}`;
-        deps.vidoePlayerHTMLElement.load();
-        // alert('what');
-        next();
+            console.log('play video', { ctx });
+    
+            if (!ctx.rowId || !ctx.tableName) {
+                throw new Error(`PlayVideoMW: ctx.rowId && ctx.tableName required`);
+            }
+    
+            deps.vidoePlayerHTMLElement.src = `/video/${ctx.rowId}`;
+            deps.vidoePlayerHTMLElement.load();
+
+            deps.vidoePlayerHTMLElement.addEventListener("loadeddata", () => {
+
+                resolve();
+            });
+
+        });
+        await next();
     };
 
     return fn;
@@ -912,69 +950,6 @@ class Flicker {
     }
 }
 
-class TimeoutController {
-    /**
-     *
-     * @param {Object} deps
-     * @param {HTMLElement} deps.HTMLElement
-     * @param {(payload:any) => Promise<any>} deps.handler
-     */
-    static Instance(deps = {}) {
-        return new TimeoutController({
-            handler: deps.handler,
-            HTMLElement: deps.HTMLElement,
-        });
-    }
-
-    reset() {
-        if (this.#timeoutid === Infinity) return;
-        clearTimeout(this.#timeoutid);
-    }
-
-    set() {
-        if (this.#timeoutid !== Infinity) {
-            clearTimeout(this.#timeoutid);
-        }
-
-        setTimeout(this.#handler.bind(this), 1000);
-    }
-
-    /**
-     * @type {HTMLElement}
-     */
-    #HTMLElement;
-
-    /**
-     * @type {number}
-     */
-    #timeoutid;
-
-    /**
-     * @type {(payload:any) => Promise<any>}
-     */
-    #handler;
-
-    /**
-     *
-     * @param {Object} deps
-     * @param {HTMLElement} deps.HTMLElement
-     * @param {(payload:any) => Promise<any>} deps.handler
-     */
-    constructor(deps = {}) {
-        if (!deps.HTMLElement) {
-            throw new Error(`TimeoutController: HTMLElement required`);
-        }
-
-        if (!deps.handler) {
-            throw new Error(`TimeoutController: handler required`);
-        }
-
-        this.#HTMLElement = deps.HTMLElement;
-        this.#timeoutid = Infinity;
-        this.#handler = deps.handler;
-    }
-}
-
 class HTMLElementController {
     /**
      *
@@ -1015,44 +990,13 @@ class HTMLElementController {
             timeoutsMap: this.#Timeouts,
             options: options,
             callerFnName: this.show.name,
-        });
-
-        // const RollBack = {
-        //     Implementation: options.rollBackImplementation || ((f) => f),
-        //     timeoutDuration: options.rollBackTimeOut || 0,
-        // };
-
-        // const clientId = this.show.name;
-
-        // // this.#HTMLElement.style.display = 'flex';
-        // this.#HTMLElement.style.animation =
-        //     'ShowPlayList .2s ease-out 0s 1 forwards';
-
-        // const Timeout = this.#Timeouts.get(clientId);
-
-        // if (Timeout && Timeout.Id !== Infinity) {
-        //     clearTimeout(Timeout.Id);
-        // }
-
-        // this.#Timeouts.set(clientId, {
-        //     Id: setTimeout(RollBack.Implementation, RollBack.timeoutDuration),
-        //     handler: RollBack.Implementation,
-        //     duration: RollBack.timeoutDuration,
-        // });
-
-        // // clearTimeout(this.#Timeouts.get(clientId).Id);
-
-        // console.log({ timeoouts: this.#Timeouts });
+        });  
     }
 
     hide() {
         this.#behaviors.hide({
             baseHTML: this.#HTMLElement,
         });
-        // this.#HTMLElement.style.animation =
-        //     'HidePlaylist .2s ease-out 0s 1 forwards';
-        // this.#HTMLElement.onanimationend = () => {};
-        // this.#HTMLElement.style.display = 'flex';
     }
 
     /**
@@ -1140,11 +1084,6 @@ class HTMLElementController {
                 duration: Cache.TimeoutDuration,
             });
         });
-
-        // const Timeouts = {
-        //     MouseEnter: Infinity,
-        //     MouseLeave: Infinity,
-        // };
     }
 }
 
@@ -1196,6 +1135,67 @@ class HTMLElementControllerBehaviors {
         this.#actions.show = actions.show || ((f) => f);
         this.#actions.hide = actions.hide || ((f) => f);
     }
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @returns {HTMLControllerAction}
+ */
+function ControlsPanelShowAction (deps = {}) {
+
+    /**
+     * 
+     * @param {ActionContextParam} ctx 
+     */
+    const Action = (ctx={}) => {
+
+        const {
+            baseHTML,
+            options /* : { rollBackImplementation, rollBackTimeOut } */,
+            timeoutsMap,
+        } = ctx;
+
+
+        const RollBack = {
+            Implementation:
+                ctx.options.rollBackImplementation /* || ((f) => f) */,
+            timeoutDuration: ctx.options.rollBackTimeOut /* || 0 */,
+        };
+
+        const clientId = ctx.callerFnName;
+
+        
+        /** ----------------------------------------------------
+         * ⚠️ target element behavior implementation is only here ⚠️
+         */ 
+        // -----------------------------------------------------
+
+        // ctx.baseHTML.style.display = 'flex';
+        ctx.baseHTML.style.animation = 'ShowControllPanel .2s ease-out 0s 1 forwards'
+        // ctx.baseHTML.style.animation =
+        //     'ShowPlayList .2s ease-out 0s 1 forwards';
+
+        
+        // ===============================================
+        // ===============================================
+
+
+        const Timeout = ctx.timeoutsMap.get(clientId);
+
+        if (Timeout && Timeout.Id !== Infinity) {
+            clearTimeout(Timeout.Id);
+        }
+
+        ctx.timeoutsMap.set(clientId, {
+            Id: setTimeout(RollBack.Implementation, RollBack.timeoutDuration),
+            handler: RollBack.Implementation,
+            duration: RollBack.timeoutDuration,
+        });
+
+    }
+
+    return Action; 
 }
 
 /**

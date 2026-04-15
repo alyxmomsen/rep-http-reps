@@ -1,20 +1,21 @@
 :root {
     --scale-value: 9px;
     --playlistWidht:40%;
+    --controlsPanelButtonHeight:43px;
 }
 
 input {
-    padding: 4px;
-    border-radius: 4px;
-    font-weight: bold;
-    color: #002e86;
+	padding: 4px;
+	border-radius: 4px;
+	font-weight: bold;
+	color: #000;
 }
 
 .form-element {
-    padding: 9px;
-    border: 1px solid wheat;
-    border-radius: 4px;
-    position: relative;
+	padding: 9px;
+	border: 1px solid #475e66;
+	border-radius: 4px;
+	position: relative;
 }
 
 /* modal windows */
@@ -27,17 +28,18 @@ input {
 }
 
 .wrapper.form--main {
-    /* width: 50%; */
-    margin: 0 auto;
-    background-color: #877171;
-    padding: 9px;
-    border-radius: 4px;
+	/* width: 50%; */
+	margin: 0 auto;
+	background-color: #394a64;
+	padding: 9px;
+	border-radius: 4px;
 }
 
 #form--main--controlls-container {
-    padding: 9px;
-    border: 1px solid aliceblue;
-    position: relative;
+	padding: 9px;
+	border: 1px solid #434649;
+	position: relative;
+	border-radius: 4px;
 }
 
 #form--main--controlls-container #form--main--close-button {
@@ -48,11 +50,11 @@ input {
 }
 
 .wrapper.form--main form {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    justify-content: start;
-    align-items: start;
+	display: flex;
+	flex-direction: column;
+	gap: 9px;
+	justify-content: start;
+	align-items: center;
 }
 
 /* video elem modal window */
@@ -69,10 +71,16 @@ input {
 }
 
 #controls--video__show-form {
-    padding: 9px;
-    font-weight: bold;
-    margin: 9px;
-    cursor: pointer;
+	/* padding: 9px; */
+	font-weight: bold;
+	/* margin: 9px; */
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: auto;
+	height: 43px;
+	padding: 0 9px;
 }
 
 video#video--main {
@@ -98,8 +106,8 @@ video#video--main {
 }
 
 #modal-window--a .frame {
-    width: 50%;
-    margin: 0 auto;
+	width: 80%;
+	margin: 0 auto;
 }
 
 /* playlist modal-window */
@@ -179,7 +187,7 @@ video#video--main {
 	z-index: 0;
 	align-self: end;
 	width: 100%;
-	bottom: 90%;
+	bottom: calc(100%);/* - var(--controlsPanelButtonHeight) */
 	position: absolute;
 	display: flex;
 	justify-content: end;
@@ -244,5 +252,32 @@ video#video--main {
     }
     to {
         right:98%;
+    }
+}
+
+@keyframes ShowControllPanel {
+    from {
+        bottom:calc(100%);
+    }
+    to {
+        bottom:calc(100% - var(--controlsPanelButtonHeight))
+    }
+}
+
+@keyframes HideControllPanel {
+    from {
+        bottom:calc(100% - var(--controlsPanelButtonHeight))
+    }
+    to {
+        bottom:100%;
+    }
+}
+
+@keyframes Rolling {
+    from {
+        transform: rotateX(0deg);
+    }
+    to {
+        transform: rotateX(360deg);
     }
 }
