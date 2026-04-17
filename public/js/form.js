@@ -13,6 +13,7 @@
  * @typedef {(ctx:ActionContextParam) => Promise<any>} HTMLControllerAction
  */
 //---------------------------------------------------------------------------
+
 const AppState = {
     Pools: {
         Playlist: [],
@@ -24,11 +25,6 @@ const AppState = {
 };
 
 // =============================================
-
-const Create = {
-    ToolTip: CreateToolTip,
-    PlaylistItem: CreatePlaylistItem,
-};
 
 // ============== REGISTRATE MIDDLEWARE (BEGIN) ==============
 
@@ -85,7 +81,21 @@ const ControllerBehaviors = {
     },
 };
 
+const GlobalUtils = {
+    // TimeoutController: TimeoutController.Instance,
+    RandomString: generateRandomString,
+    InputNameAttibuteGenrator: GenerateNameAttribure,
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+    const Services = {
+        KeyController: KeyController.CreateFactory({
+            FormState: AppState.Form,
+            onKeyChange: () => {},
+            trackedKeys: ['KeyK'],
+        }),
+    };
+
     // ============= grab HTML elements (BEGIN) =============
 
     const DOMElements = {
@@ -107,9 +117,21 @@ document.addEventListener('DOMContentLoaded', () => {
         ToolTipsContainer: grabDOMElement('modal-window--b'),
         PlayList: grabDOMElement(`playlist--video`),
         VideoPlayer: grabDOMElement(`video--main`),
+        CreatePlaylistItemButton: grabDOMElement(`button--add-element`),
+        PlaylistFormModule: grabDOMElement(`playlist-items-group`),
     };
 
     // ============= grab HTML elements (END) =============
+
+    const Create = {
+        ToolTip: CreateToolTip,
+        PlaylistItem: CreatePlaylistItem,
+        PlaylistFormElem: PlaylistFormItemCreator({
+            nest: DOMElements.PlaylistFormModule,
+            randomstringUtil: GlobalUtils.RandomString,
+            nameAttribureGenerator: GlobalUtils.InputNameAttibuteGenrator,
+        }),
+    };
 
     // --------------------------------------------
     const DOMEElementsControllers = {
@@ -122,10 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
             behaviors: DOMEElementsControllersBehaviors.Controlls(),
         }),
     };
-
-    // const Utils = {
-    //     TimeoutController: TimeoutController.Instance,
-    // };
 
     // ============= set middleware chains ==========
 
@@ -187,6 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
         Create.ToolTip({
             targetContainer: DOMElements.ToolTipsContainer,
         })('u just opened the form');
+    });
+
+    DOMElements.CreatePlaylistItemButton.addEventListener('click', async () => {
+        Create.PlaylistFormElem({
+            titlePlaceholder: 'foo',
+            descriptionPlaceholder: 'bar',
+            caption: 'baz',
+            filePlaceHolder: 'hello guys',
+        });
+
+        // DOMElements.PlaylistFormModule.appendChild();
     });
 
     // ------------ form close chain --------------
@@ -1354,7 +1383,7 @@ class KeyController {
      * @param {{isOpen:boolean}} deps.FormState — зависимости для внедрения
      * @returns {() => KeyController} — фабрика создания экземпляра
      */
-    static Instance(deps = {}) {
+    static CreateFactory(deps = {}) {
         // Валидация зависимостей
         if (deps.trackedKeys && !Array.isArray(deps.trackedKeys)) {
             throw new Error('trackedKeys must be an array');
@@ -1443,7 +1472,7 @@ class KeyController {
 }
 
 // Создание экземпляра с зависимостями
-const kc = KeyController.Instance({
+const kc = KeyController.CreateFactory({
     trackedKeys: ['KeyK', 'KeyW', 'KeyA', 'KeyS', 'KeyD'], // отслеживаем только эти клавиши
     onKeyChange: (event) => {
         // console.log(`Клавиша ${event.code} ${event.state}`);
@@ -1452,12 +1481,189 @@ const kc = KeyController.Instance({
 })();
 
 // Цикл обновления с разумной частотой (60 FPS)
-const updateLoop = () => {
-    kc.update();
-    requestAnimationFrame(updateLoop);
-};
+// const updateLoop = () => {
+//     kc.update();
+//     requestAnimationFrame(updateLoop);
+// };
 
-updateLoop();
+// updateLoop();
 
 // Очистка при необходимости
 // window.addEventListener('beforeunload', () => kc.destroy());
+
+/**
+ *
+ * @param {Object} deps
+ * @param {HTMLElement} deps.nest
+ * @param {(config:{length:number}) => string} deps.randomstringUtil
+ * @param {(globalConfig:{groupId:string}) => (config:{columnName:string;columnDataType:string}) => string} deps.nameAttribureGenerator
+ * @returns {(data:{
+ *  titlePlaceholder: string;
+ *  descriptionPlaceholder: string;
+ *  caption: string;
+ *  filePlaceHolder: string;
+ * }) => any}
+ */
+function PlaylistFormItemCreator(deps = {}) {
+    if (!deps) {
+        throw new Error(`deps required`);
+    }
+
+    if (!deps.nest) {
+        throw new Error(`deps.nest required`);
+    }
+
+    if (!deps.randomstringUtil) {
+        throw new Error(`deps.randomstringUtil required`);
+    }
+
+    if (!deps.nameAttribureGenerator) {
+        throw new Error(`deps.nameAttribureGenerator required`);
+    }
+
+    /**
+     *
+     * @param {Object} data
+     * @param {Object} data.titlePlaceholder
+     * @param {Object} data.descriptionPlaceholder
+     * @param {Object} data.caption
+     * @param {Object} data.filePlaceHolder
+     *
+     */
+    const fn = (data) => {
+        const Args = {
+            data: data,
+        };
+
+        const Inputs = {
+            Title: document.createElement('input'),
+            Description: document.createElement('input'),
+            File: document.createElement('input'),
+        };
+
+        const Units = {
+            Inputs: Inputs,
+            Caption: document.createElement('h3'),
+        };
+
+        const Wrappers = {
+            Default: document.createElement('div'),
+        };
+
+        const Gears = {
+            Frame: document.createElement('div'),
+            Wrappers: Wrappers,
+            Units: Units,
+        };
+
+        const Controller = {
+            removeElems: removeElems,
+        };
+
+        const groupId = deps.randomstringUtil({ length: 2 });
+
+        Inputs.Description.placeholder = Args.data.descriptionPlaceholder;
+        Inputs.Description.setAttribute(
+            'name',
+            deps.nameAttribureGenerator({ groupId: groupId })({
+                columnDataType: 'string',
+                columnName: 'description',
+            })
+        );
+        Inputs.Title.placeholder = Args.data.titlePlaceholder;
+        Inputs.Title.setAttribute(
+            'name',
+            deps.nameAttribureGenerator({ groupId: groupId })({
+                columnDataType: 'string',
+                columnName: 'title',
+            })
+        );
+        Units.Caption.innerText = Args.data.caption;
+        Inputs.File.innerText = Args.data.filePlaceHolder;
+        Inputs.File.setAttribute('type', 'file');
+        Inputs.File.setAttribute(
+            'name',
+            deps.nameAttribureGenerator({ groupId: groupId })({
+                columnDataType: 'string',
+                columnName: 'video',
+            })
+        );
+        // Units.Button.className = '';
+
+        Gears.Frame.className =
+            'flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element';
+
+        Gears.Frame.appendChild(Units.Caption);
+        Gears.Frame.appendChild(Inputs.Title);
+        Gears.Frame.appendChild(Inputs.Description);
+        Gears.Frame.appendChild(Inputs.File);
+
+        deps.nest.appendChild(Gears.Frame);
+
+        Inputs.File.addEventListener('click', () => {
+            Controller.removeElems(Gears);
+        });
+
+        function removeElems(obj) {
+            for (const [k, v] of Object.entries(obj)) {
+                if (typeof v === 'object') {
+                    removeElems(v);
+                    continue;
+                }
+                v.remove();
+            }
+        }
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} config
+ * @param {Object} config.length
+ */
+function generateRandomString(config) {
+    const timeStamp = Date.now();
+
+    const charset =
+        'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890' +
+        timeStamp;
+
+    const RandomString = {
+        Line: '',
+    };
+
+    for (let i = 0; i < config.length; i++) {
+        const index = Math.floor(Math.random() * charset.length);
+        RandomString.Line += charset[index];
+    }
+
+    return RandomString.Line;
+}
+
+/**
+ *
+ * @param {Object} globalConfig
+ * @param {Object} globalConfig.groupId
+ */
+function GenerateNameAttribure(globalConfig) {
+    if (!globalConfig.groupId) {
+        throw new Error(`SetNameAttribute: globalConfig.groupId required`);
+    }
+
+    /**
+     *
+     * @param {Object} config
+     * @param {Object} config.columnName
+     * @param {Object} config.columnDataType
+     * @returns
+     */
+    const fn = (config) => {
+        const tableName = 'af';
+
+        return `multitable://${globalConfig.groupId}${tableName}.${config.columnName}.${config.columnDataType}`;
+    };
+
+    return fn;
+}

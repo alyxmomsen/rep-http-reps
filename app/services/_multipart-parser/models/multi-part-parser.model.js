@@ -110,6 +110,8 @@ class MultipartFormdataHandler {
                 /* получаем смердженную иерархическую структуру  */
                 const mergedGroups = multiTableGroupingAgent.getGroups();
 
+                console.log('check multipart handler', {mergedGroups});
+
                 const middlewareresponse = await this.#executeMiddleware(
                     mergedGroups,
                     this.#onDataEndMiddleware
