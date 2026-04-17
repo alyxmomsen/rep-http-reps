@@ -45,7 +45,7 @@
                                     enctype="multipart/form-data"
                                     id="form--main"
                                 >
-                                    <div class="flex flex--col flex--gap-2">
+                                    <div id="registrate-user-area" class="flex flex--col flex--gap-2">
                                         <!-- <div
                                             class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element"
                                         >
@@ -91,6 +91,9 @@
                                                 id="button--add-element"
                                             >
                                                 ADD ELEMENT
+                                            </button>
+                                            <button type="button" id="controls--video__show-registrate-user-form">
+                                                registrate user
                                             </button>
                                         </div>
                                         <div
@@ -191,9 +194,6 @@
                     <video id="video--main" controls></video>
                     <div id="playlist--video"></div>
                     <div id="controls--video">
-                        <button type="button" id="controls--video__show-registrate-user-form">
-                            registrate user
-                        </button>
                         <button type="button" id="controls--video__show-form">
                             open form
                         </button>

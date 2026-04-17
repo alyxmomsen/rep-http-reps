@@ -27,7 +27,8 @@ const {
 const { HTTPRouter } = require('../v3/router.model');
 const { dataBase } = require('../../database/controller/db.controller');
 const { createReadStream } = require('fs');
-const { join } = require('path');
+const { join, resolve } = require('path');
+const { readFile } = require('fs/promises');
 // const { HTTPRouter } = require('../v2/model/router.model');
 const router = new HTTPRouter();
 
@@ -80,6 +81,26 @@ router.post('/api/handle-form', (ctx) => {
     const { req, res } = ctx;
 
     FormHandler.processForm(req, res, { contentTypeHandlersRouter });
+});
+
+
+router.get('/api/get-html-form/registrate-user', async (ctx) => {
+
+    const { req, res, params, queryParams } = ctx ;
+
+    console.log('/api/get-html-form/registrate-user called');
+
+    const file = await readFile(resolve('./assets/html/registrate-user.form.html'));
+
+    console.log({file});
+
+    res.writeHead(200, {
+        'content-type':'text/html',
+    });
+    res.end(JSON.stringify({
+        file:file.toString('utf-8'),
+    }));
+
 });
 
 

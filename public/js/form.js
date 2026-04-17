@@ -21,6 +21,7 @@ const AppState = {
     Playlist: {},
     Form: {
         isOpen: false,
+        registrateUserModuleIsLoaded:false,
     },
 };
 
@@ -119,6 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
         VideoPlayer: grabDOMElement(`video--main`),
         CreatePlaylistItemButton: grabDOMElement(`button--add-element`),
         PlaylistFormModule: grabDOMElement(`playlist-items-group`),
+        OpenUserRegistrate: grabDOMElement(
+            `controls--video__show-registrate-user-form`
+        ),
+        ReqistrateUserArea: grabDOMElement(`registrate-user-area`),
     };
 
     // ============= grab HTML elements (END) =============
@@ -188,6 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     );
 
+    DOMElements.OpenUserRegistrate.addEventListener('click', async (ev) => {
+        await RequestManagers.GetRegistrateUserForm.execute({});
+    });
+
     DOMElements.OpenFormButton.addEventListener('click', async (ev) => {
         new MiddlewareChain(
             Middleware.FormOpen({
@@ -242,6 +251,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============== REGISTRATE REQUEST MANAGERS (BEGIN) ==============
 
     const RequestManagers = {
+        GetRegistrateUserForm: new RequestManager(
+            '/api/get-html-form/registrate-user',
+            'get',
+            async (ctx) => {
+
+                /* hardcode detection !!! */
+
+                const json = await ctx.response.json();
+
+                const file = json.file;
+
+                const div = document.createElement('div');
+
+                div.innerHTML = file;
+
+                if(!AppState.Form.registrateUserModuleIsLoaded) {
+
+                    DOMElements.ReqistrateUserArea.appendChild(div);
+                    AppState.Form.registrateUserModuleIsLoaded = true;
+                }
+
+                await new MiddlewareChain(
+                    Middleware.FormOpen({
+                        modalWindowController:ModalWindowControllers.FormModalWindow,
+                    }),
+                    () => {
+                        
+                    }
+                ).execute({some:'data'});
+
+                console.log({json});
+            },
+            (ctx) => {
+                // alert();
+            }
+        ),
         UpdatePlaylist: new RequestManager(
             '/api/get-playlist',
             'get',
@@ -1531,11 +1576,10 @@ function PlaylistFormItemCreator(deps = {}) {
      *
      */
     const fn = (data) => {
-
         /**
          * step 1a:
          */
-        
+
         /*  */
         const Args = {
             data: data,
@@ -1576,7 +1620,7 @@ function PlaylistFormItemCreator(deps = {}) {
          */
         /*  */
         const groupId = deps.randomstringUtil({ length: 2 });
-        
+
         Units.Caption.innerText = Args.data.caption;
 
         Inputs.Description.placeholder = Args.data.descriptionPlaceholder;
@@ -1604,13 +1648,12 @@ function PlaylistFormItemCreator(deps = {}) {
                 columnName: 'video',
             })
         );
-        
+
         Buttons.RemoveTheItem.setAttribute('type', 'button');
-        Buttons.RemoveTheItem.innerText = 'remove this one'
-        Buttons.RemoveTheItem.addEventListener('click',  (e) => {
+        Buttons.RemoveTheItem.innerText = 'remove this one';
+        Buttons.RemoveTheItem.addEventListener('click', (e) => {
             // removeElems(Gears.Frame);
             Controller.removeElems(Gears.Frame);
-            
         });
 
         Gears.Frame.className =
@@ -1620,7 +1663,6 @@ function PlaylistFormItemCreator(deps = {}) {
          * step 2:
          * nesting these items
          */
-
 
         Gears.Frame.appendChild(Units.Caption);
         Gears.Frame.appendChild(Inputs.Title);
@@ -1632,9 +1674,7 @@ function PlaylistFormItemCreator(deps = {}) {
         deps.nest.appendChild(Gears.Frame);
 
         function removeElems(obj) {
-            
             obj.remove();
-            
         }
     };
 
