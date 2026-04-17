@@ -1531,6 +1531,12 @@ function PlaylistFormItemCreator(deps = {}) {
      *
      */
     const fn = (data) => {
+
+        /**
+         * step 1a:
+         */
+        
+        /*  */
         const Args = {
             data: data,
         };
@@ -1539,6 +1545,10 @@ function PlaylistFormItemCreator(deps = {}) {
             Title: document.createElement('input'),
             Description: document.createElement('input'),
             File: document.createElement('input'),
+        };
+
+        const Buttons = {
+            RemoveTheItem: document.createElement('button'),
         };
 
         const Units = {
@@ -1560,7 +1570,14 @@ function PlaylistFormItemCreator(deps = {}) {
             removeElems: removeElems,
         };
 
+        /**
+         * step 1b:
+         * initialize these items
+         */
+        /*  */
         const groupId = deps.randomstringUtil({ length: 2 });
+        
+        Units.Caption.innerText = Args.data.caption;
 
         Inputs.Description.placeholder = Args.data.descriptionPlaceholder;
         Inputs.Description.setAttribute(
@@ -1578,7 +1595,6 @@ function PlaylistFormItemCreator(deps = {}) {
                 columnName: 'title',
             })
         );
-        Units.Caption.innerText = Args.data.caption;
         Inputs.File.innerText = Args.data.filePlaceHolder;
         Inputs.File.setAttribute('type', 'file');
         Inputs.File.setAttribute(
@@ -1588,30 +1604,37 @@ function PlaylistFormItemCreator(deps = {}) {
                 columnName: 'video',
             })
         );
-        // Units.Button.className = '';
+        
+        Buttons.RemoveTheItem.setAttribute('type', 'button');
+        Buttons.RemoveTheItem.innerText = 'remove this one'
+        Buttons.RemoveTheItem.addEventListener('click',  (e) => {
+            // removeElems(Gears.Frame);
+            Controller.removeElems(Gears.Frame);
+            
+        });
 
         Gears.Frame.className =
             'flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element';
+
+        /**
+         * step 2:
+         * nesting these items
+         */
+
 
         Gears.Frame.appendChild(Units.Caption);
         Gears.Frame.appendChild(Inputs.Title);
         Gears.Frame.appendChild(Inputs.Description);
         Gears.Frame.appendChild(Inputs.File);
 
+        Gears.Frame.appendChild(Buttons.RemoveTheItem);
+
         deps.nest.appendChild(Gears.Frame);
 
-        Inputs.File.addEventListener('click', () => {
-            Controller.removeElems(Gears);
-        });
-
         function removeElems(obj) {
-            for (const [k, v] of Object.entries(obj)) {
-                if (typeof v === 'object') {
-                    removeElems(v);
-                    continue;
-                }
-                v.remove();
-            }
+            
+            obj.remove();
+            
         }
     };
 
