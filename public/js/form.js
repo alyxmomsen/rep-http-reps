@@ -14,6 +14,8 @@
  */
 //---------------------------------------------------------------------------
 
+const AppBuffer = new Map();
+
 const AppState = {
     Pools: {
         Playlist: [],
@@ -21,7 +23,7 @@ const AppState = {
     Playlist: {},
     Form: {
         isOpen: false,
-        registrateUserModuleIsLoaded:false,
+        registrateUserModuleIsLoaded: false,
     },
 };
 
@@ -42,6 +44,7 @@ const Middleware = {
 const FinalHandlers = {
     OnFormResponse: FormDataRequestFinalHandler,
     OnUpdatePlaylist: UpdatePlaylistFinalHandler,
+    OnGetUserRegistrateForm: OnGetUserRegistrateFormFinalHandler,
 };
 
 // ============== REGISTRATE MIDDLEWARE (END) ==============
@@ -194,7 +197,10 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     DOMElements.OpenUserRegistrate.addEventListener('click', async (ev) => {
-        await RequestManagers.GetRegistrateUserForm.execute({});
+        if (AppState.Form.registrateUserModuleIsLoaded === false) {
+            await RequestManagers.GetRegistrateUserForm.execute({});
+        } else {
+        }
     });
 
     DOMElements.OpenFormButton.addEventListener('click', async (ev) => {
@@ -254,35 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
         GetRegistrateUserForm: new RequestManager(
             '/api/get-html-form/registrate-user',
             'get',
-            async (ctx) => {
-
-                /* hardcode detection !!! */
-
-                const json = await ctx.response.json();
-
-                const file = json.file;
-
-                const div = document.createElement('div');
-
-                div.innerHTML = file;
-
-                if(!AppState.Form.registrateUserModuleIsLoaded) {
-
-                    DOMElements.ReqistrateUserArea.appendChild(div);
-                    AppState.Form.registrateUserModuleIsLoaded = true;
-                }
-
-                await new MiddlewareChain(
-                    Middleware.FormOpen({
-                        modalWindowController:ModalWindowControllers.FormModalWindow,
-                    }),
-                    () => {
-                        
-                    }
-                ).execute({some:'data'});
-
-                console.log({json});
-            },
+            () => {},
             (ctx) => {
                 // alert();
             }
@@ -1726,6 +1704,45 @@ function GenerateNameAttribure(globalConfig) {
         const tableName = 'af';
 
         return `multitable://${globalConfig.groupId}${tableName}.${config.columnName}.${config.columnDataType}`;
+    };
+
+    return fn;
+}
+
+/**
+ *
+ * @param {Object} deps
+ * @param {Object} deps.appBuffer
+ * @param {() => MiddlewareChain } deps.middlewareChainFactory
+ */
+function OnGetUserRegistrateFormFinalHandler(deps = {}) {
+    if (true) {
+    }
+
+    const fn = async (ctx) => {
+        /* hardcode detection !!! */
+
+        const json = await ctx.response.json();
+
+        const file = json.file;
+
+        const div = document.createElement('div');
+
+        div.innerHTML = file;
+
+        if (!AppState.Form.registrateUserModuleIsLoaded) {
+            DOMElements.ReqistrateUserArea.appendChild(div);
+            AppState.Form.registrateUserModuleIsLoaded = true;
+        }
+
+        await new MiddlewareChain(
+            Middleware.FormOpen({
+                modalWindowController: ModalWindowControllers.FormModalWindow,
+            }),
+            () => {}
+        ).execute({ some: 'data' });
+
+        console.log({ json });
     };
 
     return fn;
