@@ -196,11 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     );
 
-    DOMElements.OpenUserRegistrate.addEventListener('click', async (ev) => {
-        if (AppState.Form.registrateUserModuleIsLoaded === false) {
-            await RequestManagers.GetRegistrateUserForm.execute({});
-        } else {
-        }
+    DOMElements.OpenUserRegistrate.addEventListener('click', (e) => {
+        alert(`incomplete feature`);
     });
 
     DOMElements.OpenFormButton.addEventListener('click', async (ev) => {
@@ -260,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         GetRegistrateUserForm: new RequestManager(
             '/api/get-html-form/registrate-user',
             'get',
-            () => {},
+            (ctx) => {},
             (ctx) => {
                 // alert();
             }
@@ -1713,7 +1710,7 @@ function GenerateNameAttribure(globalConfig) {
  *
  * @param {Object} deps
  * @param {Object} deps.appBuffer
- * @param {() => MiddlewareChain } deps.middlewareChainFactory
+ * @param {MiddlewareChain} deps.middlewareChain
  */
 function OnGetUserRegistrateFormFinalHandler(deps = {}) {
     if (true) {
@@ -1722,27 +1719,27 @@ function OnGetUserRegistrateFormFinalHandler(deps = {}) {
     const fn = async (ctx) => {
         /* hardcode detection !!! */
 
-        const json = await ctx.response.json();
-
-        const file = json.file;
-
-        const div = document.createElement('div');
-
-        div.innerHTML = file;
-
         if (!AppState.Form.registrateUserModuleIsLoaded) {
+            deps.middlewareChain.execute();
+
+            const file = json.file;
+
+            const div = document.createElement('div');
+
+            div.innerHTML = file;
+
             DOMElements.ReqistrateUserArea.appendChild(div);
             AppState.Form.registrateUserModuleIsLoaded = true;
         }
 
-        await new MiddlewareChain(
-            Middleware.FormOpen({
-                modalWindowController: ModalWindowControllers.FormModalWindow,
-            }),
-            () => {}
-        ).execute({ some: 'data' });
+        // await new MiddlewareChain(
+        //     Middleware.FormOpen({
+        //         modalWindowController: ModalWindowControllers.FormModalWindow,
+        //     }),
+        //     () => {}
+        // ).execute({ some: 'data' });
 
-        console.log({ json });
+        // console.log({ json });
     };
 
     return fn;
