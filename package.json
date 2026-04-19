@@ -28,6 +28,7 @@
         "nodemon:prettier": "nodemon --exec prettier .\\public\\js\\ --write"
     },
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.1032.0",
         "pg": "^8.20.0"
     },
     "devDependencies": {

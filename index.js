@@ -18,7 +18,7 @@ const httpServer = http.createServer(async (req, res) => {
 });
 
 const port = 3333;
-const host = 'localhost';
+const host = '0.0.0.0';
 httpServer.listen(port, host, () => {
     console.log({ port, host });
 });
