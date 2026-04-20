@@ -19,11 +19,15 @@ const AppBuffer = new Map();
 const AppState = {
     Pools: {
         Playlist: [],
+        AddNewPlaylistItems: [],
     },
     Playlist: {},
     Form: {
         isOpen: false,
         registrateUserModuleIsLoaded: false,
+    },
+    HTMLFomrmUnits: {
+        RegistrateUser: null,
     },
 };
 
@@ -41,13 +45,16 @@ const Middleware = {
     PlayVideo: PlayVideoMW,
 };
 
-const FinalHandlers = {
+const RequestManagerFinalHandlers = {
     OnFormResponse: FormDataRequestFinalHandler,
     OnUpdatePlaylist: UpdatePlaylistFinalHandler,
-    OnGetUserRegistrateForm: OnGetUserRegistrateFormFinalHandler,
 };
 
 // ============== REGISTRATE MIDDLEWARE (END) ==============
+
+const OnClickHandlers = {
+    OnGetUserRegistrateForm: OnGetUserRegistrateFormFinalHandler,
+};
 
 const DOMEElementsControllersBehaviors = {
     Controlls: () =>
@@ -120,16 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
         MainForm: grabDOMElement('form--main'),
         ToolTipsContainer: grabDOMElement('modal-window--b'),
         PlayList: grabDOMElement(`playlist--video`),
+        AddVideoPlaylistControllsButton: grabDOMElement(
+            `playlist-button--add-video`
+        ),
         VideoPlayer: grabDOMElement(`video--main`),
         CreatePlaylistItemButton: grabDOMElement(`button--add-element`),
         PlaylistFormModule: grabDOMElement(`playlist-items-group`),
-        OpenUserRegistrate: grabDOMElement(
+        OpenUserRegistrateButton: grabDOMElement(
             `controls--video__show-registrate-user-form`
         ),
-        ReqistrateUserArea: grabDOMElement(`registrate-user-area`),
+        FormUnitsArea: grabDOMElement(`form-units-container`),
+        RegistrateUsersArea: grabDOMElement(`registrate-user-area`),
     };
 
-    // ============= grab HTML elements (END) =============
+    //FormUnitsArea ============= grab HTML elements (END) =============
 
     const Create = {
         ToolTip: CreateToolTip,
@@ -138,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
             nest: DOMElements.PlaylistFormModule,
             randomstringUtil: GlobalUtils.RandomString,
             nameAttribureGenerator: GlobalUtils.InputNameAttibuteGenrator,
+            descriptionDefaultContent: 'default content',
+            titleDefaultContent: 'default content',
         }),
     };
 
@@ -196,9 +209,28 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     );
 
-    DOMElements.OpenUserRegistrate.addEventListener('click', (e) => {
-        alert(`incomplete feature`);
-    });
+    DOMElements.OpenUserRegistrateButton.addEventListener(
+        'click',
+        async (e) => {
+            console.log(AppState.Form.registrateUserModuleIsLoaded);
+
+            if (!AppState.Form.registrateUserModuleIsLoaded) {
+                await RequestManagers.GetRegistrateUserForm.execute();
+            } else {
+                DOMElements.RegistrateUsersArea.innerHTML = '';
+                AppState.Form.registrateUserModuleIsLoaded = false;
+            }
+        }
+    );
+
+    DOMElements.AddVideoPlaylistControllsButton.addEventListener(
+        'click',
+        () => {
+            Middleware.FormOpen({
+                modalWindowController: ModalWindowControllers.FormModalWindow,
+            })({}, (f) => f);
+        }
+    );
 
     DOMElements.OpenFormButton.addEventListener('click', async (ev) => {
         new MiddlewareChain(
@@ -220,12 +252,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     DOMElements.CreatePlaylistItemButton.addEventListener('click', async () => {
-        Create.PlaylistFormElem({
-            titlePlaceholder: 'foo',
-            descriptionPlaceholder: 'bar',
-            caption: 'baz',
-            filePlaceHolder: 'hello guys',
+        const createdElement = Create.PlaylistFormElem({
+            titleDefaultContent: 'default title',
+            descriptionDefaultContent: 'default description',
+            titlePlaceholder: 'title placeholder',
+            descriptionPlaceholder: 'description placeholder',
+            caption: 'create playlist element',
+            filePlaceHolder: '', // deprecated
         });
+
+        AppState.Pools.AddNewPlaylistItems.push(createdElement);
 
         // DOMElements.PlaylistFormModule.appendChild();
     });
@@ -257,15 +293,26 @@ document.addEventListener('DOMContentLoaded', () => {
         GetRegistrateUserForm: new RequestManager(
             '/api/get-html-form/registrate-user',
             'get',
-            (ctx) => {},
-            (ctx) => {
-                // alert();
-            }
+            async (ctx) => {
+                // console.log(await ctx.response.json());
+
+                const HTML = await ctx.response.json();
+
+                console.log({ HTML });
+
+                console.log({ reguserarea: DOMElements.RegistrateUsersArea });
+
+                if (!AppState.Form.registrateUserModuleIsLoaded) {
+                    DOMElements.RegistrateUsersArea.innerHTML = HTML.file;
+                    AppState.Form.registrateUserModuleIsLoaded = true;
+                }
+            },
+            (ctx) => {}
         ),
         UpdatePlaylist: new RequestManager(
             '/api/get-playlist',
             'get',
-            FinalHandlers.OnUpdatePlaylist({
+            RequestManagerFinalHandlers.OnUpdatePlaylist({
                 middlewareChain: new MiddlewareChain((ctx) => {}),
                 playlistItemCreator: Create.PlaylistItem({
                     playlistItemsPool: AppState.Pools.Playlist,
@@ -286,11 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
         Form: new RequestManager(
             '/api/handle-form',
             'post',
-            FinalHandlers.OnFormResponse({
+            RequestManagerFinalHandlers.OnFormResponse({
                 onSuccessMiddleware: new MiddlewareChain(
                     (ctx, next) => {
                         console.log('firs mw', { ctx });
                         DOMElements.StatusDisplay.innerText = 'done';
+                        DOMElements.StatusDisplay.style.animation = 'unset';
                         next();
                     },
                     Middleware.FormClose({
@@ -310,11 +358,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                         next();
                     },
+                    (
+                        (deps = {}) =>
+                        (ctx, next) => {
+                            /* очищаем пул элементов  */
+
+                            if (deps.addPlaylistFormElementPull.length > 0) {
+                                let element;
+                                while (
+                                    (element =
+                                        deps.addPlaylistFormElementPull.pop())
+                                ) {
+                                    element.remove();
+                                }
+                            }
+
+                            next();
+                        }
+                    )({
+                        addPlaylistFormElementPull:
+                            AppState.Pools.AddNewPlaylistItems,
+                    }),
                     (ctx) => {
                         /** final mw */
                         Create.ToolTip({
                             targetContainer: DOMElements.ToolTipsContainer,
                         })('SUCCESS');
+
+                        DOMElements.RegistrateUsersArea.innerHTML = '';
+                        AppState.Form.registrateUserModuleIsLoaded = false;
                         console.log('done', { ctx });
                     }
                 ),
@@ -330,9 +402,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     playVideoMWChain: MiddlewareChains.playVideo,
                     playlistItemsPool: AppState.Pools.Playlist,
                 }),
+                toolTipCreator: Create.ToolTip({
+                    targetContainer: DOMElements.ToolTipsContainer,
+                    disapearTimeout: 10000,
+                }),
             }),
             (ctx) => {
                 console.log(`before request final handler`);
+                DOMElements.StatusDisplay.innerText = '🔃';
+                DOMElements.StatusDisplay.style.transformOrigin = '50% 50% 0';
+                DOMElements.StatusDisplay.style.animation =
+                    'Rolling 1s ease-out 0s infinite forwards';
             }
         ),
     };
@@ -506,6 +586,7 @@ function FormCloseMiddleware(deps = {}) {
  * @param {MiddlewareChain} deps.onSuccessMiddleware
  * @param {MiddlewareChain} deps.onFailMiddleware
  * @param {HTMLElement} deps.playlistHTMLElement
+ * @param {Object} deps.toolTipCreator
  * @param {(dataSet:{title:string;description:string;file:Object}) => void} deps.playlistItemCreator
  * @returns {(ctx:Object) => Promise<any>}
  */
@@ -537,6 +618,10 @@ function FormDataRequestFinalHandler(deps = {}) {
         );
     }
 
+    if (!deps.toolTipCreator) {
+        throw new Error(`deps.toolTipCreator required`);
+    }
+
     /**
      *
      * @param {Object} ctx
@@ -557,7 +642,7 @@ function FormDataRequestFinalHandler(deps = {}) {
             return;
         }
 
-        await onSuccessMiddleware.execute(ctx);
+        deps.onSuccessMiddleware.execute(ctx);
 
         const ServerSuccessResponse = {};
 
@@ -580,8 +665,11 @@ function FormDataRequestFinalHandler(deps = {}) {
                     video: PlaylistDataSet.video,
                 });
             },
-            users: () => {
-                //
+            users: (payload) => {
+                const name = payload[`name`];
+                const lastName = payload[`last-name`];
+
+                deps.toolTipCreator(`user registrated: ${name} ${lastName}`);
             },
         };
 
@@ -927,6 +1015,13 @@ function CreatePlaylistItem(deps = {}) {
             });
 
             ElementUnits.status.innerText = '🔃';
+            // Object.assign(ElementUnits.status.style, {
+            //     transformOrigin: '50% 50%', // или 'center center'
+            //     animation: 'unset',
+            //     display: 'flex',
+            //     justifyContent: 'center',
+            //     alignItems: 'center',
+            // });
             ElementUnits.status.style.animation =
                 'Rolling 1s ease-out 0s infinite forwards';
 
@@ -957,11 +1052,22 @@ function CreatePlaylistItem(deps = {}) {
  *
  * @param {Object} deps
  * @param {HTMLDivElement} deps.targetContainer
+ * @param {number} deps.disapearTimeout
  * @returns
  */
 function CreateToolTip(deps = {}) {
     if (!deps.targetContainer) {
         throw new Error(`CreateToolTip: targetContainer required`);
+    }
+
+    if (!deps.disapearTimeout) {
+        console.warn(`CreateToolTip: deps.disapearTimeout is not provided`);
+    }
+
+    if (deps.disapearTimeout && typeof deps.disapearTimeout !== 'number') {
+        throw new Error(
+            `CreateToolTip: deps.disapearTimeout must be 'number' type`
+        );
     }
 
     let timeout = Infinity;
@@ -979,7 +1085,7 @@ function CreateToolTip(deps = {}) {
 
         timeout = setTimeout(() => {
             div.remove();
-        }, 3000);
+        }, deps.disapearTimeout || 3000);
 
         div.addEventListener('mouseover', () => {
             console.log('over');
@@ -1514,6 +1620,8 @@ const kc = KeyController.CreateFactory({
 /**
  *
  * @param {Object} deps
+ * @param {Object} deps.titleDefaultContent
+ * @param {Object} deps.descriptionDefaultContent
  * @param {HTMLElement} deps.nest
  * @param {(config:{length:number}) => string} deps.randomstringUtil
  * @param {(globalConfig:{groupId:string}) => (config:{columnName:string;columnDataType:string}) => string} deps.nameAttribureGenerator
@@ -1541,11 +1649,21 @@ function PlaylistFormItemCreator(deps = {}) {
         throw new Error(`deps.nameAttribureGenerator required`);
     }
 
+    if (!deps.descriptionDefaultContent) {
+        console.warn('description default content is not provided');
+    }
+
+    if (!deps.titleDefaultContent) {
+        console.warn('title default content is not provided');
+    }
+
     /**
      *
      * @param {Object} data
      * @param {Object} data.titlePlaceholder
+     * @param {Object} data.titleContent
      * @param {Object} data.descriptionPlaceholder
+     * @param {Object} data.descriptionContent
      * @param {Object} data.caption
      * @param {Object} data.filePlaceHolder
      *
@@ -1599,6 +1717,10 @@ function PlaylistFormItemCreator(deps = {}) {
         Units.Caption.innerText = Args.data.caption;
 
         Inputs.Description.placeholder = Args.data.descriptionPlaceholder;
+        Inputs.Description.value =
+            Args.data.descriptionContent ||
+            deps.descriptionDefaultContent ||
+            'default default';
         Inputs.Description.setAttribute(
             'name',
             deps.nameAttribureGenerator({ groupId: groupId })({
@@ -1607,6 +1729,10 @@ function PlaylistFormItemCreator(deps = {}) {
             })
         );
         Inputs.Title.placeholder = Args.data.titlePlaceholder;
+        Inputs.Title.value =
+            Args.data.titleContent ||
+            deps.titleDefaultContent ||
+            'default default';
         Inputs.Title.setAttribute(
             'name',
             deps.nameAttribureGenerator({ groupId: groupId })({
@@ -1647,6 +1773,8 @@ function PlaylistFormItemCreator(deps = {}) {
         Gears.Frame.appendChild(Buttons.RemoveTheItem);
 
         deps.nest.appendChild(Gears.Frame);
+
+        return Gears.Frame;
 
         function removeElems(obj) {
             obj.remove();

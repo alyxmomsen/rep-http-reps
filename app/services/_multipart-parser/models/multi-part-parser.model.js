@@ -99,11 +99,11 @@ class MultipartFormdataHandler {
                             ✔ MultiTableGrouppingAgent: трансформация плоской структуры в иерархическую
                             с последущим мерджингом таких структур для каждой порции данных
                         */
-                        multiTableGroupingAgent.handleFormDataPartParsedData(
+                        await multiTableGroupingAgent.handleFormDataPartParsedData(
                             mwResult
                         );
                     } catch (e) {
-                        console.log({ e });
+                        console.log('check that error: ', { e });
                     }
                 }
 
