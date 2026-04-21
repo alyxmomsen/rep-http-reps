@@ -71,13 +71,6 @@ const FILES_SCHEMA = {
                             payload: '__body',
                         },
                     },
-                    // __columnName:{
-                    //     type:ValueType.Leaf,
-                    //     value:{
-                    //         action:'file',
-                    //         payload:'__body',
-                    //     },
-                    // },
                 },
             },
         },
@@ -116,7 +109,6 @@ class PreMapper {
                     currentContext[newProp] = branchHandlerResult;
                 }
             } else {
-                // type === ValueType.Leaf
 
                 if (currentContext[newProp]) {
                     const leafHandlerResult = this.#leafHandler(

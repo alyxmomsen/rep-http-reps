@@ -55,26 +55,16 @@ class MultipartFormdataHandler {
             req.on('end', async () => {
                 const wholeBuffer = Buffer.concat(RequestDataPool.Chunks);
                 const boundaryBuffer = Buffer.from(`--${boundaryMatch[1]}`);
-                /* разбиваем сплошной буфер данных формы на отдельные порции
-                где одна порция - один HTML инпут  */
-                // const parts = splitFormData(wholeBuffer, boundaryBuffer);
+
                 const parts = this.#DepsToolSet.splitFormData(
                     wholeBuffer,
                     boundaryBuffer
                 );
 
-                /* инстанцируем объект multiTableAgentFactory, 
-                этот класс накапливает состояние, инстанцирование гарантирует 
-                то что состояние объекта "чистый лист"*/
                 const multiTableGroupingAgent = this.#multiTableAgentFactory();
 
                 for (const part of parts) {
                     try {
-                        // ==========================================================
-                        // ============== ? вынести в middleware ? ==================
-
-                        /* парсинг данных */
-                        /* дробим монолит на атомы */
                         const { body, headers: headersPart } =
                             this.#DepsToolSet.parseFormDataPart(part);
                         const headers = this.#DepsToolSet.splitHeaders(
@@ -84,7 +74,6 @@ class MultipartFormdataHandler {
                             headers['content-disposition'] || null;
                         const contentType = headers['content-type'] || null;
                         if (!contentDisposition) {
-                            /* contentDisposition содержит важные данные, так-что без него- никак */
                             throw new Error(
                                 `multipart form data parser: incorrect content-disposition of content-type`
                             );
@@ -95,22 +84,11 @@ class MultipartFormdataHandler {
                                 contentDisposition
                             );
 
-                        //
-                        // ==========================================================
-
-                        /*  
-                            ✔ extractProtocolMiddleware: выявление наличия протокола multitable-form-protocol 
-                                - uses extractProtocolName                        
-                        */
                         const mwResult = await this.#executeMiddleware(
                             { name, filename, contentType, body },
                             this.#onDataPartMiddleware
                         );
 
-                        /* 
-                            ✔ MultiTableGrouppingAgent: трансформация плоской структуры в иерархическую
-                            с последущим мерджингом таких структур для каждой порции данных
-                        */
                         await multiTableGroupingAgent.handleFormDataPartParsedData(
                             mwResult
                         );
@@ -119,10 +97,7 @@ class MultipartFormdataHandler {
                     }
                 }
 
-                /* получаем смердженную иерархическую структуру  */
                 const mergedGroups = multiTableGroupingAgent.getGroups();
-
-                console.log('check multipart handler', { mergedGroups });
 
                 const middlewareresponse = await this.#executeMiddleware(
                     mergedGroups,
@@ -130,11 +105,8 @@ class MultipartFormdataHandler {
                 );
 
                 if (middlewareresponse.success) {
-                    /* резолвим промис успешным результатом processing-чейна  */
                     resolve({ success: middlewareresponse.success });
                 }
-
-                // console.log({mergedGroups});
             });
         });
     }
@@ -185,10 +157,8 @@ class MultipartFormdataHandler {
         };
 
         if (middleware.length > 0) {
-            // обработанные данные
             return await next(payload);
         } else {
-            // необработанные данные
             return payload;
         }
     }

@@ -149,7 +149,7 @@ class MultiTableGrouppingAgent {
          * Ensures all required fields are present before processing
          */
         if (!this.#validateData(data)) {
-            console.log({ data });
+            
             throw new Error(
                 `MultiTableGrouppingAgent: incorrect provided data`
             );
@@ -219,14 +219,12 @@ class MultiTableGrouppingAgent {
                 fileDataSet,
                 this.#mergedGroups
             );
+
             this.#mergedGroups = this.#dataTransformer.process(
                 LINK_COLUMN_SCHEMA,
                 linkColumnDataSet,
                 this.#mergedGroups
             );
-
-            // console.dir(context, {depth:10});
-            // throw new Error();
 
             return;
         }
@@ -238,14 +236,11 @@ class MultiTableGrouppingAgent {
             columnName,
         })();
 
-        console.log('foo bar: 1');
         this.#mergedGroups = this.#dataTransformer.process(
             REGULAR_COLUMN_SCHEMA,
             regularDataSet,
             this.#mergedGroups
         );
-        console.dir(this.#mergedGroups, { depth: 10 });
-        console.log('foo bar: 2');
     }
 
     /**
