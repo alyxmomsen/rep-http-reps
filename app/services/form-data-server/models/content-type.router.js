@@ -40,25 +40,35 @@ class ContentTypeHandlersRouter {
     }
 
     registrateContentTypeHandler(contentType, handler) {
+        const LocalState = {
+            isContentTypeValid: false,
+        };
+
         let isContentTypeValid = false;
         for (const [key, registratedContentType] of Object.entries(
             ContentTypeHandlersRouter.contentTypesMap
         )) {
             if (contentType === registratedContentType) {
-                isContentTypeValid = true;
+                LocalState.isContentTypeValid = true;
                 break;
             }
         }
 
-        if (this.#contentTypeHandlers.has(contentType)) {
+        if (LocalState.isContentTypeValid === false) {
             throw new Error(
-                `Content type handlers router: this content-type ${contentType} already in use`
+                `ContentTypeHandlersRouter::registrateContentTypeHandler/content-type validation: invalid content-type`
+            );
+        }
+
+        if (this.#contentTypeHandlers.has(contentType)) {
+            console.warn(
+                `ContentTypeHandlersRouter::registrateContentTypeHandler: overriding content-type handler`
             );
         }
 
         this.#contentTypeHandlers.set(contentType, handler);
         /* логирование успешной транзакции */
-        console.log(`content-type <${contentType}> registrated successfull`);
+        console.log(`content-type < ${contentType} > registrated successfull`);
     }
 
     static contentTypesMap = {
