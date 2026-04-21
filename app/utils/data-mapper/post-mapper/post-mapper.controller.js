@@ -1,3 +1,4 @@
+const { FileManager } = require('../../../services/filemanager.service.js/filemanager.service');
 const {
     filemanager,
 } = require('../../../services/filemanager.service.js/fmanager.controller');
@@ -78,7 +79,6 @@ module.exports = {
  *
  * @param {Object} deps
  * @param {StateContainerFactory} deps.StateContainerFactory
- * @param {() => Promise<StateContainer>} deps.StateContainerActionFactory
  * @returns {(payload:Object)=> Promise<any>} - Leaf Action
  */
 function LinkActionFactory(deps = {}) {
@@ -87,8 +87,6 @@ function LinkActionFactory(deps = {}) {
     if (!deps.StateContainerFactory) {
         throw new Error();
     }
-
-    // console.log(`Link action`, { payload });
 
     /**
      *
@@ -136,13 +134,6 @@ function LinkActionFactory(deps = {}) {
                 return;
             }
 
-            // console.log('link payload check', {
-            //     payload,
-            //     globalContainers,
-            //     targetContainer,
-            //     targetContainerData:targetContainer.getData(),
-            // });
-
             // ===================================================
 
             /**
@@ -189,10 +180,6 @@ function LinkActionFactory(deps = {}) {
 
         CurrentContainer.setAction('main', ContainerActionCallBack);
 
-        // transaction.setRollBack('main', () => {
-        //     // console.log('link main rollback');
-        // });
-
         return CurrentContainer;
     };
 
@@ -203,14 +190,13 @@ function LinkActionFactory(deps = {}) {
  *
  * @param {Object} deps
  * @param {StateContainerFactory} deps.StateContainerFactory
- * @param {() => Promise<StateContainer>} deps.StateContainerActionFactory
  * @returns {(payload:Object)=> Promise<any>} - Leaf Action
  */
 function FileActionFactory(deps = {}) {
     const StateContainerFactory = deps.StateContainerFactory;
 
     if (!StateContainerFactory) {
-        throw new Error();
+        throw new Error(`deps.StateContainerFactory required`);
     }
 
     /**
@@ -278,14 +264,13 @@ function FileActionFactory(deps = {}) {
  *
  * @param {Object} deps
  * @param {StateContainerFactory} deps.StateContainerFactory
- * @param {() => Promise<StateContainer>} deps.StateContainerActionFactory
  * @returns {(payload:Object)=> Promise<any>} - Leaf Action
  */
 function DataActionFactory(deps = {}) {
     const StateContainerFactory = deps.StateContainerFactory;
 
     if (!StateContainerFactory) {
-        throw new Error();
+        throw new Error(`deps.StateContainerFactory required`);
     }
 
     const DataAction = async (payload) => {
@@ -309,12 +294,16 @@ function DataActionFactory(deps = {}) {
 }
 
 function LinkLeafStateContainerActionFactory() {
-    const fn = (ContainerInterface, deps) => {
-        // /**
-        //  * @type {Map<string,StateContainer>}
-        //  */
-        // const globalContainers = deps;
 
+
+    /**
+     * 
+     * @param {{}} ContainerInterface 
+     * @param {Object} deps 
+     * @returns 
+     */
+    const fn = (ContainerInterface, deps) => {
+        
         const targetContainerKey = `${payload.tableName}/${payload.groupId}`;
         const targetContainer = deps.globalContainers.get(targetContainerKey);
 
@@ -334,13 +323,6 @@ function LinkLeafStateContainerActionFactory() {
             return;
         }
 
-        // console.log('link payload check', {
-        //     payload,
-        //     globalContainers,
-        //     targetContainer,
-        //     targetContainerData:targetContainer.getData(),
-        // });
-
         // ===================================================
 
         /**
@@ -354,11 +336,6 @@ function LinkLeafStateContainerActionFactory() {
 
         const targetContainerState = targetContainer.getState();
         const targetContainerData = targetContainer.getData();
-
-        console.log('LinkAction/columnContainerAction/tar cont state: ', {
-            targetContainerState,
-            targetContainerData,
-        });
 
         if (targetContainerState.value === 'done') {
             ContainerInterface.setState('done', 'target container is "done"');
@@ -385,11 +362,31 @@ function LinkLeafStateContainerActionFactory() {
     return fn;
 }
 
-function FileLeafStateContainerActionFactory() {
+/**
+ * 
+ * @param {Object} deps 
+ * @param {FileManager} deps.filemanager 
+ * @param {Object} deps 
+ * @returns 
+ */
+function FileLeafStateContainerActionFactory(deps) {
+
+    if (!deps.filemanager) {
+        throw new Error(`deps.filemanager required`);
+    }
+
+    /**
+     * 
+     * @param {*} StateContainerInterface 
+     * @param {Object} deps 
+     * @returns 
+     */
     const fn = async (StateContainerInterface, deps = {}) => {
         const fileManagerResult = await filemanager.write(
             LeafActionArgs.FileData
         );
+
+        
 
         if (fileManagerResult.error) {
             StateContainerInterface.setState(StateContainer.States.Rejected);

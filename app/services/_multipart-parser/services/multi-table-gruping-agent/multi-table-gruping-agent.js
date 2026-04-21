@@ -29,10 +29,9 @@
  */
 
 const { randomBytes } = require('crypto');
+
 const { DataMapper } = require('../data-mapper/v2/model/data-mapper.v2.model');
-const {
-    filemanager,
-} = require('../../../filemanager.service.js/fmanager.controller');
+
 const {
     PreMapper,
     FILES_SCHEMA,
