@@ -241,6 +241,7 @@ video#video--main {
     overflow-x: hidden;
     text-overflow: ellipsis;
     /* animation: ShowPlayList .2s ease-out 0s 1 forwards; */
+    scrollbar-width: none;
 }
 
 #playlist--video:hover {
