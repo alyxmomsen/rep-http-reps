@@ -35,10 +35,23 @@ const {
     PreMapper,
 } = require('../../../utils/data-mapper/pre-mapper/pre-mapper.model');
 
-const { splitHeaders, parseContentDisposition, parseFormDataPart, splitFormData } = require('../models/deps/multipart-parser.deps');
-const { PostMapper } = require('../../../utils/data-mapper/post-mapper/post-mapper.model');
-const { StateContainerFactory } = require('../../../utils/data-mapper/post-mapper/transactions/transaction.controller');
-const { DataActionFactory, FileActionFactory, LinkActionFactory } = require('../../../utils/data-mapper/post-mapper/post-mapper.controller');
+const {
+    splitHeaders,
+    parseContentDisposition,
+    parseFormDataPart,
+    splitFormData,
+} = require('../models/deps/multipart-parser.deps');
+const {
+    PostMapper,
+} = require('../../../utils/data-mapper/post-mapper/post-mapper.model');
+const {
+    StateContainerFactory,
+} = require('../../../utils/data-mapper/post-mapper/transactions/transaction.controller');
+const {
+    DataActionFactory,
+    FileActionFactory,
+    LinkActionFactory,
+} = require('../../../utils/data-mapper/post-mapper/post-mapper.controller');
 
 const multiTableGrouppingAgentFactory = () => {
     return new MultiTableGrouppingAgent({
@@ -56,10 +69,10 @@ const formDataLinksBufferFactory = () => {
 
 const multipartFormHandler = new MultipartFormdataHandler({
     multiTableGrouppingAgentFactory,
-    splitHeaders:splitHeaders,
-    parseContentDisposition:parseContentDisposition,
-    parseFormDataPart:parseFormDataPart,
-    splitFormData:splitFormData,
+    splitHeaders: splitHeaders,
+    parseContentDisposition: parseContentDisposition,
+    parseFormDataPart: parseFormDataPart,
+    splitFormData: splitFormData,
 });
 
 multipartFormHandler.useMiddleware(
@@ -71,13 +84,13 @@ multipartFormHandler.onDataEndListeners(
         postMapper: new PostMapper({
             stateRollBackContainerFactory: new StateContainerFactory(),
             dataAction: DataActionFactory({
-                StateContainerFactory:new StateContainerFactory(),
+                StateContainerFactory: new StateContainerFactory(),
             }),
             fileAction: FileActionFactory({
-                StateContainerFactory:new StateContainerFactory(),
+                StateContainerFactory: new StateContainerFactory(),
             }),
             linkAction: LinkActionFactory({
-                StateContainerFactory:new StateContainerFactory(),
+                StateContainerFactory: new StateContainerFactory(),
             }),
         }),
     })

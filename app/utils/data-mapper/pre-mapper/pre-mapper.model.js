@@ -109,7 +109,6 @@ class PreMapper {
                     currentContext[newProp] = branchHandlerResult;
                 }
             } else {
-
                 if (currentContext[newProp]) {
                     const leafHandlerResult = this.#leafHandler(
                         value,

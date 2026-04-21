@@ -1,4 +1,6 @@
-const { FileManager } = require('../../../services/filemanager.service.js/filemanager.service');
+const {
+    FileManager,
+} = require('../../../services/filemanager.service.js/filemanager.service');
 const {
     filemanager,
 } = require('../../../services/filemanager.service.js/fmanager.controller');
@@ -294,16 +296,13 @@ function DataActionFactory(deps = {}) {
 }
 
 function LinkLeafStateContainerActionFactory() {
-
-
     /**
-     * 
-     * @param {{}} ContainerInterface 
-     * @param {Object} deps 
-     * @returns 
+     *
+     * @param {{}} ContainerInterface
+     * @param {Object} deps
+     * @returns
      */
     const fn = (ContainerInterface, deps) => {
-        
         const targetContainerKey = `${payload.tableName}/${payload.groupId}`;
         const targetContainer = deps.globalContainers.get(targetContainerKey);
 
@@ -363,30 +362,27 @@ function LinkLeafStateContainerActionFactory() {
 }
 
 /**
- * 
- * @param {Object} deps 
- * @param {FileManager} deps.filemanager 
- * @param {Object} deps 
- * @returns 
+ *
+ * @param {Object} deps
+ * @param {FileManager} deps.filemanager
+ * @param {Object} deps
+ * @returns
  */
 function FileLeafStateContainerActionFactory(deps) {
-    
     if (!deps.filemanager) {
         throw new Error(`deps.filemanager required`);
     }
 
     /**
-     * 
-     * @param {*} StateContainerInterface 
-     * @param {Object} deps 
-     * @returns 
+     *
+     * @param {*} StateContainerInterface
+     * @param {Object} deps
+     * @returns
      */
     const fn = async (StateContainerInterface, deps = {}) => {
         const fileManagerResult = await filemanager.write(
             LeafActionArgs.FileData
         );
-
-
 
         if (fileManagerResult.error) {
             StateContainerInterface.setState(StateContainer.States.Rejected);

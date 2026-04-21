@@ -77,7 +77,6 @@ class FileManager {
     async read(filname) {
         let step = 0;
         return await new Promise(async (res, rej) => {
-            
             const Stats = {
                 fileSize: null,
             };
@@ -100,7 +99,6 @@ class FileManager {
             }
 
             readStream.on('ready', () => {
-
                 res({
                     success: {
                         readStream,
@@ -141,7 +139,6 @@ class FileManager {
             const fileStats = await stat(testFileFullPath);
 
             await rm(testFileFullPath);
-
         } catch (err) {
             console.log(`FileManager/errors/handled error: `, { err });
         }

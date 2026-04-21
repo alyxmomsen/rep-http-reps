@@ -148,7 +148,6 @@ class MultiTableGrouppingAgent {
          * Ensures all required fields are present before processing
          */
         if (!this.#validateData(data)) {
-            
             throw new Error(
                 `MultiTableGrouppingAgent: incorrect provided data`
             );

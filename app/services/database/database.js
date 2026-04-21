@@ -94,7 +94,6 @@ class DataBase {
      * @param {string} rowId
      */
     readOne(tableId, rowId) {
-
         const tableById = this.#data.get(tableId);
         if (!tableById) {
             return {
@@ -140,17 +139,14 @@ class DataBase {
     }
 
     updateOne(tableId, rowId, data) {
-
         return {};
     }
 
     deleteOne(tableId, rowId) {
-
         return {};
     }
 
     deleteTable(tableId) {
-
         return {};
     }
 

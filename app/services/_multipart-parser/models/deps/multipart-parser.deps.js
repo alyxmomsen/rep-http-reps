@@ -1,4 +1,10 @@
-module.exports = { parseContentDisposition, splitHeaders, parseFormDataPart , splitFormData, findSeparatorIndex}
+module.exports = {
+    parseContentDisposition,
+    splitHeaders,
+    parseFormDataPart,
+    splitFormData,
+    findSeparatorIndex,
+};
 
 /**
  *

@@ -74,9 +74,12 @@ router.get(
     
     работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
 */
-router.post('/api/handle-form', formDataParserFactory({
-    contentTypeHandlersRouter:contentTypeHandlersRouter,
-}));
+router.post(
+    '/api/handle-form',
+    formDataParserFactory({
+        contentTypeHandlersRouter: contentTypeHandlersRouter,
+    })
+);
 
 router.get('/api/get-html-form/registrate-user', async (ctx) => {
     const { req, res, params, queryParams } = ctx;
@@ -96,7 +99,6 @@ router.get('/api/get-html-form/registrate-user', async (ctx) => {
 });
 
 createRoute('/api/get-playlist', async (ctx) => {
-
     const { req, res, params } = ctx;
 
     const dbAdapter = dbControllersRouter.get('video-playlist');
@@ -139,7 +141,6 @@ createRoute('/api/get-playlist', async (ctx) => {
             })
         );
     }
-
 });
 
 /* 
@@ -204,7 +205,6 @@ async function StreamVideoRouteHandler(ctx) {
     }
 
     if (!ctx.params || !ctx.queryParams) {
-        
         ctx.res.writeHead(400, {
             'content-type': 'application/json',
         });
@@ -217,7 +217,6 @@ async function StreamVideoRouteHandler(ctx) {
     }
 
     if (!ctx.params.rowId) {
-        
         ctx.res.end(
             JSON.stringify({
                 message: 'rowid required but not received',
@@ -232,8 +231,6 @@ async function StreamVideoRouteHandler(ctx) {
     if (!req.headers.range) {
         Flags.IsRangeHeader = false;
     }
-
-    
 
     const ParamsSet = {
         params: ctx.params,
@@ -312,7 +309,7 @@ async function StreamVideoRouteHandler(ctx) {
         rangeLength: 0,
     };
 
-    const ranges = ctx.req.headers.range.replace('bytes=', '').split('-')
+    const ranges = ctx.req.headers.range.replace('bytes=', '').split('-');
 
     FileStats.start = Number.parseInt(ranges[0], 10);
 
