@@ -25,46 +25,52 @@ class FormHandler {
      * @description вызывает конкретный контроллер для обработки формы
      * в зависимости от "content-type" хедера ,
      * принимает зависимость contentTypeHandlersRouter
-     * @param {IncomingMessage} req
-     * @param {ServerResponse} res
-     * @param {{contentTypeHandlersRouter:ContentTypeHandlersRouter}} deps
+     * @param {IncomingMessage} httpRequest
+     * @param {ServerResponse} httpResponse
+     * @param {Object} deps
+     * @param {ContentTypeHandlersRouter} deps.contentTypeHandlersRouter
      * @returns {Promise<void>}
      */
-    static async processForm(req, res, deps = {}) {
-        // ----------- deps fetching --------------------
-
+    static async processForm(httpRequest, httpResponse, deps = {}) {
         const contentTypeHandlersRouter = deps.contentTypeHandlersRouter;
 
         // ----------------------------------------------
 
-        if (contentTypeHandlersRouter === undefined) {
-            res.writeHead(400, {
+        if (deps.contentTypeHandlersRouter === undefined) {
+            httpResponse.writeHead(400, {
                 'content-type': 'application/json',
             });
-            res.end(
+
+            httpResponse.end(
                 JSON.stringify({
                     message: 'enternal error: 1',
                 })
             );
+
             console.log(
                 `x1b[31m` +
-                    'contentTypeHandlersRouter is not received' +
+                    'deps.contentTypeHandlersRouter is not provided' +
                     `x1b[0m`
             );
-            throw new Error(`contentTypeHandlersRouter is not provided`);
+
+            throw new Error(
+                `FormHandler::processForm: deps.contentTypeHandlersRouter is not provided`
+            );
         }
 
         // ------------------------------------------------
 
-        const { headers } = req;
+        const { headers } = httpRequest;
 
-        const contentTypeHeader = headers['content-type'];
+        const Request = {
+            contentTypeHeader: httpRequest.headers['content-type'],
+        };
 
-        if (contentTypeHeader === undefined) {
-            res.writeHead(400, {
+        if (Request.contentTypeHeader === undefined) {
+            httpResponse.writeHead(400, {
                 'content-type': 'application/json',
             });
-            res.end(
+            httpResponse.end(
                 JSON.stringify({
                     message: 'expected content-type header but not provided',
                 })
@@ -72,53 +78,66 @@ class FormHandler {
             return;
         }
 
-        const [contentType, contentTypeAttr] = contentTypeHeader.split(/;\s*/);
+        const [contentType, contentTypeAttr] =
+            Request.contentTypeHeader.split(/;\s*/);
+
+        const ContentTypeHeader = {
+            contentType: contentType,
+            attribute: contentTypeAttr,
+        };
 
         try {
-            const contentTypeController =
-                contentTypeHandlersRouter.getHandlerController(contentType);
-            const ControllerResponse = await contentTypeController.handle(
-                req,
-                res,
-                contentTypeAttr
+            const ContentTypeController =
+                contentTypeHandlersRouter.getHandlerController(
+                    ContentTypeHeader.contentType
+                );
+
+            const ControllerResponse = await ContentTypeController.handle(
+                httpRequest,
+                httpResponse,
+                ContentTypeHeader.attribute
             );
 
             if (ControllerResponse.error) {
-                res.writeHead(520, {
+                httpResponse.writeHead(500, {
                     'content-type': 'application/json',
                 });
-                res.end(
+
+                httpResponse.end(
                     JSON.stringify({
-                        error,
+                        message: error,
                     })
                 );
+
                 return;
             }
 
             if (!ControllerResponse.success) {
-                res.writeHead(500, {
+                httpResponse.writeHead(520, {
                     'content-type': 'application/json',
                 });
-                res.end(
+                httpResponse.end(
                     JSON.stringify({
-                        message: '3',
+                        message: 'unknown server error',
                     })
                 );
                 return;
             }
 
-            res.writeHead(200, {
+            httpResponse.writeHead(200, {
                 'content-type': 'application/json',
             });
-            res.end(JSON.stringify(ControllerResponse));
+
+            httpResponse.end(JSON.stringify(ControllerResponse));
+
             return;
         } catch (err) {
-            res.writeHead(520, {
+            httpResponse.writeHead(520, {
                 'content-type': 'application/json',
             });
-            res.end(
+            httpResponse.end(
                 JSON.stringify({
-                    error: err,
+                    details: err,
                     message: 'unknown error',
                 })
             );
@@ -133,7 +152,7 @@ class FormHandler {
      * @returns {Promise<void>}
      */
     static async renderer(req, res) {
-        console.log('renderer...');
+        console.log('rendering the form...');
 
         try {
             const formHTMLpath = FORM_HANDLER_CONSTANTS.ASSETS_PATH;
