@@ -1,4 +1,4 @@
-const { StateContainer } = require("./transaction.model");
+const { StateContainer } = require('./transaction.model');
 
 class StateContainerFactory {
     create() {

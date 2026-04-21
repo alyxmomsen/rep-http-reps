@@ -1,4 +1,8 @@
-const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const {
+    S3Client,
+    PutObjectCommand,
+    ListObjectsV2Command,
+} = require('@aws-sdk/client-s3');
 const { createReadStream, writeFileSync, existsSync } = require('fs');
 const { resolve } = require('path');
 
@@ -36,7 +40,11 @@ async function listObjects(bucketName) {
 
         if (response.Contents) {
             console.log(`\n📁 Объекты в бакете ${bucketName}:`);
-            response.Contents.forEach(obj => console.log(`  - ${obj.Key} (${obj.Size} bytes, изменён: ${obj.LastModified})`));
+            response.Contents.forEach((obj) =>
+                console.log(
+                    `  - ${obj.Key} (${obj.Size} bytes, изменён: ${obj.LastModified})`
+                )
+            );
             return response.Contents;
         } else {
             console.log('Бакет пуст');
@@ -50,34 +58,35 @@ async function listObjects(bucketName) {
 
 async function main() {
     console.log('🚀 Начинаем тестирование Timeweb S3...\n');
-    
+
     const bucketName = 'e7a7869b-5321-4677-88da-dc499859d662';
-    
+
     // Создаём тестовый файл
-    const testFilePath = resolve(`C:\\Users\\user\\Downloads\\Черное_зеркало_5_сезон_-_0_серия.mp4`);
+    const testFilePath = resolve(
+        `C:\\Users\\user\\Downloads\\Черное_зеркало_5_сезон_-_0_серия.mp4`
+    );
     const testContent = `Тестовый файл создан ${new Date().toISOString()}`;
-    
+
     console.log('📝 Создаём тестовый файл:', testFilePath);
     writeFileSync(testFilePath, testContent);
     console.log('✅ Тестовый файл создан\n');
-    
+
     try {
         // 1. Проверяем соединение - получаем список файлов
         console.log('1️⃣ Проверяем соединение с бакетом...');
         const files = await listObjects(bucketName);
         console.log(`   Найдено ${files.length} файлов\n`);
-        
+
         // 2. Загружаем файл
         console.log('2️⃣ Загружаем файл...');
         await uploadFile(bucketName, `test-${Date.now()}.txt`, testFilePath);
-        
+
         // 3. Снова получаем список файлов, чтобы увидеть новый файл
         console.log('\n3️⃣ Получаем обновлённый список...');
         const updatedFiles = await listObjects(bucketName);
         console.log(`   Теперь в бакете ${updatedFiles.length} файлов\n`);
-        
+
         console.log('🎉 Тестирование завершено успешно!');
-        
     } catch (error) {
         console.error('\n❌ Тестирование не удалось:', error.message);
         if (error.code === 'NoSuchBucket') {

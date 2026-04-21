@@ -1,21 +1,21 @@
 :root {
     --scale-value: 9px;
-    --playlistWidht:40%;
-    --controlsPanelButtonHeight:43px;
+    --playlistWidht: 40%;
+    --controlsPanelButtonHeight: 43px;
 }
 
 input {
-	padding: 4px;
-	border-radius: 4px;
-	font-weight: bold;
-	color: #000;
+    padding: 4px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #000;
 }
 
 .form-element {
-	padding: 9px;
-	border: 1px solid #475e66;
-	border-radius: 4px;
-	position: relative;
+    padding: 9px;
+    border: 1px solid #475e66;
+    border-radius: 4px;
+    position: relative;
 }
 
 /* modal windows */
@@ -28,44 +28,44 @@ input {
 }
 
 .wrapper.form--main {
-	/* width: 50%; */
-	margin: 0 auto;
-	background-color: #394a64;
-	padding: 9px;
-	border-radius: 4px;
-	display: flex;
-	gap: 9px;
+    /* width: 50%; */
+    margin: 0 auto;
+    background-color: #394a64;
+    padding: 9px;
+    border-radius: 4px;
+    display: flex;
+    gap: 9px;
 }
 
 #form--main__options {
-	display: flex;
-	flex-direction: column;
-	gap: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
 }
 
 button {
-	padding: 9px;
-	cursor: pointer;
-	text-transform: uppercase;
-	background-color: #75adb9;
-	border-radius: 4px;
-	border: 1px solid white;
+    padding: 9px;
+    cursor: pointer;
+    text-transform: uppercase;
+    background-color: #75adb9;
+    border-radius: 4px;
+    border: 1px solid white;
 }
 
 #form--main__options button {
-	padding: 9px;
-	cursor: pointer;
-	text-transform: uppercase;
-	background-color: #75adb9;
-	border-radius: 4px;
-	border: 1px solid white;
+    padding: 9px;
+    cursor: pointer;
+    text-transform: uppercase;
+    background-color: #75adb9;
+    border-radius: 4px;
+    border: 1px solid white;
 }
 
 #form--main--controlls-container {
-	padding: 9px;
-	border: 1px solid #434649;
-	position: relative;
-	border-radius: 4px;
+    padding: 9px;
+    border: 1px solid #434649;
+    position: relative;
+    border-radius: 4px;
 }
 
 #form--main--controlls-container #form--main--close-button {
@@ -76,37 +76,37 @@ button {
 }
 
 .wrapper.form--main form {
-	display: flex;
-	flex-direction: column;
-	gap: 9px;
-	justify-content: start;
-	align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    justify-content: start;
+    align-items: center;
 }
 
 /* video elem modal window */
 #modal-window--video {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: auto;
-	/* display: none; */
-	display: flex;
-	aspect-ratio: 16/9;
-	overflow: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    /* display: none; */
+    display: flex;
+    aspect-ratio: 16/9;
+    overflow: hidden;
 }
 
 #controls--video__show-form {
-	/* padding: 9px; */
-	font-weight: bold;
-	/* margin: 9px; */
-	cursor: pointer;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: auto;
-	height: 43px;
-	padding: 0 9px;
+    /* padding: 9px; */
+    font-weight: bold;
+    /* margin: 9px; */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: auto;
+    height: 43px;
+    padding: 0 9px;
 }
 
 video#video--main {
@@ -118,22 +118,22 @@ video#video--main {
 
 /* form modal-window */
 #modal-window--a {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 2;
-	/* display: flex; */
-	display: none;
-	justify-content: center;
-	align-items: center;
-	background-color: #281f30d4;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    /* display: flex; */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background-color: #281f30d4;
 }
 
 #modal-window--a .frame {
-	width: 80%;
-	margin: 0 auto;
+    width: 80%;
+    margin: 0 auto;
 }
 
 /* playlist modal-window */
@@ -141,7 +141,7 @@ video#video--main {
     position: absolute;
     bottom: 0;
     /* right: -200vw; */
-	right: 0;
+    right: 0;
     width: 50%;
     height: auto;
     z-index: 1;
@@ -211,52 +211,52 @@ video#video--main {
 /* video-playlist */
 
 #controls--video {
-	z-index: 0;
-	align-self: end;
-	width: 100%;
-	bottom: calc(100%);/* - var(--controlsPanelButtonHeight) */
-	position: absolute;
-	display: flex;
-	justify-content: end;
-	background-color: #20515d6b;
+    z-index: 0;
+    align-self: end;
+    width: 100%;
+    bottom: calc(100%); /* - var(--controlsPanelButtonHeight) */
+    position: absolute;
+    display: flex;
+    justify-content: end;
+    background-color: #20515d6b;
 }
 
 #playlist--video {
     z-index: 1;
-	--width: 40%;
-	position: absolute;
-	top: 0;
-	color: #fff;
-	background-color: #0e1f3267;
-	padding: 9px;
-	width: 40%;
-	height: 93%;
-	display: flex;
-	/* display: none; */
-	flex-direction: column;
-	gap: 9px;
-	transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
-	right: 100%;
-	overflow-y: scroll;
-	overflow-x: hidden;
-	text-overflow: ellipsis;
-	/* animation: ShowPlayList .2s ease-out 0s 1 forwards; */
+    --width: 40%;
+    position: absolute;
+    top: 0;
+    color: #fff;
+    background-color: #0e1f3267;
+    padding: 9px;
+    width: 40%;
+    height: 93%;
+    display: flex;
+    /* display: none; */
+    flex-direction: column;
+    gap: 9px;
+    transition: background-color 1s cubic-bezier(0, 0.39, 0, 0.62);
+    right: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    /* animation: ShowPlayList .2s ease-out 0s 1 forwards; */
 }
 
 #playlist--video:hover {
-	background-color: #2e2e51ed;
-	color: #8a8fb3;
+    background-color: #2e2e51ed;
+    color: #8a8fb3;
 }
 
 #playlist--video > div {
-	display: flex;
-	gap: 9px;
-	padding: 6px;
-	border: 1px solid #322e2e4a;
-	border-radius: 4px;
-	transition: color 1s cubic-bezier(0, 0.39, 0, 0.62);
-	transition: color 0.2s ease-out;
-	cursor: pointer;
+    display: flex;
+    gap: 9px;
+    padding: 6px;
+    border: 1px solid #322e2e4a;
+    border-radius: 4px;
+    transition: color 1s cubic-bezier(0, 0.39, 0, 0.62);
+    transition: color 0.2s ease-out;
+    cursor: pointer;
 }
 
 #playlist--video > div:hover {
@@ -264,42 +264,41 @@ video#video--main {
 }
 
 #playlist--video > div:hover {
-
 }
 
 @keyframes ShowPlayList {
     from {
-        right:100%;
+        right: 100%;
     }
     to {
-        right:calc(100% - var(--playlistWidht))
+        right: calc(100% - var(--playlistWidht));
     }
 }
 
 @keyframes HidePlaylist {
     from {
-        right:calc(100% - var(--playlistWidht))
+        right: calc(100% - var(--playlistWidht));
     }
     to {
-        right:100%;
+        right: 100%;
     }
 }
 
 @keyframes ShowControllPanel {
     from {
-        bottom:calc(100%);
+        bottom: calc(100%);
     }
     to {
-        bottom:calc(100% - var(--controlsPanelButtonHeight))
+        bottom: calc(100% - var(--controlsPanelButtonHeight));
     }
 }
 
 @keyframes HideControllPanel {
     from {
-        bottom:calc(100% - var(--controlsPanelButtonHeight))
+        bottom: calc(100% - var(--controlsPanelButtonHeight));
     }
     to {
-        bottom:100%;
+        bottom: 100%;
     }
 }
 

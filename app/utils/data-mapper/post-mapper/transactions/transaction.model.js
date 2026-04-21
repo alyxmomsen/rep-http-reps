@@ -72,7 +72,7 @@ class StateContainer {
                     setRollBack: this.setRollBack.bind(this),
                     setData: (value) => this.#setData(value),
                 },
-                {globalContainers}
+                { globalContainers }
             );
         }
     }
@@ -134,9 +134,9 @@ class StateContainer {
     #state;
 
     static States = {
-        Pending:'pending',
-        Rejected:'rejected',
-        Done:'done',
+        Pending: 'pending',
+        Rejected: 'rejected',
+        Done: 'done',
     };
 
     constructor() {

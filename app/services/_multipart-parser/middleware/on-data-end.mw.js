@@ -89,12 +89,7 @@ module.exports = function onDataEndMiddleware(deps = {}) {
         };
 
         for (const [addr, { rowId, tableName }] of Object.entries(result)) {
-
-
-
             if (tableName === 'files') continue;
-
-            
 
             const DataBaseResponse = dataBase.readOne(tableName, rowId);
 
