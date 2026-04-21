@@ -33,6 +33,7 @@ const {
 const {
     PreMapper,
 } = require('../../../utils/data-mapper/pre-mapper/pre-mapper.model');
+const { splitHeaders, parseContentDisposition, parseFormDataPart, splitFormData } = require('../models/deps/multipart-parser.deps');
 
 const multiTableGrouppingAgentFactory = () => {
     return new MultiTableGrouppingAgent({
@@ -51,6 +52,10 @@ const formDataLinksBufferFactory = () => {
 // Создаём экземпляр
 const multipartFormHandler = new MultipartFormdataHandler({
     multiTableGrouppingAgentFactory,
+    splitHeaders:splitHeaders,
+    parseContentDisposition:parseContentDisposition,
+    parseFormDataPart:parseFormDataPart,
+    splitFormData:splitFormData,
 });
 
 multipartFormHandler.useMiddleware(

@@ -6,12 +6,12 @@ const {
 class MultipartFormdataHandler {
     /**
      *
-     * @param {IncomingMessage} req
-     * @param {ServerResponse} res
-     * @param {string} payload
+     * @param {IncomingMessage} req - http.IncomingMessage
+     * @param {ServerResponse} res - http.ServerResponse
+     * @param {string} payload - boundary raw string
      * @returns {Promise<{error?:Object;success?:Object}>}
      */
-    async handle(req, res, payload) {
+    async handle(req, res, payload, deps) {
         if (!payload) {
             return {
                 error: {
@@ -38,20 +38,30 @@ class MultipartFormdataHandler {
         }
 
         return new Promise((resolve, reject) => {
-            const chunks = [];
-            const incomingDataMaxSize = 1024 * 1024 * 1024 * 2; // 2Gb
-            let receivedSize = 0;
+            const Options = {
+                incomingDataMaxSize: 1024 * 1024 * 1024 * 2, // 2Gb
+            };
+
+            const RequestDataPool = {
+                Chunks: [],
+                ReceivedDataSize: 0,
+            };
+
             req.on('data', async (chunk) => {
-                receivedSize += chunk.length;
-                chunks.push(chunk);
+                RequestDataPool.ReceivedDataSize += chunk.length;
+                RequestDataPool.Chunks.push(chunk);
             });
 
             req.on('end', async () => {
-                const wholeBuffer = Buffer.concat(chunks);
+                const wholeBuffer = Buffer.concat(RequestDataPool.Chunks);
                 const boundaryBuffer = Buffer.from(`--${boundaryMatch[1]}`);
                 /* разбиваем сплошной буфер данных формы на отдельные порции
                 где одна порция - один HTML инпут  */
-                const parts = splitFormData(wholeBuffer, boundaryBuffer);
+                // const parts = splitFormData(wholeBuffer, boundaryBuffer);
+                const parts = this.#DepsToolSet.splitFormData(
+                    wholeBuffer,
+                    boundaryBuffer
+                );
 
                 /* инстанцируем объект multiTableAgentFactory, 
                 этот класс накапливает состояние, инстанцирование гарантирует 
@@ -66,8 +76,8 @@ class MultipartFormdataHandler {
                         /* парсинг данных */
                         /* дробим монолит на атомы */
                         const { body, headers: headersPart } =
-                            parseFormDataPart(part);
-                        const headers = splitHeaders(
+                            this.#DepsToolSet.parseFormDataPart(part);
+                        const headers = this.#DepsToolSet.splitHeaders(
                             headersPart.toString('utf-8')
                         );
                         const contentDisposition =
@@ -81,7 +91,9 @@ class MultipartFormdataHandler {
                         }
 
                         const { name, filename } =
-                            parseContentDisposition(contentDisposition);
+                            this.#DepsToolSet.parseContentDisposition(
+                                contentDisposition
+                            );
 
                         //
                         // ==========================================================
@@ -116,8 +128,6 @@ class MultipartFormdataHandler {
                     mergedGroups,
                     this.#onDataEndMiddleware
                 );
-
-                // console.log();
 
                 if (middlewareresponse.success) {
                     /* резолвим промис успешным результатом processing-чейна  */
@@ -186,22 +196,83 @@ class MultipartFormdataHandler {
     #onDataPartMiddleware;
     #onDataEndMiddleware;
 
+    /**
+     * @type {() => MultiTableGrouppingAgent}
+     */
     #multiTableAgentFactory;
 
     /**
+     * @type {{
+     *  splitFormData:(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>)=> Buffer<ArrayBuffer>[]
+     *  parseFormDataPart:(part:Buffer<ArrayBuffer>)=> ({headers:Buffer<ArrayBuffer>,body:Buffer<ArrayBuffer>})
+     *  splitHeaders:(headersRaw:string)=> Object.<string,string>
+     *  parseContentDisposition:(contentDispositionHeaderData:string)=> ({
+     *   name: string | null;
+     *   filename: string | null;
+     *  })
+     * }}
+     */
+    #DepsToolSet;
+
+    /**
      *
-     * @param {{multiTableGrouppingAgentFactory:() => MultiTableGrouppingAgent}} deps
+     * @param {Object} deps
+     * @param {() => MultiTableGrouppingAgent} deps.multiTableGrouppingAgentFactory
+     * @param {(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>)=> Buffer<ArrayBuffer>[]} deps.splitFormData
+     * @param {(part:Buffer<ArrayBuffer>)=> ({headers:Buffer<ArrayBuffer>,body:Buffer<ArrayBuffer>})} deps.parseFormDataPart
+     * @param {(headersRaw:string)=> Object.<string,string>} deps.splitHeaders
+     * @param {(contentDispositionHeaderData:string)=> ({
+     *  name: string | null;
+     *  filename: string | null;
+     * })} deps.parseContentDisposition
      */
     constructor(deps = {}) {
-        const multtitableAgenttFactrory = deps.multiTableGrouppingAgentFactory;
-
-        if (!multtitableAgenttFactrory) {
+        if (!deps.multiTableGrouppingAgentFactory) {
             throw new Error(
-                `MultipartFormdataHandler: required multiTableGrouppingAgentFactory but not provided`
+                `MultipartFormdataHandler: deps.multiTableGrouppingAgentFactory required`
             );
         }
 
-        this.#multiTableAgentFactory = multtitableAgenttFactrory;
+        this.#multiTableAgentFactory = deps.multiTableGrouppingAgentFactory;
+
+        if (!deps.splitFormData) {
+            throw new Error(`deps.splitFormData required`);
+        }
+
+        console.log(
+            `💘 MultipartFormdataHandler::constructor: deps.splitFormData`
+        );
+
+        if (!deps.parseFormDataPart) {
+            throw new Error(`deps.parseFormDataPart required`);
+        }
+
+        console.log(
+            `💘 MultipartFormdataHandler::constructor: deps.parseFormDataPart`
+        );
+
+        if (!deps.splitHeaders) {
+            throw new Error(`deps.splitHeaders required`);
+        }
+
+        console.log(
+            `💘 MultipartFormdataHandler::constructor: deps.splitHeaders`
+        );
+
+        if (!deps.parseContentDisposition) {
+            throw new Error(`deps.parseContentDisposition required`);
+        }
+
+        console.log(
+            `💘 MultipartFormdataHandler::constructor: deps.parseContentDisposition`
+        );
+
+        this.#DepsToolSet = {
+            splitFormData: deps.splitFormData,
+            parseFormDataPart: deps.parseFormDataPart,
+            splitHeaders: deps.splitHeaders,
+            parseContentDisposition: deps.parseContentDisposition,
+        };
 
         this.#onDataPartMiddleware = [];
         this.#onDataEndMiddleware = [];
@@ -209,116 +280,3 @@ class MultipartFormdataHandler {
 }
 
 module.exports = { MultipartFormdataHandler };
-
-function parseContentDisposition(contentDispositionHeaderData) {
-    const nameMatch = contentDispositionHeaderData.match(/name="([^"]+)"/);
-    const filenameMatch =
-        contentDispositionHeaderData.match(/filename="([^"]+)"/);
-
-    return {
-        name: (nameMatch && nameMatch[1]) || null,
-        filename: (filenameMatch && filenameMatch[1]) || null,
-    };
-}
-
-/**
- *
- * @param {string} headersRaw
- */
-function splitHeaders(headersRaw) {
-    const headers = {};
-
-    const separator = '\r\n';
-
-    const rows = headersRaw.split(separator);
-    rows.forEach((row) => {
-        const [key, value] = row.split(': ');
-        if (key && value) {
-            const normalizedKey = key.toLowerCase();
-            headers[normalizedKey] = value;
-        }
-    });
-
-    return headers;
-}
-
-/**
- *
- * @param {Buffer<ArrayBuffer>} part
- */
-function parseFormDataPart(part) {
-    const separatorBuffer = Buffer.from(`\r\n\r\n`);
-    const separatorIndex = findSeparatorIndex(part, separatorBuffer);
-
-    if (separatorIndex === -1) {
-        throw new Error(
-            `MultipartFormdataHandler/fn.parseFormDataPart: incorrect part`
-        );
-    }
-
-    const headers = part.subarray(0, separatorIndex);
-
-    let bodyEndIndex = part.length;
-
-    if (part[bodyEndIndex - 2] === 0x0d && part[bodyEndIndex - 1]) {
-        bodyEndIndex -= 2;
-    }
-
-    const body = part.subarray(
-        separatorIndex + separatorBuffer.length,
-        bodyEndIndex
-    );
-
-    return {
-        headers,
-        body,
-    };
-}
-
-/**
- *
- * @param {Buffer<ArrayBuffer>} data
- * @param {Buffer<ArrayBuffer>} separator
- */
-function splitFormData(data, separator) {
-    let start = 0;
-    let index = 0;
-
-    const parts = [];
-
-    while ((index = findSeparatorIndex(data, separator, start)) !== -1) {
-        parts.push(data.subarray(start, index));
-        start = index + separator.length;
-
-        if (data[start] === 0x0d && data[start + 1] === 0x0a) {
-            start += 2;
-        }
-    }
-
-    parts.push(data.subarray(start));
-
-    return parts;
-}
-
-/**
- *
- * @param {Buffer<ArrayBuffer>} data
- * @param {Buffer<ArrayBuffer>} separator
- * @param {number} start
- */
-function findSeparatorIndex(data, separator, start = 0) {
-    for (let index = start; index <= data.length - separator.length; index++) {
-        let found = true;
-        for (let j = 0; j < separator.length; j++) {
-            if (data[index + j] !== separator[j]) {
-                found = false;
-                break;
-            }
-        }
-        if (found === true) {
-            return index;
-        }
-    }
-
-    return -1;
-}
