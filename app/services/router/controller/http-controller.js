@@ -5,6 +5,7 @@ const {
 } = require('../../_multipart-parser/models/render');
 const {
     contentTypeHandlersRouter,
+    formDataParserFactory,
 } = require('../../form-data-server/controller/content-type.controller');
 const {
     FormHandler,
@@ -75,11 +76,9 @@ router.get(
     
     работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
 */
-router.post('/api/handle-form', (ctx) => {
-    const { req, res } = ctx;
-
-    FormHandler.processForm(req, res, { contentTypeHandlersRouter });
-});
+router.post('/api/handle-form', formDataParserFactory({
+    contentTypeHandlersRouter:contentTypeHandlersRouter,
+}));
 
 router.get('/api/get-html-form/registrate-user', async (ctx) => {
     const { req, res, params, queryParams } = ctx;
