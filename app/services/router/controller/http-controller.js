@@ -16,7 +16,6 @@ const {
 const {
     handleStatic,
 } = require('../../request-handlers/static/static-handler');
-// const Router = require("../router");
 
 const {
     dbControllersRouter,
