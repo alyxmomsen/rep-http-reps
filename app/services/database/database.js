@@ -43,7 +43,6 @@ class DataBase {
             );
         }
 
-        console.log('create one', { tableId, data });
         /**
          * @type {Map<string,string>}
          */
@@ -52,7 +51,6 @@ class DataBase {
             newRow.set(columnName, columnValue);
         }
 
-        /* новый уникальный идентификатор строки "таблицы" */
         const newRowIdHash = randomBytes(32).toString('hex');
 
         const tableByTableId = this.#data.get(tableId);
@@ -96,7 +94,6 @@ class DataBase {
      * @param {string} rowId
      */
     readOne(tableId, rowId) {
-        console.log('read one', { tableId, rowId }, this.#data);
 
         const tableById = this.#data.get(tableId);
         if (!tableById) {
@@ -117,7 +114,6 @@ class DataBase {
             };
         }
 
-        // this.#emit('onOperationEnd');
         return {
             success: {
                 rowById,
@@ -144,17 +140,17 @@ class DataBase {
     }
 
     updateOne(tableId, rowId, data) {
-        console.log('update one', { tableId, rowId, data });
+
         return {};
     }
 
     deleteOne(tableId, rowId) {
-        console.log('delete one', { tableId, rowId });
+
         return {};
     }
 
     deleteTable(tableId) {
-        console.log('delete table', tableId);
+
         return {};
     }
 

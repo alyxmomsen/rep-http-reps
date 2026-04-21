@@ -59,8 +59,6 @@ router.get(
     '/l/form',
     async (ctx, next) => {
         const { req, res, params, queryParams } = ctx;
-
-        console.log('handle form middleware');
         await next('test');
         return;
     },
@@ -83,13 +81,9 @@ router.post('/api/handle-form', formDataParserFactory({
 router.get('/api/get-html-form/registrate-user', async (ctx) => {
     const { req, res, params, queryParams } = ctx;
 
-    console.log('/api/get-html-form/registrate-user called');
-
     const file = await readFile(
         resolve('./assets/html/registrate-user.form.html')
     );
-
-    console.log({ file });
 
     res.writeHead(200, {
         'content-type': 'text/html',
@@ -102,18 +96,16 @@ router.get('/api/get-html-form/registrate-user', async (ctx) => {
 });
 
 createRoute('/api/get-playlist', async (ctx) => {
-    console.log('step 1');
+
     const { req, res, params } = ctx;
 
     const dbAdapter = dbControllersRouter.get('video-playlist');
 
     try {
-        console.log('step 2');
         const { error, success } = dbAdapter.readAllRows();
 
         if (error) {
             // Не возвращаем ошибку, если таблица пуста — возвращаем пустой массив
-            console.log('Playlist read error (possibly empty):', error);
             res.writeHead(200, {
                 'content-type': 'application/json',
             });
@@ -126,7 +118,6 @@ createRoute('/api/get-playlist', async (ctx) => {
             );
             return;
         }
-        console.log('step 3');
         const validatedData = success?.validatedData || {};
 
         res.end(
@@ -137,8 +128,6 @@ createRoute('/api/get-playlist', async (ctx) => {
             })
         );
     } catch (err) {
-        console.log('step 4');
-        console.log('get playlist end-point: error: ', { err });
         res.writeHead(200, {
             'content-type': 'application/json',
         });
@@ -151,7 +140,6 @@ createRoute('/api/get-playlist', async (ctx) => {
         );
     }
 
-    console.log('step 5');
 });
 
 /* 
@@ -160,7 +148,6 @@ createRoute('/api/get-playlist', async (ctx) => {
 
     работает с кастомным протоколом: multitable (для name аттрибута данных HTML формы)
 */
-// router.post('/api/handle-multipart-form-data', multipartFormHandler.handle.bind(multipartFormHandler));
 
 /* test route for URL params */
 router.get('/test/:id/foo/:bar', async (ctx) => {
@@ -208,10 +195,6 @@ async function StreamVideoRouteHandler(ctx) {
         IsRowIdParam: true,
     };
 
-    console.log('step: ', ++step);
-
-    console.log('StreamVideoRouteHandler: called');
-
     const { req, res, params, queryParams } = ctx;
 
     if (!ctx.req || !ctx.res) {
@@ -219,11 +202,9 @@ async function StreamVideoRouteHandler(ctx) {
             `StreamVideoRouteHandler/ctx cust: no ctx.req || ctx.res`
         );
     }
-    console.log('step: ', ++step);
+
     if (!ctx.params || !ctx.queryParams) {
-        console.log(
-            `StreamVideoRouteHandler/ctx cust: no ctx.params || ctx.queryParams`
-        );
+        
         ctx.res.writeHead(400, {
             'content-type': 'application/json',
         });
@@ -234,11 +215,9 @@ async function StreamVideoRouteHandler(ctx) {
         );
         return;
     }
-    console.log('step: ', ++step);
+
     if (!ctx.params.rowId) {
-        console.log(
-            `StreamVideoRouteHandler/params cust: params.rowId no received`
-        );
+        
         ctx.res.end(
             JSON.stringify({
                 message: 'rowid required but not received',
@@ -249,23 +228,20 @@ async function StreamVideoRouteHandler(ctx) {
         });
         return;
     }
-    console.log('step: ', ++step);
+
     if (!req.headers.range) {
         Flags.IsRangeHeader = false;
     }
 
-    console.log('StreamVideoRouteHandler: params-set', {
-        params: ctx.params,
-        queryParams: ctx.queryParams,
-    });
-    console.log('step: ', ++step);
+    
+
     const ParamsSet = {
         params: ctx.params,
         queryParams: ctx.queryParams,
     };
 
     const dbresponse = dataBase.readOne('files', ParamsSet.params.rowId);
-    console.log('step: ', ++step);
+
     if (dbresponse.error) {
         ctx.res.writeHead(500, {
             'content-type': 'application/json',
@@ -278,7 +254,7 @@ async function StreamVideoRouteHandler(ctx) {
         );
         return;
     }
-    console.log('step: ', ++step);
+
     if (!dbresponse.success) {
         ctx.res.writeHead(500, {
             'content-type': 'application/json',
@@ -290,7 +266,7 @@ async function StreamVideoRouteHandler(ctx) {
         );
         return;
     }
-    console.log('step: ', ++step);
+
     const FileDataSet = {
         start: 0,
         end: 0,
@@ -300,11 +276,11 @@ async function StreamVideoRouteHandler(ctx) {
 
     const fileSystemFilename =
         dbresponse.success.rowById.get('fileSystemFilename');
-    console.log('step: ', ++step);
+
     const mime = dbresponse.success.rowById.get('mime');
-    console.log('step: ', ++step, 'message: smth');
+
     const filmanagerResponse = await filemanager.read(fileSystemFilename);
-    console.log('step: ', ++step, { filmanagerResponse });
+
     if (filmanagerResponse.error) {
         ctx.res.writeHead(500, {
             'content-type': 'application/json',
@@ -317,10 +293,6 @@ async function StreamVideoRouteHandler(ctx) {
         );
         return;
     }
-    console.log('step: ', ++step);
-    console.log('StreamVideoRouteHandler/filmanagerResponse: ', {
-        filmanagerResponse,
-    });
 
     if (!ctx.req.headers.range) {
         ctx.res.writeHead(200, {
@@ -333,13 +305,6 @@ async function StreamVideoRouteHandler(ctx) {
         throw new Error();
         return;
     }
-    console.log('step: ', ++step);
-    // ctx.res.writeHead(200, {
-    //     'content-type':mime,
-    //     'content-length':filmanagerResponse.success.fileStats.fileSize,
-    // });
-
-    // await filmanagerResponse.success.readStream.pipe(ctx.res);
 
     const FileStats = {
         start: 0,
@@ -347,15 +312,10 @@ async function StreamVideoRouteHandler(ctx) {
         rangeLength: 0,
     };
 
-    const ranges = ctx.req.headers.range.replace('bytes=', '').split('-');
+    const ranges = ctx.req.headers.range.replace('bytes=', '').split('-')
 
-    console.log(
-        'StreamVideoRouteHandler: ',
-        { ranges },
-        filmanagerResponse.success.fileStats.fileSize
-    );
-    console.log('step: ', ++step);
     FileStats.start = Number.parseInt(ranges[0], 10);
+
     FileStats.end = ranges[1]
         ? Number.parseInt(ranges[1], 10)
         : filmanagerResponse.success.fileStats.fileSize - 1;
@@ -367,8 +327,6 @@ async function StreamVideoRouteHandler(ctx) {
         end: FileStats.end,
     });
 
-    console.log(`check that: `, { start: FileStats.start, end: FileStats.end });
-    console.log('step: ', ++step);
     ctx.res.writeHead(206, {
         'Content-Type': mime,
         'Content-Length': `${FileStats.end - FileStats.start + 1}`,
@@ -376,12 +334,5 @@ async function StreamVideoRouteHandler(ctx) {
         'Accept-Ranges': 'bytes',
     });
 
-    console.log({
-        'Content-Type': mime,
-        'Content-Length': `${FileStats.end - FileStats.start + 1}`,
-        'Content-Range': `bytes ${FileStats.start}-${FileStats.end}/${filmanagerResponse.success.fileStats.fileSize}`,
-        'Accept-Ranges': 'bytes',
-    });
-    console.log('step: ', ++step);
     rs.pipe(ctx.res);
 }

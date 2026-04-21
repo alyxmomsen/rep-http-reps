@@ -77,20 +77,16 @@ class FileManager {
     async read(filname) {
         let step = 0;
         return await new Promise(async (res, rej) => {
-            console.log(`fm/step ${++step} | start`);
+            
             const Stats = {
                 fileSize: null,
             };
 
-            console.log(`fm/step ${++step} | stats init`);
             const readStream = createReadStream(join(this.#rootPath, filname));
 
             try {
-                console.log(`fm/step ${++step} | try get stats start`);
                 const stats = await stat(join(this.#rootPath, filname));
                 Stats.fileSize = stats.size;
-                console.log(`fm/step ${++step} | try get stats end`);
-                // throw new Error(`fuckin err`);
             } catch (err) {
                 console.log('FileManager::read/error: ', { err });
 
@@ -103,9 +99,8 @@ class FileManager {
                 });
             }
 
-            console.log(`fm/step ${++step} | `);
             readStream.on('ready', () => {
-                console.log('fm/ready');
+
                 res({
                     success: {
                         readStream,
@@ -125,7 +120,6 @@ class FileManager {
             });
 
             readStream.on('data', () => {});
-            console.log(`fm/step ${++step} | end`);
 
             res({
                 success: {
@@ -148,7 +142,6 @@ class FileManager {
 
             await rm(testFileFullPath);
 
-            console.log(`FileManager/methods/delete: `, 'success');
         } catch (err) {
             console.log(`FileManager/errors/handled error: `, { err });
         }
@@ -162,8 +155,6 @@ class FileManager {
                 );
                 return;
             }
-
-            console.log(`FileManager/check the removed file: `, { err });
         }
     }
 
@@ -173,7 +164,5 @@ class FileManager {
         this.#rootPath = resolve(join('.', 'uploads'));
     }
 }
-
-// const filemanager = new FileManager () ;
 
 module.exports = { CONSTANTS, FileManager };

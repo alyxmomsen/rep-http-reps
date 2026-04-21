@@ -370,7 +370,7 @@ function LinkLeafStateContainerActionFactory() {
  * @returns 
  */
 function FileLeafStateContainerActionFactory(deps) {
-
+    
     if (!deps.filemanager) {
         throw new Error(`deps.filemanager required`);
     }
@@ -386,7 +386,7 @@ function FileLeafStateContainerActionFactory(deps) {
             LeafActionArgs.FileData
         );
 
-        
+
 
         if (fileManagerResult.error) {
             StateContainerInterface.setState(StateContainer.States.Rejected);
