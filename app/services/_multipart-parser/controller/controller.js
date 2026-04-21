@@ -36,9 +36,7 @@ const {
 
 const multiTableGrouppingAgentFactory = () => {
     return new MultiTableGrouppingAgent({
-        // mapper:new Mapper(),
         dataTransformer: new PreMapper(),
-        // dataTransformer: new DataTransformer(),
         multiTableProtocolParser: multiTableProtocolParser,
         fileDataSetSchema: FILE_DATA_SET_SCHEMA,
         linkedFieldDataSetSchema: LINKED_FIELD_DATA_SET_SCHEMA,
