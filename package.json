@@ -1,6 +1,41 @@
 {
-  "devDependencies": {
-    "nodemon": "^3.1.14",
-    "prettier": "^3.8.1"
-  }
+    "name": "knight-bus-app",
+    "version": "1.0.0",
+    "description": "A from-scratch implementation of a web server framework for Node.js, featuring custom routing, multipart form parsing, file upload handling, and data validation.",
+    "homepage": "https://github.com/alyxmomsen/rep-http-reps#readme",
+    "bugs": {
+        "url": "https://github.com/alyxmomsen/rep-http-reps/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/alyxmomsen/rep-http-reps.git"
+    },
+    "license": "ISC",
+    "author": "",
+    "type": "commonjs",
+    "main": "index.js",
+    "scripts": {
+        "test": "jest",
+        "test:unit": "jest __tests__/unit",
+        "test:unit.current": "jest __tests__/unit/data-set-processor",
+        "test:integration": "jest __tests__/integration",
+        "test:all": "jest",
+        "test:coverage": "jest --coverage",
+        "test:watch": "jest --watch",
+        "test:coverage:watch": "jest --coverage --watch",
+        "test:mapper": "jest __tests__/unit/mapper",
+        "test:create:integration": "mkdir __tests__\\integration",
+        "nodemon:prettier": "nodemon --exec prettier .\\public\\js\\ --write"
+    },
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.1032.0",
+        "pg": "^8.20.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^30.0.0",
+        "dotenv": "^17.3.1",
+        "jest": "^29.7.0",
+        "nodemon": "^3.1.14",
+        "prettier": "^3.8.1"
+    }
 }

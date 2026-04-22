@@ -1,0 +1,10 @@
+/node_modules
+/client/node_modules
+/client/build
+/uploads
+/_dev-artefacts
+/dev
+/__dev-artefacts__
+/coverage/
+.prettierrc.js
+.prettierrc
