@@ -9,12 +9,6 @@ const {
 } = require('./transactions/transaction.controller');
 
 const { StateContainer } = require('./transactions/transaction.model');
-// const {
-//     StateContainer: StateContainer,
-// } = require('./transactions/transaction.model');
-// const {
-//     TransactionsContainer,
-// } = require('./transactions/transactios-container.model');
 
 const Factories = {
     GroupContainerAction: GroupContainerActionFactory,
@@ -78,23 +72,23 @@ class PostMapper {
                     Buffer.Conrainers.Pended.push(async () => {
                         const container = ProcessedGroup.Container;
                         await container.preCommit(this.#globalPull.containers);
-                        console.log('one more try: ', {
-                            value: container.getState().value,
-                            message: container.getState().message,
-                            data: container.getData(),
-                        });
+                        // console.log('one more try: ', {
+                        //     value: container.getState().value,
+                        //     message: container.getState().message,
+                        //     data: container.getData(),
+                        // });
                     });
                 }
 
                 // ----------- console log -----------
 
-                console.log(
-                    ++DevVars.ConsoleLog.index + ') post pre commit result: ',
-                    {
-                        state: PrecommittedGroupContainerSnapShot.state,
-                        data: PrecommittedGroupContainerSnapShot.data,
-                    }
-                );
+                // console.log(
+                //     ++DevVars.ConsoleLog.index + ') post pre commit result: ',
+                //     {
+                //         state: PrecommittedGroupContainerSnapShot.state,
+                //         data: PrecommittedGroupContainerSnapShot.data,
+                //     }
+                // );
 
                 // -----------------------------------
             }
@@ -395,10 +389,10 @@ function GroupContainerActionFactory(deps = {}) {
                 Flags.allLeafsIsDone = false;
             }
 
-            console.log('column pre-commit state: ', {
-                colName: CurrentIteration.propertyName,
-                st: LeafContainerSnapshot.state,
-            });
+            // console.log('column pre-commit state: ', {
+            //     colName: CurrentIteration.propertyName,
+            //     st: LeafContainerSnapshot.state,
+            // });
         }
 
         /**
@@ -415,9 +409,9 @@ function GroupContainerActionFactory(deps = {}) {
             return;
         }
 
-        console.log(`StateContainerAction/state: `, {
-            groupLeafsContainers: deps.groupLeafsContainers,
-        });
+        // console.log(`StateContainerAction/state: `, {
+        //     groupLeafsContainers: deps.groupLeafsContainers,
+        // });
 
         /**
          *
@@ -447,8 +441,6 @@ function GroupContainerActionFactory(deps = {}) {
 
         // пробуем сохраниться
         const dbAdapterResult = dbAdapter.createOne(LocalDataCache.DBDataSet);
-        // console.log({dbAdapterResult});
-        // throw new Error();
 
         if (dbAdapterResult.error) {
             /*  */
@@ -468,7 +460,7 @@ function GroupContainerActionFactory(deps = {}) {
 
         // --------------------------------------
         // успешно
-        console.log('database data-set', { Buffer: LocalDataCache });
+        // console.log('database data-set', { Buffer: LocalDataCache });
         //---------------------------------------
 
         ServedContainerInterface.setState('done', 'data was stored in the DB');

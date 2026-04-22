@@ -19,7 +19,7 @@ const AppBuffer = new Map();
 const AppState = {
     Pools: {
         Playlist: [],
-        AddNewPlaylistItems: [],
+        AddNewPlaylistItems: [], // form elements
     },
     Playlist: {},
     Form: {
@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         rollBackTimeOut: 3000,
                     }),
                 playlistHTML: DOMElements.PlayList,
+                playlistPool: AppState.Pools.Playlist,
             }),
             (ctx) => {}
         ),
@@ -361,13 +362,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     (
                         (deps = {}) =>
                         (ctx, next) => {
+                            /* clear the form  */
+
+                            console.log(
+                                'deps.addPlaylistFormElementPull',
+                                deps.newPlaylistItemFormElem
+                            );
                             /* очищаем пул элементов  */
 
-                            if (deps.addPlaylistFormElementPull.length > 0) {
+                            if (deps.newPlaylistItemFormElem.length > 0) {
                                 let element;
                                 while (
                                     (element =
-                                        deps.addPlaylistFormElementPull.pop())
+                                        deps.newPlaylistItemFormElem.pop())
                                 ) {
                                     element.remove();
                                 }
@@ -376,9 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             next();
                         }
                     )({
-                        addPlaylistFormElementPull:
+                        newPlaylistItemFormElem:
                             AppState.Pools.AddNewPlaylistItems,
                     }),
+                    (ctx, next) => {
+                        /* purge the playlist */
+                        let PLItem;
+                        while ((PLItem = AppState.Pools.Playlist.pop())) {
+                            PLItem.Item.remove();
+                        }
+                    },
                     (ctx) => {
                         /** final mw */
                         Create.ToolTip({
@@ -642,7 +656,7 @@ function FormDataRequestFinalHandler(deps = {}) {
             return;
         }
 
-        deps.onSuccessMiddleware.execute(ctx);
+        await deps.onSuccessMiddleware.execute(ctx);
 
         const ServerSuccessResponse = {};
 
@@ -678,11 +692,8 @@ function FormDataRequestFinalHandler(deps = {}) {
                 Action[DBRow.tableName](DBRow.row);
             }
         }
-
-        deps.playlistHTMLElement;
     };
 
-    let s;
     return fn;
 }
 
@@ -691,6 +702,7 @@ function FormDataRequestFinalHandler(deps = {}) {
  * @param {Object} deps
  * @param {(data:Object) => void} deps.playlistItemCreator
  * @param {HTMLElement} deps.playlistHTML
+ * @param {[]} deps.playlistPool
  * @param {Function} deps.showPlaylistExecutor
  * @returns
  */
@@ -742,6 +754,12 @@ function UpdatePlaylistFinalHandler(deps = {}) {
         const IncomingData = {
             DBRows: ctx.jsonResponse.success.rows,
         };
+
+        // let playlistItem;
+        // while (playlistItem = deps.playlistPool.pop()) {
+        //     console.log('hello wworld', playlistItem);
+        //     // playlistItem.remove();
+        // }
 
         for (const [key, DataSet] of Object.entries(IncomingData.DBRows)) {
             Action['video-playlist'](DataSet);
