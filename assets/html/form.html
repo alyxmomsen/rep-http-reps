@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form id="form--main" method="post" enctype="multipart/form-data" >
+        <input type="file" name="multitable://0025.video.binary" id="">
+        <input type="text" value="my title" name="multitable://0025.title.string" id="">
+        <input type="text" value="my description" name="multitable://0025.description.string" id="">
+        <button id="form--main__submit" type="submit">submit</button>
+    </form>
+</body>
+</html>
+<script>
+    window.addEventListener("DOMContentLoaded" , async () => {
+
+        const DOMEelements = {
+            Form:grabDOMElement('form--main'),
+            SubmitButton:grabDOMElement(`form--main__submit`),
+        }
+
+        const formData = new FormData(DOMEelements.Form);
+
+        DOMEelements.Form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            await (new RequestManager({
+                url:'/api/handle-multitable-form',
+                method:'post',
+                finalHandler:async (ctx) => {
+                    console.log({ctx});
+                    const json = await ctx.FetchResponse.json();
+                    console.log({json});
+                },
+                middleware:[],
+            })).exec(formData);
+            
+        });
+
+        DOMEelements.SubmitButton.addEventListener("click", () => {
+            
+        });
+    })
+
+    
+    /** 
+     * @param {string} id 
+    */
+    function grabDOMElement (id) {
+        const DOMElement = document.getElementById(id);
+        if(!DOMElement) {
+            throw new Error(`grabDOMElement: DOM element is not received`);
+        }
+        return DOMElement;
+    }
+
+    class RequestManager  {
+
+        async exec (body) {
+
+            this.#executeMiddleware({}, this.#beforeRequestMW);
+
+            const FetchResponse = await fetch(this.#url, {
+                method:this.#method,
+                body:this.#method === 'post' ? body : undefined,
+            });
+
+            await this.#finalHandler({FetchResponse});
+
+            this.#executeMiddleware(FetchResponse, this.#aferRequestMW);
+        }
+
+        addMiddleware (...mw) {
+
+        }
+
+        #executeMiddleware (payload, middleware) {
+
+        }
+
+        #finalHandler;
+        
+        #beforeRequestMW;
+        #aferRequestMW;
+
+        #url;
+        #method;
+
+        /** 
+         * @param {Object} config - config container
+         * @param {string} config.url
+         * @param {string} config.method
+         * @param {Function} config.finalHandler
+         * @param {Array} config.middleware
+        */
+        constructor (config ={})  {
+
+            this.#url = config.url;
+            this.#method = config.method;
+
+            this.#finalHandler = config.finalHandler;
+
+        }
+    }
+
+</script>
