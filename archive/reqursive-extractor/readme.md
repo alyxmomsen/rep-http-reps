@@ -1,3 +1,0 @@
-- mapper
-- status: deprecated
-- new version path: app\utils\mapper-2.0

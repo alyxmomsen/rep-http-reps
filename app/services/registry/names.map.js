@@ -1,6 +1,0 @@
-const GLOBAL_NAMES = {
-    FORM_HANDLER: 'FORM_HANDLER',
-    MULTIPART_HANDLER: 'MULTIPART_HANDLER',
-};
-
-module.exports = { GLOBAL_NAMES };
