@@ -19,8 +19,8 @@ const {
     SplitFormDataBuffer,
 } = require('./routes/multipart-route/utils/split-form-data-buffer.util');
 const { SplitPart } = require('./routes/multipart-route/utils/split-part.util');
-const { PremapperControllerFactory, PremapperFactory } = require('./serices/pre-mapper/premapper.controller');
-const { PreMapperSchemas } = require('./serices/pre-mapper/premapper.model');
+const { PremapperControllerFactory, PremapperFactory } = require('./services/pre-mapper/premapper.controller');
+const { PreMapperSchemas } = require('./services/pre-mapper/premapper.model');
 
 /**
  * @type {Map<string,Function>}

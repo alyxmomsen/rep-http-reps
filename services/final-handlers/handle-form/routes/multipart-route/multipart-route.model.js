@@ -1,10 +1,11 @@
+const { PostMapper, StateController } = require('../../services/post-mapper/post-mapper.model');
 const {
     PremapperController,
-} = require('../../serices/pre-mapper/premapper.controller');
+} = require('../../services/pre-mapper/premapper.controller');
 const {
     PreMapper,
     PreMapperSchemas: Schemas,
-} = require('../../serices/pre-mapper/premapper.model');
+} = require('../../services/pre-mapper/premapper.model');
 
 /**
  *
@@ -126,6 +127,12 @@ function MultipartContentTypeRoute(deps = {}) {
                 }
 
                 console.dir({ MapperBuffer }, { depth: 10 });
+
+                const postMapper = new PostMapper({
+                    StateControllerFactory:() => new StateController(),
+                });
+
+                postMapper.process(MapperBuffer.premapperResult);
 
                 /**
                  *
