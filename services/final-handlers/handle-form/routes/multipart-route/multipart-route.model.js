@@ -1,9 +1,19 @@
+const {
+    PremapperController,
+} = require('../../serices/pre-mapper/premapper.controller');
+const {
+    PreMapper,
+    PreMapperSchemas: Schemas,
+} = require('../../serices/pre-mapper/premapper.model');
+
 /**
  *
  * @param {Object} deps
  * @param {(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>) => Buffer<ArrayBuffer>[]} deps.SplitFormDataBuffer
  * @param {(data:Buffer<ArrayBuffer>) => Object} deps.splitPart
  * @param {(data:string) => {name:string|null;filename:string|null;contentType:string|null}} deps.parseHeaders
+ * @param {(data:string) => {groupId:string;tableId:string;columnName:string;dataType:string}} deps.MultiTableParser
+ * @param {() => PremapperController} deps.PremapperControllerFactory
  * @returns {(req:http.IncomingMessage, res:http.ServerResponse, payload:any) => {}}
  */
 function MultipartContentTypeRoute(deps = {}) {
@@ -22,6 +32,18 @@ function MultipartContentTypeRoute(deps = {}) {
     if (!deps.parseHeaders) {
         throw new Error(
             `MultipartContentTypeRoute factory: deps.parseHeaders required`
+        );
+    }
+
+    if (!deps.MultiTableParser) {
+        throw new Error(
+            `MultipartContentTypeRoute factory: deps.MultiTableParser required`
+        );
+    }
+
+    if (!deps.PremapperControllerFactory) {
+        throw new Error(
+            `MultipartContentTypeRoute factory: deps.PremapperControllerFactory required`
         );
     }
 
@@ -69,6 +91,11 @@ function MultipartContentTypeRoute(deps = {}) {
                     Buffer.from(`--${LocalBuffer.boundaryMatchResult[1]}`)
                 );
 
+                const premapperController = deps.PremapperControllerFactory();
+                const MapperBuffer = {
+                    premapperResult: {},
+                };
+
                 for (const part of SplitBufferResult) {
                     try {
                         const SplittedPart = deps.splitPart(part);
@@ -77,11 +104,33 @@ function MultipartContentTypeRoute(deps = {}) {
                             SplittedPart.headers.toString('utf-8')
                         );
 
-                        console.log({ ParsedHeaders });
+                        const ParsedMultitableData = deps.MultiTableParser(
+                            ParsedHeaders.name
+                        );
+
+                        MapperBuffer.premapperResult =
+                            premapperController.process(
+                                {
+                                    filename: ParsedHeaders.filename,
+                                    contentType: ParsedHeaders.contentType,
+                                    body: SplittedPart.body,
+                                    groupId: ParsedMultitableData.groupId,
+                                    tableId: ParsedMultitableData.tableId,
+                                    columnName: ParsedMultitableData.columnName,
+                                },
+                                MapperBuffer.premapperResult
+                            );
                     } catch (err) {
                         console.log({ err });
                     }
                 }
+
+                console.dir({ MapperBuffer }, { depth: 10 });
+
+                /**
+                 *
+                 * PostMapper runtime
+                 */
 
                 resolve({ success: { message: 'done', data: {} } });
             });
