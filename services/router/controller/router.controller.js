@@ -11,12 +11,15 @@ const {
 const {
     MiddlewareExecutorDIContainer,
 } = require('../../../utils/middleware-executor/controller/mw-executor.controller');
-const {
-    HandleFormFinalHandler,
-    ContentTypeRoutes,
-} = require('../../final-handlers/handle-form/handle-form.fh');
+
 const { readFile, stat } = require('fs/promises');
 const { resolve, extname } = require('path');
+const {
+    HandleFormFinalHandler,
+} = require('../../final-handlers/handle-form/handle-form.fh.model');
+const {
+    ContentTypeRoutes,
+} = require('../../final-handlers/handle-form/content-type-router.controller');
 
 const router = new Router(
     {
