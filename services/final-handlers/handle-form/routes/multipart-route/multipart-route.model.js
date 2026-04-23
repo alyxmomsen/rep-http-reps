@@ -1,4 +1,4 @@
-const { PostMapper, StateController } = require('../../services/post-mapper/post-mapper.model');
+const { PostMapper, StateController, PostMapperActions } = require('../../services/post-mapper/post-mapper.model');
 const {
     PremapperController,
 } = require('../../services/pre-mapper/premapper.controller');
@@ -129,15 +129,11 @@ function MultipartContentTypeRoute(deps = {}) {
                 console.dir({ MapperBuffer }, { depth: 6 });
 
                 const postMapper = new PostMapper({
-                    StateControllerFactory:() => new StateController(),
+                    StateControllerFactory: () => new StateController(),
+                    LeafActions:PostMapperActions,
                 });
 
-                postMapper.process(MapperBuffer.premapperResult);
-
-                /**
-                 *
-                 * PostMapper runtime
-                 */
+                await postMapper.process(MapperBuffer.premapperResult);
 
                 resolve({ success: { message: 'done', data: {} } });
             });

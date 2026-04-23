@@ -40,8 +40,6 @@ class PreMapper {
                 ? dataSet[propertyKey.replace('__', '')]
                 : propertyKey;
 
-            // Context[newPropertyName] = Actions['Leaf'](ActionPayload, dataSet);
-
             if (ActionType === 'branch') {
                 /**
                  * the option is that
