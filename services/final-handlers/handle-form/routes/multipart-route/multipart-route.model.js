@@ -126,7 +126,7 @@ function MultipartContentTypeRoute(deps = {}) {
                     }
                 }
 
-                console.dir({ MapperBuffer }, { depth: 10 });
+                console.dir({ MapperBuffer }, { depth: 6 });
 
                 const postMapper = new PostMapper({
                     StateControllerFactory:() => new StateController(),
