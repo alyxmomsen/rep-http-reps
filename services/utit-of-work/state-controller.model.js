@@ -5,6 +5,10 @@
  * @typedef {(deps:{payload:any}) => StateControllerAction} StateControllerActionFactory
  */
 
+const { randomBytes } = require('crypto');
+const { FileManager } = require('../file-manager/model/f-manager.model');
+const { resolve } = require('path');
+
 class StateController {
     static Status = {
         Pending: 'pending',
@@ -28,6 +32,13 @@ class StateController {
             },
             setData: (data) => {
                 this.#data = data;
+            },
+            /**
+             *
+             * @param {Function} rollbackFn
+             */
+            setRollBack: (rollbackFn) => {
+                this.#actions.rollback = rollbackFn;
             },
         });
     }
@@ -102,18 +113,32 @@ function FileAction(deps = {}) {
      *
      * @type {StateControllerAction}
      */
-    const fn = function (controller) {
+    const fn = async function (controller) {
         try {
             console.log('File StateController Action payload: ', {
                 payload: deps.payload,
             });
 
-            controller.setStatus('done');
-            controller.setData({
-                tableName: 'test table name',
-                rowId: 'test row id',
+            const fmanager = new FileManager({
+                rootDir: resolve(
+                    'C:\\Users\\user\\Desktop\\projects\\javascript\\repetitor\\PRODUCTS\\http-server\\knight-bus\\rep-http-reps\\uploads'
+                ),
             });
+
+            const FmResult = await fmanager.save(deps.payload);
+
+            console.log({ FmResult });
+
+            controller.setStatus('done');
+            controller.setData(FmResult.success?.filename);
+
+            controller.setRollBack(() => {
+                console.log('rollbacking...');
+            });
+
+            console.log('end file action');
         } catch (err) {
+            console.log('errrrrrrrrrrrrrrr', { err });
             controller.setStatus(StateController.Status.Rejected);
         }
     };
@@ -143,7 +168,7 @@ function LinkAction(deps = {}) {
      *
      * @type {StateControllerAction}
      */
-    const fn = function (controller) {
+    const fn = async function (controller) {
         try {
             const targetStateControllerAddress = `${deps.payload.tableId}/${deps.payload.groupId}`;
 
@@ -156,12 +181,18 @@ function LinkAction(deps = {}) {
                 return;
             }
 
-            throw new Error(`do it do it`);
-
             const targetControllerStatus = targetStateController.getStatus();
 
-            controller.setData(targetStateController.getData());
-            controller.setStatus('done');
+            if (targetControllerStatus === 'done') {
+                controller.setStatus('done');
+                controller.setData(targetStateController.getData().state);
+            } else if (targetControllerStatus === 'pending') {
+                controller.setStatus('pending');
+            } else if (targetControllerStatus === 'rejected') {
+                controller.setStatus('rejected');
+            } else {
+                controller.setStatus('rejected');
+            }
 
             console.log('Link StateController action payload: ', {
                 deps,
@@ -191,7 +222,7 @@ function DataAction(deps = {}) {
      *
      * @type {StateControllerAction}
      */
-    const fn = function (controller) {
+    const fn = async function (controller) {
         // throw new Error();
         try {
             console.log('Data StateController action payload: ', {

@@ -1,3 +1,4 @@
+const { randomBytes } = require('node:crypto');
 const {
     StateControllerFactory,
 } = require('../../../../utit-of-work/state-controller.controller');
@@ -24,6 +25,10 @@ class PostMapper {
             DataSet: dataSet,
         };
 
+        const Pool = {
+            PendingStateControllers: [],
+        };
+
         for (const [tableId, Groups] of Object.entries(Args.DataSet)) {
             console.log('table iteration:');
             for (const [groupId, groupColumns] of Object.entries(Groups)) {
@@ -42,10 +47,6 @@ class PostMapper {
 
                 await ProcessedGroup.StateController.try();
 
-                console.log({
-                    groupControllers: ProcessedGroup.StateController.getData(),
-                });
-
                 this.#groupStateControllers.set(
                     CurrentIterationGroup.StateControllerAddress,
                     ProcessedGroup.StateController
@@ -54,11 +55,14 @@ class PostMapper {
         }
 
         for (const [k, v] of this.#groupStateControllers.entries()) {
-            console.log(k, v.getStatus());
             if (v.getStatus() === 'pending') {
-                v.try();
-                console.log(v.getStatus());
+                await v.try();
             }
+
+            console.dir(
+                { message: 'is done', data: v.getData() },
+                { depth: 4 }
+            );
         }
 
         console.log('\x1b[33mpostmapper process end...\x1b[0m');
@@ -87,19 +91,13 @@ class PostMapper {
                     this.#leafsActions.get(actionName) ||
                     (() => {
                         console.log('wrong action');
-                        throw new Error(`no action defined`);
+                        throw new Error(`no action received`);
                     });
 
                 const LeafStateController = await Action({
                     payload: payload,
                     globalStateControllers: this.#groupStateControllers,
                 });
-
-                console.log(
-                    `leaf < ${actionName} > < ${columnName} >controller status: `,
-                    LeafStateController.getStatus(),
-                    LeafStateController.getData()
-                );
 
                 if (
                     LeafStateController.getStatus() ===
@@ -118,6 +116,12 @@ class PostMapper {
                 ) {
                     CheckList.done = true;
                 } else {
+                    console.log({
+                        actionName,
+                        columnName,
+                        tableId,
+                        status: LeafStateController.getStatus(),
+                    });
                     throw new Error(`internal error`);
                 }
 
@@ -127,13 +131,22 @@ class PostMapper {
 
             if (CheckList.rejected) {
                 controller.setStatus('rejected');
-                controller.setData(LocalPools.InnerStateControllers);
             } else if (CheckList.pending) {
                 controller.setStatus('pending');
-                controller.setData(LocalPools.InnerStateControllers);
-            } else if (CheckList.done) {
+            } else if (!CheckList.done) {
+                throw new Error(`unknown error: !CheckList.done`);
+            } else {
                 controller.setStatus('done');
-                controller.setData(LocalPools.InnerStateControllers);
+
+                const DataBaseResult = {
+                    table: randomBytes(8).toString(`hex`),
+                    id: randomBytes(8).toString(`hex`),
+                };
+
+                controller.setData({
+                    savedData: LocalPools.InnerStateControllers,
+                    state: DataBaseResult,
+                });
             }
         });
 
@@ -241,7 +254,7 @@ function FileAction(deps = {}) {
             })
         );
 
-        stateController.try();
+        await stateController.try();
 
         console.log('File PostMapper Action:', { payload: localDeps.payload });
 
@@ -287,7 +300,7 @@ function LinkAction(deps = {}) {
             })
         );
 
-        stateController.try();
+        await stateController.try();
 
         console.log('Link PostMapper Action:', {
             payload: localDeps.payload,
@@ -328,7 +341,7 @@ function DataAction(deps = {}) {
             })
         );
 
-        stateController.try();
+        await stateController.try();
 
         console.log('Data PostMapper Action:', { Payload: localDeps.payload });
 
