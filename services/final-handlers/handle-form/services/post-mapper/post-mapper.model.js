@@ -7,6 +7,7 @@ const {
     StateController,
     StateControllerActionsFactories,
 } = require('../../../../utit-of-work/state-controller.model');
+const { FileManager } = require('../../../../file-manager/model/f-manager.model');
 
 /**
  * @typedef {(payload:any,deps:Object) => Promise<StateController>} PostMapperAction
@@ -250,7 +251,7 @@ function FileAction(deps = {}) {
         stateController.setAction(
             deps.StateControllerActionsFactories.File({
                 payload: localDeps.payload,
-                fileManager: {},
+                fileManager: new FileManager,
             })
         );
 
