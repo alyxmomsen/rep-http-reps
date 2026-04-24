@@ -1,112 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <form id="form--main" method="post" enctype="multipart/form-data" >
-        <input type="text" value="my title" name="multitable://0125.title.string" id="">
-        <input type="text" value="my description" name="multitable://0125.description.string" id="">
-        <input type="file" name="multitable://0125.video.binary" id="">
-        <input type="text" value="my title" name="multitable://0025.title.string" id="">
-        <input type="text" value="my description" name="multitable://0025.description.string" id="">
-        <input type="file" name="multitable://0025.video.binary" id="">
-        <button id="form--main__submit" type="submit">submit</button>
-    </form>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <form id="form--main" method="post" enctype="multipart/form-data">
+            <input
+                type="text"
+                value="my title"
+                name="multitable://0125.title.string"
+                id=""
+            />
+            <input
+                type="text"
+                value="my description"
+                name="multitable://0125.description.string"
+                id=""
+            />
+            <input type="file" name="multitable://0125.video.binary" id="" />
+            <input
+                type="text"
+                value="my title"
+                name="multitable://0025.title.string"
+                id=""
+            />
+            <input
+                type="text"
+                value="my description"
+                name="multitable://0025.description.string"
+                id=""
+            />
+            <input type="file" name="multitable://0025.video.binary" id="" />
+            <button id="form--main__submit" type="submit">submit</button>
+        </form>
+    </body>
 </html>
 <script>
-    window.addEventListener("DOMContentLoaded" , async () => {
-
+    window.addEventListener('DOMContentLoaded', async () => {
         const DOMEelements = {
-            Form:grabDOMElement('form--main'),
-            SubmitButton:grabDOMElement(`form--main__submit`),
-        }
+            Form: grabDOMElement('form--main'),
+            SubmitButton: grabDOMElement(`form--main__submit`),
+        };
 
         const formData = new FormData(DOMEelements.Form);
 
-        DOMEelements.Form.addEventListener("submit", async (e) => {
+        DOMEelements.Form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            await (new RequestManager({
-                url:'/api/handle-multitable-form',
-                method:'post',
-                finalHandler:async (ctx) => {
-                    console.log({ctx});
+
+            await new RequestManager({
+                url: '/api/handle-multitable-form',
+                method: 'post',
+                finalHandler: async (ctx) => {
+                    console.log({ ctx });
                     const json = await ctx.FetchResponse.json();
-                    console.log({json});
+                    console.log({ json });
                 },
-                middleware:[],
-            })).exec(formData);
-            
+                middleware: [],
+            }).exec(formData);
         });
 
-        DOMEelements.SubmitButton.addEventListener("click", () => {
-            
-        });
-    })
+        DOMEelements.SubmitButton.addEventListener('click', () => {});
+    });
 
-    
-    /** 
-     * @param {string} id 
-    */
-    function grabDOMElement (id) {
+    /**
+     * @param {string} id
+     */
+    function grabDOMElement(id) {
         const DOMElement = document.getElementById(id);
-        if(!DOMElement) {
+        if (!DOMElement) {
             throw new Error(`grabDOMElement: DOM element is not received`);
         }
         return DOMElement;
     }
 
-    class RequestManager  {
-
-        async exec (body) {
-
+    class RequestManager {
+        async exec(body) {
             this.#executeMiddleware({}, this.#beforeRequestMW);
 
             const FetchResponse = await fetch(this.#url, {
-                method:this.#method,
-                body:this.#method === 'post' ? body : undefined,
+                method: this.#method,
+                body: this.#method === 'post' ? body : undefined,
             });
 
-            await this.#finalHandler({FetchResponse});
+            await this.#finalHandler({ FetchResponse });
 
             this.#executeMiddleware(FetchResponse, this.#aferRequestMW);
         }
 
-        addMiddleware (...mw) {
+        addMiddleware(...mw) {}
 
-        }
-
-        #executeMiddleware (payload, middleware) {
-
-        }
+        #executeMiddleware(payload, middleware) {}
 
         #finalHandler;
-        
+
         #beforeRequestMW;
         #aferRequestMW;
 
         #url;
         #method;
 
-        /** 
+        /**
          * @param {Object} config - config container
          * @param {string} config.url
          * @param {string} config.method
          * @param {Function} config.finalHandler
          * @param {Array} config.middleware
-        */
-        constructor (config ={})  {
-
+         */
+        constructor(config = {}) {
             this.#url = config.url;
             this.#method = config.method;
 
             this.#finalHandler = config.finalHandler;
-
         }
     }
-
 </script>

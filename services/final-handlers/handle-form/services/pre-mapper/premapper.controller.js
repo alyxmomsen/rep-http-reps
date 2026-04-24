@@ -82,9 +82,9 @@ class PremapperController {
 
     /**
      *
-     * @param {Object} deps
-     * @param {PreMapper} deps.PreMapper
-     * @param {{File:Object;Linked:Object;Regular:Object}} deps.PreMapperSchemas
+     * @param {Object} payload
+     * @param {PreMapper} payload.PreMapper
+     * @param {{File:Object;Linked:Object;Regular:Object}} payload.PreMapperSchemas
      */
     constructor(deps = {}) {
         if (!deps.PreMapper) {
@@ -106,9 +106,9 @@ class PremapperController {
 
 /**
  *
- * @param {Object} deps
- * @param {() => PreMapper} deps.PremapperFactory
- * @param {{File:Object;Linked:Object;Regular:Object}} deps.PreMapperSchemas
+ * @param {Object} payload
+ * @param {() => PreMapper} payload.PremapperFactory
+ * @param {{File:Object;Linked:Object;Regular:Object}} payload.PreMapperSchemas
  * @returns {PremapperController}
  */
 function PremapperControllerFactory(deps = {}) {

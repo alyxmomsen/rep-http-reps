@@ -1,4 +1,13 @@
-const { PostMapper, StateController, PostMapperActions } = require('../../services/post-mapper/post-mapper.model');
+const {
+    StateControllerFactory,
+} = require('../../../../utit-of-work/state-controller.controller');
+const {
+    PostMapperFactory,
+} = require('../../services/post-mapper/post-mapper.controller');
+const {
+    PostMapper,
+    PostMapperActions,
+} = require('../../services/post-mapper/post-mapper.model');
 const {
     PremapperController,
 } = require('../../services/pre-mapper/premapper.controller');
@@ -9,12 +18,13 @@ const {
 
 /**
  *
- * @param {Object} deps
- * @param {(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>) => Buffer<ArrayBuffer>[]} deps.SplitFormDataBuffer
- * @param {(data:Buffer<ArrayBuffer>) => Object} deps.splitPart
- * @param {(data:string) => {name:string|null;filename:string|null;contentType:string|null}} deps.parseHeaders
- * @param {(data:string) => {groupId:string;tableId:string;columnName:string;dataType:string}} deps.MultiTableParser
- * @param {() => PremapperController} deps.PremapperControllerFactory
+ * @param {Object} payload
+ * @param {(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>) => Buffer<ArrayBuffer>[]} payload.SplitFormDataBuffer
+ * @param {(data:Buffer<ArrayBuffer>) => Object} payload.splitPart
+ * @param {(data:string) => {name:string|null;filename:string|null;contentType:string|null}} payload.parseHeaders
+ * @param {(data:string) => {groupId:string;tableId:string;columnName:string;dataType:string}} payload.MultiTableParser
+ * @param {() => PremapperController} payload.PremapperControllerFactory
+ * @param {PostMapperFactory} payload.PostMapperFactory
  * @returns {(req:http.IncomingMessage, res:http.ServerResponse, payload:any) => {}}
  */
 function MultipartContentTypeRoute(deps = {}) {
@@ -45,6 +55,12 @@ function MultipartContentTypeRoute(deps = {}) {
     if (!deps.PremapperControllerFactory) {
         throw new Error(
             `MultipartContentTypeRoute factory: deps.PremapperControllerFactory required`
+        );
+    }
+
+    if (!deps.PostMapperFactory) {
+        throw new Error(
+            `MultipartContentTypeRoute factory: deps.PostMapperFactory required`
         );
     }
 
@@ -128,10 +144,7 @@ function MultipartContentTypeRoute(deps = {}) {
 
                 console.dir({ MapperBuffer }, { depth: 6 });
 
-                const postMapper = new PostMapper({
-                    StateControllerFactory: () => new StateController(),
-                    LeafActions:PostMapperActions,
-                });
+                const postMapper = deps.PostMapperFactory.Instance();
 
                 await postMapper.process(MapperBuffer.premapperResult);
 
