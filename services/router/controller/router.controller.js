@@ -59,6 +59,7 @@ router.get('/public/:type/:file', async (ctx) => {
         res.writeHead(200, { 'content-type': mime });
         res.end(fileContent);
     } catch (err) {
+        console.log({err});
         res.writeHead(404, { 'content-type': 'text/plain' });
         res.end('File not found');
     }
@@ -72,13 +73,31 @@ router.get(
     })
 );
 
+router.get('/test/:id/foo/:bar', (ctx) => {
+
+    const { req, res , params, queryParams} = ctx;
+    console.log({ params, queryParams });
+    res.end();
+    
+});
+
 router.post(
     '/api/handle-multitable-form',
     HandleFormFinalHandler({
         ContentTypeRoutes: ContentTypeRoutes,
     })
 );
+
+router.get(`/api/get-playlist`, (ctx) => {
+    console.log(ctx);
+    const { req, res } = ctx;
+    
+    res.end('hello');
+});
+
 router.get('/l/form', GetFormFinalHandler());
+
+
 
 module.exports = { router };
 

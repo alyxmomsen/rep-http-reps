@@ -95,7 +95,7 @@ const ControllerBehaviors = {
 const GlobalUtils = {
     // TimeoutController: TimeoutController.Instance,
     RandomString: generateRandomString,
-    InputNameAttibuteGenrator: GenerateNameAttribure,
+    InputNameAttibuteGenrator: GenerateNameAttribute,
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             (ctx) => {}
         ),
         Form: new RequestManager(
-            '/api/handle-form',
+            '/api/handle-multitable-form',
             'post',
             RequestManagerFinalHandlers.OnFormResponse({
                 onSuccessMiddleware: new MiddlewareChain(
@@ -644,7 +644,7 @@ function FormDataRequestFinalHandler(deps = {}) {
     const fn = async (ctx) => {
         // const jsonResponse = ctx.jsonResponse;
 
-        ActionName = {
+        const ActionName = {
             VideoPlaylist: 'video-playlist',
             Users: 'users',
         };
@@ -1642,7 +1642,7 @@ const kc = KeyController.CreateFactory({
  * @param {Object} deps.descriptionDefaultContent
  * @param {HTMLElement} deps.nest
  * @param {(config:{length:number}) => string} deps.randomstringUtil
- * @param {(globalConfig:{groupId:string}) => (config:{columnName:string;columnDataType:string}) => string} deps.nameAttribureGenerator
+ * @param {(globalConfig:{groupId:string}) => (config:{columnName:string;columnDataType:string;tableId:string}) => string} deps.nameAttribureGenerator
  * @returns {(data:{
  *  titlePlaceholder: string;
  *  descriptionPlaceholder: string;
@@ -1744,6 +1744,7 @@ function PlaylistFormItemCreator(deps = {}) {
             deps.nameAttribureGenerator({ groupId: groupId })({
                 columnDataType: 'string',
                 columnName: 'description',
+                tableId:'8e', // video-playlist
             })
         );
         Inputs.Title.placeholder = Args.data.titlePlaceholder;
@@ -1756,6 +1757,7 @@ function PlaylistFormItemCreator(deps = {}) {
             deps.nameAttribureGenerator({ groupId: groupId })({
                 columnDataType: 'string',
                 columnName: 'title',
+                tableId:'8e', // video-playlist
             })
         );
         Inputs.File.innerText = Args.data.filePlaceHolder;
@@ -1765,6 +1767,7 @@ function PlaylistFormItemCreator(deps = {}) {
             deps.nameAttribureGenerator({ groupId: groupId })({
                 columnDataType: 'string',
                 columnName: 'video',
+                tableId:'8e', // video-playlist
             })
         );
 
@@ -1831,7 +1834,7 @@ function generateRandomString(config) {
  * @param {Object} globalConfig
  * @param {Object} globalConfig.groupId
  */
-function GenerateNameAttribure(globalConfig) {
+function GenerateNameAttribute(globalConfig) {
     if (!globalConfig.groupId) {
         throw new Error(`SetNameAttribute: globalConfig.groupId required`);
     }
@@ -1839,14 +1842,28 @@ function GenerateNameAttribure(globalConfig) {
     /**
      *
      * @param {Object} config
+     * @param {Object} config.tableId
      * @param {Object} config.columnName
      * @param {Object} config.columnDataType
      * @returns
      */
     const fn = (config) => {
-        const tableName = 'af';
 
-        return `multitable://${globalConfig.groupId}${tableName}.${config.columnName}.${config.columnDataType}`;
+        if (!config.tableId) {
+            throw new Error(`GenerateNameAttribute fn: config.tableId required`);
+        }
+
+        if (!config.columnName) {
+            throw new Error(`GenerateNameAttribute fn: config.columnName required`);
+        }
+        
+        if (!config.columnDataType) {
+            throw new Error(`GenerateNameAttribute fn: config.columnDataType required`);
+        }
+
+        const tableId = config.tableId;
+
+        return `multitable://${globalConfig.groupId}${tableId}.${config.columnName}.${config.columnDataType}`;
     };
 
     return fn;

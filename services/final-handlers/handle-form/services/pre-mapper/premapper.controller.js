@@ -40,7 +40,7 @@ class PremapperController {
 
             const FileDataSet = {
                 ...dataSet,
-                tableId: 'files-table-id',
+                tableId: '25', // files
                 groupId: fileGroupId,
             };
 
@@ -48,7 +48,7 @@ class PremapperController {
                 ...dataSet,
                 body: {
                     groupId: fileGroupId,
-                    tableId: 'files-table-id',
+                    tableId: '25', // files
                 },
             };
 

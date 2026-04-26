@@ -18,13 +18,13 @@ const {
 
 /**
  *
- * @param {Object} payload
- * @param {(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>) => Buffer<ArrayBuffer>[]} payload.SplitFormDataBuffer
- * @param {(data:Buffer<ArrayBuffer>) => Object} payload.splitPart
- * @param {(data:string) => {name:string|null;filename:string|null;contentType:string|null}} payload.parseHeaders
- * @param {(data:string) => {groupId:string;tableId:string;columnName:string;dataType:string}} payload.MultiTableParser
- * @param {() => PremapperController} payload.PremapperControllerFactory
- * @param {PostMapperFactory} payload.PostMapperFactory
+ * @param {Object} deps
+ * @param {(data:Buffer<ArrayBuffer>, separator:Buffer<ArrayBuffer>) => Buffer<ArrayBuffer>[]} deps.SplitFormDataBuffer
+ * @param {(data:Buffer<ArrayBuffer>) => Object} deps.splitPart
+ * @param {(data:string) => {name:string|null;filename:string|null;contentType:string|null}} deps.parseHeaders
+ * @param {(data:string) => {groupId:string;tableId:string;columnName:string;dataType:string}} deps.MultiTableParser
+ * @param {() => PremapperController} deps.PremapperControllerFactory
+ * @param {PostMapperFactory} deps.PostMapperFactory
  * @returns {(req:http.IncomingMessage, res:http.ServerResponse, payload:any) => {}}
  */
 function MultipartContentTypeRoute(deps = {}) {
@@ -146,9 +146,11 @@ function MultipartContentTypeRoute(deps = {}) {
 
                 const postMapper = deps.PostMapperFactory.Instance();
 
-                await postMapper.process(MapperBuffer.premapperResult);
+                const PostMapperResult = await postMapper.process(MapperBuffer.premapperResult);
 
-                resolve({ success: { message: 'done', data: {} } });
+                console.dir(PostMapperResult, { depth:4 });
+
+                resolve({ success: { message: 'done', data: PostMapperResult } });
             });
         });
     };

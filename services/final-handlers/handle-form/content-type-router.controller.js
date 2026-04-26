@@ -1,3 +1,6 @@
+const { DBAdapterFactory } = require('../../db-adapter/db-adapter.controller');
+const { ValidatiionSchemas: DBAdapterValidatiionSchemas } = require('../../db-adapter/db-adapter.model');
+const { inMemoryDataBase } = require('../../in-memory-db/controller/db.controller');
 const {
     StateControllerFactory,
 } = require('../../utit-of-work/state-controller.controller');
@@ -66,6 +69,10 @@ ContentTypeRoutes.set(
         PostMapperFactory: new PostMapperFactory({
             PostMapperActions: PostMapperActions,
             StateControllerFactory: new StateControllerFactory(),
+            DBAdapterFactory: new DBAdapterFactory({
+                dataBaseInstance: inMemoryDataBase,
+                ValidationSchemas:DBAdapterValidatiionSchemas
+            }), 
         }),
     })
 );

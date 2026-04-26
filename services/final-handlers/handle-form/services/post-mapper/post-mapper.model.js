@@ -9,6 +9,9 @@ const {
 } = require('../../../../utit-of-work/state-controller.model');
 const { FileManager } = require('../../../../file-manager/model/f-manager.model');
 const { resolve } = require('node:path');
+const { InMemoryDBFactory, inMemoryDataBase } = require('../../../../in-memory-db/controller/db.controller');
+const { InMemoryDataBase } = require('../../../../in-memory-db/model/db.model');
+const { DBAdapter } = require('../../../../db-adapter/db-adapter.model');
 
 /**
  * @typedef {(payload:any,deps:Object) => Promise<StateController>} PostMapperAction
@@ -56,18 +59,18 @@ class PostMapper {
             }
         }
 
+        const Result = [];
+
         for (const [k, v] of this.#groupStateControllers.entries()) {
             if (v.getStatus() === 'pending') {
                 await v.try();
             }
 
-            console.dir(
-                { message: 'is done', data: v.getData() },
-                { depth: 4 }
-            );
+            Result.push(v.getData().state);
         }
 
         console.log('\x1b[33mpostmapper process end...\x1b[0m');
+        return Result;
     }
 
     async #processGroup(groupDataSet, tableId) {
@@ -134,7 +137,7 @@ class PostMapper {
 
             if (CheckList.rejected) {
                 controller.setStatus('rejected');
-                Le
+                
             } else if (CheckList.pending) {
                 controller.setStatus('pending');
             } else if (!CheckList.done) {
@@ -142,14 +145,13 @@ class PostMapper {
             } else {
                 controller.setStatus('done');
 
-                const DataBaseResult = {
-                    table: randomBytes(8).toString(`hex`),
-                    id: randomBytes(8).toString(`hex`),
-                };
+                const DBResult = this.#DBAdapter.create(tableId, LocalPools.InnerStateControllers);
+
+                console.dir({DBResult}, {depth:3});
 
                 controller.setData({
                     savedData: LocalPools.InnerStateControllers,
-                    state: DataBaseResult,
+                    state: DBResult,
                 });
             }
         });
@@ -173,10 +175,17 @@ class PostMapper {
     #leafsActions;
 
     /**
+     * @type {DBAdapter}
+     */
+    #DBAdapter;
+
+    /**
      *
-     * @param {Object} payload
-     * @param {StateControllerFactory} payload.StateControllerFactory
-     * @param {Map<string,() => Promise<any>>} payload.LeafActions
+     * @param {Object} deps
+     * @param {StateControllerFactory} deps.StateControllerFactory
+     * @param {InMemoryDataBase} deps.InMemoryDataBase
+     * @param {DBAdapter} deps.DBAdapter
+     * @param {Map<string,() => Promise<any>>} deps.LeafActions
      */
     constructor(deps = {}) {
         console.log(deps.StateControllerFactory);
@@ -191,9 +200,21 @@ class PostMapper {
             );
         }
 
+        if (!deps.InMemoryDataBase) {
+            throw new Error(
+                `PostMapper::constructor: deps.InMemoryDataBase required`
+            );
+        }
+
         if (!deps.LeafActions) {
             throw new Error(
                 `PostMapper::constructor: deps.LeafActions required`
+            );
+        }
+
+        if (!deps.DBAdapter) {
+            throw new Error(
+                `PostMapper::constructor: deps.DBAdapter required`
             );
         }
 
@@ -202,6 +223,8 @@ class PostMapper {
         this.#leafsActions = deps.LeafActions;
 
         this.#groupStateControllers = new Map();
+
+        this.#DBAdapter = deps.DBAdapter;
     }
 }
 

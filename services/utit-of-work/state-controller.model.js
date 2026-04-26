@@ -191,7 +191,16 @@ function LinkAction(deps = {}) {
 
             if (targetControllerStatus === 'done') {
                 controller.setStatus('done');
-                controller.setData(targetStateController.getData().state);
+
+                const TargetControllerState = targetStateController.getData().state;
+
+                const RowData = {
+                    tableName:TargetControllerState.tableName,
+                    rowId:TargetControllerState.rowId,
+                }
+
+                controller.setData(RowData);
+
             } else if (targetControllerStatus === 'pending') {
                 controller.setStatus('pending');
             } else if (targetControllerStatus === 'rejected') {

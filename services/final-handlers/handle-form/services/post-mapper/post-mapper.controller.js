@@ -1,3 +1,6 @@
+const { DBAdapterFactory } = require('../../../../db-adapter/db-adapter.controller');
+const { ValidatiionSchemas } = require('../../../../db-adapter/db-adapter.model');
+const { inMemoryDataBase } = require('../../../../in-memory-db/controller/db.controller');
 const {
     StateControllerFactory,
 } = require('../../../../utit-of-work/state-controller.controller');
@@ -8,6 +11,8 @@ class PostMapperFactory {
         return new PostMapper({
             LeafActions: this.#postMapperActions,
             StateControllerFactory: this.#stateControllerFactory,
+            InMemoryDataBase: inMemoryDataBase,
+            DBAdapter: this.#DBAdapterFactory.Instance(),
         });
     }
 
@@ -22,10 +27,16 @@ class PostMapperFactory {
     #postMapperActions;
 
     /**
+     * @type {DBAdapterFactory}
+     */
+    #DBAdapterFactory;
+
+    /**
      *
-     * @param {Object} payload
-     * @param {StateControllerFactory} payload.StateControllerFactory
-     * @param {Map<string,(payload:any,smth:any) => Promise<any>} payload.PostMapperActions
+     * @param {Object} deps
+     * @param {StateControllerFactory} deps.StateControllerFactory
+     * @param {Map<string,(payload:any,smth:any) => Promise<any>} deps.PostMapperActions
+     * @param {DBAdapterFactory} deps.DBAdapterFactory
      */
     constructor(deps = {}) {
         if (!deps.StateControllerFactory) {
@@ -40,8 +51,16 @@ class PostMapperFactory {
             );
         }
 
+        if (!deps.DBAdapterFactory) {
+            throw new Error(
+                `PostMapperFactory::constructor:  required`
+            );
+        }
+
+
         this.#stateControllerFactory = deps.StateControllerFactory;
         this.#postMapperActions = deps.PostMapperActions;
+        this.#DBAdapterFactory = deps.DBAdapterFactory;
     }
 }
 
