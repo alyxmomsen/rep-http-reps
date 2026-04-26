@@ -39,6 +39,31 @@ router.addGlobalMiddleware(
     SayHelloMW()
 );
 
+// Раздача статики (CSS, JS)
+router.get('/public/:type/:file', async (ctx) => {
+    const { req, res, params } = ctx;
+    const { type, file } = params;
+
+    const mimeTypes = {
+        'css': 'text/css',
+        'js': 'text/javascript',
+        'html': 'text/html',
+    };
+
+    const mime = mimeTypes[type] || 'text/plain';
+
+    try {
+        const fileContent = await readFile(
+            resolve(`./assets/${type}/${file}.${type}`)
+        );
+        res.writeHead(200, { 'content-type': mime });
+        res.end(fileContent);
+    } catch (err) {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        res.end('File not found');
+    }
+});
+
 router.get(
     '/foo',
     SayHelloMW(),

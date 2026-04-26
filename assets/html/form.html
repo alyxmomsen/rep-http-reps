@@ -3,116 +3,225 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/public/css/main" />
+        <link rel="stylesheet" href="/public/css/form" />
+        <script src="/public/js/main"></script>
+        <script src="/public/js/req-man"></script>
+        <script src="/public/js/form"></script>
+        <!-- <script src=""></script> -->
         <title>Document</title>
     </head>
     <body>
-        <form id="form--main" method="post" enctype="multipart/form-data">
-            <input
-                type="text"
-                value="my title"
-                name="multitable://0125.title.string"
-                id=""
-            />
-            <input
-                type="text"
-                value="my description"
-                name="multitable://0125.description.string"
-                id=""
-            />
-            <input type="file" name="multitable://0125.video.binary" id="" />
-            <input
-                type="text"
-                value="my title"
-                name="multitable://0025.title.string"
-                id=""
-            />
-            <input
-                type="text"
-                value="my description"
-                name="multitable://0025.description.string"
-                id=""
-            />
-            <input type="file" name="multitable://0025.video.binary" id="" />
-            <button id="form--main__submit" type="submit">submit</button>
-        </form>
+        <!-- <form action="/api/handle-form" method="post" enctype="text/plain"> -->
+        <!-- <form action="/api/handle-form" method="post" enctype="application/x-www-form-urlencoded"> -->
+
+        <!-- структура!
+
+        структура "name"
+        <group-id> <table-name> <column-name> <data-type (инпуты отдают "стринг", но для БД нужен тип данных)>
+        group-id: группа это одна строка в таблице БД
+        table-name: целевая таблица в БД
+        column-name: одна колонка строки группы
+        
+        отельное внимание на "column-name" для файла:
+
+        колумн-нэйм файла будет использоваться как префих для названия колонки в БД
+        так как для файла требуется по-меньшей мере три колонки, -
+        "MIME" , "original-filename" , "filesystem-filename" , следовательно в БД будет:
+        "<columnName>/MIME" , "<columnName>/original-filename" , "<columnName>/filesystem-filename" 
+
+        upd: added <protocolId>
+        протокол нужен для сервера что бы подобрать нужную стратегию для парсинга поля "name"
+    -->
+        <div class="wrapper--main">
+            <div id="app">
+                <div class="app--frame left" id="modal-window--a">
+                    <div class="frame" id="">
+                        <div class="" id="form--main--controlls-container">
+                            <div class="wrapper form--main" id="">
+                                <div class="" id="form--main__options">
+                                    <button
+                                        type="button"
+                                        id="button--add-element"
+                                    >
+                                        ADD ELEMENT
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="controls--video__show-registrate-user-form"
+                                    >
+                                        registrate user
+                                    </button>
+                                </div>
+                                <form
+                                    action="/api/handle-form"
+                                    method="post"
+                                    enctype="multipart/form-data"
+                                    id="form--main"
+                                >
+                                    <div
+                                        id="form-units-container"
+                                        class="flex flex--col flex--gap-2"
+                                    >
+                                        <div id="registrate-user-area"></div>
+                                        <!-- <div
+                                            class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element"
+                                        >
+                                            <h3>user</h3>
+                                            
+                                            <input
+                                                type="text"
+                                                name="multitable://0025.name.string"
+                                                id=""
+                                                value="default name"
+                                            />
+                                            <input
+                                                type="text"
+                                                name="multitable://0025.last-name.string"
+                                                id=""
+                                                value="default last-name"
+                                            />
+                                            
+                                            <input
+                                                type="file"
+                                                name="multitable://0025.avatar.string"
+                                                id=""
+                                                accept=".img, .jpeg, .png"
+                                            />
+                                            
+                                            <input
+                                                type="file"
+                                                name="multitable://0025.thumb-nail.string"
+                                                id=""
+                                                accept=".img, .jpeg, .png"
+                                            />
+                                            
+                                            <input
+                                                type="file"
+                                                name="multitable://0025.logo.string"
+                                                id=""
+                                                accept=".img, .jpeg, .png"
+                                            />
+                                        </div> -->
+
+                                        <div
+                                            id="playlist-items-group"
+                                            class="flex flex--gap-1"
+                                        >
+                                            <!-- playlist element -->
+                                            <!-- <div
+                                                class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element"
+                                            >
+                                                <h3>playlist element</h3>
+                                                
+                                                <input
+                                                    type="text"
+                                                    name="multitable://04af.title.string"
+                                                    id=""
+                                                    value="default title-2"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    name="multitable://04af.description.string"
+                                                    id=""
+                                                    value="default description-2"
+                                                />
+                                                
+                                                <input
+                                                    type="file"
+                                                    name="multitable://04af.video.string"
+                                                    id=""
+                                                    accept=".mkv, .mp4"
+                                                />
+                                                <button
+                                                    class="playlist-element--close-button"
+                                                    type="button"
+                                                >
+                                                    X
+                                                </button>
+                                            </div> -->
+
+                                            <!-- playlist element -->
+                                            <!-- <div
+                                                hidden="true"
+                                                class="flex flex--col flex--jtf-ctr flex--align-start flex--gap-1 form-element"
+                                            >
+                                                <h3>playlist element</h3>
+                                                
+                                                <input
+                                                    type="text"
+                                                    name="multitable://05af.title.string"
+                                                    id=""
+                                                    value="default title 3"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    name="multitable://05af.description.string"
+                                                    id=""
+                                                    value="default description 3"
+                                                />
+                                                
+                                                <input
+                                                    type="file"
+                                                    name="multitable://05af.video.string"
+                                                    id=""
+                                                    accept=".mkv, .mp4"
+                                                />
+                                                <button
+                                                    class="playlist-element--close-button"
+                                                    type="button"
+                                                >
+                                                    X
+                                                </button>
+                                            </div> -->
+                                        </div>
+                                        <div
+                                            class="flex flex--gap-1"
+                                            id="main-form-submit"
+                                        >
+                                            <button
+                                                type="submit"
+                                                value="submit"
+                                            >
+                                                submit
+                                            </button>
+                                            <button type="reset" value="reset">
+                                                reset
+                                            </button>
+                                            <div id="status--upload">
+                                                status
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <button type="button" id="form--main--close-button">
+                                ❌
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="app--frame right" id="modal-window--b"></div>
+                <div class="app-frame" id="modal-window--video">
+                    <video id="video--main" controls></video>
+                    <div id="playlist--video">
+                        <div class="playlist-contr ols">
+                            <button
+                                id="playlist-button--add-video"
+                                type="button"
+                            >
+                                add video
+                            </button>
+                        </div>
+                    </div>
+                    <div id="controls--video">
+                        <button type="button" id="controls--video__show-form">
+                            open form
+                        </button>
+                    </div>
+                </div>
+                <div class="app-frame" id="modal-window--p"></div>
+            </div>
+        </div>
     </body>
 </html>
-<script>
-    window.addEventListener('DOMContentLoaded', async () => {
-        const DOMEelements = {
-            Form: grabDOMElement('form--main'),
-            SubmitButton: grabDOMElement(`form--main__submit`),
-        };
-
-        const formData = new FormData(DOMEelements.Form);
-
-        DOMEelements.Form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            await new RequestManager({
-                url: '/api/handle-multitable-form',
-                method: 'post',
-                finalHandler: async (ctx) => {
-                    console.log({ ctx });
-                    const json = await ctx.FetchResponse.json();
-                    console.log({ json });
-                },
-                middleware: [],
-            }).exec(formData);
-        });
-
-        DOMEelements.SubmitButton.addEventListener('click', () => {});
-    });
-
-    /**
-     * @param {string} id
-     */
-    function grabDOMElement(id) {
-        const DOMElement = document.getElementById(id);
-        if (!DOMElement) {
-            throw new Error(`grabDOMElement: DOM element is not received`);
-        }
-        return DOMElement;
-    }
-
-    class RequestManager {
-        async exec(body) {
-            this.#executeMiddleware({}, this.#beforeRequestMW);
-
-            const FetchResponse = await fetch(this.#url, {
-                method: this.#method,
-                body: this.#method === 'post' ? body : undefined,
-            });
-
-            await this.#finalHandler({ FetchResponse });
-
-            this.#executeMiddleware(FetchResponse, this.#aferRequestMW);
-        }
-
-        addMiddleware(...mw) {}
-
-        #executeMiddleware(payload, middleware) {}
-
-        #finalHandler;
-
-        #beforeRequestMW;
-        #aferRequestMW;
-
-        #url;
-        #method;
-
-        /**
-         * @param {Object} config - config container
-         * @param {string} config.url
-         * @param {string} config.method
-         * @param {Function} config.finalHandler
-         * @param {Array} config.middleware
-         */
-        constructor(config = {}) {
-            this.#url = config.url;
-            this.#method = config.method;
-
-            this.#finalHandler = config.finalHandler;
-        }
-    }
-</script>

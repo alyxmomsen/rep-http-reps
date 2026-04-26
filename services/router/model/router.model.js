@@ -39,32 +39,40 @@ class Router {
      * @param {ServerResponse} res
      */
     async handleRequest(req, res) {
-        const { method, headers, url: rawURL } = req;
+        const { method, url: rawURL } = req;
 
         const methodRoutes = this.#routes.get(method);
 
         if (!methodRoutes) {
-            res.writeHead(402, {
+            const allowed = Array.from(this.#routes.keys()).join(', ');
+            res.writeHead(405, {
                 'content-type': 'application/json',
+                Allow: allowed,
             });
-            res.end(JSON.stringify({ hello: 'world' }));
-            console.log({ foo: 'bar' });
+            res.end(
+                JSON.stringify({
+                    message: 'Method Not Allowed',
+                    allow: allowed,
+                })
+            );
             return;
         }
 
         const { url, queryString } = this.#splitURL(rawURL);
+        const query = this.#extractQueryParams(queryString);
 
         for (const RouteBundle of methodRoutes.values()) {
             const urlMatch = RouteBundle.regex.exec(url);
 
             if (!urlMatch) continue;
 
-            const Ctx = {
-                req,
-                res,
-            };
+            // Извлекаем params
+            const params = {};
+            RouteBundle.keys.forEach((key, i) => {
+                params[key] = decodeURIComponent(urlMatch[i + 1]);
+            });
 
-            console.log({ RouteBundle });
+            const Ctx = { req, res, params, queryParams: query };
 
             await this.#middlewareExecutor.exec(
                 Ctx,
@@ -75,15 +83,8 @@ class Router {
             return;
         }
 
-        res.writeHead(404, {
-            'content-type': 'application/json',
-        });
-
-        res.end(
-            JSON.stringify({
-                message: '404 , not found, bro',
-            })
-        );
+        res.writeHead(404, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Not Found' }));
     }
 
     addGlobalMiddleware(...handlers) {
@@ -124,6 +125,20 @@ class Router {
      */
     delete(template, ...handlers) {
         this.#addRoute(template, 'DELETE', handlers);
+    }
+
+    #extractQueryParams(queryString) {
+        const params = {};
+        if (!queryString) return params;
+
+        queryString.split('&').forEach((pair) => {
+            const [key, value] = pair.split('=');
+            if (key && value !== undefined) {
+                params[decodeURIComponent(key)] = decodeURIComponent(value);
+            }
+        });
+
+        return params;
     }
 
     /**
