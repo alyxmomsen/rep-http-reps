@@ -8,6 +8,7 @@ const {
     StateControllerActionsFactories,
 } = require('../../../../utit-of-work/state-controller.model');
 const { FileManager } = require('../../../../file-manager/model/f-manager.model');
+const { resolve } = require('node:path');
 
 /**
  * @typedef {(payload:any,deps:Object) => Promise<StateController>} PostMapperAction
@@ -105,6 +106,7 @@ class PostMapper {
                     StateController.Status.Rejected
                 ) {
                     CheckList.rejected = true;
+                    // LeafStateController.rollBack();
                     break;
                 } else if (
                     LeafStateController.getStatus() ===
@@ -132,6 +134,7 @@ class PostMapper {
 
             if (CheckList.rejected) {
                 controller.setStatus('rejected');
+                Le
             } else if (CheckList.pending) {
                 controller.setStatus('pending');
             } else if (!CheckList.done) {
@@ -212,6 +215,9 @@ PostMapperActions.set(
     FileAction({
         StateControllerFactory: new StateControllerFactory(),
         StateControllerActionsFactories: StateControllerActionsFactories,
+        fileManager: new FileManager({
+            rootDir:resolve(`C:\\Users\\user\\Desktop\\projects\\javascript\\repetitor\\PRODUCTS\\http-server\\knight-bus\\rep-http-reps\\uploads`),
+        }),
     })
 );
 
@@ -237,9 +243,19 @@ module.exports = { PostMapper, PostMapperActions };
  *
  * @param {Object} deps
  * @param {StateControllerFactory} deps.StateControllerFactory
+ * @param {FileManager} deps.fileManager
  * @returns
  */
 function FileAction(deps = {}) {
+
+    if (!deps.StateControllerFactory) {
+        throw new Error(`FileAction factory: deps.StateControllerFactory required`);
+    }
+
+    if (!deps.fileManager) {
+        throw new Error(`FileAction factory: deps.fileManager required`);
+    }
+
     /**
      *
      * @param {Object} localDeps
@@ -251,7 +267,7 @@ function FileAction(deps = {}) {
         stateController.setAction(
             deps.StateControllerActionsFactories.File({
                 payload: localDeps.payload,
-                fileManager: new FileManager,
+                fileManager: deps.fileManager ,
             })
         );
 

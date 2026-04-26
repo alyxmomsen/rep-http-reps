@@ -43,7 +43,9 @@ class StateController {
         });
     }
 
-    #rollback() {}
+    #rollback() {
+        this.#actions.rollback();
+    }
 
     getStatus() {
         return this.#status;
@@ -51,6 +53,14 @@ class StateController {
 
     getData() {
         return this.#data;
+    }
+
+    setStatus(status) {
+        this.#status = status;
+    }
+
+    setData(data) {
+        this.#data = data;
     }
 
     /**
@@ -97,13 +107,17 @@ module.exports = {
  *
  * @param {Object} deps
  * @param {Buffer<ArrayBuffer>} deps.payload
- * @param {{}} deps.fileManager
+ * @param {FileManager} deps.fileManager
  * @returns
  */
 function FileAction(deps = {}) {
     if (!deps.payload) {
         throw new Error(`FileAction factory: deps.payload required`);
     }
+
+    // if (deps.payload instanceof Buffer === false) {
+    //     throw new Error(``);
+    // }
 
     if (!deps.fileManager) {
         throw new Error(`FileAction factory: deps.fileManager required`);
@@ -119,15 +133,7 @@ function FileAction(deps = {}) {
                 payload: deps.payload,
             });
 
-            const fmanager = new FileManager({
-                rootDir: resolve(
-                    'C:\\Users\\user\\Desktop\\projects\\javascript\\repetitor\\PRODUCTS\\http-server\\knight-bus\\rep-http-reps\\uploads'
-                ),
-            });
-
-            const FmResult = await fmanager.save(deps.payload);
-
-            console.log({ FmResult });
+            const FmResult = await deps.fileManager.save(deps.payload);
 
             controller.setStatus('done');
             controller.setData(FmResult.success?.filename);
@@ -138,7 +144,7 @@ function FileAction(deps = {}) {
 
             console.log('end file action');
         } catch (err) {
-            console.log('errrrrrrrrrrrrrrr', { err });
+            console.log('error', { err });
             controller.setStatus(StateController.Status.Rejected);
         }
     };
