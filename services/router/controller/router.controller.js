@@ -30,14 +30,14 @@ const router = new Router(
     { compileRouteBundleBehavior: CompileRouteBundle() }
 );
 
-router.addGlobalMiddleware(
-    SayHelloMW(),
-    SayHelloMW(),
-    SayHelloMW(),
-    SayHelloMW(),
-    SayHelloMW(),
-    SayHelloMW()
-);
+// router.addGlobalMiddleware(
+//     SayHelloMW(),
+//     SayHelloMW(),
+//     SayHelloMW(),
+//     SayHelloMW(),
+//     SayHelloMW(),
+//     SayHelloMW()
+// );
 
 // Раздача статики (CSS, JS)
 router.get('/public/:type/:file', async (ctx) => {
@@ -89,7 +89,6 @@ router.post(
 );
 
 router.get(`/api/get-playlist`, (ctx) => {
-    console.log(ctx);
     const { req, res } = ctx;
     
     res.end('hello');
