@@ -1,3 +1,5 @@
+const dotenv = require('dotenv');
+dotenv.config({});
 const http = require('http');
 const { router } = require('./services/router/controller/router.controller');
 

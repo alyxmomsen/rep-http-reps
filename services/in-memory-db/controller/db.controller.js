@@ -1,16 +1,13 @@
-const { InMemoryDataBase } = require("../model/db.model");
+const { InMemoryDataBase } = require('../model/db.model');
 
 class InMemoryDBFactory {
-
     Instance() {
         return new InMemoryDataBase();
     }
 
-    constructor() {
-        
-    }
+    constructor() {}
 }
 
-const database = new InMemoryDBFactory().Instance()
+const database = new InMemoryDBFactory().Instance();
 
-module.exports = { InMemoryDBFactory, inMemoryDataBase:database }
+module.exports = { InMemoryDBFactory, inMemoryDataBase: database };

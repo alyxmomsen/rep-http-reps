@@ -1,6 +1,12 @@
-const { DBAdapterFactory } = require('../../../../db-adapter/db-adapter.controller');
-const { ValidatiionSchemas } = require('../../../../db-adapter/db-adapter.model');
-const { inMemoryDataBase } = require('../../../../in-memory-db/controller/db.controller');
+const {
+    DBAdapterFactory,
+} = require('../../../../db-adapter/db-adapter.controller');
+const {
+    ValidatiionSchemas,
+} = require('../../../../db-adapter/db-adapter.model');
+const {
+    inMemoryDataBase,
+} = require('../../../../in-memory-db/controller/db.controller');
 const {
     StateControllerFactory,
 } = require('../../../../utit-of-work/state-controller.controller');
@@ -52,11 +58,8 @@ class PostMapperFactory {
         }
 
         if (!deps.DBAdapterFactory) {
-            throw new Error(
-                `PostMapperFactory::constructor:  required`
-            );
+            throw new Error(`PostMapperFactory::constructor:  required`);
         }
-
 
         this.#stateControllerFactory = deps.StateControllerFactory;
         this.#postMapperActions = deps.PostMapperActions;

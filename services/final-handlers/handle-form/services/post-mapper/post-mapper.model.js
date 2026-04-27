@@ -7,9 +7,14 @@ const {
     StateController,
     StateControllerActionsFactories,
 } = require('../../../../utit-of-work/state-controller.model');
-const { FileManager } = require('../../../../file-manager/model/f-manager.model');
+const {
+    FileManager,
+} = require('../../../../file-manager/model/f-manager.model');
 const { resolve } = require('node:path');
-const { InMemoryDBFactory, inMemoryDataBase } = require('../../../../in-memory-db/controller/db.controller');
+const {
+    InMemoryDBFactory,
+    inMemoryDataBase,
+} = require('../../../../in-memory-db/controller/db.controller');
 const { InMemoryDataBase } = require('../../../../in-memory-db/model/db.model');
 const { DBAdapter } = require('../../../../db-adapter/db-adapter.model');
 
@@ -137,7 +142,6 @@ class PostMapper {
 
             if (CheckList.rejected) {
                 controller.setStatus('rejected');
-                
             } else if (CheckList.pending) {
                 controller.setStatus('pending');
             } else if (!CheckList.done) {
@@ -145,9 +149,12 @@ class PostMapper {
             } else {
                 controller.setStatus('done');
 
-                const DBResult = this.#DBAdapter.create(tableId, LocalPools.InnerStateControllers);
+                const DBResult = this.#DBAdapter.create(
+                    tableId,
+                    LocalPools.InnerStateControllers
+                );
 
-                console.dir({DBResult}, {depth:3});
+                console.dir({ DBResult }, { depth: 3 });
 
                 controller.setData({
                     savedData: LocalPools.InnerStateControllers,
@@ -213,9 +220,7 @@ class PostMapper {
         }
 
         if (!deps.DBAdapter) {
-            throw new Error(
-                `PostMapper::constructor: deps.DBAdapter required`
-            );
+            throw new Error(`PostMapper::constructor: deps.DBAdapter required`);
         }
 
         this.#stateControllerFactory = deps.StateControllerFactory;
@@ -239,7 +244,7 @@ PostMapperActions.set(
         StateControllerFactory: new StateControllerFactory(),
         StateControllerActionsFactories: StateControllerActionsFactories,
         fileManager: new FileManager({
-            rootDir:resolve(`C:\\Users\\user\\Desktop\\projects\\javascript\\repetitor\\PRODUCTS\\http-server\\knight-bus\\rep-http-reps\\uploads`),
+            rootDir: resolve(process.env?.UPLOADS_DIR || './uploads'),
         }),
     })
 );
@@ -270,9 +275,10 @@ module.exports = { PostMapper, PostMapperActions };
  * @returns
  */
 function FileAction(deps = {}) {
-
     if (!deps.StateControllerFactory) {
-        throw new Error(`FileAction factory: deps.StateControllerFactory required`);
+        throw new Error(
+            `FileAction factory: deps.StateControllerFactory required`
+        );
     }
 
     if (!deps.fileManager) {
@@ -290,7 +296,7 @@ function FileAction(deps = {}) {
         stateController.setAction(
             deps.StateControllerActionsFactories.File({
                 payload: localDeps.payload,
-                fileManager: deps.fileManager ,
+                fileManager: deps.fileManager,
             })
         );
 

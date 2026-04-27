@@ -40,12 +40,20 @@ function HandleFormFinalHandler(deps = {}) {
                 console.log('alternate handler');
             });
 
-        const ContentTypeHandlerResult = await contentTypeHandler(ctx.req, ContentType.payload);
+        const ContentTypeHandlerResult = await contentTypeHandler(
+            ctx.req,
+            ContentType.payload
+        );
 
         ctx.res.writeHead(200, {
             'content-type': 'application/json',
         });
-        ctx.res.end(JSON.stringify({ message: 'foo bar baz', data:ContentTypeHandlerResult }));
+        ctx.res.end(
+            JSON.stringify({
+                message: 'foo bar baz',
+                data: ContentTypeHandlerResult,
+            })
+        );
     };
 
     return fn;

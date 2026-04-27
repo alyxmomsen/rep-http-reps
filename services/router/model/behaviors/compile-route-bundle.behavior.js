@@ -1,6 +1,6 @@
 /**
  * Compiles a route template into a RouteBundle with regex and keys.
- * 
+ *
  * @param {Object} deps - Dependencies (unused, kept for consistency)
  * @returns {(template: string, handlers: import("../router.model").RouteMiddleware[]) => import("../router.model").RouteBundle}
  */

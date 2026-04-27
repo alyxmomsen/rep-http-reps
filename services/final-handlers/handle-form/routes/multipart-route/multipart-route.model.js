@@ -146,11 +146,15 @@ function MultipartContentTypeRoute(deps = {}) {
 
                 const postMapper = deps.PostMapperFactory.Instance();
 
-                const PostMapperResult = await postMapper.process(MapperBuffer.premapperResult);
+                const PostMapperResult = await postMapper.process(
+                    MapperBuffer.premapperResult
+                );
 
-                console.dir(PostMapperResult, { depth:4 });
+                console.dir(PostMapperResult, { depth: 4 });
 
-                resolve({ success: { message: 'done', data: PostMapperResult } });
+                resolve({
+                    success: { message: 'done', data: PostMapperResult },
+                });
             });
         });
     };
