@@ -176,13 +176,14 @@ function VideoStreamHandler(deps = {}) {
             res.end(JSON.stringify({}));
         }
 
-        if (FileStats.success)
-            res.writeHead(206, {
-                'content-type': DataSet.DbRow.mime,
-                'content-length': '',
-                'accept-ranges': 'bytes',
-                'content-range': `bytes=${0}-${0}/${0}`,
-            });
+        if (FileStats.success) {
+        }
+        // res.writeHead(206, {
+        //     'content-type': DataSet.DbRow.mime,
+        //     'content-length': '',
+        //     'accept-ranges': 'bytes',
+        //     'content-range': `bytes=${}-${}/${}`,
+        // });
         res.end();
     };
 
