@@ -149,16 +149,16 @@ class PostMapper {
             } else {
                 controller.setStatus('done');
 
-                const DBResult = this.#DBAdapter.create(
+                const DBAdapterResult = this.#DBAdapter.create(
                     tableId,
                     LocalPools.InnerStateControllers
                 );
 
-                console.dir({ DBResult }, { depth: 3 });
+                console.dir({ DBResult: DBAdapterResult }, { depth: 3 });
 
                 controller.setData({
                     savedData: LocalPools.InnerStateControllers,
-                    state: DBResult,
+                    state: DBAdapterResult,
                 });
             }
         });

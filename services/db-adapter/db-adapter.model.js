@@ -46,9 +46,14 @@ class DBAdapter {
             dataSet
         );
 
-        console.log({ dbTransactionResult });
+        const DBAdapterResult = {
+            tableId,
+            ...dbTransactionResult,
+        };
 
-        return dbTransactionResult;
+        console.log({ DBAdapterResult });
+
+        return DBAdapterResult;
     }
 
     read(tableId, rowId) {}

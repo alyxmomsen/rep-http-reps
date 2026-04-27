@@ -48,12 +48,7 @@ function HandleFormFinalHandler(deps = {}) {
         ctx.res.writeHead(200, {
             'content-type': 'application/json',
         });
-        ctx.res.end(
-            JSON.stringify({
-                message: 'foo bar baz',
-                data: ContentTypeHandlerResult,
-            })
-        );
+        ctx.res.end(JSON.stringify(ContentTypeHandlerResult));
     };
 
     return fn;

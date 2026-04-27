@@ -392,9 +392,50 @@ document.addEventListener('DOMContentLoaded', () => {
                         while ((PLItem = AppState.Pools.Playlist.pop())) {
                             PLItem.Item.remove();
                         }
+                        next();
                     },
                     (ctx) => {
                         /** final mw */
+
+                        console.warn({ ctx });
+
+                        const AddedData =
+                            ctx?.jsonResponse?.success?.data || [];
+
+                        const Actions = {
+                            /**
+                             * @description
+                             * handle "files" table name
+                             * @param {Object} data 
+                             */
+                            25: (data) => {
+                                console.info('file is successfully stored');
+                            },
+                            /**
+                             * @description
+                             * handle "play-list" table name
+                             * @param {{title:string, description:string, file:string}} data 
+                             */
+                            '8e': (data) => {
+
+                                const {title, description, file} = data ;
+
+                                Create.ToolTip({
+                                    targetContainer:
+                                        DOMElements.ToolTipsContainer,
+                                        disapearTimeout:5000,
+                                })(`created playlist element:\r\n ${title} ${description}`.toUpperCase());
+                            },
+                        };
+
+                        for (const ResponseDataItem of AddedData) {
+                            console.info({ ResponseDataItem });
+
+                            
+                            const { tableId, data, rowId } = ResponseDataItem;
+                            Actions[tableId]?.(data) || (() => {console.warn('no action for ' + tableId)})()
+                        }
+
                         Create.ToolTip({
                             targetContainer: DOMElements.ToolTipsContainer,
                         })('SUCCESS');
@@ -444,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         next();
     });
 
-    RequestManagers.UpdatePlaylist.execute({});
+    // RequestManagers.UpdatePlaylist.execute();
 
     DOMElements.MainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -685,11 +726,18 @@ function FormDataRequestFinalHandler(deps = {}) {
 
                 deps.toolTipCreator(`user registrated: ${name} ${lastName}`);
             },
+            files: (payload) => {
+                console.log('files case');
+            },
         };
 
         if (ctx.jsonResponse.success) {
-            for (const DBRow of ctx.jsonResponse.success) {
-                Action[DBRow.tableName](DBRow.row);
+            for (const DBRow of ctx.jsonResponse.success.data) {
+                console.info({ DBRow });
+                Action[DBRow.tableName]?.(DBRow.data) ||
+                    (() => {
+                        console.warn('no action');
+                    })();
             }
         }
     };
@@ -1744,7 +1792,7 @@ function PlaylistFormItemCreator(deps = {}) {
             deps.nameAttribureGenerator({ groupId: groupId })({
                 columnDataType: 'string',
                 columnName: 'description',
-                tableId:'8e', // video-playlist
+                tableId: '8e', // video-playlist
             })
         );
         Inputs.Title.placeholder = Args.data.titlePlaceholder;
@@ -1757,7 +1805,7 @@ function PlaylistFormItemCreator(deps = {}) {
             deps.nameAttribureGenerator({ groupId: groupId })({
                 columnDataType: 'string',
                 columnName: 'title',
-                tableId:'8e', // video-playlist
+                tableId: '8e', // video-playlist
             })
         );
         Inputs.File.innerText = Args.data.filePlaceHolder;
@@ -1767,7 +1815,7 @@ function PlaylistFormItemCreator(deps = {}) {
             deps.nameAttribureGenerator({ groupId: groupId })({
                 columnDataType: 'string',
                 columnName: 'video',
-                tableId:'8e', // video-playlist
+                tableId: '8e', // video-playlist
             })
         );
 
@@ -1848,17 +1896,22 @@ function GenerateNameAttribute(globalConfig) {
      * @returns
      */
     const fn = (config) => {
-
         if (!config.tableId) {
-            throw new Error(`GenerateNameAttribute fn: config.tableId required`);
+            throw new Error(
+                `GenerateNameAttribute fn: config.tableId required`
+            );
         }
 
         if (!config.columnName) {
-            throw new Error(`GenerateNameAttribute fn: config.columnName required`);
+            throw new Error(
+                `GenerateNameAttribute fn: config.columnName required`
+            );
         }
-        
+
         if (!config.columnDataType) {
-            throw new Error(`GenerateNameAttribute fn: config.columnDataType required`);
+            throw new Error(
+                `GenerateNameAttribute fn: config.columnDataType required`
+            );
         }
 
         const tableId = config.tableId;
