@@ -1,7 +1,7 @@
 const { InMemoryDataBase } = require('../in-memory-db/model/db.model');
 
 class DBAdapter {
-    create(tableId, dataSet) {
+    createOne(tableId, dataSet) {
         console.log({ tableId });
 
         const Schema =
@@ -56,7 +56,24 @@ class DBAdapter {
         return DBAdapterResult;
     }
 
-    read(tableId, rowId) {}
+    readOne(tableId, rowId) {
+        const tableName = DBAdapter.TablesMap[tableId];
+
+        if (!tableName) {
+            return {
+                failure: {
+                    message: 'incorrect table-id',
+                    details: {
+                        tableId: tableId,
+                    },
+                },
+            };
+        }
+
+        return {
+            ...this.#database.readOne(DBAdapter.TablesMap[tableId], rowId),
+        };
+    }
 
     static TablesNames = {
         FILES: 'files',
@@ -66,6 +83,14 @@ class DBAdapter {
     static TablesMap = {
         25: DBAdapter.TablesNames.FILES,
         '8e': DBAdapter.TablesNames.VIDEO_PLAYLIST,
+        Code: {
+            Files: '25',
+            PlayList: '8e',
+        },
+        TableName: {
+            25: DBAdapter.TablesNames.FILES,
+            '8e': DBAdapter.TablesNames.VIDEO_PLAYLIST,
+        },
     };
 
     /**

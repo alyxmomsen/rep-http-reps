@@ -149,7 +149,7 @@ class PostMapper {
             } else {
                 controller.setStatus('done');
 
-                const DBAdapterResult = this.#DBAdapter.create(
+                const DBAdapterResult = this.#DBAdapter.createOne(
                     tableId,
                     LocalPools.InnerStateControllers
                 );

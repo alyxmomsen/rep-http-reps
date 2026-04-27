@@ -27,6 +27,33 @@ class InMemoryDataBase {
         };
     }
 
+    readOne(tableName, rowId) {
+        const Table = this.#database.get(tableName);
+        if (!Table) {
+            return {
+                failure: {
+                    message: 'no table by name',
+                    details: {
+                        crud: 'read',
+                        tableName: tableName,
+                    },
+                },
+            };
+        }
+
+        for (const [k, v] of Table.entries()) {
+            console.log({ k, v });
+        }
+
+        const TableRowData = Table.get(rowId);
+
+        return {
+            success: {
+                rowData: TableRowData,
+            },
+        };
+    }
+
     /**
      * @type {Map<string,Map<string,Object>>}
      */

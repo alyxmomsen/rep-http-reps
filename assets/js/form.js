@@ -1195,8 +1195,8 @@ function PlayVideoMW(deps = {}) {
                     `PlayVideoMW: ctx.rowId && ctx.tableName required`
                 );
             }
-
-            deps.vidoePlayerHTMLElement.src = `/video/${ctx.rowId}`;
+            
+            deps.vidoePlayerHTMLElement.src = `/video-stream/${ctx.rowId}`;
             deps.vidoePlayerHTMLElement.load();
 
             deps.vidoePlayerHTMLElement.addEventListener('loadeddata', () => {

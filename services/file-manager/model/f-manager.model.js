@@ -1,5 +1,12 @@
 const { randomBytes } = require('node:crypto');
-const { statSync, createWriteStream } = require('node:fs');
+const {
+    statSync,
+    createWriteStream,
+    createReadStream,
+    ReadStream,
+    Stats,
+} = require('node:fs');
+const { stat } = require('node:fs/promises');
 const { join } = require('node:path');
 const { Readable } = require('node:stream');
 
@@ -33,6 +40,57 @@ class FileManager {
                 reject({
                     failure: {
                         message: err,
+                    },
+                });
+            }
+        });
+    }
+
+    /**
+     *
+     * @param {string} filename
+     * @returns {{
+     *  stream: ReadStream,
+     *  fileSize: number,
+     * }}
+     */
+    async getStream(filename) {
+        const filePath = join(this.#rootDir, filename);
+
+        const stats = await stat(filePath);
+
+        const fileSize = stats.size;
+
+        return new Promise((resolve, reject) => {
+            const rs = createReadStream(filePath);
+
+            resolve({
+                stream: rs,
+                fileSize: fileSize,
+            });
+        });
+    }
+
+    /**
+     *
+     * @param {string} filename
+     * @returns {Promise<{success?:{stats:Stats};failure:{details:Object}}>}
+     */
+    async getFileStats(filename) {
+        return new Promise(async (resolve, reject) => {
+            const filePath = join(this.#rootDir, filename);
+
+            try {
+                const stats = await stat(filePath);
+                resolve({
+                    success: {
+                        stats,
+                    },
+                });
+            } catch (err) {
+                reject({
+                    failure: {
+                        details: err,
                     },
                 });
             }
