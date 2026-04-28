@@ -70,7 +70,7 @@ function printGreatings(deps = {}) {
                 }
                 TimoutBuffer.id = setTimeout(
                     print,
-                    Math.floor(Math.random() * 200)
+                    Math.floor(Math.random() * 5)
                 );
             };
 

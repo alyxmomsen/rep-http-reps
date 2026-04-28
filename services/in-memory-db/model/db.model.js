@@ -54,6 +54,33 @@ class InMemoryDataBase {
         };
     }
 
+    readAll(tableName) {
+        const table = this.#database.get(tableName);
+
+        console.log({ table });
+
+        if (!table) {
+            return {
+                success: {
+                    rows: {},
+                },
+            };
+        }
+
+        const Rows = {};
+
+        for (const [k, v] of table.entries()) {
+            console.log({ k, v });
+            Rows[k] = v;
+        }
+
+        return {
+            success: {
+                rows: Rows,
+            },
+        };
+    }
+
     /**
      * @type {Map<string,Map<string,Object>>}
      */

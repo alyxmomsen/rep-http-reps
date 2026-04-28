@@ -88,15 +88,56 @@ router.post(
     })
 );
 
-router.get(`/api/get-playlist`, (ctx) => {
-    const { req, res } = ctx;
-
-    res.end('hello');
-});
+router.get(
+    `/api/get-playlist`,
+    GetPlaylistHandler({
+        dataBaseAdapter: new DBAdapterFactory({
+            dataBaseInstance: inMemoryDataBase,
+            ValidationSchemas: ValidatiionSchemas,
+        }).Instance(),
+    })
+);
 
 router.get('/l/form', GetFormFinalHandler());
 
 module.exports = { router };
+
+/**
+ *
+ * @param {Object} deps
+ * @param {DBAdapter} deps.dataBaseAdapter
+ * @returns {(ctx:{req:IncomingMessage;res:ServerResponse;params:Object.<string,string>;queryParams:Object.<string,string>}) => Promise<any>}
+ */
+function GetPlaylistHandler(deps = {}) {
+    if (!deps.dataBaseAdapter) {
+        throw new Error(
+            `GetPlaylistHandler factory: deps.dataBaseAdapter required`
+        );
+    }
+
+    /**
+     *
+     * @param {{req:IncomingMessage;res:ServerResponse;params:Object.<string,string>;queryParams:Object.<string,string>} Ctx
+     */
+    const fn = async function (Ctx) {
+        const { req, res, params, queryParams } = Ctx;
+
+        const dBResult = deps.dataBaseAdapter.readAll('8e');
+
+        console.log({ dBResult });
+
+        const rows = Array.from(Object.values(dBResult.success.rows));
+
+        console.log('hello world', { rows });
+
+        res.writeHead(200, {
+            'content-type': 'application/json',
+        });
+        res.end(JSON.stringify({ success: { rows: rows } }));
+    };
+
+    return fn;
+}
 
 /**
  *

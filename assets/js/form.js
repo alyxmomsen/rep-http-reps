@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'post',
             RequestManagerFinalHandlers.OnFormResponse({
                 onSuccessMiddleware: new MiddlewareChain(
-                    (ctx, next) => {
+                    async (ctx, next) => {
                         console.log('firs mw', { ctx });
                         DOMElements.StatusDisplay.innerText = 'done';
                         DOMElements.StatusDisplay.style.animation = 'unset';
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     //     playlistModalWindow: DOMElements.PlayList,
                     //     timeoutController: { reset: () => {}, set: () => {} },
                     // }),
-                    (ctx, next) => {
+                    async (ctx, next) => {
                         DOMEElementsControllers.Playlist.show({
                             rollBackImplementation: () => {
                                 DOMEElementsControllers.Playlist.hide();
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     (
                         (deps = {}) =>
-                        (ctx, next) => {
+                        async (ctx, next) => {
                             /* clear the form  */
 
                             console.log(
@@ -386,15 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         newPlaylistItemFormElem:
                             AppState.Pools.AddNewPlaylistItems,
                     }),
-                    (ctx, next) => {
-                        /* purge the playlist */
-                        let PLItem;
-                        while ((PLItem = AppState.Pools.Playlist.pop())) {
-                            PLItem.Item.remove();
-                        }
-                        next();
-                    },
-                    (ctx) => {
+                    async (ctx, next) => {
                         /** final mw */
 
                         console.warn({ ctx });
@@ -443,7 +435,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         DOMElements.RegistrateUsersArea.innerHTML = '';
                         AppState.Form.registrateUserModuleIsLoaded = false;
                         console.log('done', { ctx });
-                    }
+
+                        next();
+                    }, 
+                    async (ctx) => {
+                        await RequestManagers.UpdatePlaylist.execute();
+                        
+                    },
                 ),
                 onFailMiddleware: new MiddlewareChain(
                     Middleware.DisplayStatus({
@@ -485,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
         next();
     });
 
-    // RequestManagers.UpdatePlaylist.execute();
+    RequestManagers.UpdatePlaylist.execute();
 
     DOMElements.MainForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -714,11 +712,14 @@ function FormDataRequestFinalHandler(deps = {}) {
                     },
                 };
 
-                deps.playlistItemCreator({
-                    title: PlaylistDataSet.title,
-                    description: PlaylistDataSet.description,
-                    video: PlaylistDataSet.video,
-                });
+                // deps.playlistItemCreator({
+                //     title: PlaylistDataSet.title,
+                //     description: PlaylistDataSet.description,
+                //     video: PlaylistDataSet.video,
+                // });
+
+
+                deps.toolTipCreator(`saved new video: ${PlaylistDataSet.title} ${PlaylistDataSet.description}`);
             },
             users: (payload) => {
                 const name = payload[`name`];
@@ -770,6 +771,9 @@ function UpdatePlaylistFinalHandler(deps = {}) {
     }
 
     const handler = async (ctx) => {
+
+        
+
         const Action = {
             'video-playlist': (payload) => {
                 console.log({ payload });
@@ -803,11 +807,18 @@ function UpdatePlaylistFinalHandler(deps = {}) {
             DBRows: ctx.jsonResponse.success.rows,
         };
 
-        // let playlistItem;
-        // while (playlistItem = deps.playlistPool.pop()) {
-        //     console.log('hello wworld', playlistItem);
-        //     // playlistItem.remove();
-        // }
+        /**
+         * clear the play list
+         */
+
+        let playlistItem;
+        while (playlistItem = deps.playlistPool.pop()) {
+            playlistItem.Item.remove();
+        }
+
+        /**
+         * 
+         */
 
         for (const [key, DataSet] of Object.entries(IncomingData.DBRows)) {
             Action['video-playlist'](DataSet);
@@ -1065,13 +1076,16 @@ function CreatePlaylistItem(deps = {}) {
             title: document.createElement(`div`),
             description: document.createElement(`div`),
             status: document.createElement(`div`),
+            separator: document.createElement(`div`),
         };
 
         ElementUnits.title.innerText = data.title;
         ElementUnits.description.innerText = data.description;
         ElementUnits.status.innerText = '🖤';
+        ElementUnits.separator.innerText = ' : ';
 
         ElementUnits.base.appendChild(ElementUnits.title);
+        ElementUnits.base.appendChild(ElementUnits.separator);
         ElementUnits.base.appendChild(ElementUnits.description);
         ElementUnits.base.appendChild(ElementUnits.status);
 

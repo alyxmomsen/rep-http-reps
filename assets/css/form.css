@@ -69,10 +69,10 @@ button {
 }
 
 #form--main--controlls-container #form--main--close-button {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    cursor: pointer;
+	position: absolute;
+	top: -9px;
+	right: 18px;
+	cursor: pointer;
 }
 
 .wrapper.form--main form {

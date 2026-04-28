@@ -75,6 +75,20 @@ class DBAdapter {
         };
     }
 
+    readAll (tableId) {
+        const tableName = DBAdapter.TablesMap[tableId];
+
+        console.log({tableName});
+
+        const dataBaseResult = this.#database.readAll(tableName)
+
+        console.log({dataBaseResult});
+
+        return {
+            success:dataBaseResult.success,
+        }
+    }
+
     static TablesNames = {
         FILES: 'files',
         VIDEO_PLAYLIST: 'video-playlist',
