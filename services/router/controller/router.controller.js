@@ -123,68 +123,103 @@ function VideoStreamHandler(deps = {}) {
      * @param {{req:IncomingMessage, res:ServerResponse, params:{dBRowId:string} queryParams:Object.<string,string>}} Ctx
      */
     const fn = async (Ctx) => {
-        const IncomingArgs = {
-            Ctx: Ctx,
-        };
+        const { req, res, params } = Ctx;
 
-        const { req, res, params: Params } = IncomingArgs.Ctx;
-
-        const rangeHeader = req.headers.range;
-
-        const DBAdapterResult = deps.dBAdapter.readOne(
-            DBAdapter.TablesMap.Code.Files,
-            Params.dBRowId
-        );
-
-        if (DBAdapterResult.failure) {
+        if (!params) {
+            res.writeHead(400, {
+                'content-type': 'application/json',
+            });
             res.end(
                 JSON.stringify({
-                    failure: DBAdapterResult.failure,
+                    message: 'params required but not provided',
                 })
             );
             return;
         }
 
-        if (!rangeHeader) {
-            const FileManagerResult = await deps.fileManager.getStream(
-                DBAdapterResult.success.rowData.fileSystemFileName
+        const RequestParams = {
+            dBRowId: params.dBRowId,
+        };
+
+        const dBResult = deps.dBAdapter.readOne('25', RequestParams.dBRowId);
+
+        if (dBResult.failure) {
+            res.writeHead(500, {
+                'content-type': 'video/mkv',
+            });
+            res.end(
+                JSON.stringify({
+                    message: dBResult.failure,
+                })
             );
-            console.log({ FileManagerResult });
-            FileManagerResult.stream.pipe(res);
+        }
+
+        console.dir({ success: dBResult }, { depth: 4 });
+
+        const FileManagerResult = await deps.fileManager.getFileStats(
+            dBResult.success.rowData.fileSystemFileName
+        );
+
+        if (FileManagerResult.failure) {
+            res.writeHead(500, {
+                'content-type': 'video/mkv',
+            });
+            res.end(
+                JSON.stringify({
+                    message: FileManagerResult.failure,
+                })
+            );
+
             return;
         }
 
-        console.dir({ DBAdapterResult }, { depth: 3 });
+        if (!req.headers.range) {
+            try {
+                const rs = createReadStream(FileManagerResult.success.fullpath);
+                res.writeHead(200, {
+                    'content-type': dBResult.success.rowData.mime,
+                });
+                rs.pipe(res);
+            } catch (err) {
+                res.writeHead(500, {
+                    'content-type': 'video/mkv',
+                });
+                res.end(
+                    JSON.stringify({
+                        message: 'stream failure',
+                        details: err,
+                    })
+                );
+            }
 
-        const DataSet = {
-            /**
-             * @type {{
-             *  originalFileName:string;
-             *  mime:string;
-             *  fileSystemFileName:string;
-             * }}
-             */
-            DbRow: DBAdapterResult.success.rowData,
+            return;
+        }
+
+        const SplittedRangeHeader = req.headers.range
+            .replace('bytes=', '')
+            .split('-');
+
+        const ResponseDataSet = {
+            StartRange: Number.parseInt(SplittedRangeHeader[0], 10),
+            EndRange: SplittedRangeHeader[1]
+                ? Number.parseInt(SplittedRangeHeader[1], 10)
+                : FileManagerResult.success.stats.size - 1,
+            FileSize: FileManagerResult.success.stats.size,
         };
 
-        const FileStats = await deps.fileManager.getFileStats(
-            DBAdapterResult.success.rowData.fileSystemFileName
-        );
+        res.writeHead(206, {
+            'content-type': dBResult.success.rowData.mime,
+            'content-length': `${ResponseDataSet.EndRange - ResponseDataSet.StartRange + 1}`,
+            'content-range': `bytes ${ResponseDataSet.StartRange}-${ResponseDataSet.EndRange}/${ResponseDataSet.FileSize}`,
+            'accept-ranges': 'bytes',
+        });
 
-        if (FileStats.failure) {
-            res.writeHead(500);
-            res.end(JSON.stringify({}));
-        }
+        const rs = createReadStream(FileManagerResult.success.fullpath, {
+            start: ResponseDataSet.StartRange,
+            end: ResponseDataSet.EndRange,
+        });
 
-        if (FileStats.success) {
-        }
-        // res.writeHead(206, {
-        //     'content-type': DataSet.DbRow.mime,
-        //     'content-length': '',
-        //     'accept-ranges': 'bytes',
-        //     'content-range': `bytes=${}-${}/${}`,
-        // });
-        res.end();
+        rs.pipe(res);
     };
 
     return fn;

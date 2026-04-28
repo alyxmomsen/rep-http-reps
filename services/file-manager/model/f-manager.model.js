@@ -71,30 +71,30 @@ class FileManager {
         });
     }
 
-    /**
-     *
-     * @param {string} filename
-     * @returns {Promise<{success?:{stats:Stats};failure:{details:Object}}>}
-     */
     async getFileStats(filename) {
-        return new Promise(async (resolve, reject) => {
-            const filePath = join(this.#rootDir, filename);
+        const fileFullPath = join(this.#rootDir, filename);
 
-            try {
-                const stats = await stat(filePath);
-                resolve({
-                    success: {
-                        stats,
-                    },
-                });
-            } catch (err) {
-                reject({
-                    failure: {
-                        details: err,
-                    },
-                });
-            }
-        });
+        try {
+            const stats = await stat(fileFullPath);
+            const FileData = {
+                filePath: fileFullPath,
+            };
+
+            return {
+                success: {
+                    stats,
+                    fullpath: FileData.filePath,
+                },
+                failure: undefined,
+            };
+        } catch (err) {
+            return {
+                failure: {
+                    details: err,
+                },
+                success: undefined,
+            };
+        }
     }
 
     /**
