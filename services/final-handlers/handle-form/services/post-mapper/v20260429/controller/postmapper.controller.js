@@ -29,7 +29,9 @@ class PostMapperFactory {
         return new PostMapper({
             leafActions: LeafActions,
             stateControllerFactory: new StateControllerFactory({
-                tryBehavior: new GroupTryBehavior(),
+                tryBehavior: new GroupTryBehavior({
+                    dBAdapter:null,
+                }),
             }),
         });
     }

@@ -11,7 +11,7 @@ class StateController {
     /**
      * 
      * @param {Object} payload 
-     * @param {Object} payload.data 
+     * @param {any} payload.data 
      */
     async try(payload) {
         this.#tryBehavior.execute({stateController:this, payload:payload.data});

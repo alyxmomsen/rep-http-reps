@@ -30,15 +30,16 @@ class PostMapper {
                     groupDataSet: groupDataSet,
                 };
 
+                this.#stateControllersPool.set(
+                    `${tableId}/${groupId}`,
+                    groupStateController
+                );
+
                 const groupStateController = await this.#processTheGroup(
                     groupDataSet,
                     tableId
                 );
 
-                this.#stateControllersPool.set(
-                    `${tableId}/${groupId}`,
-                    groupStateController
-                );
             }
         }
     }
@@ -56,6 +57,7 @@ class PostMapper {
                 dataSet,
                 tableId,
                 postMapperActions: this.#postMapperActions,
+                
             },
         });
 
