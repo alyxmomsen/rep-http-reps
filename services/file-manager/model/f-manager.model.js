@@ -14,6 +14,7 @@ class FileManager {
     /**
      *
      * @param {Buffer<ArrayBuffer>} data
+     * @returns {Promise<{success?:{filename:string};failure?:{message:any}}>}
      */
     async save(data) {
         return await new Promise((resolve, reject) => {
