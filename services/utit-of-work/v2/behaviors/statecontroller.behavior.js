@@ -23,6 +23,8 @@ class MainTry extends TryBehavior {
      *
      */
     async execute(params) {
+        const PendedStateControllers = [];
+
         for (const [tableId, groups] of Object.entries({
             25: {
                 '01': {
@@ -61,26 +63,41 @@ class MainTry extends TryBehavior {
             },
         })) {
             for (const [groupId, row] of Object.entries(groups)) {
-                const stateController = this.#StateControllerFactory.Instance();
+                const groupStateController =
+                    this.#StateControllerFactory.Instance();
 
                 const controllerAddress = `${tableId}/${groupId}`;
 
                 this.#globalStateControllersPool.set(
                     controllerAddress,
-                    stateController
+                    groupStateController
                 );
 
-                await stateController.try(row);
-            }
+                await groupStateController.try(row);
+                console.log({ tableId, groups });
 
-            console.log({ tableId, groups });
+                const GroupState = {
+                    status: groupStateController.getStatus(),
+                    data: groupStateController.getData(),
+                };
+
+                if (GroupState.status === 'pending') {
+                    PendedStateControllers.push(async () => {
+                        await groupStateController.try(row);
+                    });
+                }
+
+                console.log(`address: ${tableId}/${groupId}`, { GroupState });
+            }
         }
 
-        this.#dBAdapter.createOne('25', {
-            fileSystemFileName: '981271893612369182736918273',
-            mime: 'video/mkv',
-            originalFileName: 'text.txt',
-        });
+        for (const executor of PendedStateControllers) {
+            await executor();
+        }
+
+        for (const [k, v] of this.#globalStateControllersPool.entries()) {
+            console.log('finally:', v.getData(), v.getStatus());
+        }
     }
 
     /**

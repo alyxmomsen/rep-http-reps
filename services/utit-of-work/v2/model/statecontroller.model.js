@@ -7,7 +7,7 @@
 class StateControllerToo {
     async try(payload) {
         await this.#tryBehavior.execute({
-            iterface: {
+            interface: {
                 setStatus: this.#setStatus.bind(this),
                 setData: this.#setData.bind(this),
                 setTryBehavior: this.#setTryBehavior.bind(this),
@@ -41,12 +41,16 @@ class StateControllerToo {
      *
      * @param {any} data
      */
-    #setData(data) {}
+    #setData(data) {
+        this.#data = data;
+    }
 
     /**
      * @param {StateControllerStatusToo} status
      */
-    #setStatus(status) {}
+    #setStatus(status) {
+        this.#status = status;
+    }
 
     /**
      *

@@ -22,6 +22,15 @@ class SecondTryBehavior extends TryBehavior {
     async execute(params) {
         console.log(`SecondTryBehavior::execute`, { params });
 
+        const PreCheckState = {
+            /**
+             * @type {import('../model/statecontroller.model').StateControllerStatusToo}
+             */
+            state: undefined,
+        };
+
+        const leafsStateControllersState = {};
+
         for (const [
             columnName,
             { action: actionName, payload: actionPayload },
@@ -29,6 +38,44 @@ class SecondTryBehavior extends TryBehavior {
             console.log({ columnName, actionName, actionPayload });
 
             const leafStateController = this.#stateControllerFactory.Instance();
+
+            await leafStateController.try({ actionName, actionPayload });
+
+            const ProcessedLeaf = {
+                columnName: columnName,
+                status: leafStateController.getStatus(),
+                data: leafStateController.getData(),
+            };
+
+            leafsStateControllersState[columnName] = ProcessedLeaf;
+
+            console.log({
+                ProcessedLeaf,
+            });
+
+            if (PreCheckState.state === undefined) {
+                PreCheckState.state = ProcessedLeaf.status;
+            } else if (PreCheckState.state === 'rejected') {
+                continue;
+            } else if (PreCheckState.state === 'pending') {
+                continue;
+            } else {
+                PreCheckState.state = ProcessedLeaf.status;
+            }
+        }
+
+        console.log({ leafsStateControllersState });
+
+        if (PreCheckState.state === 'done') {
+            params.interface.setData(leafsStateControllersState);
+            params.interface.setStatus('done');
+        } else if (PreCheckState.state === 'rejected') {
+            params.interface.setStatus('rejected');
+        } else if (PreCheckState.state === 'pending') {
+            params.interface.setStatus('pending');
+        } else {
+            // params.interface.setStatus('rejected');
+            throw new Error(`12`);
         }
     }
 

@@ -44,7 +44,16 @@ describe ('state-container-too', () => {
                     tryBehavior: new SecondTryBehavior({
                         globalStateControllersPool: globalStateControllersPool,
                         stateControllerFactory: new StateControllerFactoryToo({
-                            tryBehavior: new LeafTryBehavior(),
+                            tryBehavior: new LeafTryBehavior({
+                                dBAdapter:new DBAdapter({
+                                    DataBase:db,
+                                    ValidationSchemas:ValidatiionSchemas,
+                                }),
+                                fileManager:new FileManager({
+                                    rootDir:'./uploads',
+                                }),
+                                globalStateControllersPool:globalStateControllersPool,
+                            }),
                             rollbackBehavior: new LeafRollbackBehavior(),
                         }),
                     }),
@@ -56,16 +65,16 @@ describe ('state-container-too', () => {
         }).Instance();
     });
 
-    test ('nada', () => {
+    test ('main', async () => {
 
-        /**
-         * @type {Map<string,StateControllerToo>}
-         */
-        const globalStateControllers = new Map();
+        await stateControllerToo.try();
 
+        const State = {
+            data:stateControllerToo.getData(),
+            status:stateControllerToo.getStatus(),
+        }
 
-        
-        stateControllerToo.try();
+        console.log({State});
 
         expect(1).toBe(1)
     });
