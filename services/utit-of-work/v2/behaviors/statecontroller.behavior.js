@@ -1,6 +1,3 @@
-const { DBAdapter } = require('../../../db-adapter/db-adapter.model');
-const { FileManager } = require('../../../file-manager/model/f-manager.model');
-const { InMemoryDataBase } = require('../../../in-memory-db/model/db.model');
 const {
     StateControllerFactoryToo,
 } = require('../controller/statecontroller.controller');
@@ -101,14 +98,6 @@ class MainTry extends TryBehavior {
     }
 
     /**
-     * @type {DBAdapter}
-     */
-    #dBAdapter;
-    /**
-     * @type {FileManager}
-     */
-    #fileManager;
-    /**
      * @type {StateControllerFactoryToo}
      */
     #StateControllerFactory;
@@ -127,17 +116,17 @@ class MainTry extends TryBehavior {
      */
     constructor(deps = {}) {
         super();
-        if (!deps.dBAdapter) {
-            throw new Error(
-                `TryBehavior extended MainTry::constructor: deps.dBAdapter required`
-            );
-        }
+        // if (!deps.dBAdapter) {
+        //     throw new Error(
+        //         `TryBehavior extended MainTry::constructor: deps.dBAdapter required`
+        //     );
+        // }
 
-        if (!deps.fileManager) {
-            throw new Error(
-                `TryBehavior extended MainTry::constructor: deps.fileManager required`
-            );
-        }
+        // if (!deps.fileManager) {
+        //     throw new Error(
+        //         `TryBehavior extended MainTry::constructor: deps.fileManager required`
+        //     );
+        // }
 
         if (!deps.globalStateControllersPool) {
             throw new Error(
@@ -151,8 +140,6 @@ class MainTry extends TryBehavior {
             );
         }
 
-        this.#dBAdapter = deps.dBAdapter;
-        this.#fileManager = deps.fileManager;
         this.#globalStateControllersPool = deps.globalStateControllersPool;
         this.#StateControllerFactory = deps.stateControllerFactory;
     }
