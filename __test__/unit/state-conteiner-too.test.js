@@ -24,6 +24,44 @@ describe ('state-container-too', () => {
      */
     let globalStateControllersPool;
 
+    let testDataSet = {
+        25: {
+            '01': {
+                fileSystemFileName: {
+                    action: 'file',
+                    payload: Buffer.from(`hello world`),
+                },
+                mime: {
+                    action: 'data',
+                    payload: 'video/mpeg4',
+                },
+                originalFileName: {
+                    action: 'data',
+                    payload: 'foo-bar.mp4',
+                },
+            },
+        },
+        '8e': {
+            '01': {
+                video: {
+                    action: 'link',
+                    payload: {
+                        tableId: '25',
+                        groupId: '01',
+                    },
+                },
+                title: {
+                    action: 'data',
+                    payload: 'knight-bus',
+                },
+                description: {
+                    action: 'data',
+                    payload: 'harry potter context',
+                },
+            },
+        },
+    };
+
     beforeEach (() => {
 
         db = new InMemoryDataBase();
@@ -67,7 +105,7 @@ describe ('state-container-too', () => {
 
     test ('main', async () => {
 
-        await stateControllerToo.try();
+        await stateControllerToo.try(testDataSet);
 
         const State = {
             data:stateControllerToo.getData(),

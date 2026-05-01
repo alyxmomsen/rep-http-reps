@@ -22,43 +22,7 @@ class MainTry extends TryBehavior {
     async execute(params) {
         const PendedStateControllers = [];
 
-        for (const [tableId, groups] of Object.entries({
-            25: {
-                '01': {
-                    fileSystemFileName: {
-                        action: 'file',
-                        payload: Buffer.from(`hello world`),
-                    },
-                    mime: {
-                        action: 'data',
-                        payload: 'video/mpeg4',
-                    },
-                    originalFileName: {
-                        action: 'data',
-                        payload: 'foo-bar.mp4',
-                    },
-                },
-            },
-            '8e': {
-                '01': {
-                    video: {
-                        action: 'link',
-                        payload: {
-                            tableId: '25',
-                            groupId: '01',
-                        },
-                    },
-                    title: {
-                        action: 'data',
-                        payload: 'knight-bus',
-                    },
-                    description: {
-                        action: 'data',
-                        payload: 'harry potter context',
-                    },
-                },
-            },
-        })) {
+        for (const [tableId, groups] of Object.entries(params.payload)) {
             for (const [groupId, row] of Object.entries(groups)) {
                 const groupStateController =
                     this.#StateControllerFactory.Instance();
