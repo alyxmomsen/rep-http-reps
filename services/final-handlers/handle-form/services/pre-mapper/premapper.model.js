@@ -15,8 +15,7 @@ class PreMapper {
              * @returns {}
              */
             Leaf: (value, dataSet) => {
-                console.log({ value, dataSet });
-
+                
                 const { action, payload } = value;
 
                 return {
@@ -33,8 +32,6 @@ class PreMapper {
 
         for (const [propertyKey, Configuration] of Object.entries(schema)) {
             const { type: ActionType, value: ActionPayload } = Configuration;
-
-            console.log({ Configuration });
 
             const newPropertyName = propertyKey.startsWith('__')
                 ? dataSet[propertyKey.replace('__', '')]

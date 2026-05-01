@@ -9,23 +9,24 @@ const {
 class LeafTryBehavior extends TryBehavior {
     /**
      *
-     * @param {Object} params
-     * @param {Object} params.interface
+     * @param {Object} params - params container
+     * @param {Object} params.interface - interface container
      * @param {(status:import('../model/statecontroller.model').StateControllerStatusToo) => any} params.interface.setStatus
      * @param {(data:any) => any} params.interface.setData
      * @param {(beh:TryBehavior) => any} params.interface.setTryBehavior
      * @param {(beh:RollBackBehavior) => any} params.interface.setRollBackBehavior
-     * @param {{actionName:string, actionPayload:any}} params.payload
+     * @param {Object} params.payload - payload conttainer
+     * @param {string} params.payload.actionName
+     * @param {any} params.payload.actionPayload
+     * @param {Map<string,StateControllerToo>} params.payload.stateControllersGlobalPool
      *
      */
     async execute(params) {
-        console.log('hello world', { params });
-
         switch (params.payload.actionName) {
             case 'link': {
                 const { tableId, groupId } = params.payload.actionPayload;
                 const targetStateController =
-                    this.#globalStateControllersPool.get(
+                    params.payload.stateControllersGlobalPool.get(
                         `${tableId}/${groupId}`
                     );
 
@@ -34,6 +35,14 @@ class LeafTryBehavior extends TryBehavior {
                         status: targetStateController.getStatus(),
                         data: targetStateController.getData(),
                     };
+
+                    console.dir({
+                        title: '[Link] target found:',
+                        details: {
+                            address: `${tableId}/${groupId}`,
+                            status: TargetStateController,
+                        },
+                    } , {depth:5});
 
                     if (TargetStateController.status === 'rejected') {
                         params.interface.setStatus('rejected');
@@ -78,7 +87,10 @@ class LeafTryBehavior extends TryBehavior {
                 break;
             }
             case 'data': {
-                params.interface.setData(params.payload.actionPayload);
+                const data = params.payload.actionPayload;
+                params.interface.setData(
+                    data instanceof Buffer ? data.toString('utf-8') : data
+                );
                 params.interface.setStatus('done');
 
                 break;
@@ -93,22 +105,12 @@ class LeafTryBehavior extends TryBehavior {
      * @type {FileManager}
      */
     #fileManager;
-    /**
-     * @type {DBAdapter}
-     */
-    #dBAdapter;
-
-    /**
-     * @type {Map<string,StateControllerToo>}
-     */
-    #globalStateControllersPool;
 
     /**
      *
      * @param {Object} deps
      * @param {FileManager} deps.fileManager
      * @param {DBAdapter} deps.dBAdapter
-     * @param {Map<string,StateControllerToo>} deps.globalStateControllersPool
      */
     constructor(deps = {}) {
         super();
@@ -116,17 +118,7 @@ class LeafTryBehavior extends TryBehavior {
             throw new Error(`deps.fileManager required`);
         }
 
-        if (!deps.dBAdapter) {
-            throw new Error(`deps.dBAdapter required`);
-        }
-
-        if (!deps.globalStateControllersPool) {
-            throw new Error(`deps.globalStateControllersPool required`);
-        }
-
         this.#fileManager = deps.fileManager;
-        this.#dBAdapter = deps.dBAdapter;
-        this.#globalStateControllersPool = deps.globalStateControllersPool;
     }
 }
 

@@ -1,13 +1,25 @@
 const { DBAdapterFactory } = require('../../db-adapter/db-adapter.controller');
 const {
     ValidatiionSchemas: DBAdapterValidatiionSchemas,
+    ValidatiionSchemas,
 } = require('../../db-adapter/db-adapter.model');
+const { FileManager } = require('../../file-manager/model/f-manager.model');
 const {
     inMemoryDataBase,
+    InMemoryDBFactory,
 } = require('../../in-memory-db/controller/db.controller');
 const {
-    StateControllerFactory,
-} = require('../../utit-of-work/state-controller.controller');
+    LeafTryBehavior,
+    LeafRollbackBehavior,
+} = require('../../utit-of-work/v2/behaviors/leaf.behavior');
+const {
+    SecondTryBehavior,
+    SecondRollbackBehavior,
+} = require('../../utit-of-work/v2/behaviors/second.behavior');
+const {
+    StateControllerFactoryToo,
+} = require('../../utit-of-work/v2/controller/statecontroller.controller');
+
 const {
     MultipartContentTypeRoute,
 } = require('./routes/multipart-route/multipart-route.model');
@@ -72,10 +84,22 @@ ContentTypeRoutes.set(
         }),
         PostMapperFactory: new PostMapperFactory({
             PostMapperActions: PostMapperActions,
-            StateControllerFactory: new StateControllerFactory(),
-            DBAdapterFactory: new DBAdapterFactory({
-                dataBaseInstance: inMemoryDataBase,
-                ValidationSchemas: DBAdapterValidatiionSchemas,
+            StateControllerFactory: new StateControllerFactoryToo({
+                tryBehavior: new SecondTryBehavior({
+                    dBAdapter: new DBAdapterFactory({
+                        dataBaseInstance: inMemoryDataBase,
+                        ValidationSchemas:ValidatiionSchemas,
+                    }).Instance(),
+                    stateControllerFactory: new StateControllerFactoryToo({
+                        tryBehavior: new LeafTryBehavior({
+                            fileManager: new FileManager({
+                                rootDir: './uploads',
+                            }),
+                        }),
+                        rollbackBehavior: new LeafRollbackBehavior(),
+                    }),
+                }),
+                rollbackBehavior: new SecondRollbackBehavior({}),
             }),
         }),
     })

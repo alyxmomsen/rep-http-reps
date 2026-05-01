@@ -124,11 +124,7 @@ function GetPlaylistHandler(deps = {}) {
 
         const dBResult = deps.dataBaseAdapter.readAll('8e');
 
-        console.log({ dBResult });
-
         const rows = Array.from(Object.values(dBResult.success.rows));
-
-        console.log('hello world', { rows });
 
         res.writeHead(200, {
             'content-type': 'application/json',

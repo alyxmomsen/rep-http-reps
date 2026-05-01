@@ -9,56 +9,27 @@ const {
 
 class MainTry extends TryBehavior {
     /**
-     *
+     * @typedef {Map<string,StateControllerToo>} StateControllersGlobalPool
+     * 
      * @param {Object} params
      * @param {Object} params.interface
      * @param {(status:StateControllerStatusToo) => any} params.interface.setStatus
      * @param {(data:any) => any} params.interface.setData
      * @param {(beh:TryBehavior) => any} params.interface.setTryBehavior
      * @param {(beh:RollBackBehavior) => any} params.interface.setRollBackBehavior
-     * @param {any} params.payload
+     * @param {{row:Object;tableId:string;groupId:string;stateControllersGlobalPool:StateControllersGlobalPool}} params.payload
      *
      */
     async execute(params) {
-        const PendedStateControllers = [];
+        
+        console.log({params});
 
-        for (const [tableId, groups] of Object.entries(params.payload)) {
-            for (const [groupId, row] of Object.entries(groups)) {
-                const groupStateController =
-                    this.#StateControllerFactory.Instance();
+        const { row, groupId, tableId, stateControllersGlobalPool } = params.payload;
 
-                const controllerAddress = `${tableId}/${groupId}`;
+        const stateController = this.#StateControllerFactory.Instance();
 
-                this.#globalStateControllersPool.set(
-                    controllerAddress,
-                    groupStateController
-                );
-
-                await groupStateController.try(row);
-                console.log({ tableId, groups });
-
-                const GroupState = {
-                    status: groupStateController.getStatus(),
-                    data: groupStateController.getData(),
-                };
-
-                if (GroupState.status === 'pending') {
-                    PendedStateControllers.push(async () => {
-                        await groupStateController.try(row);
-                    });
-                }
-
-                console.log(`address: ${tableId}/${groupId}`, { GroupState });
-            }
-        }
-
-        for (const executor of PendedStateControllers) {
-            await executor();
-        }
-
-        for (const [k, v] of this.#globalStateControllersPool.entries()) {
-            console.log('finally:', v.getData(), v.getStatus());
-        }
+        stateController.try(params.row);
+        
     }
 
     /**
@@ -80,17 +51,6 @@ class MainTry extends TryBehavior {
      */
     constructor(deps = {}) {
         super();
-        // if (!deps.dBAdapter) {
-        //     throw new Error(
-        //         `TryBehavior extended MainTry::constructor: deps.dBAdapter required`
-        //     );
-        // }
-
-        // if (!deps.fileManager) {
-        //     throw new Error(
-        //         `TryBehavior extended MainTry::constructor: deps.fileManager required`
-        //     );
-        // }
 
         if (!deps.globalStateControllersPool) {
             throw new Error(

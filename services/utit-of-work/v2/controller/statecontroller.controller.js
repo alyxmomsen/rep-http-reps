@@ -5,7 +5,13 @@ const {
 } = require('../model/statecontroller.model');
 
 class StateControllerFactoryToo {
-    Instance(payload = {}) {
+
+    /**
+     * 
+     * @param {Object} deps
+     * @returns 
+     */
+    Instance(deps = {}) {
         const stateController = new StateControllerToo({
             tryBehavior: this.#tryBehavior,
             rollBackBehavior: this.#rollbackBehavior,

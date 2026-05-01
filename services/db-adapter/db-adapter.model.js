@@ -2,7 +2,6 @@ const { InMemoryDataBase } = require('../in-memory-db/model/db.model');
 
 class DBAdapter {
     createOne(tableId, dataSet) {
-        console.log({ tableId });
 
         const Schema =
             this.#validationSchemas[tableId] ||
@@ -51,8 +50,6 @@ class DBAdapter {
             ...dbTransactionResult,
         };
 
-        console.log({ DBAdapterResult });
-
         return DBAdapterResult;
     }
 
@@ -78,11 +75,7 @@ class DBAdapter {
     readAll (tableId) {
         const tableName = DBAdapter.TablesMap[tableId];
 
-        console.log({tableName});
-
         const dataBaseResult = this.#database.readAll(tableName)
-
-        console.log({dataBaseResult});
 
         return {
             success:dataBaseResult.success,
