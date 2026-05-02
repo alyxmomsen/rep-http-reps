@@ -1,6 +1,12 @@
-const { LeafTryBehavior } = require('../../services/utit-of-work/v2/behaviors/leaf.behavior');
-const { StateControllerToo } = require('../../services/utit-of-work/v2/model/statecontroller.model');
-const { FileManager } = require('../../services/file-manager/model/f-manager.model');
+const {
+    LeafTryBehavior,
+} = require('../../services/utit-of-work/v2/behaviors/leaf.behavior');
+const {
+    StateControllerToo,
+} = require('../../services/utit-of-work/v2/model/statecontroller.model');
+const {
+    FileManager,
+} = require('../../services/file-manager/model/f-manager.model');
 
 describe('LeafTryBehavior', () => {
     /** @type {LeafTryBehavior} */
@@ -19,8 +25,12 @@ describe('LeafTryBehavior', () => {
 
         const params = {
             interface: {
-                setStatus: (status) => { capturedStatus = status; },
-                setData: (data) => { capturedData = data; },
+                setStatus: (status) => {
+                    capturedStatus = status;
+                },
+                setData: (data) => {
+                    capturedData = data;
+                },
                 setTryBehavior: () => {},
                 setRollBackBehavior: () => {},
             },
@@ -45,7 +55,9 @@ describe('LeafTryBehavior', () => {
         const params = {
             interface: {
                 setStatus: () => {},
-                setData: (data) => { capturedData = data; },
+                setData: (data) => {
+                    capturedData = data;
+                },
                 setTryBehavior: () => {},
                 setRollBackBehavior: () => {},
             },
@@ -67,7 +79,9 @@ describe('LeafTryBehavior', () => {
 
         const params = {
             interface: {
-                setStatus: (status) => { capturedStatus = status; },
+                setStatus: (status) => {
+                    capturedStatus = status;
+                },
                 setData: () => {},
                 setTryBehavior: () => {},
                 setRollBackBehavior: () => {},
@@ -82,5 +96,122 @@ describe('LeafTryBehavior', () => {
         await leafTryBehavior.execute(params);
 
         expect(capturedStatus).toBe('rejected');
+    });
+
+    test('должен найти целевой контроллер в пуле для action "link" и вернуть done с его данными', async () => {
+        const globalPool = new Map();
+
+        // Создаём целевой контроллер и даём ему получить статус через try()
+        const targetController = new StateControllerToo({
+            tryBehavior: new LeafTryBehavior({
+                fileManager: new FileManager({ rootDir: './test-uploads' }),
+            }),
+            rollBackBehavior: { execute: async () => {} },
+        });
+
+        // Проводим через try с data-действием — это естественный путь
+        await targetController.try({
+            actionName: 'data',
+            actionPayload: { tableName: 'files', rowId: 'abc-123' },
+            stateControllersGlobalPool: globalPool,
+        });
+        // Теперь targetController.status = 'done', targetController.data = { tableName: 'files', rowId: 'abc-123' }
+
+        globalPool.set('25/abcd', targetController);
+
+        let capturedStatus = null;
+        let capturedData = null;
+
+        const params = {
+            interface: {
+                setStatus: (status) => {
+                    capturedStatus = status;
+                },
+                setData: (data) => {
+                    capturedData = data;
+                },
+                setTryBehavior: () => {},
+                setRollBackBehavior: () => {},
+            },
+            payload: {
+                actionName: 'link',
+                actionPayload: { tableId: '25', groupId: 'abcd' },
+                stateControllersGlobalPool: globalPool,
+            },
+        };
+
+        await leafTryBehavior.execute(params);
+
+        expect(capturedStatus).toBe('done');
+        expect(capturedData).toEqual({ tableName: 'files', rowId: 'abc-123' });
+    });
+
+    test('должен вернуть rejected для action "link", если целевой контроллер rejected', async () => {
+        const globalPool = new Map();
+
+        const targetController = new StateControllerToo({
+            tryBehavior: new LeafTryBehavior({
+                fileManager: new FileManager({ rootDir: './test-uploads' }),
+            }),
+            rollBackBehavior: { execute: async () => {} },
+        });
+
+        // Делаем неизвестное действие — контроллер станет rejected
+        await targetController.try({
+            actionName: 'unknown_action',
+            actionPayload: null,
+            stateControllersGlobalPool: globalPool,
+        });
+        // Теперь targetController.status = 'rejected'
+
+        globalPool.set('25/abcd', targetController);
+
+        let capturedStatus = null;
+
+        const params = {
+            interface: {
+                setStatus: (status) => {
+                    capturedStatus = status;
+                },
+                setData: () => {},
+                setTryBehavior: () => {},
+                setRollBackBehavior: () => {},
+            },
+            payload: {
+                actionName: 'link',
+                actionPayload: { tableId: '25', groupId: 'abcd' },
+                stateControllersGlobalPool: globalPool,
+            },
+        };
+
+        await leafTryBehavior.execute(params);
+
+        expect(capturedStatus).toBe('rejected');
+    });
+
+    test('должен вернуть pending для action "link", если целевой контроллер не найден в пуле', async () => {
+        const globalPool = new Map(); // пустой пул
+
+        let capturedStatus = null;
+
+        const params = {
+            interface: {
+                setStatus: (status) => {
+                    capturedStatus = status;
+                },
+                setData: () => {},
+                setTryBehavior: () => {},
+                setRollBackBehavior: () => {},
+            },
+            payload: {
+                actionName: 'link',
+                actionPayload: { tableId: '25', groupId: 'не_существует' },
+                stateControllersGlobalPool: globalPool,
+            },
+        };
+
+        await leafTryBehavior.execute(params);
+
+        expect(capturedStatus).toBe('pending');
     });
 });
