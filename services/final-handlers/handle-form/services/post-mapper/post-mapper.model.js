@@ -82,19 +82,20 @@ class PostMapper {
             await executor();
         }
 
-        
-        // const results = [];
-        // for (const [address, controller] of this.#stateControllersGlobalPool) {
-        //     if (controller.getStatus() === 'done') {
-        //         const [tableId, groupId] = address.split('/');
-        //         const controllerData = controller.getData();
-        //         results.push({
-        //             tableId: tableId,
-        //             ...controllerData,
-        //         });
-        //     }
-        // }
-        // return results;
+        const results = [];
+        for (const [address, controller] of this.#stateControllersGlobalPool) {
+            if (controller.getStatus() === 'done') {
+                const [tableId] = address.split('/');
+                const controllerData = controller.getData();
+                results.push({
+                    tableId: tableId,
+                    tableName: controllerData.tableName,
+                    rowId: controllerData.rowId,
+                    data: controllerData.data || controllerData,
+                });
+            }
+        }
+        return results;
     }
 
     /**

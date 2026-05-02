@@ -146,7 +146,7 @@ function MultipartContentTypeRoute(deps = {}) {
 
                 const PostMapperResult = await postMapper.process(
                     MapperBuffer.premapperResult
-                );
+                ) || [];
 
                 resolve({
                     success: { message: 'done', data: PostMapperResult },

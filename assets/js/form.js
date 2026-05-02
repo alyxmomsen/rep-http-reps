@@ -412,11 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 const {title, description, file} = data ;
 
+                                console.log('playlist action:', {data});
+
                                 Create.ToolTip({
                                     targetContainer:
                                         DOMElements.ToolTipsContainer,
                                         disapearTimeout:5000,
-                                })(`created playlist element:\r\n ${title} ${description}`.toUpperCase());
+                                })(`created playlist element`);
                             },
                         };
 
