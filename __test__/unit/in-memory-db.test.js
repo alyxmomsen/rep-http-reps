@@ -32,14 +32,14 @@ describe('InMemoryDataBase', () => {
         expect(result.failure.message).toBe('no table by name');
     });
 
-    test('должен вернуть success с undefined, если строка не найдена (баг)', () => {
+    test('должен вернуть failure, если строка не найдена (баг)', () => {
         db.create('test_table', { name: 'John' });
         const result = db.readOne('test_table', 'non_existent_row');
 
         // Это текущее поведение — баг. Тест документирует его.
         // Когда починишь — изменишь expected на failure.
-        expect(result.success).toBeDefined();
-        expect(result.success.rowData).toBeUndefined();
+        expect(result.failure).toBeDefined();
+        expect(result.success).toBeUndefined();
     });
 
     test('readAll должен вернуть все строки таблицы', () => {

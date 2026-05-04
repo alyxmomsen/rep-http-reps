@@ -47,6 +47,14 @@ class InMemoryDataBase {
 
         const TableRowData = Table.get(rowId);
 
+        if (TableRowData === undefined) {
+            return {
+                failure: {
+                    message:`row by id ${rowId} is not exist` ,
+                }
+            }
+        }
+
         return {
             success: {
                 rowData: TableRowData,
