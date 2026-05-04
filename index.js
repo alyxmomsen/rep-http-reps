@@ -1,82 +1,81 @@
-const dotenv = require('dotenv');
-dotenv.config({});
 const http = require('http');
-const { router } = require('./services/router/controller/router.controller');
+const { MainServiceFactory } = require("./services/main/main.controller");
+const { MainService } = require("./services/main/main.model");
+const { pathes } = require("./services/pathes/pathes.model");
+const { DefaulScan } = require("./services/scan-dir/behaviors/default.behavior");
+const { ScanDirFactory } = require("./services/scan-dir/scan-dir.controller");
+const { HTTPRouter } = require('./services/http-router/model/router.model');
+const { router } = require('./services/http-router/controller/router.controller');
 
-const httpServer = http.createServer(async (req, res) => {
-    await router.handleRequest(req, res);
-});
-
-const startServer = async () => {
-    await printGreatings()();
-    httpServer.listen(3333, '0.0.0.0', async () => {
-        console.log(`server started`);
-    });
-};
-
-startServer();
+const HTTPServer = http.createServer(RequestListenerFactory({
+    router:router,
+}));
 
 /**
  *
  * @param {Object} deps
- * @returns {() => Promise<void>}
+ * @param {MainService} deps.mainService
+ * @param {http.Server} deps.httpServer
+ * @returns
  */
-function printGreatings(deps = {}) {
+function start(deps = {}) {
+    console.log("factory called...");
+
+    if (!deps.mainService) {
+        throw new Error(`start/factory: deps.mainService required`);
+    }
+
+    if (!deps.httpServer) {
+        throw new Error(`start/factory: deps.httpServer required`);
+    }
+
     const fn = async function () {
-        return new Promise(async (resolve, reject) => {
-            const messageParts = [
-                `welcome to the Knight Bus!`,
-                `Emergency transport for stranded witch or wizzard.`,
-                `My name is Stan Shunpike,`,
-                `and i\`ll be you conductor for this evening`,
-            ];
 
-            const message = messageParts.join(`\r\n`);
+        const port = 3333;
+        const host = '127.0.0.1';
 
-            // console.log(`\x1b[38;2;255;0;255m` + message + `\x1b[0m`);
-
-            const TimoutBuffer = {
-                id: Infinity,
-                duration: 1000,
-                messageLength: 0,
-                appearMessage: '',
-            };
-
-            const print = async function () {
-                if (++TimoutBuffer.messageLength <= message.length) {
-                    TimoutBuffer.appearMessage = message.slice(
-                        0,
-                        TimoutBuffer.messageLength
-                    );
-                } else {
-                    if (TimoutBuffer.id !== Infinity) {
-                        clearTimeout(TimoutBuffer.id);
-                    }
-
-                    return resolve();
-                }
-                console.clear();
-                console.log(
-                    `\x1b[38;2;` +
-                        `${Math.floor(Math.random() * 255)};` +
-                        `${Math.floor(Math.random() * 255)};` +
-                        `${Math.floor(Math.random() * 255)}m` +
-                        TimoutBuffer.appearMessage +
-                        `\x1b[0m`
-                );
-
-                if (TimoutBuffer.id !== Infinity) {
-                    clearTimeout(TimoutBuffer.id);
-                }
-                TimoutBuffer.id = setTimeout(
-                    print,
-                    Math.floor(Math.random() * 5)
-                );
-            };
-
-            await print();
+        deps.httpServer.listen(port, host, () => {
+            console.log(`served: ${port} ${host}`);
         });
+
+        deps.mainService.process();
     };
+
+    return fn;
+}
+
+start({
+	mainService:new MainServiceFactory({
+		scanDirFactory:new ScanDirFactory().Instance({
+			scanBehavior:new DefaulScan({
+				path:'C://Users//AnturNevut//Desktop//polnoch-gp',
+			}),
+		}),
+	}).Instance(),
+    httpServer:HTTPServer,
+})();
+
+
+/**
+ * 
+ * @param {Object} deps 
+ * @param {HTTPRouter} deps.router 
+ * @returns 
+ */
+function RequestListenerFactory (deps = {}) {
+
+    if (!deps.router) {
+        throw new Error(`deps.router required`);
+    }
+
+    /**
+     * 
+     * @param {http.IncomingMessage} req 
+     * @param {http.ServerResponse} res 
+     */
+    const fn = async function (req, res) {
+        await deps.router.handleRequest(req, res);
+    }
 
     return fn;
 }

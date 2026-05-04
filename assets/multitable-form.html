@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form id="form--main" method="post" enctype="multipart/form-data">
+        <input type="text" name="multitable://008e.title.string">
+        <input type="text" name="multitable://008e.description.string">
+        <input type="file" name="multitable://008e.video.binary">
+        <input id="btn--submit-form" type="button" value="go">
+    </form>
+</body>
+</html>
+<script>
+    window.addEventListener("DOMContentLoaded",  async () => {
+        
+        const DOMElements = {
+            form:grabDOMElement(`form--main`),
+            submitFormButton:grabDOMElement(`btn--submit-form`),
+        }
+
+        const Listeners = {
+            SubmitMainForm: SubmitForm,
+        }
+
+        
+
+        DOMElements.submitFormButton.addEventListener('click', Listeners.SubmitMainForm({
+            formElem:DOMElements.form,
+        }));
+
+        
+    });
+
+    /** 
+     * @param {string} id 
+     * 
+    */
+    function grabDOMElement (id) {
+        const dOMElement = document.getElementById(id);
+
+        if (dOMElement === undefined) {
+            throw new Error(`dom element grabbing error`);
+        }
+
+        return dOMElement;
+    }
+
+
+    /** 
+     * 
+     * @param {Object} deps 
+     * @param {Object} deps.formElem
+     * 
+    */
+    function SubmitForm (deps = {}) {
+        if (!deps.formElem) {
+            throw new Error(`deps.formData required`);
+        }
+ 
+        if (deps.formElem instanceof HTMLFormElement === false) {
+            throw new Error(`deps.formData must be instance of HTMLFormElement`);
+        }
+
+        /** 
+         * @param {Object} params
+         * 
+        */
+        const fn = async function (params = {}) {
+
+
+            const formData = new FormData(deps.formElem);
+
+            try {
+
+                const  fetchResponse = await fetch('/handle-multitable-form', {
+                    body:formData,
+                    method:'post',
+                });
+
+                const jsonData = await fetchResponse.json();
+                console.log({jsonData});
+            }
+            catch (err) {
+                console.log({err});
+            }
+        }
+
+        return fn;
+    }
+
+</script>
+<style>
+    body {
+        background-color: #364161;
+    }
+</style>

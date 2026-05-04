@@ -1,0 +1,17 @@
+# Игнорировать служебные папки
+node_modules/
+dist/
+build/
+coverage/
+
+# Игнорировать минифицированные файлы
+*.min.js
+*.min.css
+
+# Игнорировать файлы блокировки
+package-lock.json
+yarn.lock
+
+# Обрабатывать только нужные файлы/папки
+!services/pathes/**/*.js
+!services/pathes/**/*.json
