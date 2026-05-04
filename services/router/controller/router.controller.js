@@ -189,6 +189,7 @@ function VideoStreamHandler(deps = {}) {
                     message: dBResult.failure,
                 })
             );
+            return;
         }
 
         console.dir({ success: dBResult }, { depth: 4 });
