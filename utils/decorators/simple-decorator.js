@@ -1,37 +1,37 @@
 
-async function simpleDecorator(payload , fn) {
+// async function simpleDecorator(payload , fn) {
     
-    console.log({payload});
+//     console.log({payload});
 
-    return async (...params) => {
+//     return async (...params) => {
 
-        await fn(payload , ...params);
-    }
+//         await fn(payload , ...params);
+//     }
 
-}
+// }
 
-module.exports = simpleDecorator;
+// module.exports = simpleDecorator;
 
-async function matcher(payload , type) {
+// async function matcher(payload , type) {
     
-    const { params } = req;
+//     const { params } = req;
 
-    const { type:_type , handler } = payload;
+//     const { type:_type , handler } = payload;
 
-    if (
-        typeof _type !== 'string'
-        || typeof type !== "string"
-    ) throw new Error('payload.type and type must be "string" type')
+//     if (
+//         typeof _type !== 'string'
+//         || typeof type !== "string"
+//     ) throw new Error('payload.type and type must be "string" type')
 
-    if (type === _type) {
-        return simpleDecorator({
-            foo: 'bar', handler: () => {
-                console.log('simple handler');
-            }
-        }, () => {
+//     if (type === _type) {
+//         return simpleDecorator({
+//             foo: 'bar', handler: () => {
+//                 console.log('simple handler');
+//             }
+//         }, () => {
             
-        });
-    }
+//         });
+//     }
 
-    return null
-}
+//     return null
+// }

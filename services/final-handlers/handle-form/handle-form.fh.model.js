@@ -38,6 +38,7 @@ function HandleFormFinalHandler(deps = {}) {
             deps.ContentTypeRoutes.get(contentType) ||
             (() => {
                 console.log('alternate handler');
+                return;
             });
 
         const ContentTypeHandlerResult = await contentTypeHandler(

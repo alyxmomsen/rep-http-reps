@@ -65,7 +65,7 @@ class StateControllerToo {
      * @param {TryBehavior} tryBehavior
      */
     #setTryBehavior(tryBehavior) {
-        this.#rollBackBehavior = tryBehavior;
+        this.#tryBehavior = tryBehavior;
     }
 
     /**

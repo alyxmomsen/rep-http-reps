@@ -28,7 +28,7 @@ class MainTry extends TryBehavior {
 
         const stateController = this.#StateControllerFactory.Instance();
 
-        stateController.try(params.row);
+        await stateController.try(params.row);
         
     }
 

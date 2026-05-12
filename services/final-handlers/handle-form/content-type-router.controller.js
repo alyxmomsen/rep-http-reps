@@ -105,4 +105,22 @@ ContentTypeRoutes.set(
     })
 );
 
+ContentTypeRoutes.set('application/x-www-form-urlencoded', DefaultBehavior({}));
+ContentTypeRoutes.set('text/plain', DefaultBehavior({}));
+
 module.exports = { ContentTypeRoutes };
+
+
+/**
+ * 
+ * @param {Object} deps 
+ */
+function DefaultBehavior(deps = {}) { 
+
+    const fn = function (req, payload) {
+        return [];
+    }
+
+    return fn;
+
+}

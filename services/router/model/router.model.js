@@ -178,7 +178,7 @@ class Router {
         }
 
         if (methodRoutes.has(template)) {
-            console.log(
+            console.warn(
                 `\x1b[33mRouter::addRoute: this route key < ${template} > already exist. Overwrite.\x1b[0m`
             );
         }
