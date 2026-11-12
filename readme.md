@@ -1,5 +1,22 @@
 # Knight Bus
 
+## Что реализовано
+
+- **HTTP-роутер** с middleware, параметрами URL и query-строками
+- **Парсер `multipart/form-data`** — побайтовый поиск boundary в `Buffer`, 
+  без Multer и Busboy
+- **DSL `multitable://`** — описание транзакции прямо в HTML-разметке
+- **Транзакционное сохранение файлов** — паттерн Unit of Work: файл на диске 
+  всегда имеет запись в БД, при ошибке — полный откат
+- **Стриминг видео** с поддержкой Range-запросов (206 Partial Content)
+- **In-memory БД** с атомарными операциями
+- **21 unit-тест** (Jest) на транзакционную логику
+
+**Стек:** Node.js, JavaScript, HTTP, Buffer, Streams, fs, crypto, Jest.
+
+---
+
+
 ## Why I built this
 
 I built Knight Bus because I wanted to understand what happens under the hood when a form with a file is submitted. I didn't want to rely on magic. I wanted to see every byte of the boundary, every chunk of the stream, every transaction committed or rolled back.
